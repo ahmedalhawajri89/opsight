@@ -1,0 +1,61 @@
+# ---------- OS / Editor ----------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+
+# ---------- Secrets (never commit) ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+auth.json
+
+# ---------- Backend (Laravel / PHP) ----------
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/storage/*.key
+backend/storage/pail
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/bootstrap/cache/*
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/database/*.sqlite
+backend/database/*.sqlite-journal
+backend/Homestead.json
+backend/Homestead.yaml
+
+# ---------- Frontend (Next.js / Node) ----------
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.turbo/
+frontend/next-env.d.ts
+frontend/.vercel
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/.playwright/
+# Saved Playwright sessions are real credentials.
+frontend/playwright/.auth/
+
+# ---------- Generic ----------
+node_modules/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
