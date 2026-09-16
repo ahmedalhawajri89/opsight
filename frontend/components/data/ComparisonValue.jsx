@@ -1,0 +1,74 @@
+'use client';
+
+import { cn } from '@/lib/cn';
+import { EMPTY, changeArrow, changeTone, formatPercent, formatPoints } from '@/lib/format';
+
+/**
+ * A period-over-period change.
+ *
+ * Three rules, all of which exist because the obvious implementation is wrong:
+ *
+ * 1. **Tone follows the metric's favourable direction, not the sign.** Expenses
+ *    rising is bad news even though the number grew. Every caller passes
+ *    `favourable`.
+ *
+ * 2. **Colour is never the only signal.** An arrow and a sign accompany it, so
+ *    nothing is lost in greyscale or to a colour-blind reader.
+ *
+ * 3. **A null change renders as an em dash with an explanation**, never as 0%.
+ *    A percentage against a zero or sign-flipped base is not computable, and
+ *    inventing one is the failure this whole product exists to avoid
+ *    (METRICS.md §1.5).
+ */
+
+const TONE_CLASSES = {
+  positive: 'text-[--color-positive]',
+  negative: 'text-[--color-negative]',
+  neutral: 'text-[--color-text-muted]',
+};
+
+export function ComparisonValue({
+  change,
+  /** 'percent' for a ratio change, 'points' for a difference of two ratios. */
+  format = 'percent',
+  favourable = 'up',
+  basis,
+  previousLabel,
+  className,
+}) {
+  const tone = changeTone(change, favourable);
+  const unavailable = change === null || change === undefined;
+
+  const formatted = unavailable
+    ? EMPTY
+    : format === 'points'
+      ? formatPoints(change)
+      : formatPercent(change, { sign: true });
+
+  return (
+    <div
+      className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[0.8125rem]', className)}
+    >
+      <span
+        className={cn('tabular inline-flex items-baseline gap-1 font-medium', TONE_CLASSES[tone])}
+        title={
+          unavailable
+            ? 'No comparison available — the previous period had no value to compare against.'
+            : undefined
+        }
+      >
+        {!unavailable && (
+          <span aria-hidden="true" className="text-[0.625rem]">
+            {changeArrow(change)}
+          </span>
+        )}
+        {formatted}
+      </span>
+
+      {/* The basis is always stated in words. A bare percentage is a rumour. */}
+      {basis && <span className="text-[--color-text-subtle]">{basis}</span>}
+
+      {previousLabel && <span className="tabular text-[--color-text-subtle]">{previousLabel}</span>}
+    </div>
+  );
+}
