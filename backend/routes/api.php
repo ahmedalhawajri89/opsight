@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
@@ -80,6 +81,16 @@ Route::prefix('v1')->group(function (): void {
         Route::get('inventory/{product}/movements', [InventoryController::class, 'movements']);
         Route::post('inventory/{product}/adjust', [InventoryController::class, 'adjust']);
         Route::post('inventory/{product}/restock', [InventoryController::class, 'restock']);
+
+        /* ---- Analytics --------------------------------------------------- */
+        // Aggregation is the most expensive work in the system, so these carry
+        // their own, tighter limit (SECURITY.md §7).
+        Route::middleware('throttle:60,1')->group(function (): void {
+            Route::get('dashboard', [AnalyticsController::class, 'dashboard']);
+            Route::get('analytics/summary', [AnalyticsController::class, 'summary']);
+            Route::get('analytics/timeseries', [AnalyticsController::class, 'timeseries']);
+            Route::get('analytics/breakdown', [AnalyticsController::class, 'breakdown']);
+        });
 
         /* ---- Expenses ---------------------------------------------------- */
         Route::get('expenses', [ExpenseController::class, 'index']);

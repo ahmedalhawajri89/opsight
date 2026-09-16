@@ -274,9 +274,49 @@ recursive CTEs is the path; MariaDB 10.4 supports them.
 aggregation is fast. Pre-aggregating before measuring is optimising a problem that may not
 exist, and it risks the correctness the whole product rests on.
 
-**Trigger to implement.** Dashboard p95 above 500 ms on the Phase 01 seeded dataset
-(100k orders, 400k line items). That dataset exists specifically so this is a measurement,
-not a guess.
+**Trigger to implement.** Dashboard p95 above 500 ms on the seeded dataset. That dataset
+exists specifically so this is a measurement, not a guess.
+
+---
+
+### MEASURED IN PHASE 04 — verdict: NOT WARRANTED
+
+Dataset: 2,277 orders, 5,520 line items, 6,352 stock movements, 36 months.
+
+The naive measurement said the trigger was met, and it was wrong. Measuring the endpoints
+over HTTP gave a dashboard p95 of 774 ms — comfortably past 500 ms, and an apparently clear
+mandate to build the rollup table.
+
+Two further measurements showed that conclusion was an artefact:
+
+| What was measured | Result |
+| --- | --- |
+| Dashboard summary, called directly (no HTTP, no framework boot) | **86 ms**, 16 queries |
+| `GET /health` over HTTP — no auth, no database, no work at all | **561 ms** |
+| `GET /dashboard` over HTTP | 664 ms |
+| **Attributable to the analytics work** | **~103 ms** |
+
+`php artisan serve` is a single-threaded PHP dev server with no opcache. Its fixed
+per-request cost on this machine is roughly 560 ms, and that is what the first measurement
+was mostly recording. The confirmation: after a change that provably cut the summary from
+52 queries to 16, the HTTP figures got *worse* — noise, not signal.
+
+**So the rollup table is not built.** It would introduce staleness, a rebuild job,
+dirty-day invalidation for backdated entries, and a second place where a metric is defined,
+in order to fix roughly 100 ms that is already well inside budget.
+
+**What the measurement did find** was a real problem the rollup would have masked: the
+metric methods derived from each other — `netMargin → netProfit → grossProfit → netRevenue`,
+and `grossMargin → netRevenue` again — so `netRevenue` was queried six times per period and
+a single summary issued **52 queries**. Consolidating the order-level totals into one
+memoised aggregate per period cut that to 16, and the three-year summary from 181 ms to
+80 ms. That fix costs no staleness and creates no second definition.
+
+**Caveat, stated plainly.** 561 ms of the measurement is the dev server, so the absolute
+HTTP numbers here say nothing about production. What they do establish is the *shape*: the
+application's own cost is ~100 ms at this data volume, and the trigger is not met. The
+figure should be re-measured on php-fpm with opcache before deployment, and again at ten
+times the data.
 
 **Binding constraints if adopted.** A rollup is a **cache, not a record**: fully
 reconstructible from L0 by one command; a test asserting rebuilt values equal live-computed

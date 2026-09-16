@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Models\BusinessSetting;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -23,6 +24,15 @@ abstract class TestCase extends BaseTestCase
          * untested, which is the failure mode Phase 01 exists to prevent.
          */
         $this->withHeader('Origin', (string) config('app.frontend_url'));
+
+        /*
+         * The settings singleton must exist before anything reads a timezone
+         * from it, and its cache must not leak between tests — a test that
+         * changes the fiscal year would otherwise poison every later one.
+         */
+        BusinessSetting::flushCache();
+
+        BusinessSetting::ensureExists(['company_name' => 'Opsight Test']);
     }
 
     /**

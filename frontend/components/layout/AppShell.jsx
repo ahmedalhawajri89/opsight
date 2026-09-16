@@ -10,9 +10,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
  * 403 (ROLES_AND_PERMISSIONS.md §5).
  *
  * An entry without `ready: true` renders as disabled rather than as a dead link
- * that looks broken. Analytics stays disabled until Phase 04 builds the metric
- * layer behind it — a navigable page with invented numbers would be worse than
- * one that is honestly not there yet.
+ * that looks broken.
  */
 const NAV_GROUPS = [
   {
@@ -31,7 +29,7 @@ const NAV_GROUPS = [
   },
   {
     label: 'Analysis',
-    items: [{ href: '/analytics', label: 'Analytics', ability: 'analytics.view' }],
+    items: [{ href: '/analytics', label: 'Analytics', ability: 'analytics.view', ready: true }],
   },
   ...(process.env.NEXT_PUBLIC_ENABLE_GALLERY === 'true'
     ? [

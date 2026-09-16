@@ -21,17 +21,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        BusinessSetting::updateOrCreate(
-            ['id' => BusinessSetting::SINGLETON_ID],
-            [
-                'company_name' => 'Opsight Demo Trading',
-                'currency' => 'BHD',
-                'currency_decimals' => 3,
-                'timezone' => 'Asia/Bahrain',
-                'fiscal_year_start_month' => 1,
-                'default_low_stock_threshold' => 10,
-            ],
-        );
+        BusinessSetting::ensureExists(['company_name' => 'Opsight Demo Trading']);
 
         $accounts = [
             ['Ahmed Al Hawajri', 'owner@opsight.test', Role::Owner],

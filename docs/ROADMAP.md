@@ -169,7 +169,7 @@ screen. A real deployment simply never sets the flag.
 
 ---
 
-## Phase 04 — Metrics, analytics & dashboard
+## Phase 04 — Metrics, analytics & dashboard ✅ *(complete)*
 
 **Goal.** The reason the product exists.
 
@@ -186,6 +186,48 @@ screen. A real deployment simply never sets the flag.
 
 **Done when:** every metric matches its hand-calculated value, every null and zero case
 behaves as documented, Staff receive no cost keys, and dashboard p95 is recorded.
+
+**Outcome.** All met. 199 backend tests (933 assertions, 1 documented skip), 151 frontend
+tests, 36 browser E2E tests. Pint clean, PHPStan level 6 clean, ESLint and Prettier clean,
+production build green.
+
+All twenty metrics in METRICS.md §2 are defined once, in `MetricCalculator`, and verified
+against `MetricFixture` — a deliberately small dataset whose every expected value is
+hand-calculated in the docblock, arithmetic shown. The fixture reprices its widget *after*
+every order is committed, so any metric reading `products.cost` instead of the line-item
+snapshot fails immediately rather than on a plausible-looking number.
+
+**ADR-009 was decided against the rollup table, on evidence that nearly went the other way.**
+The first measurement — a naive loop over HTTP — reported a dashboard p95 of 774 ms and
+would have justified building it. Measuring the calculator directly gave 86 ms, and
+`GET /health`, which does no work at all, cost 561 ms on its own. The framework boot was
+being counted as analytics cost. Attributable time is ~103 ms, so live computation stays,
+and the trigger in ADR-009 stands unchanged for when the dataset grows.
+
+The measurement did find a real defect on the way: the summary endpoint was issuing 52
+queries because every metric re-aggregated the same rows. A memoised per-period aggregate
+cut it to 16. That was the actual problem — and no rollup table would have fixed it, only
+hidden it behind a cache.
+
+Three other things worth recording:
+
+1. **A ratio's change is in percentage points, not percent.** A margin moving 38.4% → 34.2%
+   is −4.2 pp; calling it −10.9% is a different claim about the business. `MetricTile`
+   selects `change_absolute` over `change_pct` on format, and the E2E suite asserts the
+   rendered unit.
+2. **The chart palette failed a colour-blindness check that a code comment claimed it had
+   passed.** Simulated under Viénot deuteranopia, two adjacent series sat at ΔE 1.8 — for a
+   deuteranopic reader, indistinguishable. Redesigned to ΔE 16.4 (light) and 23.0 (dark),
+   and the test that had been asserting WCAG contrast ratios — which cannot detect this —
+   was replaced with the simulation itself.
+3. **`bcdiv` truncates rather than rounds,** which produced a gross margin of 0.555555 where
+   the hand calculation said 0.555556. Fixed by dividing at a higher scale before rounding,
+   not by adjusting the expected value.
+
+**One documented deviation:** `TimeSeries` and `Breakdown` write their own SQL rather than
+calling `MetricCalculator` per bucket, which would be one query per day of the period. They
+are guarded by reconciliation tests asserting that the buckets sum to the summary figure, so
+the two paths cannot silently disagree.
 
 ---
 
