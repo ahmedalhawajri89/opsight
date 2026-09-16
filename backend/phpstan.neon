@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # `tests` is deliberately excluded.
+    #
+    # Pest binds $this to the TestCase at runtime, so every `$this->getJson(...)`
+    # in a test file reads to PHPStan as a call on a bare PHPUnit\TestCase. The
+    # result is dozens of false positives that would have to be suppressed with
+    # a blanket ignore — which would also hide any real error in the same files.
+    # The test suite is verified by running it, not by analysing it.
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    # Level 6 to start, raised deliberately as the codebase settles
+    # (docs/architecture/TESTING_STRATEGY.md §8).
+    level: 6

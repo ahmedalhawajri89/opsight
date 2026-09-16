@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+        <!--
+            Concurrency tests use real, committed rows across two connections,
+            so they cannot run inside RefreshDatabase's transaction.
+        -->
+        <testsuite name="Concurrency">
+            <directory>tests/Concurrency</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+
+        <!--
+            Tests run against a REAL MySQL/MariaDB schema, never SQLite.
+
+            SQLite differs from MariaDB on DECIMAL handling, CHECK constraint
+            enforcement, foreign key behaviour and SELECT ... FOR UPDATE —
+            which is to say, on exactly the features this schema relies upon.
+            Testing on SQLite would give passing tests and a broken system.
+
+            See docs/architecture/TESTING_STRATEGY.md §3.
+        -->
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_DATABASE" value="opsight_test"/>
+        <env name="DB_USERNAME" value="root"/>
+        <env name="DB_PASSWORD" value=""/>
+        <env name="DB_URL" value=""/>
+
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <!--
+            NOT "array".
+
+            The array driver discards session data at the end of each request,
+            so authentication between requests would survive only on the
+            in-memory guard singleton — and a logout test would pass while the
+            real cookie session was never exercised at all. The database driver
+            makes the session genuinely persist, which is the mechanism
+            production actually uses (ADR-002).
+        -->
+        <env name="SESSION_DRIVER" value="database"/>
+        <env name="SESSION_DOMAIN" value="localhost"/>
+        <env name="SANCTUM_STATEFUL_DOMAINS" value="localhost:3000"/>
+        <env name="FRONTEND_URL" value="http://localhost:3000"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>
