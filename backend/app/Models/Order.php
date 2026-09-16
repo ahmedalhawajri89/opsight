@@ -1,0 +1,118 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Domain\Orders\OrderStatus;
+use Database\Factories\OrderFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
+
+/**
+ * @property int $id
+ * @property string $reference
+ * @property OrderStatus $status
+ * @property Carbon|null $placed_at
+ * @property Carbon|null $fulfilled_at
+ * @property Carbon|null $cancelled_at
+ * @property Carbon|null $refunded_at
+ * @property Carbon|null $created_at
+ * @property string $subtotal_amount
+ * @property string $total_amount
+ * @property string $cogs_amount
+ */
+class Order extends Model
+{
+    /** @use HasFactory<OrderFactory> */
+    use HasFactory;
+
+    /**
+     * Note what is ABSENT: status, placed_at, subtotal_amount, total_amount and
+     * cogs_amount. All are integrity-bearing and are written only by the service
+     * that owns the operation, never by a request payload (SECURITY.md §6).
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'customer_id',
+        'notes',
+        'discount_amount',
+        'tax_amount',
+        'shipping_amount',
+    ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        // decimal casts, never float — money must not touch a PHP float.
+        return [
+            'status' => OrderStatus::class,
+            'placed_at' => 'datetime',
+            'fulfilled_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'refunded_at' => 'datetime',
+            'refunded_amount' => 'decimal:2',
+            'subtotal_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'shipping_amount' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'cogs_amount' => 'decimal:2',
+        ];
+    }
+
+    /** @return HasMany<OrderItem, $this> */
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    /** @return BelongsTo<Customer, $this> */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Orders that count toward revenue, COGS, AOV and order counts.
+     *
+     * @param  Builder<Order>  $query
+     * @return Builder<Order>
+     */
+    public function scopeQualifying(Builder $query): Builder
+    {
+        return $query->whereIn('status', OrderStatus::qualifying());
+    }
+
+    /**
+     * Ranges on the business date, never on created_at.
+     *
+     * A draft written in July and confirmed in August is August revenue.
+     * Half-open, so the final second of the period is never dropped
+     * (METRICS.md §1.2).
+     *
+     * @param  Builder<Order>  $query
+     * @return Builder<Order>
+     */
+    public function scopePlacedBetween(Builder $query, string $fromUtc, string $toExclusiveUtc): Builder
+    {
+        return $query->where('placed_at', '>=', $fromUtc)
+            ->where('placed_at', '<', $toExclusiveUtc);
+    }
+
+    public function isEditable(): bool
+    {
+        return $this->status->isEditable();
+    }
+}
