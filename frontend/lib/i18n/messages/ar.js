@@ -44,6 +44,7 @@ const ar = {
 
   shell: {
     account: 'الحساب: {name}',
+    profile: 'الملف الشخصي',
     promo: {
       title: 'قرارات أفضل. أعمال أقوى.',
       body: 'يحوّل Opsight بياناتك إلى رؤى واضحة ونتائج حقيقية.',
@@ -146,14 +147,10 @@ const ar = {
   },
 
   preferences: {
-    open: 'اللغة',
-    title: 'اللغة والأرقام',
-    description: 'يُحفظ في حسابك، فيُطبَّق على كل جهاز تسجّل الدخول منه.',
     language: 'اللغة',
     numerals: 'الأرقام',
     western: 'غربية',
     arabicIndic: 'عربية مشرقية',
-    preview: 'معاينة',
   },
 
   period: {

@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,9 +20,9 @@ import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
 import { cn } from '@/lib/cn';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { PreferencesDialog } from '@/features/i18n/PreferencesDialog';
 import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
-import { GlobalSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
+import { SearchDialog, TopBarSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 /**
  * Navigation is filtered by ability, so a user never sees a link that would
@@ -150,13 +158,19 @@ export function AppShell({ children }) {
   const { t } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
-  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [slot, setSlot] = useState(null);
+  const barSearch = useRef(null);
+  const wideSearch = useMediaQuery('(min-width: 768px)');
 
-  const openSearch = useCallback(() => setSearchOpen(true), []);
-  useSearchShortcut(openSearch);
+  // Ctrl/⌘+K focuses the field in the bar; where the bar has only an icon,
+  // it opens the same field in a dialog.
+  const focusSearch = useCallback(() => {
+    if (wideSearch) barSearch.current?.focus();
+    else setSearchOpen(true);
+  }, [wideSearch]);
+  useSearchShortcut(focusSearch);
 
   /*
    * Navigate explicitly rather than waiting for the layout's auth guard to
@@ -259,41 +273,29 @@ export function AppShell({ children }) {
               <Icon name="menu" size={20} />
             </button>
 
-            {/* Looks like a field; opens the search dialog, which holds the real one. */}
-            <button
-              type="button"
-              onClick={openSearch}
-              aria-haspopup="dialog"
-              className="hidden h-9 w-full max-w-[22rem] items-center gap-2.5 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-sunken) px-3 text-start text-[0.8125rem] text-(--color-text-subtle) transition-colors hover:border-(--color-line-strong) md:flex"
-            >
-              <Icon name="search" size={16} />
-              <span className="flex-1">{t('search.placeholder')}</span>
-              <kbd className="px-1 font-sans text-xs tracking-wide text-(--color-text-subtle)">
-                ⌘ K
-              </kbd>
-            </button>
-            <button
-              type="button"
-              onClick={openSearch}
-              aria-label={t('search.label')}
-              className="inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover) md:hidden"
-            >
-              <Icon name="search" size={19} />
-            </button>
+            {wideSearch ? (
+              <TopBarSearch ref={barSearch} pages={pages} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                aria-label={t('search.label')}
+                className="inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover)"
+              >
+                <Icon name="search" size={19} />
+              </button>
+            )}
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-              <div ref={setSlot} className="hidden min-w-0 items-center gap-2 xl:flex" />
+              <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
               <NotificationsMenu />
-              <UserMenu
-                user={user}
-                onPreferences={() => setPreferencesOpen(true)}
-                onSignOut={handleSignOut}
-              />
+              <UserMenu user={user} onSignOut={handleSignOut} />
             </div>
           </header>
 
-          <PreferencesDialog open={preferencesOpen} onClose={() => setPreferencesOpen(false)} />
-          <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} pages={pages} />
+          {!wideSearch && (
+            <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} pages={pages} />
+          )}
 
           {/*
             tabIndex -1 lets the skip link move focus here. The outline is
@@ -434,12 +436,38 @@ function DisabledNavItem({ item }) {
   );
 }
 
-function UserMenu({ user, onPreferences, onSignOut }) {
-  const { t, locale } = useI18n();
+/** A two-option switch whose options apply immediately. */
+function Choice({ options, value, onChange }) {
+  return (
+    <span className="flex rounded-(--radius-md) border border-(--color-line) p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          lang={option.lang}
+          aria-pressed={value === option.value}
+          aria-label={option.ariaLabel}
+          onClick={() => value !== option.value && onChange(option.value)}
+          className={cn(
+            'rounded-(--radius-sm) px-2 py-0.5 text-xs transition-colors duration-(--duration-fast)',
+            value === option.value
+              ? 'bg-(--color-accent) font-semibold text-(--color-text-inverse)'
+              : 'text-(--color-text-muted) hover:bg-(--color-surface-hover)',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </span>
+  );
+}
+
+function UserMenu({ user, onSignOut }) {
+  const { t, locale, numerals, setPreferences } = useI18n();
 
   return (
     <Popover
-      panelClassName="w-64"
+      panelClassName="w-72"
       trigger={(props) => (
         <button
           type="button"
@@ -469,36 +497,70 @@ function UserMenu({ user, onPreferences, onSignOut }) {
         </button>
       )}
     >
-      {({ close }) => (
+      {() => (
         <div className="p-1.5">
           <div className="px-3 py-2.5">
             <p className="truncate text-sm font-semibold text-(--color-text)">{user.name}</p>
             <p className="truncate text-xs text-(--color-text-muted)">{user.email}</p>
           </div>
           <div className="my-1 h-px bg-(--color-line-subtle)" />
+
+          {/* No profile screen exists yet: listed, disabled and labelled. */}
+          <span
+            aria-disabled="true"
+            title={t('nav.comingLater')}
+            className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] text-(--color-text-subtle)"
+          >
+            <Icon name="userCircle" />
+            <span className="flex-1">{t('shell.profile')}</span>
+            <span className="sr-only">{t('nav.comingLater')}</span>
+          </span>
+
           {/*
             Language is reachable by every role from every screen: it is a
             personal preference, and the person who most needs to change it is
-            the one who cannot read the current one — so the item names the
-            other language in its own script.
+            the one who cannot read the current one — so each option is named
+            in its own script, and choosing one applies it at once.
           */}
-          <button
-            type="button"
-            onClick={() => {
-              close();
-              onPreferences();
-            }}
-            className="flex w-full items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] text-(--color-text) hover:bg-(--color-surface-hover)"
+          <div
+            role="group"
+            aria-label={t('preferences.language')}
+            className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-(--color-text)"
           >
             <Icon name="globe" className="text-(--color-text-muted)" />
-            <span className="flex-1 text-start">{t('preferences.open')}</span>
-            <span
-              lang={locale === 'ar' ? 'en' : 'ar'}
-              className="text-xs text-(--color-text-subtle)"
+            <span className="flex-1">{t('preferences.language')}</span>
+            <Choice
+              options={[
+                { value: 'en', label: 'English', lang: 'en' },
+                { value: 'ar', label: 'العربية', lang: 'ar' },
+              ]}
+              value={locale}
+              onChange={(next) => setPreferences({ locale: next })}
+            />
+          </div>
+
+          {locale === 'ar' && (
+            <div
+              role="group"
+              aria-label={t('preferences.numerals')}
+              className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-(--color-text)"
             >
-              {locale === 'ar' ? 'English' : 'العربية'}
-            </span>
-          </button>
+              <span aria-hidden="true" className="w-4 text-center text-(--color-text-muted)">
+                #
+              </span>
+              <span className="flex-1">{t('preferences.numerals')}</span>
+              <Choice
+                options={[
+                  { value: 'latn', label: '123', ariaLabel: t('preferences.western') },
+                  { value: 'arab', label: '١٢٣', ariaLabel: t('preferences.arabicIndic') },
+                ]}
+                value={numerals}
+                onChange={(next) => setPreferences({ numerals: next })}
+              />
+            </div>
+          )}
+
+          <div className="my-1 h-px bg-(--color-line-subtle)" />
           <button
             type="button"
             onClick={onSignOut}

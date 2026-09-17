@@ -55,20 +55,23 @@ test.describe('a signed-in user choosing Arabic', () => {
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
     try {
+      const saved = () =>
+        page.waitForResponse(
+          (response) =>
+            response.url().includes('/me/preferences') && response.request().method() === 'PATCH',
+        );
+
+      // Language and digits live in the account menu and apply at once.
       await page.getByRole('button', { name: /^Account:/ }).click();
-      await page.getByRole('button', { name: /Language/ }).click();
+      let response = saved();
+      await page.getByRole('button', { name: 'العربية' }).click();
+      expect((await response).status()).toBe(200);
 
-      const dialog = page.getByRole('dialog');
-      // The dialog stays in the current language until the choice is saved.
-      await dialog.getByRole('radio', { name: /العربية/ }).check();
-      await dialog.getByRole('radio', { name: /Arabic-Indic/ }).check();
-
-      const saved = page.waitForResponse(
-        (response) =>
-          response.url().includes('/me/preferences') && response.request().method() === 'PATCH',
-      );
-      await dialog.getByRole('button', { name: 'Save' }).click();
-      expect((await saved).status()).toBe(200);
+      // The page re-renders in Arabic, so the menu is opened again, by its Arabic name.
+      await page.getByRole('button', { name: /^الحساب:/ }).click();
+      response = saved();
+      await page.getByRole('button', { name: 'عربية مشرقية' }).click();
+      expect((await response).status()).toBe(200);
 
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
       await expect(page.locator('html')).toHaveAttribute('lang', 'ar');

@@ -35,8 +35,8 @@ test.describe('the top bar, as an owner', () => {
 
   test('finds a screen by name, filtered to what the role can open', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.getByRole('button', { name: /Search anything/ }).click();
 
+    // The field lives in the top bar; results drop down beneath it.
     await page.getByRole('combobox', { name: 'Search' }).fill('Activity');
     await expect(page.getByRole('option', { name: /Activity Log/ })).toBeVisible();
   });

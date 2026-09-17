@@ -111,7 +111,7 @@ test('an owner does receive the cost surfaces staff do not', async ({ page }) =>
 
   const nav = page.getByRole('navigation', { name: 'Main' });
   await expect(nav.getByText('Expenses')).toBeVisible();
-  await expect(nav.getByText('Analytics')).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Analytics' })).toBeVisible();
   await expect(nav.getByText('Users')).toBeVisible();
 
   // The same dashboard, same period, now with the cost-bearing tiles present.

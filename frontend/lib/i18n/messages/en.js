@@ -33,6 +33,7 @@ const en = {
 
   shell: {
     account: 'Account: {name}',
+    profile: 'Profile',
     promo: {
       title: 'Better decisions. Stronger business.',
       body: 'Opsight turns your data into clear insights and real results.',
@@ -131,14 +132,10 @@ const en = {
   },
 
   preferences: {
-    open: 'Language',
-    title: 'Language and numbers',
-    description: 'Saved to your account, so it applies on every device you sign in from.',
     language: 'Language',
     numerals: 'Digits',
     western: 'Western',
     arabicIndic: 'Arabic-Indic',
-    preview: 'Preview',
   },
 
   period: {

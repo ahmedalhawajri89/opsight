@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
@@ -20,69 +20,45 @@ import { listOrders } from '@/services/orders';
  * screens would not. A source the role cannot view is not queried at all, so a
  * Staff member's search never even asks about expenses.
  *
- * Opened by the search field in the top bar or by Ctrl/⌘+K. Arrow keys move,
- * Enter opens, Escape closes and returns focus to where it was.
+ * Two faces over one engine: the field in the top bar, whose results drop down
+ * beneath it (Ctrl/⌘+K focuses it), and on a narrow screen an icon that opens
+ * the same field in a dialog. Arrow keys move, Enter opens, Escape closes.
  */
 const MIN_QUERY = 2;
 const LIMIT = 5;
 
-export function useSearchShortcut(onOpen) {
+export function useSearchShortcut(onTrigger) {
   useEffect(() => {
     const onKey = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        onOpen();
+        onTrigger();
       }
     };
 
     window.addEventListener('keydown', onKey);
 
     return () => window.removeEventListener('keydown', onKey);
-  }, [onOpen]);
+  }, [onTrigger]);
 }
 
-export function GlobalSearch({ open, onClose, pages }) {
-  const dialog = useRef(null);
-  const returnFocus = useRef(null);
+/* -------------------------------------------------------------------------- */
+/* Engine                                                                      */
+/* -------------------------------------------------------------------------- */
 
-  useEffect(() => {
-    const element = dialog.current;
-
-    if (!element) return;
-
-    if (open && !element.open) {
-      returnFocus.current = document.activeElement;
-      element.showModal();
-    } else if (!open && element.open) {
-      element.close();
-    }
-  }, [open]);
-
-  return (
-    <dialog
-      ref={dialog}
-      onClose={() => {
-        returnFocus.current?.focus?.();
-        onClose();
-      }}
-      onClick={(event) => {
-        if (event.target === dialog.current) onClose();
-      }}
-      className="m-0 mx-auto mt-[12vh] w-[min(40rem,calc(100vw-2rem))] max-w-none overflow-visible bg-transparent p-0 backdrop:bg-(--color-text)/30 backdrop:backdrop-blur-[2px]"
-    >
-      {/* Mounted only while open, so each opening starts from an empty query. */}
-      {open && <SearchPanel pages={pages} onClose={onClose} />}
-    </dialog>
-  );
+function useSource(term, allowed, key, fetcher) {
+  return useQuery({
+    queryKey: ['search', key, term],
+    queryFn: async () => (await fetcher()).data ?? [],
+    enabled: allowed && term !== '',
+    staleTime: 30_000,
+  });
 }
 
-function SearchPanel({ pages, onClose }) {
+function useSearch(query, pages) {
   const { t } = useI18n();
   const { can } = useAuth();
-  const router = useRouter();
-  const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
-  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(query.trim()), 200);
@@ -153,19 +129,57 @@ function SearchPanel({ pages, onClose }) {
     },
   ].filter((group) => group.items.length > 0);
 
-  const flat = groups.flatMap((group) => group.items);
   const loading =
     Boolean(term) && (orders.isFetching || customers.isFetching || products.isFetching);
+
+  // Each result's place in the keyboard order, fixed before rendering.
+  const flat = groups
+    .flatMap((group) => group.items)
+    .map((item, position) => ({ ...item, position }));
+  const byKey = new Map(flat.map((item) => [item.key, item.position]));
+  const positioned = groups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({ ...item, position: byKey.get(item.key) })),
+  }));
+
+  return { groups: positioned, flat, term, loading };
+}
+
+/**
+ * The field and its results, shared by both faces. `open` decides whether the
+ * results are shown; the field is always there.
+ */
+const SearchField = forwardRef(function SearchField(
+  { pages, open, onOpenChange, variant, autoFocus = false },
+  ref,
+) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const input = useRef(null);
+  const listId = useId();
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(0);
+  const { groups, flat, term, loading } = useSearch(query, pages);
   const current = Math.min(active, Math.max(flat.length - 1, 0));
 
+  useImperativeHandle(ref, () => ({ focus: () => input.current?.focus() }), []);
+
+  function close() {
+    setQuery('');
+    setActive(0);
+    onOpenChange(false);
+  }
+
   function go(item) {
-    onClose();
+    close();
+    input.current?.blur();
     router.push(item.href);
   }
 
   function onKeyDown(event) {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
+      onOpenChange(true);
       setActive((current + 1) % Math.max(flat.length, 1));
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
@@ -173,112 +187,186 @@ function SearchPanel({ pages, onClose }) {
     } else if (event.key === 'Enter' && flat[current]) {
       event.preventDefault();
       go(flat[current]);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+      input.current?.blur();
     }
   }
 
-  let index = -1;
+  const results = open && (
+    <div
+      id={listId}
+      role="listbox"
+      className={cn(
+        'max-h-[60vh] overflow-y-auto p-2',
+        variant === 'bar' &&
+          'absolute start-0 top-full z-50 mt-2 w-[min(32rem,calc(100vw-2rem))] rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface-raised) shadow-(--shadow-overlay)',
+      )}
+    >
+      {groups.map((group) => (
+        <div key={group.key} role="group" aria-label={group.label} className="mb-1 last:mb-0">
+          <p className="px-3 pt-2 pb-1 text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-subtle) uppercase">
+            {group.label}
+          </p>
+          {group.items.map((item) => {
+            const selected = item.position === current;
+            const position = item.position;
+
+            return (
+              <div
+                key={item.key}
+                id={`${listId}-${item.key}`}
+                role="option"
+                aria-selected={selected}
+                tabIndex={-1}
+                onMouseEnter={() => setActive(position)}
+                // Before blur, so the click lands before the list closes.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => go(item)}
+                onKeyDown={(event) => event.key === 'Enter' && go(item)}
+                className={cn(
+                  'flex cursor-pointer items-center gap-3 rounded-(--radius-md) px-3 py-2',
+                  selected ? 'bg-(--color-surface-selected)' : 'hover:bg-(--color-surface-hover)',
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--color-surface-sunken) text-(--color-text-muted)"
+                >
+                  <Icon name={item.icon} size={16} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[0.8125rem] font-medium text-(--color-text)">
+                    {item.title}
+                  </span>
+                  {item.detail && (
+                    <span className="block truncate text-xs text-(--color-text-muted)">
+                      {item.detail}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {flat.length === 0 && (
+        <p className="px-3 py-6 text-center text-[0.8125rem] text-(--color-text-muted)">
+          {loading
+            ? t('search.searching')
+            : term
+              ? t('search.noResults', { query: term })
+              : t('search.hint')}
+        </p>
+      )}
+    </div>
+  );
 
   return (
-    <div className="overflow-hidden rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface-raised) shadow-(--shadow-overlay)">
-      <div className="flex items-center gap-3 border-b border-(--color-line-subtle) px-4">
-        <Icon name="search" size={18} className="shrink-0 text-(--color-text-subtle)" />
+    <div className={cn('relative', variant === 'bar' ? 'w-full max-w-[22.5rem]' : '')}>
+      <div
+        className={cn(
+          'flex items-center gap-2.5',
+          variant === 'bar'
+            ? 'h-9 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-sunken) px-3 transition-colors duration-(--duration-fast) focus-within:border-(--color-accent-text) focus-within:bg-(--color-surface) focus-within:ring-2 focus-within:ring-(--color-accent-subtle)'
+            : 'border-b-2 border-(--color-line-subtle) px-4 focus-within:border-(--color-accent-text)',
+        )}
+      >
+        <Icon
+          name="search"
+          size={variant === 'bar' ? 16 : 18}
+          className="shrink-0 text-(--color-text-subtle)"
+        />
         <input
-          // A dialog opened on purpose: focusing its only field is expected.
-          autoFocus
+          ref={input}
+          autoFocus={autoFocus}
           type="search"
           role="combobox"
-          aria-expanded={flat.length > 0}
-          aria-controls="global-search-results"
-          aria-activedescendant={flat[current] ? `search-${flat[current].key}` : undefined}
+          aria-expanded={Boolean(open)}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            open && flat[current] ? `${listId}-${flat[current].key}` : undefined
+          }
           aria-label={t('search.label')}
           placeholder={t('search.placeholder')}
           value={query}
+          onFocus={() => onOpenChange(true)}
+          onBlur={() => variant === 'bar' && onOpenChange(false)}
           onChange={(event) => {
             setQuery(event.target.value);
             setActive(0);
+            onOpenChange(true);
           }}
           onKeyDown={onKeyDown}
-          className="h-14 min-w-0 flex-1 bg-transparent text-[0.9375rem] text-(--color-text) placeholder:text-(--color-text-subtle) focus:outline-none"
+          // The field's border carries focus; the outline would double it.
+          className={cn(
+            'focus-on-container min-w-0 flex-1 bg-transparent text-(--color-text) placeholder:text-(--color-text-subtle) [&::-webkit-search-cancel-button]:hidden',
+            variant === 'bar' ? 'text-[0.8125rem]' : 'h-14 text-[0.9375rem]',
+          )}
         />
-        <kbd className="shrink-0 rounded-(--radius-sm) border border-(--color-line) px-1.5 py-0.5 text-[0.6875rem] text-(--color-text-subtle)">
-          Esc
-        </kbd>
-      </div>
-
-      <div id="global-search-results" role="listbox" className="max-h-[60vh] overflow-y-auto p-2">
-        {groups.map((group) => (
-          <div key={group.key} role="group" aria-label={group.label} className="mb-1 last:mb-0">
-            <p className="px-3 pt-2 pb-1 text-[0.6875rem] font-semibold tracking-[0.06em] text-(--color-text-subtle) uppercase">
-              {group.label}
-            </p>
-            {group.items.map((item) => {
-              index += 1;
-              const selected = index === current;
-              const position = index;
-
-              return (
-                <div
-                  key={item.key}
-                  id={`search-${item.key}`}
-                  role="option"
-                  aria-selected={selected}
-                  tabIndex={-1}
-                  onMouseEnter={() => setActive(position)}
-                  onClick={() => go(item)}
-                  onKeyDown={(event) => event.key === 'Enter' && go(item)}
-                  className={cn(
-                    'flex cursor-pointer items-center gap-3 rounded-(--radius-md) px-3 py-2.5',
-                    selected ? 'bg-(--color-surface-selected)' : 'hover:bg-(--color-surface-hover)',
-                  )}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--color-surface-sunken) text-(--color-text-muted)"
-                  >
-                    <Icon name={item.icon} size={16} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-(--color-text)">
-                      {item.title}
-                    </span>
-                    {item.detail && (
-                      <span className="block truncate text-xs text-(--color-text-muted)">
-                        {item.detail}
-                      </span>
-                    )}
-                  </span>
-                  {selected && (
-                    <Icon
-                      name="arrowRight"
-                      size={14}
-                      className="shrink-0 text-(--color-text-subtle) rtl:-scale-x-100"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-
-        {flat.length === 0 && (
-          <p className="px-3 py-8 text-center text-sm text-(--color-text-muted)">
-            {loading
-              ? t('search.searching')
-              : term
-                ? t('search.noResults', { query: term })
-                : t('search.hint')}
-          </p>
+        {variant === 'bar' && (
+          <kbd className="shrink-0 font-sans text-xs text-(--color-text-subtle)">⌘ K</kbd>
         )}
       </div>
+
+      {results}
     </div>
   );
-}
+});
 
-function useSource(term, allowed, key, fetcher) {
-  return useQuery({
-    queryKey: ['search', key, term],
-    queryFn: async () => (await fetcher()).data ?? [],
-    enabled: allowed && term !== '',
-    staleTime: 30_000,
-  });
+/* -------------------------------------------------------------------------- */
+/* Faces                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/** The field in the top bar. Ctrl/⌘+K focuses it. */
+export const TopBarSearch = forwardRef(function TopBarSearch({ pages }, ref) {
+  const [open, setOpen] = useState(false);
+
+  return <SearchField ref={ref} pages={pages} open={open} onOpenChange={setOpen} variant="bar" />;
+});
+
+/** On a narrow screen: the same field in a dialog, opened from an icon. */
+export function SearchDialog({ open, onClose, pages }) {
+  const dialog = useRef(null);
+  const returnFocus = useRef(null);
+
+  useEffect(() => {
+    const element = dialog.current;
+
+    if (!element) return;
+
+    if (open && !element.open) {
+      returnFocus.current = document.activeElement;
+      element.showModal();
+    } else if (!open && element.open) {
+      element.close();
+    }
+  }, [open]);
+
+  return (
+    <dialog
+      ref={dialog}
+      onClose={() => {
+        returnFocus.current?.focus?.();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === dialog.current) onClose();
+      }}
+      className="m-0 mx-auto mt-[10vh] w-[min(40rem,calc(100vw-2rem))] max-w-none overflow-hidden rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface-raised) p-0 shadow-(--shadow-overlay) backdrop:bg-(--color-text)/30"
+    >
+      {open && (
+        <SearchField
+          pages={pages}
+          open
+          onOpenChange={(next) => !next && onClose()}
+          variant="dialog"
+          autoFocus
+        />
+      )}
+    </dialog>
+  );
 }

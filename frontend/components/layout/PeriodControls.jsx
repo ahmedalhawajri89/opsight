@@ -126,10 +126,10 @@ function Face({ subtle = false, children }) {
     <label
       className={cn(
         // focus-within draws the ring the invisible select cannot show itself.
-        'relative flex h-9 min-w-0 items-center gap-2 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface) px-3 whitespace-nowrap transition-colors hover:border-(--color-line-strong) has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-(--focus-ring)',
+        'relative flex h-9 min-w-0 items-center gap-2 border bg-(--color-surface) px-3 whitespace-nowrap transition-colors duration-(--duration-fast) has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-(--focus-ring)',
         subtle
-          ? 'text-xs text-(--color-text-muted)'
-          : 'text-[0.8125rem] font-medium text-(--color-text)',
+          ? 'rounded-full border-(--color-line) text-xs text-(--color-text-muted) hover:border-(--color-line-strong)'
+          : 'rounded-(--radius-md) border-(--color-line) text-[0.8125rem] font-medium text-(--color-text) hover:border-(--color-line-strong)',
       )}
     >
       {children}

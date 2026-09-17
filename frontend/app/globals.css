@@ -301,6 +301,16 @@ html[lang='ar'] body {
 }
 
 /*
+ * The one exception: a field whose CONTAINER draws the focus state (the top
+ * bar's search, whose border turns indigo). The ring is still visible — it has
+ * moved to the element that frames the field — so this is not outline:none on a
+ * control but a single ring instead of two.
+ */
+.focus-on-container:focus-visible {
+  outline: none;
+}
+
+/*
  * ---------------------------------------------------------------------------
  * Motion
  * ---------------------------------------------------------------------------
