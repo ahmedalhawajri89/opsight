@@ -58,6 +58,9 @@ final class CancelOrder
                 }
             }
 
+            // The reason is the whole point of auditing a cancellation.
+            $order->auditAs('order.cancelled', ['reason' => $reason]);
+
             $order->forceFill([
                 'status' => OrderStatus::Cancelled,
                 'cancelled_at' => now(),

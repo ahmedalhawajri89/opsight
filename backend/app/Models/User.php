@@ -7,7 +7,10 @@ namespace App\Models;
 use App\Authorization\Ability;
 use App\Authorization\AbilityRegistry;
 use App\Authorization\Role;
+use App\Domain\Audit\RecordsActivity;
+use App\Observers\AuditObserver;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,8 +25,25 @@ use Illuminate\Support\Carbon;
  * @property bool $is_active
  * @property Carbon|null $last_login_at
  */
+#[ObservedBy(AuditObserver::class)]
 class User extends Authenticatable
 {
+    use RecordsActivity;
+
+    /**
+     * `password` and `remember_token` are dropped centrally by AuditRedactor
+     * and are not listed here — a security rule with two enforcement sites has
+     * one site that can be forgotten. `last_login_at` is listed, because it
+     * moves on every single sign-in and `auth.login` already records that far
+     * better than a diff of one timestamp.
+     *
+     * @return list<string>
+     */
+    public function auditIgnores(): array
+    {
+        return ['last_login_at'];
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 

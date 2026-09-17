@@ -80,12 +80,25 @@ class LoginRequest extends FormRequest
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
-        throw ValidationException::withMessages([
+        $exception = ValidationException::withMessages([
             'email' => __('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
         ])->status(429);
+
+        /*
+         * A ValidationException carries no headers, so `Retry-After` is
+         * attached to the response it renders instead. SECURITY.md §7 requires
+         * it on every 429, and the field message alone is not machine-readable.
+         */
+        $exception->response = response()->json([
+            'message' => $exception->getMessage(),
+            'code' => 'auth.throttled',
+            'errors' => $exception->errors(),
+        ], 429, ['Retry-After' => (string) $seconds]);
+
+        throw $exception;
     }
 
     /**

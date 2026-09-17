@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useDashboard } from '@/features/analytics/useAnalytics';
 import { MetricTile } from '@/features/analytics/MetricTile';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { InsightFeed } from '@/features/insights/InsightFeed';
+import { useInsights } from '@/features/insights/useInsights';
 import { Badge, PartialBadge } from '@/components/ui/Badge';
 import { StatGrid } from '@/components/data/StatTile';
 import { ErrorState } from '@/components/data/States';
@@ -56,6 +58,14 @@ export default function DashboardPage() {
   };
 
   const { dashboard, meta, isLoading, isError, error, refetch } = useDashboard(period);
+
+  /*
+   * Insights read the same period as the tiles, so the feed and the figures
+   * cannot describe different windows. Cost-bearing rules are not evaluated at
+   * all server-side for a cost-blind role, so nothing is filtered here — what
+   * arrives is already what this reader is allowed to know.
+   */
+  const insights = useInsights(period);
 
   const metrics = dashboard?.metrics ?? {};
   const partial = meta?.period?.is_partial ?? false;
@@ -131,6 +141,12 @@ export default function DashboardPage() {
               />
             ))}
       </StatGrid>
+
+      <InsightFeed
+        insights={insights.insights}
+        suppressed={insights.suppressed}
+        loading={insights.isLoading}
+      />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <TrendChart

@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\ActivityController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,18 +35,41 @@ Route::prefix('v1')->group(function (): void {
 
     // ---- Public ------------------------------------------------------------
     Route::get('health', HealthController::class)
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:health')
         ->name('health');
 
     Route::post('auth/login', [AuthController::class, 'login'])
-        ->middleware('throttle:10,1')   // coarse backstop; LoginRequest owns
+        ->middleware('throttle:login')  // coarse backstop; LoginRequest owns
         ->name('auth.login');           // the real 5/min per email+IP limit
 
     // ---- Authenticated -----------------------------------------------------
-    Route::middleware(['auth:sanctum', 'active', 'throttle:120,1'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function (): void {
 
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
+
+        /* ---- Export ------------------------------------------------------ */
+        /*
+         * DECLARED BEFORE THE MODULE ROUTES ON PURPOSE. `orders/{order}` would
+         * otherwise match `orders/export` first, try to resolve an order with
+         * the id "export", and return a 404 that looks like a missing feature.
+         *
+         * Ten per hour per user, separately from the 120/minute API limit.
+         * Bulk extraction is the exfiltration vector in this system, and a
+         * limit generous enough never to be felt is not a limit
+         * (SECURITY.md §7). Each of these also requires a distinct `*.export`
+         * ability, checked by the controller against the policy.
+         */
+        // Named limiters, deliberately: see AppServiceProvider::defineRateLimits
+        // for why an unnamed throttle nested in this group shared its counter.
+        Route::middleware('throttle:exports')->group(function (): void {
+            Route::get('orders/export', [OrderController::class, 'export']);
+            Route::get('customers/export', [CustomerController::class, 'export']);
+            Route::get('products/export', [ProductController::class, 'export']);
+            Route::get('inventory/export', [InventoryController::class, 'export']);
+            Route::get('expenses/export', [ExpenseController::class, 'export']);
+            Route::get('activity/export', [ActivityController::class, 'export']);
+        });
 
         /* ---- Orders ------------------------------------------------------ */
         Route::get('orders', [OrderController::class, 'index']);
@@ -85,7 +112,7 @@ Route::prefix('v1')->group(function (): void {
         /* ---- Analytics --------------------------------------------------- */
         // Aggregation is the most expensive work in the system, so these carry
         // their own, tighter limit (SECURITY.md §7).
-        Route::middleware('throttle:60,1')->group(function (): void {
+        Route::middleware('throttle:analytics')->group(function (): void {
             Route::get('dashboard', [AnalyticsController::class, 'dashboard']);
             Route::get('analytics/summary', [AnalyticsController::class, 'summary']);
             Route::get('analytics/timeseries', [AnalyticsController::class, 'timeseries']);
@@ -98,5 +125,40 @@ Route::prefix('v1')->group(function (): void {
         Route::get('expenses/{expense}', [ExpenseController::class, 'show']);
         Route::patch('expenses/{expense}', [ExpenseController::class, 'update']);
         Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy']);
+
+        /* ---- Insights ---------------------------------------------------- */
+        // Evaluated over the analytics layer, so it carries the analytics
+        // limit rather than the general one.
+        Route::middleware('throttle:analytics')
+            ->get('insights', [InsightController::class, 'index']);
+
+        /* ---- Activity log ------------------------------------------------ */
+        // Read-only by design: there is no store, update or destroy route,
+        // because there is no code that writes here except AuditRecorder
+        // (SECURITY.md §10).
+        Route::get('activity', [ActivityController::class, 'index']);
+        Route::get('activity/actions', [ActivityController::class, 'actions']);
+
+        /* ---- Users ------------------------------------------------------- */
+        Route::get('users', [UserController::class, 'index']);
+        Route::post('users', [UserController::class, 'store']);
+        Route::get('users/{user}', [UserController::class, 'show']);
+        Route::patch('users/{user}', [UserController::class, 'update']);
+
+        /*
+         * Role changes and deactivation are sub-resource ACTIONS, not field
+         * patches, for the same reason order transitions are: each runs the
+         * last-Owner guard and each means something specific in the audit log.
+         * `PATCH /users/1 {role: "owner"}` would hide a privilege escalation
+         * inside a generic update (ARCHITECTURE.md §4).
+         */
+        Route::post('users/{user}/role', [UserController::class, 'changeRole']);
+        Route::post('users/{user}/activate', [UserController::class, 'activate']);
+        Route::post('users/{user}/deactivate', [UserController::class, 'deactivate']);
+
+        /* ---- Business settings ------------------------------------------- */
+        Route::get('settings', [SettingsController::class, 'show']);
+        Route::patch('settings', [SettingsController::class, 'update']);
+        Route::get('settings/expense-categories', [SettingsController::class, 'expenseCategories']);
     });
 });

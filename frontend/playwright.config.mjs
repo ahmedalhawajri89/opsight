@@ -49,7 +49,7 @@ export default defineConfig({
 
     {
       name: 'authenticated',
-      testMatch: /(modules|gallery|analytics)\.spec\.js/,
+      testMatch: /(modules|gallery|analytics|admin)\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
     },

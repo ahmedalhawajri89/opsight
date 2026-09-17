@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Export\CsvExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Http\Resources\OrderResource;
 use App\Models\Customer;
 use App\Support\QueryFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerController extends Controller
 {
@@ -20,6 +23,53 @@ class CustomerController extends Controller
     {
         $this->authorize('viewAny', Customer::class);
 
+        return CustomerResource::collection(
+            $this->listing($request)
+                ->paginate(QueryFilter::perPage($request))
+                ->withQueryString(),
+        );
+    }
+
+    public function export(Request $request, CsvExport $export): StreamedResponse
+    {
+        /*
+         * The customer list is the single most sensitive export in the system
+         * — it is the business's entire commercial relationship map, and the
+         * one file a departing employee has a motive to take.
+         */
+        $this->authorize('export', Customer::class);
+
+        return $export->stream(
+            query: $this->listing($request),
+            resource: CustomerResource::class,
+            columns: [
+                'name' => 'Name',
+                'company' => 'Company',
+                'email' => 'Email',
+                'phone' => 'Phone',
+                'address_line' => 'Address',
+                'city' => 'City',
+                'country' => 'Country',
+                'is_active' => 'Active',
+                'created_at' => 'Created at',
+            ],
+            request: $request,
+            filename: 'customers',
+        );
+    }
+
+    /**
+     * The filtered query behind BOTH the screen and the CSV export.
+     *
+     * One definition on purpose. SECURITY.md §9.2 requires an export to run
+     * through the same scope, policies and redaction as the screen it comes
+     * from; a second query written beside the first is a second place for a
+     * filter to be forgotten, and the forgotten one is always the export.
+     *
+     * @return Builder<Customer>
+     */
+    private function listing(Request $request): Builder
+    {
         $filter = new QueryFilter(
             filters: [
                 'search' => QueryFilter::search(['name', 'email', 'company', 'phone']),
@@ -30,11 +80,10 @@ class CustomerController extends Controller
             defaultSort: 'name',
         );
 
-        return CustomerResource::collection(
-            $filter->apply(Customer::query(), $request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+        /** @var Builder<Customer> $query */
+        $query = $filter->apply(Customer::query(), $request);
+
+        return $query;
     }
 
     public function store(Request $request): JsonResponse

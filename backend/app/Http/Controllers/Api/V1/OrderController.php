@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Export\CsvExport;
 use App\Domain\Orders\CancelOrder;
 use App\Domain\Orders\ConfirmOrder;
 use App\Domain\Orders\FulfilOrder;
@@ -18,10 +19,12 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Support\QueryFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderController extends Controller
 {
@@ -29,6 +32,61 @@ class OrderController extends Controller
     {
         $this->authorize('viewAny', Order::class);
 
+        return OrderResource::collection(
+            $this->listing($request)
+                ->paginate(QueryFilter::perPage($request))
+                ->withQueryString(),
+        );
+    }
+
+    public function export(Request $request, CsvExport $export): StreamedResponse
+    {
+        // A separate ability from orders.view. Reading a page and extracting
+        // the whole dataset are different risks (SECURITY.md §9.1).
+        $this->authorize('export', Order::class);
+
+        return $export->stream(
+            query: $this->listing($request),
+            resource: OrderResource::class,
+            columns: [
+                'reference' => 'Reference',
+                'status_label' => 'Status',
+                'placed_at' => 'Placed at',
+                'customer.name' => 'Customer',
+                'customer.email' => 'Customer email',
+                'subtotal_amount' => 'Subtotal',
+                'discount_amount' => 'Discount',
+                'tax_amount' => 'Tax',
+                'shipping_amount' => 'Shipping',
+                'total_amount' => 'Total',
+                'refunded_amount' => 'Refunded',
+                /*
+                 * Dropped automatically for a role without orders.view_margin:
+                 * OrderResource omits both keys, so CsvExport never sees them
+                 * and the columns are not written. Listing them here is safe
+                 * precisely because presence is decided by the resource and
+                 * not by this array.
+                 */
+                'cogs_amount' => 'Cost of goods',
+                'gross_profit' => 'Gross profit',
+            ],
+            request: $request,
+            filename: 'orders',
+        );
+    }
+
+    /**
+     * The filtered query behind BOTH the screen and the CSV export.
+     *
+     * One definition on purpose. SECURITY.md §9.2 requires an export to run
+     * through the same scope, policies and redaction as the screen it comes
+     * from; a second query written beside the first is a second place for a
+     * filter to be forgotten, and the forgotten one is always the export.
+     *
+     * @return Builder<Order>
+     */
+    private function listing(Request $request): Builder
+    {
         $filter = new QueryFilter(
             filters: [
                 'status' => QueryFilter::exact('status'),
@@ -44,11 +102,10 @@ class OrderController extends Controller
             defaultSort: '-created_at',
         );
 
-        $query = Order::query()->with(['customer']);
+        /** @var Builder<Order> $query */
+        $query = $filter->apply(Order::query()->with(['customer']), $request);
 
-        return OrderResource::collection(
-            $filter->apply($query, $request)->paginate(QueryFilter::perPage($request))->withQueryString(),
-        );
+        return $query;
     }
 
     public function store(StoreOrderRequest $request): JsonResponse

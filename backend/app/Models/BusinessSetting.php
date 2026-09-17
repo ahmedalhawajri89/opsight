@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Audit\RecordsActivity;
+use App\Observers\AuditObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -23,8 +26,16 @@ use Illuminate\Support\Carbon;
  * @property int $default_low_stock_threshold
  * @property Carbon|null $created_at
  */
+#[ObservedBy(AuditObserver::class)]
 class BusinessSetting extends Model
 {
+    use RecordsActivity;
+
+    public function auditSubject(): string
+    {
+        return 'settings';
+    }
+
     public const SINGLETON_ID = 1;
 
     /**

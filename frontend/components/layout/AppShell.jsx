@@ -49,9 +49,9 @@ const NAV_GROUPS = [
   {
     label: 'Administration',
     items: [
-      { href: '/activity', label: 'Activity log', ability: 'activity.view' },
-      { href: '/settings/users', label: 'Users', ability: 'users.view' },
-      { href: '/settings', label: 'Settings', ability: 'settings.view' },
+      { href: '/activity', label: 'Activity log', ability: 'activity.view', ready: true },
+      { href: '/settings/users', label: 'Users', ability: 'users.view', ready: true },
+      { href: '/settings', label: 'Settings', ability: 'settings.view', ready: true },
     ],
   },
 ];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Metrics;
 
 use App\Domain\Orders\OrderStatus;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -294,6 +295,166 @@ final class MetricCalculator
         }
 
         return $this->returningCustomers($period) / $active;
+    }
+
+    /**
+     * Operating expenses split by category, for the period.
+     *
+     * Lives here rather than in the insight rule that reads it, because it is
+     * the same figure as `operatingExpenses` with a GROUP BY — and a rule that
+     * writes its own expense query is a second definition of "operating
+     * expense" that will disagree with the first the day someone changes what
+     * counts (ARCHITECTURE.md §2).
+     *
+     * Ranges on `incurred_on` against the LOCAL dates, exactly as
+     * `operatingExpenses` does, for the same reason.
+     *
+     * @return array<string, string> category name => amount
+     */
+    public function operatingExpensesByCategory(Period $period): array
+    {
+        $rows = DB::table('expenses')
+            ->join('expense_categories', 'expense_categories.id', '=', 'expenses.expense_category_id')
+            ->whereNull('expenses.deleted_at')
+            ->whereBetween('expenses.incurred_on', [$period->from, $period->to])
+            ->groupBy('expense_categories.id', 'expense_categories.name')
+            ->selectRaw('expense_categories.name AS name, COALESCE(SUM(expenses.amount), 0) AS total')
+            ->get();
+
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $totals[(string) $row->name] = (string) $row->total;
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Sold line items carrying no recorded cost.
+     *
+     * A DATA QUALITY figure, not a business one. A line with `unit_cost = 0`
+     * contributes its full revenue to gross profit and nothing to COGS, so
+     * every margin covering it is overstated — silently, and in the
+     * favourable direction, which is the worst way for a reporting error to
+     * fail. Counting them is how the dashboard can admit it.
+     *
+     * Note this counts the SNAPSHOT on the line, not the product's cost today.
+     * A product priced correctly now can still have been sold at zero cost
+     * last March, and it is last March's margin that is wrong.
+     */
+    public function zeroCostItemCount(Period $period): int
+    {
+        [$from, $to] = $period->utcBounds();
+
+        return (int) DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('orders.status', OrderStatus::qualifying())
+            ->where('orders.placed_at', '>=', $from)
+            ->where('orders.placed_at', '<', $to)
+            ->where('order_items.unit_cost', '<=', 0)
+            ->count();
+    }
+
+    /**
+     * Customers who once ordered and have not for `$days`.
+     *
+     * A POINT-IN-TIME figure measured backwards from now, not from the
+     * selected period: "dormant" means dormant today. Ranging it on the
+     * selected period would make a customer's dormancy change every time the
+     * reader moved the date picker, which is not what the word means.
+     *
+     * Only customers with at least one qualifying order ever are counted — a
+     * record created and never used is not a lapsed relationship, it is a
+     * record created and never used.
+     */
+    public function dormantCustomerCount(int $days): int
+    {
+        $cutoff = CarbonImmutable::now()->subDays($days);
+
+        return (int) DB::table('customers')
+            ->whereNull('customers.deleted_at')
+            ->whereExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('orders')
+                    ->whereColumn('orders.customer_id', 'customers.id')
+                    ->whereIn('orders.status', OrderStatus::qualifying());
+            })
+            ->whereNotExists(function ($query) use ($cutoff): void {
+                $query->selectRaw('1')
+                    ->from('orders')
+                    ->whereColumn('orders.customer_id', 'customers.id')
+                    ->whereIn('orders.status', OrderStatus::qualifying())
+                    ->where('orders.placed_at', '>=', $cutoff);
+            })
+            ->count();
+    }
+
+    /**
+     * Products at risk of running out: selling recently, and with fewer than
+     * `$days` of cover left at that rate.
+     *
+     * @return list<array{product_id: int, name: string, sku: string, days: float, stock: int}>
+     */
+    public function stockoutRisks(int $days, int $trailingDays, int $limit): array
+    {
+        $trailing = Period::trailingDays($trailingDays);
+        [$from, $to] = $trailing->utcBounds();
+
+        /*
+         * Candidates first, in ONE query: products that actually sold in the
+         * window. Asking stockCoverageDays about every product in the catalogue
+         * would be a query per product, and the answer is null for most of them
+         * anyway — a product with no recent demand has no stockout risk,
+         * however little of it is on the shelf.
+         */
+        $candidates = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->join('inventory_items', 'inventory_items.product_id', '=', 'products.id')
+            ->whereIn('orders.status', OrderStatus::qualifying())
+            ->where('orders.placed_at', '>=', $from)
+            ->where('orders.placed_at', '<', $to)
+            ->whereNull('products.deleted_at')
+            ->where('products.is_active', true)
+            ->groupBy('products.id', 'products.name', 'products.sku', 'inventory_items.stock_on_hand')
+            ->havingRaw('SUM(order_items.quantity) > 0')
+            ->selectRaw(
+                'products.id AS product_id, products.name AS name, products.sku AS sku, '
+                .'inventory_items.stock_on_hand AS stock, '
+                .'SUM(order_items.quantity) AS units'
+            )
+            ->get();
+
+        $risks = [];
+
+        foreach ($candidates as $row) {
+            $perDay = (int) $row->units / $trailingDays;
+
+            if ($perDay <= 0.0) {
+                continue;
+            }
+
+            $cover = (int) $row->stock / $perDay;
+
+            if ($cover >= $days) {
+                continue;
+            }
+
+            $risks[] = [
+                'product_id' => (int) $row->product_id,
+                'name' => (string) $row->name,
+                'sku' => (string) $row->sku,
+                'days' => round($cover, 1),
+                'stock' => (int) $row->stock,
+            ];
+        }
+
+        // Most urgent first — the one that runs out soonest is the one to act
+        // on, and a reader acts on the top of a list.
+        usort($risks, static fn (array $a, array $b): int => $a['days'] <=> $b['days']);
+
+        return array_slice($risks, 0, $limit);
     }
 
     /* ---------------------------------------------------------------------- */

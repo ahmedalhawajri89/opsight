@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Audit\RecordsActivity;
 use App\Domain\Orders\OrderStatus;
+use App\Observers\AuditObserver;
 use Database\Factories\OrderFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,10 +29,13 @@ use Illuminate\Support\Carbon;
  * @property string $total_amount
  * @property string $cogs_amount
  */
+#[ObservedBy(AuditObserver::class)]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     /**
      * Note what is ABSENT: status, placed_at, subtotal_amount, total_amount and

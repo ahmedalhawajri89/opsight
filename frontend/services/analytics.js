@@ -22,3 +22,14 @@ export function getTimeseries(params) {
 export function getBreakdown(params) {
   return api.get('/analytics/breakdown', { params });
 }
+
+/**
+ * The insights feed (L3).
+ *
+ * Lives beside the analytics calls because it reads the same layer and takes
+ * the same period parameters — an insight and the screen it links to must
+ * describe the same window or the link is a lie.
+ */
+export function getInsights(params) {
+  return api.get('/insights', { params });
+}

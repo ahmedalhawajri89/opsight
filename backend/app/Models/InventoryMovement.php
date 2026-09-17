@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Audit\RecordsActivity;
+use App\Observers\AuditObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -20,8 +23,37 @@ use Illuminate\Support\Carbon;
  * @property Carbon $occurred_at
  * @property Carbon|null $created_at
  */
+#[ObservedBy(AuditObserver::class)]
 class InventoryMovement extends Model
 {
+    use RecordsActivity;
+
+    /**
+     * Movements caused by an order are NOT audited here.
+     *
+     * `order.confirmed` and `order.cancelled` already name the order, the
+     * actor and the moment; writing a second row per line item would multiply
+     * the log by the size of the basket and bury the entries a reader is
+     * actually looking for. A manual adjustment is the opposite case — the
+     * ledger row is the only evidence it happened, and who did it is exactly
+     * the question an auditor asks about stock that moved without a sale.
+     */
+    private const ORDER_DRIVEN = [
+        self::REASON_SALE,
+        self::REASON_SALE_CANCELLED,
+        self::REASON_SALE_REFUNDED,
+    ];
+
+    protected function shouldAudit(): bool
+    {
+        return ! in_array($this->reason, self::ORDER_DRIVEN, strict: true);
+    }
+
+    public function auditSubject(): string
+    {
+        return 'inventory';
+    }
+
     public const UPDATED_AT = null;
 
     public const REASON_SALE = 'sale';

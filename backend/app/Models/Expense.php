@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Audit\RecordsActivity;
+use App\Observers\AuditObserver;
 use Database\Factories\ExpenseFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,10 +25,13 @@ use Illuminate\Support\Carbon;
  * @property Carbon $incurred_on
  * @property Carbon|null $created_at
  */
+#[ObservedBy(AuditObserver::class)]
 class Expense extends Model
 {
     /** @use HasFactory<ExpenseFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     use SoftDeletes;
 

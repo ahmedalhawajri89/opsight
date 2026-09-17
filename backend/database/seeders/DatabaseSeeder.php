@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Authorization\Role;
+use App\Domain\Audit\AuditRecorder;
 use App\Models\BusinessSetting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -20,6 +21,26 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
+    {
+        /*
+         * Seeding is not a user action, so it does not produce user audit rows.
+         *
+         * A row written here would name the seeding process as the actor, the
+         * console as the origin and today as the moment — for an order the
+         * dataset claims was placed fourteen months ago. Every field would be
+         * false. DemoDataSeeder writes a small, honest activity history of its
+         * own instead (SECURITY.md §10).
+         */
+        AuditRecorder::pause();
+
+        try {
+            $this->seed();
+        } finally {
+            AuditRecorder::resume();
+        }
+    }
+
+    private function seed(): void
     {
         BusinessSetting::ensureExists(['company_name' => 'Opsight Demo Trading']);
 

@@ -91,12 +91,22 @@ final class QueryFilter
      */
     private function applySort(Builder $query, Request $request): void
     {
-        $sort = (string) $request->query('sort', $this->defaultSort);
+        $requested = $request->query('sort');
+        $sort = is_string($requested) && $requested !== '' ? $requested : $this->defaultSort;
 
         $descending = str_starts_with($sort, '-');
         $field = $descending ? substr($sort, 1) : $sort;
 
-        if (! in_array($field, $this->sortable, strict: true)) {
+        /*
+         * Only a sort the CALLER asked for is checked against the allowlist.
+         *
+         * The default is chosen by the endpoint, not submitted by anyone, so
+         * validating it turns a developer's decision into a user-facing 422 —
+         * which is exactly what happened to the activity log, whose sortable
+         * list is deliberately empty because a cursor must seek on the column
+         * it orders by and therefore cannot offer a choice.
+         */
+        if ($requested !== null && ! in_array($field, $this->sortable, strict: true)) {
             throw ValidationException::withMessages([
                 'sort' => "Cannot sort by '{$field}'. Allowed: "
                     .implode(', ', $this->sortable).'.',

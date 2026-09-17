@@ -26,6 +26,8 @@ final class FulfilOrder
                 throw OrderTransitionException::illegal($order->status, OrderStatus::Fulfilled);
             }
 
+            $order->auditAs('order.fulfilled');
+
             $order->forceFill([
                 'status' => OrderStatus::Fulfilled,
                 'fulfilled_at' => now(),

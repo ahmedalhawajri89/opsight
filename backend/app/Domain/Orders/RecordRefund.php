@@ -65,6 +65,8 @@ final class RecordRefund
                 }
             }
 
+            $order->auditAs('order.refunded', ['amount' => $amount]);
+
             $order->forceFill([
                 'status' => OrderStatus::Refunded,
                 'refunded_at' => now(),

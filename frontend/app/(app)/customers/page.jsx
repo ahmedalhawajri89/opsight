@@ -1,14 +1,17 @@
 'use client';
 
 import { useCustomers } from '@/features/catalog/useCatalog';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
+import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatDate } from '@/lib/format';
+import { exportCustomers } from '@/services/catalog';
 
 const FILTER_CONFIG = {
   defaults: { sort: 'name', page: 1, per_page: 25 },
@@ -17,15 +20,23 @@ const FILTER_CONFIG = {
 };
 
 export default function CustomersPage() {
+  const { can } = useAuth();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
-  const { customers, meta, isLoading, isError, error, refetch } = useCustomers({
+  /*
+   * One object for the list and the export, so "export" means "export what I
+   * am looking at". The server runs both through a single query definition,
+   * so the file and the screen cannot drift apart.
+   */
+  const query = {
     page: filters.page,
     per_page: filters.per_page,
     sort: filters.sort,
     filter: { search: filters.search, is_active: filters.is_active },
-  });
+  };
+
+  const { customers, meta, isLoading, isError, error, refetch } = useCustomers(query);
 
   const columns = [
     {
@@ -63,6 +74,16 @@ export default function CustomersPage() {
       <PageHeader
         title="Customers"
         description="Order history, lifetime value and growth are computed from orders — they are metrics, not stored columns."
+        actions={
+          /*
+           * The most sensitive export in the system: the business's entire
+           * commercial relationship map, and the one file a departing employee
+           * has a motive to take. Gated on its own ability and audited.
+           */
+          can('customers.export') ? (
+            <ExportButton onExport={exportCustomers} filters={query} />
+          ) : null
+        }
       />
 
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>

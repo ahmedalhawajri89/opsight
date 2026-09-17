@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Export\CsvExport;
 use App\Domain\Inventory\AdjustStock;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryItemResource;
@@ -12,9 +13,11 @@ use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Support\QueryFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
@@ -22,6 +25,25 @@ class InventoryController extends Controller
     {
         $this->authorize('viewAny', InventoryItem::class);
 
+        return InventoryItemResource::collection(
+            $this->listing($request)
+                ->paginate(QueryFilter::perPage($request))
+                ->withQueryString(),
+        );
+    }
+
+    /**
+     * The filtered query behind BOTH the screen and the CSV export.
+     *
+     * One definition on purpose. SECURITY.md §9.2 requires an export to run
+     * through the same scope, policies and redaction as the screen it comes
+     * from; a second query written beside the first is a second place for a
+     * filter to be forgotten, and the forgotten one is always the export.
+     *
+     * @return Builder<InventoryItem>
+     */
+    private function listing(Request $request): Builder
+    {
         $filter = new QueryFilter(
             filters: [
                 'search' => fn ($query, string $term) => $query->whereHas(
@@ -36,12 +58,35 @@ class InventoryController extends Controller
             defaultSort: 'stock_on_hand',
         );
 
-        $query = InventoryItem::query()
-            ->with('product')
-            ->whereHas('product', fn ($q) => $q->whereNull('deleted_at'));
+        /** @var Builder<InventoryItem> $query */
+        $query = $filter->apply(
+            InventoryItem::query()
+                ->with('product')
+                ->whereHas('product', fn ($q) => $q->whereNull('deleted_at')),
+            $request,
+        );
 
-        return InventoryItemResource::collection(
-            $filter->apply($query, $request)->paginate(QueryFilter::perPage($request))->withQueryString(),
+        return $query;
+    }
+
+    public function export(Request $request, CsvExport $export): StreamedResponse
+    {
+        $this->authorize('export', InventoryItem::class);
+
+        return $export->stream(
+            query: $this->listing($request),
+            resource: InventoryItemResource::class,
+            columns: [
+                'product.sku' => 'SKU',
+                'product.name' => 'Product',
+                'product.unit' => 'Unit',
+                'stock_on_hand' => 'Stock on hand',
+                'reorder_point' => 'Reorder point',
+                'is_low' => 'Below reorder point',
+                'last_movement_at' => 'Last movement',
+            ],
+            request: $request,
+            filename: 'inventory',
         );
     }
 

@@ -202,6 +202,71 @@ export async function request(
   throw error;
 }
 
+/**
+ * Fetches a file and hands it to the browser as a download.
+ *
+ * NOT a plain `<a href>` to the API, which is the obvious implementation and
+ * the wrong one: an export can legitimately fail — 403 without the ability,
+ * 422 when the row cap is exceeded — and a navigation would replace the
+ * application with a page of raw JSON the user cannot get back from. Fetching
+ * the body means a failure arrives as an ApiError like any other and the
+ * screen can say what went wrong.
+ *
+ * Reads the filename from Content-Disposition rather than inventing one, so
+ * the server owns the naming and the date stamp it puts on the file.
+ */
+export async function download(path, { params, fallbackName = 'export.csv' } = {}) {
+  let response;
+
+  try {
+    response = await fetch(`${BASE_URL}/api/v1${path}${buildQuery(params)}`, {
+      method: 'GET',
+      headers: { Accept: 'text/csv, application/json' },
+      credentials: 'include',
+    });
+  } catch {
+    throw new ApiError({
+      status: 0,
+      code: 'network.unreachable',
+      message: 'Could not reach the server. Check your connection and try again.',
+    });
+  }
+
+  if (!response.ok) {
+    const payload = await parseBody(response);
+
+    throw new ApiError({
+      status: response.status,
+      code: payload?.code,
+      message: payload?.message,
+      errors: payload?.errors,
+    });
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filenameFrom(response.headers.get('Content-Disposition')) ?? fallbackName;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  // Revoked on the next tick: releasing it synchronously can cancel the
+  // download in some browsers before it has started reading.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function filenameFrom(header) {
+  if (!header) return null;
+
+  const match = header.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export const api = {
   get: (path, options) => request(path, { ...options, method: 'GET' }),
   post: (path, body, options) => request(path, { ...options, method: 'POST', body }),

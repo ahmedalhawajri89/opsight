@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Export\CsvExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
 use App\Support\QueryFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExpenseController extends Controller
 {
@@ -19,6 +22,46 @@ class ExpenseController extends Controller
     {
         $this->authorize('viewAny', Expense::class);
 
+        return ExpenseResource::collection(
+            $this->listing($request)
+                ->paginate(QueryFilter::perPage($request))
+                ->withQueryString(),
+        );
+    }
+
+    public function export(Request $request, CsvExport $export): StreamedResponse
+    {
+        $this->authorize('export', Expense::class);
+
+        return $export->stream(
+            query: $this->listing($request),
+            resource: ExpenseResource::class,
+            columns: [
+                'incurred_on' => 'Incurred on',
+                'category.name' => 'Category',
+                'description' => 'Description',
+                'vendor' => 'Vendor',
+                'reference' => 'Reference',
+                'amount' => 'Amount',
+                'notes' => 'Notes',
+            ],
+            request: $request,
+            filename: 'expenses',
+        );
+    }
+
+    /**
+     * The filtered query behind BOTH the screen and the CSV export.
+     *
+     * One definition on purpose. SECURITY.md §9.2 requires an export to run
+     * through the same scope, policies and redaction as the screen it comes
+     * from; a second query written beside the first is a second place for a
+     * filter to be forgotten, and the forgotten one is always the export.
+     *
+     * @return Builder<Expense>
+     */
+    private function listing(Request $request): Builder
+    {
         $filter = new QueryFilter(
             filters: [
                 'search' => QueryFilter::search(['description', 'vendor', 'reference']),
@@ -31,11 +74,10 @@ class ExpenseController extends Controller
             defaultSort: '-incurred_on',
         );
 
-        return ExpenseResource::collection(
-            $filter->apply(Expense::query()->with('category'), $request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+        /** @var Builder<Expense> $query */
+        $query = $filter->apply(Expense::query()->with('category'), $request);
+
+        return $query;
     }
 
     public function store(Request $request): JsonResponse

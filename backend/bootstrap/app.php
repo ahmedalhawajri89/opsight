@@ -62,6 +62,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            /*
+             * An exception that arrives with its response already built is
+             * rendered as built — Laravel's own convention. It is how the login
+             * throttle attaches `Retry-After` to a refusal that is a
+             * ValidationException, which has no headers of its own.
+             */
+            if ($e instanceof ValidationException && $e->response !== null) {
+                return $e->response;
+            }
+
             [$status, $code, $message] = match (true) {
                 $e instanceof ValidationException => [
                     $e->status,
@@ -168,6 +178,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
             }
 
-            return response()->json($payload, $status);
+            /*
+             * Carry the exception's own headers across. Building a fresh JSON
+             * response otherwise drops them — most importantly `Retry-After`
+             * on a 429, which SECURITY.md §7 requires and which is the only
+             * way a client can tell a five-second wait from a fifty-minute one.
+             */
+            $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : [];
+
+            return response()->json($payload, $status, $headers);
         });
     })->create();

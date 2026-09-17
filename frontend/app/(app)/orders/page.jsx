@@ -10,11 +10,13 @@ import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DateInput, Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
+import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatDate, formatMoney } from '@/lib/format';
+import { exportOrders } from '@/services/orders';
 
 /*
  * Defined at module scope, not inline.
@@ -42,7 +44,12 @@ export default function OrdersPage() {
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
-  const { orders, meta, isLoading, isError, error, refetch } = useOrders({
+  /*
+   * One object for the list and the export, so "export" means "export what I
+   * am looking at". The server runs both through a single query definition,
+   * so the file and the screen cannot drift apart.
+   */
+  const query = {
     page: filters.page,
     per_page: filters.per_page,
     sort: filters.sort,
@@ -52,7 +59,9 @@ export default function OrdersPage() {
       placed_from: filters.placed_from,
       placed_to: filters.placed_to,
     },
-  });
+  };
+
+  const { orders, meta, isLoading, isError, error, refetch } = useOrders(query);
 
   const columns = [
     {
@@ -124,11 +133,14 @@ export default function OrdersPage() {
         title="Orders"
         description="Every committed sale, and the drafts on their way to becoming one."
         actions={
-          <Can ability="orders.create">
-            <Button variant="primary" onClick={() => router.push('/orders/new')}>
-              New order
-            </Button>
-          </Can>
+          <div className="flex flex-wrap items-start gap-2">
+            {can('orders.export') && <ExportButton onExport={exportOrders} filters={query} />}
+            <Can ability="orders.create">
+              <Button variant="primary" onClick={() => router.push('/orders/new')}>
+                New order
+              </Button>
+            </Can>
+          </div>
         }
       />
 

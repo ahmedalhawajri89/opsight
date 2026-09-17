@@ -5,11 +5,13 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
+import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatMoney, formatNumber } from '@/lib/format';
+import { exportProducts } from '@/services/catalog';
 
 const FILTER_CONFIG = {
   defaults: { sort: 'name', page: 1, per_page: 25 },
@@ -22,7 +24,12 @@ export default function ProductsPage() {
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
-  const { products, meta, isLoading, isError, error, refetch } = useProducts({
+  /*
+   * One object for the list and the export, so "export" means "export what I
+   * am looking at". The server runs both through a single query definition,
+   * so the file and the screen cannot drift apart.
+   */
+  const query = {
     page: filters.page,
     per_page: filters.per_page,
     sort: filters.sort,
@@ -31,7 +38,9 @@ export default function ProductsPage() {
       is_active: filters.is_active,
       low_stock: filters.low_stock,
     },
-  });
+  };
+
+  const { products, meta, isLoading, isError, error, refetch } = useProducts(query);
 
   const columns = [
     { key: 'sku', header: 'SKU', sortable: true, mono: true, width: '10rem' },
@@ -94,6 +103,9 @@ export default function ProductsPage() {
       <PageHeader
         title="Products"
         description="The catalog. Editing a price or cost affects future orders only — past orders keep their own snapshots."
+        actions={
+          can('products.export') ? <ExportButton onExport={exportProducts} filters={query} /> : null
+        }
       />
 
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>

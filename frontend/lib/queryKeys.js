@@ -47,6 +47,24 @@ export const queryKeys = {
   dashboard: {
     all: ['dashboard'],
   },
+  insights: {
+    all: ['insights'],
+    list: (period) => ['insights', 'list', period],
+  },
+  activity: {
+    all: ['activity'],
+    list: (filters) => ['activity', 'list', filters],
+    actions: ['activity', 'actions'],
+  },
+  users: {
+    all: ['users'],
+    list: (filters) => ['users', 'list', filters],
+  },
+  settings: {
+    all: ['settings'],
+    detail: ['settings', 'detail'],
+    expenseCategories: ['settings', 'expense-categories'],
+  },
 };
 
 /**
@@ -62,4 +80,17 @@ export const STOCK_AFFECTING_KEYS = [
   queryKeys.products.all,
   queryKeys.analytics.all,
   queryKeys.dashboard.all,
+  // Insights read the analytics layer, so anything that moves a metric moves
+  // them too. Leaving them out would leave "revenue fell 20%" on screen after
+  // the order that caused it was cancelled.
+  queryKeys.insights.all,
 ];
+
+/**
+ * Everything a write invalidates, whatever the write was.
+ *
+ * Every mutation is audited, so every mutation adds a row to the activity log.
+ * A screen showing yesterday's last entry after an action just taken is a
+ * small thing that makes an audit tool feel unreliable.
+ */
+export const AUDITED_KEYS = [queryKeys.activity.all];

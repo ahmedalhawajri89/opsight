@@ -33,7 +33,16 @@ return [
         'X-XSRF-TOKEN',
     ],
 
-    'exposed_headers' => ['Retry-After'],
+    /*
+     * Response headers JavaScript is allowed to READ.
+     *
+     * Everything not on this list is hidden from fetch by the browser, even
+     * though it arrives — which is not a warning anyone gets. `Retry-After`
+     * lets the client say how long a 429 lasts; `Content-Disposition` lets a
+     * CSV download keep the filename and date stamp the SERVER chose, rather
+     * than falling back to a name the client invented.
+     */
+    'exposed_headers' => ['Retry-After', 'Content-Disposition'],
 
     'max_age' => 0,
 

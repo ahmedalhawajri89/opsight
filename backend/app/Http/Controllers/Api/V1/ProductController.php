@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Export\CsvExport;
 use App\Domain\Inventory\AdjustStock;
 use App\Domain\Inventory\StockLedger;
 use App\Http\Controllers\Controller;
@@ -13,10 +14,12 @@ use App\Http\Resources\ProductResource;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Support\QueryFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Products.
@@ -31,6 +34,25 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', Product::class);
 
+        return ProductResource::collection(
+            $this->listing($request)
+                ->paginate(QueryFilter::perPage($request))
+                ->withQueryString(),
+        );
+    }
+
+    /**
+     * The filtered query behind BOTH the screen and the CSV export.
+     *
+     * One definition on purpose. SECURITY.md §9.2 requires an export to run
+     * through the same scope, policies and redaction as the screen it comes
+     * from; a second query written beside the first is a second place for a
+     * filter to be forgotten, and the forgotten one is always the export.
+     *
+     * @return Builder<Product>
+     */
+    private function listing(Request $request): Builder
+    {
         $filter = new QueryFilter(
             filters: [
                 'search' => QueryFilter::search(['name', 'sku']),
@@ -47,10 +69,34 @@ class ProductController extends Controller
             defaultSort: 'name',
         );
 
-        $query = Product::query()->with(['category', 'inventoryItem']);
+        /** @var Builder<Product> $query */
+        $query = $filter->apply(Product::query()->with(['category', 'inventoryItem']), $request);
 
-        return ProductResource::collection(
-            $filter->apply($query, $request)->paginate(QueryFilter::perPage($request))->withQueryString(),
+        return $query;
+    }
+
+    public function export(Request $request, CsvExport $export): StreamedResponse
+    {
+        $this->authorize('export', Product::class);
+
+        return $export->stream(
+            query: $this->listing($request),
+            resource: ProductResource::class,
+            columns: [
+                'sku' => 'SKU',
+                'name' => 'Name',
+                'category.name' => 'Category',
+                'unit' => 'Unit',
+                'price' => 'Price',
+                // Omitted by ProductResource for a role without
+                // products.view_cost, and therefore never written.
+                'cost' => 'Cost',
+                'stock.on_hand' => 'Stock on hand',
+                'stock.reorder_point' => 'Reorder point',
+                'is_active' => 'Active',
+            ],
+            request: $request,
+            filename: 'products',
         );
     }
 

@@ -78,7 +78,13 @@ final class ConfirmOrder
                 $lineTotal = $this->round(bcsub($lineGross, (string) $item->line_discount, 6));
                 $lineCogs = $this->round(bcmul($unitCost, (string) $item->quantity, 6));
 
-                $item->forceFill([
+                /*
+                 * The snapshot write is part of confirming, not an edit of
+                 * the line. `order.confirmed` already records it; a row per
+                 * line here would multiply the log by basket size and say
+                 * nothing the order row does not.
+                 */
+                $item->withoutAudit()->forceFill([
                     'product_name' => $product->name,
                     'product_sku' => $product->sku,
                     'unit_price' => $unitPrice,
@@ -106,6 +112,15 @@ final class ConfirmOrder
                 bcadd((string) $order->tax_amount, (string) $order->shipping_amount, 2),
                 2,
             );
+
+            /*
+             * Named for the audit log before the write, so the row reads
+             * `order.confirmed` rather than `order.updated`. The line-item
+             * snapshot values are deliberately not repeated into the context:
+             * they are on the order_items rows, permanently, and copying
+             * costs into a table Staff can read would leak them.
+             */
+            $order->auditAs('order.confirmed', ['lines' => $items->count()]);
 
             $order->forceFill([
                 'status' => OrderStatus::Confirmed,

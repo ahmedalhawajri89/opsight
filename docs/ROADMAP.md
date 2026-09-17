@@ -231,7 +231,7 @@ the two paths cannot silently disagree.
 
 ---
 
-## Phase 05 — Expenses, insights, audit & export
+## Phase 05 — Expenses, insights, audit & export ✅ *(complete)*
 
 - Expenses and expense categories, full stack.
 - Profit metrics completed (they depend on expenses).
@@ -246,6 +246,98 @@ the two paths cannot silently disagree.
 
 **Done when:** every security test in SECURITY.md §15 passes and every module writes to the
 audit log.
+
+**Outcome.** All met. 327 backend tests (1,255 assertions, 1 documented skip), 159 frontend
+tests, 50 browser E2E tests — green on three consecutive full runs. Pint clean, PHPStan level 6 clean, ESLint and Prettier clean,
+production build green.
+
+Expenses and the profit metrics that depend on them were already delivered with the Phase 03
+module sweep and Phase 04's calculator, so this phase added the expense category filter and
+left the rest alone rather than rebuilding it.
+
+**The audit log is an observer, not a line in each controller.** The requirement is "every
+write is audited", and a call in each controller satisfies that only until someone adds a
+controller. `AuditObserver` is attached by `#[ObservedBy]` on the model, so the model itself
+declares that it is audited and a new endpoint inherits it. Domain services NAME their event
+— `order.cancelled` with its reason, rather than `order.updated` with a status diff — through
+an override the observer consumes, which keeps one write path while letting the operation say
+what actually happened.
+
+Four decisions inside it are worth recording:
+
+1. **A redacted key is dropped, not masked.** `"password": "[redacted]"` still puts the key in
+   a permanent table with no delete path. The fact that a secret changed is preserved by the
+   ACTION instead: `user.password_changed` is written with an empty diff.
+2. **Seeding pauses auditing.** A row written while fabricating three years of history would
+   name the seeding process as the actor, the console as the origin and today as the moment —
+   for an order the dataset claims was placed fourteen months ago. Every field would be false,
+   and a log that lies about its own provenance is worse than a gap.
+3. **The log redacts cost, because it is otherwise a back door to it.** Every other surface
+   omits cost via `mergeWhen`; a diff reading `{"before":{"cost":"4.20"}}` would undo all of
+   that on a screen reached by a different ability.
+4. **Cursor pagination, with an id tiebreaker.** `created_at` has one-second resolution and a
+   confirm writes several rows inside one second, so ties on the ordering column let the seek
+   land mid-group and silently drop the rest. An audit log that omits rows when paged is not
+   an audit log.
+
+**Export inherits redaction rather than reimplementing it.** `CsvExport` serialises each row
+with the same resource class the screen uses, so a cost-blind role's `ProductResource` omits
+`cost`, the exporter never sees the key, and the column is not written — there is no second
+rule to forget. Two things were found while building it:
+
+- `toArray()` does NOT return `mergeWhen`'s merged keys; it returns an int-keyed `MergeValue`
+  that Laravel flattens later in the response pipeline. Reading it directly dropped the cost
+  column for *every* role. It failed closed and raised no error, so the only symptom was a
+  missing column in a file nobody diffs against the screen. `resolve()` runs the same
+  filtering the API response does.
+- `Content-Disposition` is not CORS-safelisted, so the browser hid the server's filename from
+  JavaScript and the client silently fell back to a name it invented. Now exposed explicitly.
+
+**One documented narrowing of SECURITY.md §9.6.** Applied literally, "escape any cell
+beginning `-`" turns every refund, loss and downward adjustment in a financial export into
+text, so the column will not sum — for an export whose purpose is to be summed, that is the
+feature not working, and the predictable result is someone stripping the escaping wholesale.
+A cell is therefore left alone when it is a well-formed number. The guarantee is unchanged: a
+string that parses as a number cannot also be a formula, and `-1+1`, `-A1` and
+`-HYPERLINK(...)` are all still escaped. The rule is narrower in wording and identical in
+effect, and it is a single tested predicate rather than a judgement left to each call site.
+
+**The insights feed says why it is empty.** An empty feed has two entirely different meanings
+— "nothing is wrong" and "the rules were not allowed to run" — and a UI rendering both as
+blank space asserts the first when the second is true. Since the dashboard's default window is
+a rolling thirty days, which always includes today, suppression is the state most readers will
+meet most often, so the endpoint returns the reason and the screen prints it.
+
+**The settings read was tightened during the phase.** It was first opened to every role on the
+argument that currency and timezone are formatting inputs rather than secrets. The argument
+did not survive contact with the code: every screen that formats money already receives both
+in the META of an analytics response it was making anyway, so nothing outside the settings
+screen needed the endpoint. Widening a route on a justification the code does not rely on is
+how default-deny erodes, so it sits behind `settings.view` like everything else.
+
+**The rate limits documented in SECURITY.md §7 were not the limits in force.** Found by the
+E2E export test, which passed alone and failed after the rest of the suite had browsed the
+application. Laravel keys an unnamed `throttle:X,Y` middleware on the user's id alone, so the
+export group's `throttle:10,60`, nested inside the API group's `throttle:120,1`, shared one
+counter with it: ten ordinary requests and a user's first export of the day was refused, and
+every export spent the counter twice, so the sixth was refused too. Analytics and the login
+backstop had the same flaw (a monitor polling `/health` could lock the office out of signing
+in). Every limit is now a named limiter with its own key, and `RateLimitIsolationTest` fails
+against the old routes and passes against the new ones. Two neighbouring gaps closed with it:
+the JSON error renderer dropped the exception's headers, so no 429 carried the `Retry-After`
+§7 requires, and the login throttle — a ValidationException, which has no headers — now
+attaches it explicitly. The existing login rate-limit test now asserts the header.
+
+**Before that was found, the failure was blamed on the wrong cause** — and the correction is
+worth keeping. The first diagnosis was that repeated debugging runs had spent the hourly export
+budget, and the audit log seemed to support it. The next morning, with the budget certainly
+fresh, the same test failed the same way, and the audit log showed **zero** exports in the hour
+while the endpoint returned 429. A refusal with no matching spend is not a budget problem; it is
+a counting problem, which is what led to the shared key. The two export tests were merged into
+one download regardless, since two downloads to make two assertions about one file was waste.
+Two other E2E failures were locator ambiguities rather than product defects — a hidden
+`<option>` and the owner's own address in the header — and one waited on a clock instead of on
+the server's answer, which the single-threaded dev API made intermittent.
 
 ---
 

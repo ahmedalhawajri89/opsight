@@ -5,10 +5,14 @@
  * order snapshots prices and moves stock, so it is not a field assignment.
  */
 
-import { api } from '@/lib/apiClient';
+import { api, download } from '@/lib/apiClient';
 
 export function listOrders(params) {
   return api.get('/orders', { params });
+}
+
+export function exportOrders(params) {
+  return download('/orders/export', { params, fallbackName: 'orders.csv' });
 }
 
 export function getOrder(id) {

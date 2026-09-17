@@ -3,17 +3,20 @@
 import { useState } from 'react';
 
 import { useInventory, useStockActions } from '@/features/catalog/useCatalog';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { Can } from '@/features/auth/Can';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Field, Input, NumberInput, Select, Textarea } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
+import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatDateTime, formatNumber } from '@/lib/format';
+import { exportInventory } from '@/services/catalog';
 
 const FILTER_CONFIG = {
   defaults: { sort: 'stock_on_hand', page: 1, per_page: 25 },
@@ -22,17 +25,25 @@ const FILTER_CONFIG = {
 };
 
 export default function InventoryPage() {
+  const { can } = useAuth();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
   const [adjusting, setAdjusting] = useState(null);
 
-  const { items, meta, isLoading, isError, error, refetch } = useInventory({
+  /*
+   * One object for the list and the export, so "export" means "export what I
+   * am looking at". The server runs both through a single query definition,
+   * so the file and the screen cannot drift apart.
+   */
+  const query = {
     page: filters.page,
     per_page: filters.per_page,
     sort: filters.sort,
     filter: { search: filters.search, low_stock: filters.low_stock },
-  });
+  };
+
+  const { items, meta, isLoading, isError, error, refetch } = useInventory(query);
 
   const columns = [
     {
@@ -105,6 +116,11 @@ export default function InventoryPage() {
       <PageHeader
         title="Inventory"
         description="Stock on hand is a cache over an append-only ledger. Every change is recorded with a reason."
+        actions={
+          can('inventory.export') ? (
+            <ExportButton onExport={exportInventory} filters={query} />
+          ) : null
+        }
       />
 
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>

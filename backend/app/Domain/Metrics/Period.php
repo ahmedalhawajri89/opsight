@@ -97,6 +97,28 @@ final readonly class Period
         );
     }
 
+    /**
+     * The last `$days` days ending today, inclusive.
+     *
+     * A configurable sibling of the rolling presets, for windows a user never
+     * picks but a rule needs — the trailing sales rate behind stock coverage,
+     * for instance. It resolves through the same business timezone as every
+     * other period, so a "last 30 days" computed here and one computed from a
+     * preset cannot land on different boundaries.
+     */
+    public static function trailingDays(int $days, ?Carbon $today = null): self
+    {
+        $timezone = BusinessSetting::current()->timezone;
+        $today ??= Carbon::now($timezone);
+        $today = $today->clone()->setTimezone($timezone)->startOfDay();
+
+        return self::between(
+            $today->clone()->subDays(max($days, 1) - 1)->toDateString(),
+            $today->toDateString(),
+            $timezone,
+        );
+    }
+
     public static function fiscalYearStart(Carbon $date, int $fiscalStartMonth): Carbon
     {
         $year = $date->month >= $fiscalStartMonth ? $date->year : $date->year - 1;

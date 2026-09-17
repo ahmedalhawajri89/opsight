@@ -142,7 +142,10 @@ it('rate limits repeated failures for the same email', function (): void {
     $this->postJson('/api/v1/auth/login', [
         'email' => 'target@opsight.test',
         'password' => 'wrong',
-    ])->assertStatus(429);
+    ])
+        ->assertStatus(429)
+        // SECURITY.md §15.7: the refusal says how long it lasts.
+        ->assertHeader('Retry-After');
 });
 
 it('clears the rate limit after a successful login', function (): void {

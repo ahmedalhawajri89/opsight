@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Audit\RecordsActivity;
+use App\Observers\AuditObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,8 +20,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $quantity
  * @property string $line_total
  */
+#[ObservedBy(AuditObserver::class)]
 class OrderItem extends Model
 {
+    use RecordsActivity;
+
     /**
      * The snapshot columns are fillable because the service writes them
      * explicitly at confirm time. `order_id` is absent: a line is always
