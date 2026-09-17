@@ -124,7 +124,7 @@ export default function DashboardPage() {
             for assistive technology, so a screen reader announces "Dashboard"
             first.
           */}
-          <h1 className="text-2xl leading-tight font-bold tracking-tight text-(--color-text) sm:text-[1.625rem]">
+          <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-(--color-text)">
             <span className="sr-only">{t('nav.items.dashboard')} — </span>
             {greeting(t, user?.name)}{' '}
             <span
@@ -134,10 +134,18 @@ export default function DashboardPage() {
               👋
             </span>
           </h1>
-          <p className="mt-1.5 text-sm text-(--color-text-muted)">{t('dashboard.subtitle')}</p>
+          <p className="mt-1 text-sm text-(--color-text-muted)">{t('dashboard.subtitle')}</p>
         </div>
 
-        <PeriodStatus show={meta?.comparison?.compares_partial_against_complete} />
+        {/*
+          Shown whenever the selected range includes today. The sentence
+          beside it says what that means: compared against a complete period,
+          or simply still accumulating when there is no comparison.
+        */}
+        <PeriodStatus
+          show={meta?.period?.is_partial}
+          againstComplete={meta?.comparison?.compares_partial_against_complete}
+        />
       </header>
 
       {!wide && <div className="rise">{controls}</div>}

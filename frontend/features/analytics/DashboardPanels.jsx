@@ -102,19 +102,19 @@ function RowsSkeleton({ rows = 4 }) {
  * once, beside the greeting. Without it, a dashboard on the 2nd of the month
  * reads as a collapse in trade rather than a month that has barely started.
  */
-export function PeriodStatus({ show }) {
+export function PeriodStatus({ show, againstComplete = false }) {
   const { t } = useI18n();
 
   if (!show) return null;
 
   return (
     <div role="status" className="flex max-w-md items-center gap-3">
-      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-(--color-line) bg-(--color-surface) px-3 py-1.5 text-xs font-medium text-(--color-text)">
-        <Icon name="clock" size={14} className="text-(--color-text-muted)" />
+      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-(--color-surface-hover) px-3 py-1.5 text-xs font-medium text-(--color-text-muted)">
+        <Icon name="info" size={14} />
         {t('period.incomplete')}
       </span>
       <span className="text-xs leading-relaxed text-(--color-text-muted)">
-        {t('dashboard.incompleteNote')}
+        {againstComplete ? t('dashboard.incompleteNote') : t('period.inProgressTitle')}
       </span>
     </div>
   );

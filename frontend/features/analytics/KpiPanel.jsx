@@ -5,28 +5,24 @@ import { Icon } from '@/components/ui/Icon';
 import { InfoTip } from '@/components/ui/Tooltip';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
-import {
-  EMPTY,
-  changeTone,
-  figureDirection,
-  formatMoneyParts,
-  formatPercent,
-  formatPoints,
-} from '@/lib/format';
+import { EMPTY, changeTone, figureDirection, formatPercent, formatPoints } from '@/lib/format';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { metricDefinition, metricLabel, presentMetric } from './MetricTile';
 
 /**
- * The dashboard's KPIs, in two tiers.
+ * The dashboard's KPIs, in two rows.
  *
- *   PRIMARY    four cards — icon, figure, change, basis, and the period's shape
- *   SECONDARY  eight compact cards beneath them
+ *   PRIMARY    four cards — a 40px tinted icon and the label, the figure, the
+ *              change with its basis, and the period's shape as a sparkline
+ *   COMPACT    eight small cards — icon, label, figure, change
  *
- * The tier a metric lands in is decided here, but WHICH metrics exist is
- * decided by the server. A cost-blind role receives no cost keys at all, so each
- * tier fills from its ordered list with whatever did arrive — a Staff user sees
- * revenue, orders, average order value and units on top rather than holes
- * where profit and margin would be (ROLES_AND_PERMISSIONS.md §4).
+ * The row a metric lands in is decided here, but WHICH metrics exist is decided
+ * by the server. A cost-blind role receives no cost keys, so each row fills
+ * from its ordered list with whatever did arrive — a Staff user sees revenue,
+ * orders, average order value and units on top rather than holes where profit
+ * and margin would be (ROLES_AND_PERMISSIONS.md §4).
+ *
+ * Every figure, change and series is the server's. Nothing here computes.
  */
 const PRIMARY_ORDER = [
   'net_revenue',
@@ -37,7 +33,7 @@ const PRIMARY_ORDER = [
   'units_sold',
 ];
 
-const SECONDARY_ORDER = [
+const COMPACT_ORDER = [
   'average_order_value',
   'new_customers',
   'operating_expenses',
@@ -51,60 +47,82 @@ const SECONDARY_ORDER = [
 const PRIMARY_COUNT = 4;
 
 /*
- * Icon and tint per metric, and the stroke of its sparkline. Tints come from
- * the semantic set so they stay inside the tested palette: green for what the
- * business earns, blue for volume, orange for money going out, red for orders
- * lost.
+ * Accent per metric: the icon's tint and, on a primary card, the sparkline.
+ *
+ * `costly` marks a metric whose unfavourable movement is money going out
+ * rather than trade being lost. Its bad news is shown in amber, not red —
+ * expenses rising is a warning to look at, not a failure (the specification's
+ * rule, and a distinction a reader of a finance screen relies on).
  */
 const VISUALS = {
-  net_revenue: { icon: 'coins', tint: 'green', spark: 'var(--spark-green)' },
-  orders_count: { icon: 'receipt', tint: 'blue', spark: 'var(--spark-blue)' },
-  gross_profit: { icon: 'wallet', tint: 'green', spark: 'var(--spark-purple)' },
-  gross_margin: { icon: 'percent', tint: 'blue', spark: 'var(--spark-teal)' },
-  average_order_value: { icon: 'percent', tint: 'blue', spark: 'var(--spark-purple)' },
-  new_customers: { icon: 'userPlus', tint: 'blue' },
-  operating_expenses: { icon: 'wallet', tint: 'orange' },
-  net_profit: { icon: 'trendUp', tint: 'green' },
-  cancellation_rate: { icon: 'arrowDown', tint: 'red' },
-  refund_rate: { icon: 'undo', tint: 'green' },
-  units_sold: { icon: 'box', tint: 'blue', spark: 'var(--spark-teal)' },
-  returning_customers: { icon: 'repeat', tint: 'blue' },
+  net_revenue: { icon: 'coins', accent: 'green' },
+  orders_count: { icon: 'receipt', accent: 'blue' },
+  gross_profit: { icon: 'wallet', accent: 'purple' },
+  gross_margin: { icon: 'percent', accent: 'teal' },
+  average_order_value: { icon: 'percent', accent: 'blue' },
+  new_customers: { icon: 'userPlus', accent: 'blue' },
+  operating_expenses: { icon: 'wallet', accent: 'amber', costly: true },
+  net_profit: { icon: 'trendUp', accent: 'green' },
+  cancellation_rate: { icon: 'arrowDown', accent: 'red' },
+  refund_rate: { icon: 'undo', accent: 'green' },
+  units_sold: { icon: 'box', accent: 'blue' },
+  returning_customers: { icon: 'repeat', accent: 'blue' },
 };
 
 const TINTS = {
   green: 'bg-(--color-positive-subtle) text-(--color-positive)',
   blue: 'bg-(--color-info-subtle) text-(--color-info)',
-  orange: 'bg-(--color-warning-subtle) text-(--color-warning)',
+  purple: 'bg-(--color-purple-subtle) text-(--color-purple)',
+  teal: 'bg-(--color-teal-subtle) text-(--color-teal)',
+  amber: 'bg-(--color-warning-subtle) text-(--color-warning)',
   red: 'bg-(--color-negative-subtle) text-(--color-negative)',
 };
 
-/** Splits the metrics that arrived into the two tiers, with no key in both. */
+const SPARKS = {
+  green: 'var(--spark-green)',
+  blue: 'var(--spark-blue)',
+  purple: 'var(--spark-purple)',
+  teal: 'var(--spark-teal)',
+  amber: 'var(--series-2)',
+  red: 'var(--negative)',
+};
+
+/** Splits the metrics that arrived into the two rows, with no key in both. */
 export function tierMetrics(metrics = {}) {
   const primary = PRIMARY_ORDER.filter((key) => key in metrics).slice(0, PRIMARY_COUNT);
-  const secondary = SECONDARY_ORDER.filter((key) => key in metrics && !primary.includes(key));
+  const secondary = COMPACT_ORDER.filter((key) => key in metrics && !primary.includes(key));
 
   return { primary, secondary };
 }
 
 const CARD =
-  'min-w-0 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)';
+  'min-w-0 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
 
 export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
   const { t } = useI18n();
 
   if (loading) {
     return (
-      <section aria-busy="true">
-        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+      <section aria-busy="true" className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className={cn(CARD, 'p-5')}>
               <div className="flex items-center gap-3">
-                <Skeleton className="size-9 rounded-(--radius-md)" />
+                <Skeleton className="size-10 rounded-(--radius-md)" />
                 <Skeleton className="h-3.5 w-24" />
               </div>
               <Skeleton className="mt-5 h-7 w-40" />
               <Skeleton className="mt-3 h-4 w-44" />
-              <Skeleton className="mt-4 h-8 w-full" />
+              <Skeleton className="mt-4 h-10 w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 min-[90rem]:grid-cols-8">
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
+            <div key={index} className={cn(CARD, 'p-3.5')}>
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-3 h-5 w-24" />
+              <Skeleton className="mt-2 h-3 w-12" />
             </div>
           ))}
         </div>
@@ -121,7 +139,7 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
         {t('dashboard.keyMetrics')}
       </h2>
 
-      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {primary.map((key, index) => (
           <PrimaryKpi
             key={key}
@@ -143,7 +161,7 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
           )}
         >
           {secondary.map((key, index) => (
-            <SecondaryKpi
+            <CompactKpi
               key={key}
               index={index + 4}
               metricKey={key}
@@ -162,11 +180,14 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
   const label = metricLabel(t, metricKey);
   const definition = metricDefinition(t, metricKey);
   const shown = presentMetric(metric, { currency, decimals });
-  const visual = VISUALS[metricKey] ?? { icon: 'analytics', tint: 'blue' };
+  const visual = VISUALS[metricKey] ?? { icon: 'analytics', accent: 'blue' };
   const series = Array.isArray(trend) ? trend.map((bucket) => bucket.value) : [];
 
   return (
-    <div className={cn(CARD, 'rise flex flex-col p-5')} style={{ '--rise-index': index }}>
+    <div
+      className={cn(CARD, 'rise @container flex flex-col p-5')}
+      style={{ '--rise-index': index }}
+    >
       {/*
         The label row is its own element and the heading is its direct child,
         so the card is always the heading's second ancestor — which the E2E
@@ -176,13 +197,13 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         <span
           aria-hidden="true"
           className={cn(
-            'inline-flex size-9 shrink-0 items-center justify-center rounded-(--radius-md)',
-            TINTS[visual.tint],
+            'inline-flex size-10 shrink-0 items-center justify-center rounded-(--radius-md)',
+            TINTS[visual.accent],
           )}
         >
-          <Icon name={visual.icon} size={18} strokeWidth={2} />
+          <Icon name={visual.icon} size={20} strokeWidth={1.75} />
         </span>
-        <h3 className="min-w-0 truncate text-[0.8125rem] font-medium text-(--color-text)">
+        <h3 className="min-w-0 truncate text-[0.8125rem] font-semibold text-(--color-text)">
           {label}
         </h3>
         {definition && (
@@ -192,8 +213,12 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         )}
       </div>
 
+      {/*
+        24px, shrinking with the card rather than truncating: a money figure
+        cut to "BHD 69,54…" is a different number.
+      */}
       <p
-        className="tabular mt-4 truncate text-[1.5rem] leading-none font-bold tracking-tight text-(--color-text)"
+        className="tabular mt-4 text-[clamp(1.125rem,9.5cqi,1.5rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
         title={shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined}
       >
         {shown.value === null ? (
@@ -203,57 +228,69 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         )}
       </p>
 
-      <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-        <Change metric={metric} shown={shown} size="md" />
+      <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+        <Change metric={metric} shown={shown} costly={visual.costly} size="md" />
         {comparisonLabel && (
           <span className="truncate text-xs text-(--color-text-subtle)">{comparisonLabel}</span>
         )}
       </div>
 
-      <div className="mt-auto pt-3">
+      <div className="mt-auto pt-4">
         {series.filter((value) => value !== null).length > 1 ? (
-          <Sparkline values={series} colour={visual.spark ?? 'var(--spark-blue)'} height={34} />
+          <Sparkline values={series} colour={SPARKS[visual.accent]} height={40} />
         ) : (
-          <div aria-hidden="true" className="h-[34px]" />
+          <div aria-hidden="true" className="h-10" />
         )}
       </div>
     </div>
   );
 }
 
-function SecondaryKpi({ index, metricKey, metric, currency, decimals }) {
+function CompactKpi({ index, metricKey, metric, currency, decimals }) {
   const { t } = useI18n();
   const label = metricLabel(t, metricKey);
   const definition = metricDefinition(t, metricKey);
   const shown = presentMetric(metric, { currency, decimals });
-  const visual = VISUALS[metricKey] ?? { icon: 'analytics', tint: 'blue' };
+  const visual = VISUALS[metricKey] ?? { icon: 'analytics', accent: 'blue' };
 
   return (
     <div
-      className={cn(CARD, 'rise flex flex-col px-3 py-3')}
+      className={cn(CARD, 'rise @container flex flex-col px-3 py-3')}
       style={{ '--rise-index': index }}
       title={definition}
     >
-      <div className="flex items-start gap-2">
+      {/*
+        The icon sits in the label's own line, so a label that wraps uses the
+        full card width on its second line. Up to two lines, never an ellipsis:
+        "Averag…" names no metric. The reserved height keeps a row aligned.
+      */}
+      <h3 className="line-clamp-2 min-h-[2.5em] text-[0.6875rem] leading-[1.25] font-medium hyphens-auto text-(--color-text-muted)">
         <span
           aria-hidden="true"
           className={cn(
-            'inline-flex size-5 shrink-0 items-center justify-center rounded-full',
-            TINTS[visual.tint],
+            'me-1.5 inline-flex size-4 translate-y-[-1px] items-center justify-center rounded-(--radius-sm) align-middle',
+            TINTS[visual.accent],
           )}
         >
-          <Icon name={visual.icon} size={11} strokeWidth={2.25} />
+          <Icon name={visual.icon} size={10} strokeWidth={2.25} />
         </span>
-        {/* Two lines rather than an ellipsis: a truncated metric name is no name. */}
-        <h3 className="line-clamp-2 min-h-[2.1em] min-w-0 text-[0.6875rem] leading-tight font-medium text-(--color-text-muted)">
-          {label}
-        </h3>
-      </div>
+        {label}
+      </h3>
 
-      <CompactFigure metric={metric} shown={shown} currency={currency} decimals={decimals} />
+      {/*
+        15px, shrinking with the card: the exact figure always fits whole, in
+        its currency's own precision — never rounded to make room.
+      */}
+      <p className="tabular mt-2 text-[clamp(0.6875rem,11cqi,0.9375rem)] leading-tight font-bold whitespace-nowrap text-(--color-text)">
+        {shown.value === null ? (
+          <span className="text-(--color-text-subtle)">{EMPTY}</span>
+        ) : (
+          <bdi dir={figureDirection(shown.value)}>{shown.value}</bdi>
+        )}
+      </p>
 
-      <div className="mt-auto pt-1.5">
-        <Change metric={metric} shown={shown} size="sm" />
+      <div className="mt-2">
+        <Change metric={metric} shown={shown} costly={visual.costly} size="sm" />
       </div>
     </div>
   );
@@ -263,10 +300,10 @@ function SecondaryKpi({ index, metricKey, metric, currency, decimals }) {
  * The change: an arrow and a figure, coloured by what it means for the business.
  *
  * The arrow shows the arithmetic direction; the colour shows whether that is
- * good — expenses rising is red even though the number grew. A ratio changes in
- * percentage points, and says so.
+ * good — expenses rising is not "up and green". A ratio changes in percentage
+ * points, and says so.
  */
-function Change({ metric, shown, size }) {
+function Change({ metric, shown, costly = false, size }) {
   const { t } = useI18n();
   const change = shown.change;
 
@@ -287,17 +324,22 @@ function Change({ metric, shown, size }) {
       ? formatPoints(Math.abs(change)).replace('+', '')
       : formatPercent(Math.abs(change));
 
+  const colour =
+    tone === 'positive'
+      ? 'text-(--color-positive)'
+      : tone === 'negative'
+        ? costly
+          ? 'text-(--color-warning)'
+          : 'text-(--color-negative)'
+        : 'text-(--color-text-muted)';
+
   return (
     <span
       data-tone={tone}
       className={cn(
-        'tabular inline-flex items-center gap-1 font-semibold',
+        'tabular inline-flex items-center gap-1 font-semibold whitespace-nowrap',
         size === 'md' ? 'text-[0.8125rem]' : 'text-xs',
-        tone === 'positive'
-          ? 'text-(--color-positive)'
-          : tone === 'negative'
-            ? 'text-(--color-negative)'
-            : 'text-(--color-text-muted)',
+        colour,
       )}
     >
       <Icon
@@ -308,48 +350,5 @@ function Change({ metric, shown, size }) {
       />
       <bdi dir={figureDirection(magnitude)}>{magnitude}</bdi>
     </span>
-  );
-}
-
-/**
- * A compact card's figure. Money is set with its currency code small and quiet
- * beside the amount: the code is the same on every card, and at this size it
- * would otherwise take a third of the width the amount needs.
- */
-function CompactFigure({ metric, shown, currency, decimals }) {
-  if (shown.value === null) {
-    return <p className="mt-2 text-[0.9375rem] font-bold text-(--color-text-subtle)">{EMPTY}</p>;
-  }
-
-  // Whole units on a compact card — the exact figure is its tooltip, its
-  // screen-reader text, and the Analytics screen.
-  const money =
-    metric.format === 'money' ? formatMoneyParts(metric.value, { currency, decimals: 0 }) : null;
-
-  if (!money) {
-    return (
-      <p className="tabular mt-2 truncate text-[0.9375rem] leading-tight font-bold text-(--color-text)">
-        <bdi dir={figureDirection(shown.value)}>{shown.value}</bdi>
-      </p>
-    );
-  }
-
-  const code = (
-    <span className="text-[0.625rem] font-semibold text-(--color-text-subtle)">
-      {money.currency}
-    </span>
-  );
-
-  return (
-    <p className="tabular mt-2 leading-tight font-bold text-(--color-text)" title={shown.value}>
-      <span className="sr-only">{shown.value}</span>
-      <span aria-hidden="true" className="flex min-w-0 items-baseline gap-1">
-        {money.position === 'before' && code}
-        <bdi dir={figureDirection(money.amount)} className="truncate text-[0.9375rem]">
-          {money.amount}
-        </bdi>
-        {money.position === 'after' && code}
-      </span>
-    </p>
   );
 }

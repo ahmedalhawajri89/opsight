@@ -56,7 +56,7 @@ export function Sparkline({ values = [], colour = 'var(--series-1)', height = 36
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={colour} stopOpacity="0.18" />
+          <stop offset="0%" stopColor={colour} stopOpacity="0.26" />
           <stop offset="100%" stopColor={colour} stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -66,7 +66,7 @@ export function Sparkline({ values = [], colour = 'var(--series-1)', height = 36
         d={line}
         fill="none"
         stroke={colour}
-        strokeWidth="1.75"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
