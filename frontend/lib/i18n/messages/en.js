@@ -28,6 +28,40 @@ const en = {
     walkIn: 'Walk-in',
     unknown: 'Unknown',
     inactive: 'Inactive',
+    viewAll: 'View all',
+  },
+
+  shell: {
+    account: 'Account: {name}',
+    promo: {
+      title: 'Better decisions. Stronger business.',
+      body: 'Opsight turns your data into clear insights and real results.',
+    },
+  },
+
+  search: {
+    label: 'Search',
+    placeholder: 'Search anything…',
+    hint: 'Type to find a screen, or at least two characters to search orders, customers and products.',
+    searching: 'Searching…',
+    noResults: 'Nothing found for “{query}”.',
+    groups: {
+      pages: 'Screens',
+      orders: 'Orders',
+      customers: 'Customers',
+      products: 'Products',
+    },
+  },
+
+  notifications: {
+    label: {
+      one: 'Notifications, {count} key change',
+      other: 'Notifications, {count} key changes',
+    },
+    title: 'Key changes',
+    window: 'Last 30 days',
+    empty: 'Nothing needs your attention right now.',
+    viewAll: 'Open the dashboard',
   },
 
   states: {
@@ -89,8 +123,8 @@ const en = {
       expenses: 'Expenses',
       analytics: 'Analytics',
       gallery: 'Component gallery',
-      activity: 'Activity log',
-      users: 'Users',
+      activity: 'Activity Log',
+      users: 'Users & Roles',
       settings: 'Settings',
     },
   },
@@ -113,6 +147,7 @@ const en = {
       '7d': 'Last {count} days',
       '30d': 'Last {count} days',
       '90d': 'Last {count} days',
+      '365d': 'Last {count} months',
       mtd: 'Month to date',
       qtd: 'Quarter to date',
       ytd: 'Year to date',
@@ -163,6 +198,8 @@ const en = {
     noValue: 'No value for this period.',
     whatIs: 'What is {label}?',
     previousLabel: 'Previous',
+    up: 'Up',
+    down: 'Down',
   },
 
   metrics: {
@@ -235,6 +272,108 @@ const en = {
 
   dashboard: {
     description: 'Business performance for the selected period',
+    subtitle: 'Here’s what’s happening with your business today.',
+    incompleteNote:
+      'This period is still in progress, so it is being compared against a complete one.',
+    trend: {
+      title: 'Revenue & Expenses Trend',
+      titleRevenueOnly: 'Revenue Trend',
+      description: 'Over the selected period',
+      descriptionRevenueOnly: 'Over the selected period',
+      revenue: 'Revenue',
+      expenses: 'Expenses',
+      rangeLabel: 'Quick range',
+      range: {
+        days: '{count}D',
+        years: '{count}Y',
+      },
+    },
+    topSelling: {
+      title: 'Top Selling Products',
+      product: 'Product',
+      units: 'Units Sold',
+      revenue: 'Revenue',
+      trend: 'Trend',
+    },
+    quickStats: {
+      title: 'Quick Stats',
+      products: 'Total Products',
+      customers: 'Total Customers',
+      inventoryValue: 'Total Inventory Value',
+      activeUsers: 'Active Users',
+    },
+    activity: {
+      title: 'Recent Activity',
+      empty: 'Nothing has been recorded yet.',
+      onSubject: '{subject} {verb}',
+      byActor: '{actor} {verb}',
+      exported: 'Exported {resource} as CSV',
+      verbs: {
+        created: 'created',
+        updated: 'updated',
+        deleted: 'deleted',
+        login: 'signed in',
+        logout: 'signed out',
+        login_failed: 'failed to sign in',
+        lockout: 'was locked out',
+        generated: 'exported',
+        confirmed: 'confirmed',
+        fulfilled: 'fulfilled',
+        cancelled: 'cancelled',
+        refunded: 'refunded',
+        activated: 'activated',
+        deactivated: 'deactivated',
+        role_changed: 'role changed',
+        password_changed: 'password changed',
+      },
+    },
+    explore: {
+      title: 'Need deeper insights?',
+      body: 'Explore trends, breakdowns and comparisons behind every figure on this dashboard.',
+      action: 'Explore Analytics',
+    },
+    sideColumn: 'Attention',
+    revenueDescription: '{currency} · over the selected period',
+    greeting: {
+      morning: 'Good morning, {name}',
+      afternoon: 'Good afternoon, {name}',
+      evening: 'Good evening, {name}',
+      morningAnonymous: 'Good morning',
+      afternoonAnonymous: 'Good afternoon',
+      eveningAnonymous: 'Good evening',
+    },
+    moreMetrics: {
+      title: 'Performance details',
+      description: 'The figures behind the headline numbers',
+    },
+    categories: {
+      title: 'Sales by Product Category',
+      description: 'Revenue distribution by category',
+      total: 'Net revenue',
+      sales: 'Sales',
+      other: 'Other',
+    },
+    cashFlow: {
+      title: 'Business Performance',
+      description: {
+        one: '{currency} · the last month',
+        other: '{currency} · the last {count} months',
+      },
+      revenue: 'Net revenue',
+      expenses: 'Expenses',
+      month: 'Month',
+      partialFootnote: 'The lighter bars are the current month, which is still in progress.',
+    },
+    inventory: {
+      title: 'Inventory Status',
+      inStock: 'In Stock',
+      low: 'Low Stock',
+      out: 'Out of Stock',
+      products: {
+        one: '{count} product',
+        other: '{count} products',
+      },
+    },
     keyMetrics: 'Key metrics',
     profitDescription: 'net revenue less cost of goods at the time of sale',
     topProducts: {
@@ -244,6 +383,7 @@ const en = {
       rank: '#',
       product: 'Product',
       revenue: 'Revenue',
+      viewAll: 'All products',
     },
     lowStock: {
       title: 'Low stock',
@@ -258,7 +398,8 @@ const en = {
       viewAll: 'View all inventory',
     },
     recentOrders: {
-      title: 'Recent orders',
+      title: 'Recent Orders',
+      date: 'Date',
       description: 'Latest activity, regardless of the selected period',
       all: 'All orders',
       empty: 'No orders yet',
@@ -271,7 +412,7 @@ const en = {
   },
 
   insights: {
-    title: 'Key changes',
+    title: 'Key Insights',
     description: 'Rule-based checks on these figures and on current stock',
     heldBackPartial: 'Held back until this period finishes',
     heldBack: 'Held back on this period',

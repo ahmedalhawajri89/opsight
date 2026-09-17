@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Metrics;
 
+use App\Domain\Inventory\StockLevel;
 use App\Domain\Orders\OrderStatus;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -469,12 +471,56 @@ final class MetricCalculator
      */
     public function lowStockCount(): int
     {
-        return (int) DB::table('inventory_items')
+        $query = $this->activeInventory();
+        StockLevel::whereLow($query);
+
+        return (int) $query->count();
+    }
+
+    /**
+     * How the active catalogue's stock is spread right now.
+     *
+     * Three buckets that partition the catalogue, so they always sum to
+     * `total`: out of stock (nothing on hand), low (some, but at or below the
+     * effective threshold), and in stock (above it). Low here EXCLUDES out of
+     * stock, which lowStockCount() includes — a panel showing both would
+     * otherwise count an empty shelf twice.
+     *
+     * Point in time, like lowStockCount().
+     *
+     * @return array{total: int, in_stock: int, low: int, out: int}
+     */
+    public function inventoryStatus(): array
+    {
+        $row = $this->activeInventory()
+            ->selectRaw(
+                'COUNT(*) AS total, '
+                .'SUM(CASE WHEN inventory_items.stock_on_hand <= 0 THEN 1 ELSE 0 END) AS out_of_stock, '
+                .'SUM(CASE WHEN inventory_items.stock_on_hand > 0 AND inventory_items.stock_on_hand <= '
+                .StockLevel::thresholdSql().' THEN 1 ELSE 0 END) AS low',
+                [StockLevel::defaultThreshold()],
+            )
+            ->first();
+
+        $total = (int) ($row->total ?? 0);
+        $out = (int) ($row->out_of_stock ?? 0);
+        $low = (int) ($row->low ?? 0);
+
+        return [
+            'total' => $total,
+            'in_stock' => $total - $out - $low,
+            'low' => $low,
+            'out' => $out,
+        ];
+    }
+
+    /** inventory_items for products that are live in the catalogue. */
+    private function activeInventory(): Builder
+    {
+        return DB::table('inventory_items')
             ->join('products', 'products.id', '=', 'inventory_items.product_id')
             ->whereNull('products.deleted_at')
-            ->where('products.is_active', true)
-            ->whereRaw('inventory_items.stock_on_hand <= COALESCE(products.low_stock_threshold, inventory_items.reorder_point)')
-            ->count();
+            ->where('products.is_active', true);
     }
 
     /**

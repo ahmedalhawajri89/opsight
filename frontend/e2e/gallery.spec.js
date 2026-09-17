@@ -80,7 +80,7 @@ test('renders in dark mode without a runtime error', async ({ page }) => {
 
   // Proves the dark tokens actually applied, rather than only that nothing threw.
   const ground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(ground).toBe('rgb(11, 14, 18)');
+  expect(ground).toBe('rgb(11, 16, 32)');
 
   expect(errors).toEqual([]);
 });

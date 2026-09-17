@@ -79,6 +79,7 @@ final readonly class Period
             '7d' => $today->clone()->subDays(6),
             '30d' => $today->clone()->subDays(29),
             '90d' => $today->clone()->subDays(89),
+            '365d' => $today->clone()->subDays(364),
             'mtd' => $today->clone()->startOfMonth(),
             'qtd' => self::fiscalQuarterStart($today, $settings->fiscal_year_start_month),
             'ytd' => self::fiscalYearStart($today, $settings->fiscal_year_start_month),

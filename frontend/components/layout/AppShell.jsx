@@ -1,73 +1,58 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+import packageInfo from '@/package.json';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
+import { Popover } from '@/components/ui/Popover';
+import { Logo } from '@/components/layout/Logo';
 import { cn } from '@/lib/cn';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { PreferencesDialog } from '@/features/i18n/PreferencesDialog';
+import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
+import { GlobalSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
 
 /**
  * Navigation is filtered by ability, so a user never sees a link that would
- * 403 (ROLES_AND_PERMISSIONS.md §5).
+ * 403 (ROLES_AND_PERMISSIONS.md §5). Labels are dictionary KEYS, resolved at
+ * render time, so the navigation follows the reader's language.
  *
- * An entry without `ready: true` renders as disabled rather than as a dead link
- * that looks broken. Labels are dictionary KEYS, resolved at render time, so
- * the navigation follows the reader's language.
+ * A group without a label renders its items unheaded — the dashboard sits
+ * alone at the top, as the place every session starts.
  */
 const NAV_GROUPS = [
   {
-    label: 'nav.groups.overview',
+    label: null,
     items: [
-      {
-        href: '/dashboard',
-        label: 'nav.items.dashboard',
-        icon: 'dashboard',
-        ability: 'dashboard.view',
-        ready: true,
-      },
+      { href: '/dashboard', label: 'nav.items.dashboard', icon: 'home', ability: 'dashboard.view' },
     ],
   },
   {
     label: 'nav.groups.operations',
     items: [
-      {
-        href: '/orders',
-        label: 'nav.items.orders',
-        icon: 'orders',
-        ability: 'orders.view',
-        ready: true,
-      },
+      { href: '/orders', label: 'nav.items.orders', icon: 'orders', ability: 'orders.view' },
       {
         href: '/customers',
         label: 'nav.items.customers',
         icon: 'customers',
         ability: 'customers.view',
-        ready: true,
       },
-      {
-        href: '/products',
-        label: 'nav.items.products',
-        icon: 'products',
-        ability: 'products.view',
-        ready: true,
-      },
+      { href: '/products', label: 'nav.items.products', icon: 'gallery', ability: 'products.view' },
       {
         href: '/inventory',
         label: 'nav.items.inventory',
         icon: 'inventory',
         ability: 'inventory.view',
-        ready: true,
       },
       {
         href: '/expenses',
         label: 'nav.items.expenses',
         icon: 'expenses',
         ability: 'expenses.view',
-        ready: true,
       },
     ],
   },
@@ -77,9 +62,8 @@ const NAV_GROUPS = [
       {
         href: '/analytics',
         label: 'nav.items.analytics',
-        icon: 'analytics',
+        icon: 'chart',
         ability: 'analytics.view',
-        ready: true,
       },
     ],
   },
@@ -91,9 +75,8 @@ const NAV_GROUPS = [
             {
               href: '/gallery',
               label: 'nav.items.gallery',
-              icon: 'gallery',
+              icon: 'dashboard',
               ability: 'dashboard.view',
-              ready: true,
             },
           ],
         },
@@ -103,25 +86,22 @@ const NAV_GROUPS = [
     label: 'nav.groups.administration',
     items: [
       {
+        href: '/settings/users',
+        label: 'nav.items.users',
+        icon: 'userCircle',
+        ability: 'users.view',
+      },
+      {
         href: '/activity',
         label: 'nav.items.activity',
         icon: 'activity',
         ability: 'activity.view',
-        ready: true,
-      },
-      {
-        href: '/settings/users',
-        label: 'nav.items.users',
-        icon: 'users',
-        ability: 'users.view',
-        ready: true,
       },
       {
         href: '/settings',
         label: 'nav.items.settings',
         icon: 'settings',
         ability: 'settings.view',
-        ready: true,
       },
     ],
   },
@@ -141,23 +121,39 @@ function activeHref(pathname, groups) {
   );
 }
 
+/*
+ * The top bar's page slot.
+ *
+ * A screen can place its own controls in the shared top bar — the dashboard
+ * puts its date range there — without the shell knowing about any screen. The
+ * bar exposes an element through a callback ref (state set from a ref
+ * callback, not from an effect), and the screen portals into it.
+ */
+const TopBarContext = createContext(null);
+
+export function TopBarPortal({ children }) {
+  const slot = useContext(TopBarContext);
+
+  return slot ? createPortal(children, slot) : null;
+}
+
 export function AppShell({ children }) {
   const { user, can, logout } = useAuth();
   const { t } = useI18n();
-  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [slot, setSlot] = useState(null);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  useSearchShortcut(openSearch);
 
   /*
    * Navigate explicitly rather than waiting for the layout's auth guard to
-   * notice and redirect.
-   *
-   * Clearing the cache leaves the /me query briefly re-pending, and while it is
-   * pending the guard sees "still loading" rather than "signed out" — so the
-   * user would sit on a skeleton of the page they just left. A deliberate
-   * action deserves a deliberate navigation; the reactive guard stays as the
-   * safety net for sessions that expire on their own.
+   * notice and redirect: clearing the cache leaves /me briefly re-pending, and
+   * the user would sit on a skeleton of the page they just left.
    */
   async function handleSignOut() {
     await logout();
@@ -182,12 +178,26 @@ export function AppShell({ children }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [drawerOpen]);
 
-  const groups = NAV_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => can(item.ability)),
-  })).filter((group) => group.items.length > 0);
+  const groups = useMemo(
+    () =>
+      NAV_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => can(item.ability)),
+      })).filter((group) => group.items.length > 0),
+    [can],
+  );
 
   const current = activeHref(pathname, groups);
+
+  const pages = useMemo(
+    () =>
+      groups.flatMap((group) =>
+        group.items.map((item) => ({ href: item.href, icon: item.icon, label: t(item.label) })),
+      ),
+    [groups, t],
+  );
+
+  const sidebar = <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} />;
 
   return (
     <div className="flex min-h-dvh">
@@ -203,20 +213,9 @@ export function AppShell({ children }) {
         {t('nav.skipToContent')}
       </a>
 
-      {/*
-        Persistent from 1024px. Below that the same navigation is a drawer: a
-        240px rail leaves too little width for a table at tablet sizes, and
-        before this redesign the rail simply vanished below 768px with nothing
-        in its place, leaving phone users no way to move between modules.
-      */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-e border-(--color-line) bg-(--color-surface) lg:flex">
-        <Sidebar
-          groups={groups}
-          current={current}
-          user={user}
-          onSignOut={handleSignOut}
-          onPreferences={() => setPreferencesOpen(true)}
-        />
+      {/* Persistent from 1024px; below that the same navigation is a drawer. */}
+      <aside className="sticky top-0 hidden h-dvh w-[216px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) lg:flex">
+        {sidebar}
       </aside>
 
       {drawerOpen && (
@@ -227,168 +226,154 @@ export function AppShell({ children }) {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 size-full bg-(--color-text)/25"
           />
-          <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col border-e border-(--color-line) bg-(--color-surface) shadow-(--shadow-overlay)">
-            <Sidebar
-              groups={groups}
-              current={current}
-              user={user}
-              onSignOut={handleSignOut}
-              onPreferences={() => setPreferencesOpen(true)}
-            />
+          <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col border-e border-(--color-line) bg-(--color-sidebar) shadow-(--shadow-overlay)">
+            {sidebar}
           </aside>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-13 items-center gap-3 border-b border-(--color-line) bg-(--color-surface) px-4 lg:hidden">
-          <button
-            type="button"
-            onClick={() => {
-              setOpenedAt(pathname);
-              setDrawerOpen(true);
-            }}
-            aria-expanded={drawerOpen}
-            aria-label={t('nav.openNavigation')}
-            className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-sm) text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+        <TopBarContext.Provider value={slot}>
+          <header className="sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 px-4 backdrop-blur-sm sm:px-6">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenedAt(pathname);
+                setDrawerOpen(true);
+              }}
+              aria-expanded={drawerOpen}
+              aria-label={t('nav.openNavigation')}
+              className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover) lg:hidden"
+            >
+              <Icon name="menu" size={20} />
+            </button>
+
+            {/* Looks like a field; opens the search dialog, which holds the real one. */}
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-haspopup="dialog"
+              className="hidden h-9 w-full max-w-[22rem] items-center gap-2.5 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-sunken) px-3 text-start text-[0.8125rem] text-(--color-text-subtle) transition-colors hover:border-(--color-line-strong) md:flex"
+            >
+              <Icon name="search" size={16} />
+              <span className="flex-1">{t('search.placeholder')}</span>
+              <kbd className="px-1 font-sans text-xs tracking-wide text-(--color-text-subtle)">
+                ⌘ K
+              </kbd>
+            </button>
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-label={t('search.label')}
+              className="inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover) md:hidden"
+            >
+              <Icon name="search" size={19} />
+            </button>
+
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+              <div ref={setSlot} className="hidden min-w-0 items-center gap-2 xl:flex" />
+              <NotificationsMenu />
+              <UserMenu
+                user={user}
+                onPreferences={() => setPreferencesOpen(true)}
+                onSignOut={handleSignOut}
+              />
+            </div>
+          </header>
+
+          <PreferencesDialog open={preferencesOpen} onClose={() => setPreferencesOpen(false)} />
+          <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} pages={pages} />
+
+          {/*
+            tabIndex -1 lets the skip link move focus here. The outline is
+            suppressed on THIS element only: <main> is a landing point, not a
+            control.
+          */}
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-[1760px] flex-1 px-4 py-5 focus:outline-none sm:px-6 lg:py-6"
           >
-            <Icon name="menu" size={20} />
-          </button>
-          <Brand />
-        </header>
-
-        {/*
-          tabIndex -1 lets the skip link move focus here. The outline is
-          suppressed on THIS element only: <main> is a landing point, not a
-          control, and a focus ring around the entire page after skipping
-          conveys nothing — the prohibition on outline:none is about controls,
-          which all keep theirs.
-        */}
-        <PreferencesDialog open={preferencesOpen} onClose={() => setPreferencesOpen(false)} />
-
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 focus:outline-none sm:px-6 lg:px-8 lg:py-7"
-        >
-          {children}
-        </main>
+            {children}
+          </main>
+        </TopBarContext.Provider>
       </div>
     </div>
   );
 }
 
-function Brand() {
+function Sidebar({ groups, current, canAnalyse }) {
   const { t } = useI18n();
 
   return (
-    <span className="flex items-center gap-2.5">
-      {/* The product mark: a bar chart in the accent. Identity, used once. */}
-      <span
-        aria-hidden="true"
-        className="inline-flex size-7 items-center justify-center rounded-(--radius-md) bg-(--color-accent) text-(--color-text-inverse)"
-      >
-        <Icon name="analytics" size={16} strokeWidth={2.25} />
-      </span>
-      <span className="text-[0.9375rem] font-semibold tracking-tight text-(--color-text)">
-        {t('common.appName')}
-      </span>
-    </span>
-  );
-}
-
-function Sidebar({ groups, current, user, onSignOut, onPreferences }) {
-  const { t, locale } = useI18n();
-
-  return (
     <>
-      <div className="flex h-15 shrink-0 items-center px-5">
-        <Brand />
+      <div className="flex h-[62px] shrink-0 items-center px-5">
+        <Link href="/dashboard" className="rounded-(--radius-sm)" aria-label={t('common.appName')}>
+          <Logo />
+        </Link>
       </div>
 
-      <nav aria-label={t('nav.main')} className="flex-1 overflow-y-auto px-3 pb-4 pt-1">
-        {groups.map((group) => (
-          <div key={group.label} className="mt-4 first:mt-1">
-            {/*
-              A label, not a heading. As <h2>s these put five headings in the
-              outline BEFORE the page's <h1>, so a screen-reader user jumping by
-              heading met "Overview, Operations, Analysis…" before the page
-              they were on. The list is named by the label instead.
-            */}
-            <p
-              id={`nav-${group.label.replaceAll('.', '-')}`}
-              className="px-2.5 pb-1.5 text-[0.6875rem] font-medium tracking-[0.06em] text-(--color-text-subtle) uppercase"
-            >
-              {t(group.label)}
-            </p>
+      <nav aria-label={t('nav.main')} className="flex-1 overflow-y-auto px-3 pt-1 pb-4">
+        {groups.map((group, index) => {
+          const id = group.label ? `nav-${group.label.replaceAll('.', '-')}` : `nav-group-${index}`;
 
-            <ul aria-labelledby={`nav-${group.label.replaceAll('.', '-')}`} className="space-y-px">
-              {group.items.map((item) =>
-                item.ready ? (
+          return (
+            <div key={id} className={cn(index > 0 && 'mt-5')}>
+              {/*
+                A label, not a heading: as <h2>s these put headings in the
+                outline BEFORE the page's <h1>.
+              */}
+              {group.label && (
+                <p
+                  id={id}
+                  className="px-3 pb-2 text-[0.6875rem] font-semibold tracking-[0.08em] text-(--color-text-subtle) uppercase"
+                >
+                  {t(group.label)}
+                </p>
+              )}
+
+              <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
+                {group.items.map((item) => (
                   <li key={item.href}>
                     <NavLink item={item} active={current === item.href} />
                   </li>
-                ) : (
-                  <li key={item.href}>
-                    <span
-                      aria-disabled="true"
-                      title={t('nav.comingLater')}
-                      className="flex cursor-not-allowed items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-1.5 text-[0.8125rem] text-(--color-text-subtle)"
-                    >
-                      <Icon name={item.icon} />
-                      {t(item.label)}
-                    </span>
-                  </li>
-                ),
-              )}
-            </ul>
-          </div>
-        ))}
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </nav>
 
-      <div className="shrink-0 border-t border-(--color-line) p-3">
-        {/*
-          Language is reachable by every role from every screen, not buried in
-          the Owner-only settings: it is a personal preference, and the person
-          who most needs to change it is the one who cannot read the current one.
-          The button names the language in its own script, for that reason.
-        */}
-        <button
-          type="button"
-          onClick={onPreferences}
-          className="mb-1 flex w-full items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-1.5 text-[0.8125rem] text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
-        >
-          <Icon name="globe" className="text-(--color-text-subtle)" />
-          <span className="flex-1 text-start">{t('preferences.open')}</span>
-          <span lang={locale === 'ar' ? 'en' : 'ar'} className="text-xs text-(--color-text-subtle)">
-            {locale === 'ar' ? 'English' : 'العربية'}
-          </span>
-        </button>
-
-        <div className="flex items-center gap-2.5 rounded-(--radius-md) px-2 py-1.5">
+      <div className="shrink-0 px-3 pb-4">
+        <div className="rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) p-4">
           <span
             aria-hidden="true"
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-(--color-surface-hover) text-xs font-semibold text-(--color-text-muted)"
+            className="inline-flex size-8 items-center justify-center rounded-(--radius-md) bg-linear-to-br from-(--brand-from) to-(--brand-to) text-white"
           >
-            {initials(user.name)}
+            <Icon name="chart" size={16} strokeWidth={2} />
           </span>
-
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.8125rem] font-medium text-(--color-text)">{user.name}</p>
-            <p className="truncate text-xs text-(--color-text-muted)">
-              {user.role_label} · <span>{user.email}</span>
+          <p className="mt-3 text-[0.8125rem] leading-snug font-semibold text-(--color-text)">
+            {t('shell.promo.title')}
+          </p>
+          <div className="mt-1.5 flex items-end justify-between gap-2">
+            <p className="text-[0.6875rem] leading-relaxed text-(--color-text-muted)">
+              {t('shell.promo.body')}
             </p>
+            {canAnalyse && (
+              <Link
+                href="/analytics"
+                aria-label={t('nav.items.analytics')}
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-(--color-line) text-(--color-accent-text) transition-colors hover:bg-(--color-accent-subtle)"
+              >
+                <Icon name="arrowRight" size={14} className="rtl:-scale-x-100" />
+              </Link>
+            )}
           </div>
-
-          <button
-            type="button"
-            onClick={onSignOut}
-            title={t('nav.signOut')}
-            aria-label={t('nav.signOut')}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-sm) text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
-          >
-            <Icon name="signOut" />
-          </button>
         </div>
+
+        <p className="mt-4 px-2 text-[0.6875rem] text-(--color-text-subtle)">
+          v{packageInfo.version}
+        </p>
       </div>
     </>
   );
@@ -402,25 +387,98 @@ function NavLink({ item, active }) {
       href={item.href}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'relative flex items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-1.5 text-[0.8125rem] transition-colors duration-150',
+        'flex items-center gap-3 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] transition-colors duration-150',
         active
-          ? 'bg-(--color-accent-subtle) font-medium text-(--color-accent-text)'
-          : 'text-(--color-text-muted) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+          ? 'bg-(--color-accent-subtle) font-semibold text-(--color-accent)'
+          : 'text-(--color-text) hover:bg-(--color-surface-hover)',
       )}
     >
-      {/*
-        The active marker is a bar on the inline-start edge as well as a tint,
-        so the current page is identifiable without relying on colour alone.
-      */}
-      {active && (
-        <span
-          aria-hidden="true"
-          className="absolute inset-y-1.5 start-0 w-0.5 rounded-full bg-(--color-accent)"
-        />
-      )}
-      <Icon name={item.icon} className={active ? undefined : 'text-(--color-text-subtle)'} />
+      <Icon
+        name={item.icon}
+        size={18}
+        className={active ? 'text-(--color-accent-text)' : 'text-(--color-text-muted)'}
+      />
       {t(item.label)}
     </Link>
+  );
+}
+
+function UserMenu({ user, onPreferences, onSignOut }) {
+  const { t, locale } = useI18n();
+
+  return (
+    <Popover
+      panelClassName="w-64"
+      trigger={(props) => (
+        <button
+          type="button"
+          {...props}
+          aria-label={t('shell.account', { name: user.name })}
+          className="flex items-center gap-2.5 rounded-(--radius-md) py-1 ps-1 pe-1.5 transition-colors hover:bg-(--color-surface-hover)"
+        >
+          <span
+            aria-hidden="true"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--color-accent) text-xs font-semibold text-(--color-text-inverse)"
+          >
+            {initials(user.name)}
+          </span>
+          <span className="hidden min-w-0 text-start sm:block">
+            <span className="block max-w-36 truncate text-[0.8125rem] font-semibold text-(--color-text)">
+              {user.name}
+            </span>
+            <span className="block text-[0.6875rem] text-(--color-text-muted)">
+              {user.role_label}
+            </span>
+          </span>
+          <Icon
+            name="chevronDown"
+            size={14}
+            className="hidden text-(--color-text-subtle) sm:block"
+          />
+        </button>
+      )}
+    >
+      {({ close }) => (
+        <div className="p-1.5">
+          <div className="px-3 py-2.5">
+            <p className="truncate text-sm font-semibold text-(--color-text)">{user.name}</p>
+            <p className="truncate text-xs text-(--color-text-muted)">{user.email}</p>
+          </div>
+          <div className="my-1 h-px bg-(--color-line-subtle)" />
+          {/*
+            Language is reachable by every role from every screen: it is a
+            personal preference, and the person who most needs to change it is
+            the one who cannot read the current one — so the item names the
+            other language in its own script.
+          */}
+          <button
+            type="button"
+            onClick={() => {
+              close();
+              onPreferences();
+            }}
+            className="flex w-full items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] text-(--color-text) hover:bg-(--color-surface-hover)"
+          >
+            <Icon name="globe" className="text-(--color-text-muted)" />
+            <span className="flex-1 text-start">{t('preferences.open')}</span>
+            <span
+              lang={locale === 'ar' ? 'en' : 'ar'}
+              className="text-xs text-(--color-text-subtle)"
+            >
+              {locale === 'ar' ? 'English' : 'العربية'}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="flex w-full items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] text-(--color-text) hover:bg-(--color-surface-hover)"
+          >
+            <Icon name="signOut" className="text-(--color-text-muted)" />
+            {t('nav.signOut')}
+          </button>
+        </div>
+      )}
+    </Popover>
   );
 }
 

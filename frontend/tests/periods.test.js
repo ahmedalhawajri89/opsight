@@ -30,6 +30,10 @@ describe('rolling presets', () => {
     expect(resolvePreset(PRESETS.Last90, { today: TODAY }).from).toBe('2026-06-19');
   });
 
+  it('resolves the last twelve months as 365 days including today', () => {
+    expect(resolvePreset(PRESETS.Last365, { today: TODAY }).from).toBe('2025-09-17');
+  });
+
   it('starts month-to-date on the first of the month', () => {
     expect(resolvePreset(PRESETS.MonthToDate, { today: TODAY }).from).toBe('2026-09-01');
   });

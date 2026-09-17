@@ -3,9 +3,10 @@
 import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
-import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DataTable } from '@/components/data/DataTable';
+import { PanelTitle } from '@/components/layout/PageHeader';
 import { EmptyState, ErrorState } from '@/components/data/States';
 import { useI18n } from '@/features/i18n/I18nProvider';
 
@@ -34,8 +35,11 @@ export function ChartFrame({
   emptyDescription,
   footnote,
   actions,
+  legend,
+  icon,
   height = 280,
   className,
+  style,
   children,
 }) {
   const { t } = useI18n();
@@ -45,34 +49,42 @@ export function ChartFrame({
 
   return (
     <section
+      style={style}
       className={cn(
         'flex min-w-0 flex-col rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
         className,
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4 pb-2">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-(--color-text)">{title}</h2>
-          {description && (
-            <p className="tabular mt-0.5 text-[0.8125rem] text-(--color-text-muted)">
-              {description}
-            </p>
-          )}
-        </div>
+      <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-2">
+        <PanelTitle title={title} description={description} icon={icon} />
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {actions}
+          {/*
+            An icon button, named in words for assistive technology and in a
+            tooltip for the pointer. The chart is never the only route to its
+            numbers; it just does not need a word in the header to say so.
+          */}
           {hasData && !loading && !error && (
-            <Button size="sm" variant="ghost" onClick={() => setAsTable((value) => !value)}>
-              {asTable ? t('charts.viewAsChart') : t('charts.viewAsTable')}
-            </Button>
+            <button
+              type="button"
+              onClick={() => setAsTable((value) => !value)}
+              aria-label={asTable ? t('charts.viewAsChart') : t('charts.viewAsTable')}
+              title={asTable ? t('charts.viewAsChart') : t('charts.viewAsTable')}
+              aria-pressed={asTable}
+              className="inline-flex size-8 items-center justify-center rounded-(--radius-md) text-(--color-text-subtle) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+            >
+              <Icon name={asTable ? 'analytics' : 'table'} size={16} />
+            </button>
           )}
         </div>
       </div>
 
+      {legend && !loading && hasData && !asTable && <div className="px-5 pt-1">{legend}</div>}
+
       <div className="flex-1 px-5 pt-2 pb-5">
         {loading ? (
-          <div aria-busy="true" style={{ height }}>
+          <div aria-busy="true" style={{ height: height === 'auto' ? 200 : height }}>
             <Skeleton className="size-full" />
           </div>
         ) : error ? (

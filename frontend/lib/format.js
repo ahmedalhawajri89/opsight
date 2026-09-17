@@ -258,6 +258,22 @@ export function formatDate(value, { locale = activeLocale, timeZone } = {}) {
   }).format(date);
 }
 
+/** A date without its year when it falls in the current year — for tight columns. */
+export function formatShortDate(value, { locale = activeLocale, timeZone, now = new Date() } = {}) {
+  const date = toDate(value);
+
+  if (!date) return EMPTY;
+
+  const sameYear = date.getFullYear() === now.getFullYear();
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+    timeZone,
+  }).format(date);
+}
+
 export function formatDateTime(value, { locale = activeLocale, timeZone } = {}) {
   const date = toDate(value);
 

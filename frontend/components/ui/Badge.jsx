@@ -11,19 +11,35 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * the meaning (UI_UX_DIRECTION.md §6).
  */
 
+/*
+ * Tinted fills with no outline. The outlined badges of the first design system
+ * drew a ring around every status in a table, which turned a column of orders
+ * into a column of boxes; a tint carries the tone with less noise, and the
+ * text label still carries the meaning.
+ */
 const TONES = {
-  neutral: 'text-(--color-text-muted) border-(--color-line-strong) bg-(--color-surface)',
-  accent: 'text-(--color-accent-text) border-(--color-accent) bg-(--color-accent-subtle)',
-  positive: 'text-(--color-positive) border-(--color-positive) bg-(--color-positive-subtle)',
-  negative: 'text-(--color-negative) border-(--color-negative) bg-(--color-negative-subtle)',
-  warning: 'text-(--color-warning) border-(--color-warning) bg-(--color-warning-subtle)',
+  neutral: 'text-(--color-text-muted) bg-(--color-surface-hover)',
+  accent: 'text-(--color-accent-text) bg-(--color-accent-subtle)',
+  positive: 'text-(--color-positive) bg-(--color-positive-subtle)',
+  negative: 'text-(--color-negative) bg-(--color-negative-subtle)',
+  warning: 'text-(--color-warning) bg-(--color-warning-subtle)',
 };
 
-export function Badge({ tone = 'neutral', dot = false, className, children, ...props }) {
+export function Badge({
+  tone = 'neutral',
+  dot = false,
+  shape = 'pill',
+  className,
+  children,
+  ...props
+}) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5',
+        'inline-flex items-center gap-1.5',
+        // No class-merging helper exists, so the two shapes are exclusive here
+        // rather than overridden by the caller.
+        shape === 'tag' ? 'rounded-(--radius-sm) px-2.5 py-1' : 'rounded-full px-2 py-0.5',
         'text-[0.6875rem] font-medium leading-4 whitespace-nowrap',
         TONES[tone] ?? TONES.neutral,
         className,
@@ -47,7 +63,7 @@ const ORDER_STATUS_TONE = {
   draft: 'neutral',
   confirmed: 'accent',
   fulfilled: 'positive',
-  cancelled: 'neutral',
+  cancelled: 'negative',
   refunded: 'warning',
 };
 
@@ -57,7 +73,7 @@ export function OrderStatusBadge({ status, className }) {
   const known = Object.hasOwn(ORDER_STATUS_TONE, status);
 
   return (
-    <Badge tone={known ? ORDER_STATUS_TONE[status] : 'neutral'} dot className={className}>
+    <Badge tone={known ? ORDER_STATUS_TONE[status] : 'neutral'} shape="tag" className={className}>
       {known ? t(`orderStatus.${status}`) : (status ?? t('common.unknown'))}
     </Badge>
   );

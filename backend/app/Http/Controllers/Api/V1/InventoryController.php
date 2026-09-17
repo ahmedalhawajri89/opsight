@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Export\CsvExport;
 use App\Domain\Inventory\AdjustStock;
+use App\Domain\Inventory\StockLevel;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryItemResource;
 use App\Http\Resources\InventoryMovementResource;
@@ -51,7 +52,7 @@ class InventoryController extends Controller
                     fn ($q) => $q->where('name', 'like', "%{$term}%")->orWhere('sku', 'like', "%{$term}%"),
                 ),
                 'low_stock' => fn ($query, string $value) => filter_var($value, FILTER_VALIDATE_BOOLEAN)
-                    ? $query->whereColumn('stock_on_hand', '<=', 'reorder_point')
+                    ? $query->tap(fn ($q) => StockLevel::whereLow($q))
                     : $query,
             ],
             sortable: ['stock_on_hand', 'last_movement_at'],
@@ -104,7 +105,7 @@ class InventoryController extends Controller
             InventoryItem::query()
                 ->with('product')
                 ->whereHas('product', fn ($q) => $q->whereNull('deleted_at')->where('is_active', true))
-                ->whereColumn('stock_on_hand', '<=', 'reorder_point')
+                ->tap(fn ($query) => StockLevel::whereLow($query))
                 ->orderBy('stock_on_hand')
                 ->paginate(QueryFilter::perPage($request)),
         );

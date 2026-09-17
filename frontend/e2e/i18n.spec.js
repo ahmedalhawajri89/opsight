@@ -55,6 +55,7 @@ test.describe('a signed-in user choosing Arabic', () => {
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
     try {
+      await page.getByRole('button', { name: /^Account:/ }).click();
       await page.getByRole('button', { name: /Language/ }).click();
 
       const dialog = page.getByRole('dialog');
@@ -97,7 +98,9 @@ test.describe('a signed-in user choosing Arabic', () => {
     await page.goto('/dashboard');
 
     try {
-      expect(await savePreferences(page, { locale: 'ar' })).toBe(200);
+      // Numerals stated explicitly: this test is about the default for a new
+      // choice of Arabic, and must not inherit digits a failed run left behind.
+      expect(await savePreferences(page, { locale: 'ar', numerals: 'latn' })).toBe(200);
       await page.reload();
 
       await expect(page.getByRole('heading', { name: 'لوحة المعلومات' })).toBeVisible();

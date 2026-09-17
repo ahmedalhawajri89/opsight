@@ -17,6 +17,7 @@ export const PRESETS = {
   Last7: '7d',
   Last30: '30d',
   Last90: '90d',
+  Last365: '365d',
   MonthToDate: 'mtd',
   QuarterToDate: 'qtd',
   YearToDate: 'ytd',
@@ -29,6 +30,16 @@ export const PRESET_DAYS = {
   [PRESETS.Last7]: 7,
   [PRESETS.Last30]: 30,
   [PRESETS.Last90]: 90,
+  [PRESETS.Last365]: 365,
+};
+
+// What each rolling preset's label counts: days, except a year, which reads as
+// "last 12 months" rather than "last 365 days".
+export const PRESET_LABEL_COUNTS = {
+  [PRESETS.Last7]: 7,
+  [PRESETS.Last30]: 30,
+  [PRESETS.Last90]: 90,
+  [PRESETS.Last365]: 12,
 };
 
 export const COMPARISON = {
@@ -93,6 +104,8 @@ export function resolvePreset(preset, { today = new Date(), fiscalStartMonth = 1
         return addDays(to, -29);
       case PRESETS.Last90:
         return addDays(to, -89);
+      case PRESETS.Last365:
+        return addDays(to, -364);
       case PRESETS.MonthToDate:
         return new Date(to.getFullYear(), to.getMonth(), 1);
       case PRESETS.QuarterToDate:
@@ -215,4 +228,13 @@ export function formatBucketLabel(bucket, bucketEnd, { locale = getFormatLocale(
     timeZone: 'UTC',
     ...(monthly ? { month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' }),
   }).format(start);
+}
+
+/** A month bucket as its short month name alone ("Aug", "أغسطس"), for a bar axis. */
+export function formatMonthLabel(bucket, { locale = getFormatLocale() } = {}) {
+  if (!bucket) return '';
+
+  return new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' }).format(
+    new Date(`${bucket}T00:00:00Z`),
+  );
 }

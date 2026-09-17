@@ -32,20 +32,20 @@ const SEVERITY = {
   },
   action: {
     label: 'insights.severity.action',
-    icon: 'bolt',
-    tile: 'bg-(--color-accent-subtle) text-(--color-accent-text)',
+    icon: 'arrowDown',
+    tile: 'bg-(--color-negative-subtle) text-(--color-negative)',
     text: 'text-(--color-accent-text)',
   },
   positive: {
     label: 'insights.severity.positive',
-    icon: 'check',
+    icon: 'arrowUp',
     tile: 'bg-(--color-positive-subtle) text-(--color-positive)',
     text: 'text-(--color-positive)',
   },
   opportunity: {
     label: 'insights.severity.opportunity',
-    icon: 'spark',
-    tile: 'bg-(--color-accent-subtle) text-(--color-accent-text)',
+    icon: 'star',
+    tile: 'bg-(--color-info-subtle) text-(--color-info)',
     text: 'text-(--color-accent-text)',
   },
   data_quality: {
@@ -56,16 +56,38 @@ const SEVERITY = {
   },
 };
 
-export function InsightFeed({ insights = [], suppressed = null, loading = false, className }) {
+export function InsightFeed({
+  insights = [],
+  suppressed = null,
+  loading = false,
+  className,
+  style,
+  viewAllHref,
+}) {
   const { t } = useI18n();
 
   return (
     <Card
       title={t('insights.title')}
-      description={t('insights.description')}
+      icon="diamond"
       className={cn('flex flex-col', className)}
       bodyClassName="flex-1"
+      style={style}
+      actions={
+        viewAllHref && (
+          <Link
+            href={viewAllHref}
+            className="group inline-flex items-center gap-1 text-xs font-medium text-(--color-accent-text) hover:underline"
+          >
+            {t('common.viewAll')}
+            <Icon name="arrowRight" size={13} className="rtl:-scale-x-100" />
+          </Link>
+        )
+      }
     >
+      {/* That these are rule-based checks, not predictions, is stated for every reader. */}
+      <p className="sr-only">{t('insights.description')}</p>
+
       {loading ? (
         <ul className="space-y-3" aria-busy="true">
           {[0, 1, 2].map((row) => (
@@ -79,7 +101,7 @@ export function InsightFeed({ insights = [], suppressed = null, loading = false,
           ))}
         </ul>
       ) : insights.length > 0 ? (
-        <ul className="-my-3 divide-y divide-(--color-line-subtle)">
+        <ul className="space-y-2.5">
           {insights.map((insight) => (
             <InsightRow key={insight.id} insight={insight} />
           ))}
@@ -97,30 +119,26 @@ function InsightRow({ insight }) {
   const target = linkFor(insight.link);
 
   return (
-    <li className="flex gap-3 py-3">
+    <li className="flex gap-3 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) p-4 transition-colors duration-150 hover:bg-(--color-surface-sunken)">
       <span
         aria-hidden="true"
         className={cn(
-          'inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md)',
+          'inline-flex size-9 shrink-0 items-center justify-center rounded-full',
           severity.tile,
         )}
       >
-        <Icon name={severity.icon} size={16} />
+        <Icon name={severity.icon} size={16} strokeWidth={2.25} />
       </span>
 
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            'text-[0.6875rem] font-semibold tracking-[0.06em] uppercase',
-            severity.text,
-          )}
-        >
-          {t(severity.label)}
-        </p>
-        <p className="mt-0.5 text-sm font-medium text-(--color-text)">{insight.title}</p>
-        <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
-          {insight.message}
-        </p>
+        {/*
+          The severity is named in words for assistive technology; on screen
+          each severity has its own icon as well as its tint, so colour is
+          never the only signal.
+        */}
+        <p className="sr-only">{t(severity.label)}</p>
+        <p className="text-[0.8125rem] font-semibold text-(--color-text)">{insight.title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-(--color-text-muted)">{insight.message}</p>
 
         {target && (
           <Link

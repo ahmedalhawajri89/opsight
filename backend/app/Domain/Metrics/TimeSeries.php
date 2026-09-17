@@ -41,6 +41,21 @@ use InvalidArgumentException;
  */
 final class TimeSeries
 {
+    /** Every metric this class can chart. */
+    public const METRICS = [
+        'net_revenue', 'gross_revenue', 'orders_count', 'average_order_value',
+        'cogs', 'gross_profit', 'gross_margin', 'operating_expenses',
+    ];
+
+    /** The subset that reveals cost, and so needs metrics.view_cost. */
+    public const COST_METRICS = ['cogs', 'gross_profit', 'gross_margin', 'operating_expenses'];
+
+    /**
+     * Ratios per bucket. A bucket with nothing to divide by has no value —
+     * null, not zero — exactly as the period-level metric does (METRICS.md §1.5).
+     */
+    private const RATIO_METRICS = ['gross_margin', 'average_order_value'];
+
     /**
      * Grain defaults by span: daily up to 31 days, weekly to 180, monthly after.
      *
@@ -144,10 +159,14 @@ final class TimeSeries
     }
 
     /**
-     * @return array<string, int|string>
+     * @return array<string, int|string|float|null>
      */
     private function query(Period $period, string $metric, string $grain): array
     {
+        if ($metric === 'operating_expenses') {
+            return $this->expenseQuery($period, $grain);
+        }
+
         [$from, $to] = $period->utcBounds();
         $timezone = BusinessSetting::current()->timezone;
 
@@ -172,6 +191,13 @@ final class TimeSeries
             'orders_count' => 'COUNT(*)',
             'cogs' => 'COALESCE(SUM(cogs_amount), 0)',
             'gross_profit' => 'COALESCE(SUM(subtotal_amount - discount_amount - refunded_amount - cogs_amount), 0)',
+            // Same numerator and denominator as MetricCalculator: gross profit
+            // over net revenue, undefined when there is no revenue.
+            'gross_margin' => 'CASE WHEN SUM(subtotal_amount - discount_amount - refunded_amount) > 0 '
+                .'THEN SUM(subtotal_amount - discount_amount - refunded_amount - cogs_amount) '
+                .'/ SUM(subtotal_amount - discount_amount - refunded_amount) ELSE NULL END',
+            'average_order_value' => 'CASE WHEN COUNT(*) > 0 '
+                .'THEN ROUND(SUM(subtotal_amount - discount_amount - refunded_amount) / COUNT(*), 2) ELSE NULL END',
             default => throw new InvalidArgumentException("Unknown time series metric: {$metric}."),
         };
 
@@ -191,14 +217,57 @@ final class TimeSeries
         ])->all();
     }
 
-    private function castValue(mixed $value, string $metric): int|string
+    /**
+     * Operating expenses per bucket.
+     *
+     * Its own query because expenses are not orders: they are dated by
+     * `incurred_on`, a calendar DATE in the business's own terms, so there is
+     * no timezone conversion to apply — converting a date as if it were an
+     * instant would move an expense across a month end (METRICS.md §2.9). The
+     * same definition as MetricCalculator::operatingExpenses(), and a test
+     * holds the buckets to its total.
+     *
+     * @return array<string, string>
+     */
+    private function expenseQuery(Period $period, string $grain): array
     {
-        // Counts are integers; money stays a string and never becomes a float.
-        return $metric === 'orders_count' ? (int) $value : (string) $value;
+        $bucketExpression = match ($grain) {
+            'week' => 'DATE(DATE_SUB(incurred_on, INTERVAL WEEKDAY(incurred_on) DAY))',
+            'month' => "DATE_FORMAT(incurred_on, '%Y-%m-01')",
+            default => 'DATE(incurred_on)',
+        };
+
+        return DB::table('expenses')
+            ->whereNull('deleted_at')
+            ->whereBetween('incurred_on', [$period->from, $period->to])
+            ->selectRaw("{$bucketExpression} AS bucket, COALESCE(SUM(amount), 0) AS value")
+            ->groupBy('bucket')
+            ->get()
+            ->mapWithKeys(fn ($row): array => [(string) $row->bucket => (string) $row->value])
+            ->all();
     }
 
-    private function zeroFor(string $metric): int|string
+    private function castValue(mixed $value, string $metric): int|string|float|null
     {
+        if ($value === null) {
+            return null;
+        }
+
+        // Counts are integers; a margin is a raw ratio like the summary's; money
+        // stays a string and never becomes a float.
+        return match ($metric) {
+            'orders_count' => (int) $value,
+            'gross_margin' => round((float) $value, 6),
+            default => (string) $value,
+        };
+    }
+
+    private function zeroFor(string $metric): int|string|null
+    {
+        if (in_array($metric, self::RATIO_METRICS, strict: true)) {
+            return null;
+        }
+
         return $metric === 'orders_count' ? 0 : '0.00';
     }
 
@@ -225,7 +294,7 @@ final class TimeSeries
      */
     private function assertMetricIsPermitted(string $metric, ?User $user): void
     {
-        if (! in_array($metric, ['cogs', 'gross_profit'], strict: true)) {
+        if (! in_array($metric, self::COST_METRICS, strict: true)) {
             return;
         }
 

@@ -76,37 +76,44 @@ table wastes a third of the viewport.
 ## 4. Colour
 
 A restrained neutral system with one accent and a strictly reserved semantic set.
+`app/globals.css` is the source of truth. **Revised in dashboard v3** to the palette of the
+reference layout the owner supplied (v2's petrol and sand is superseded): every value was
+sampled from the reference and moved only as far as WCAG AA required.
 
-**Neutrals** — the interface is built almost entirely from these.
+**Neutrals** — a cool white ground with a navy cast in the text.
 
 ```
 Light                              Dark
---surface        #FFFFFF           #0E1116
---surface-sunken #F7F8FA           #151A21
---surface-raised #FFFFFF           #1B212A
---border         #E3E6EB           #262D38
---border-strong  #CBD1DA           #333C49
---text           #14181F           #E8ECF2
---text-muted     #5B6472           #96A1B0
---text-subtle    #8B95A3           #6E7986
+--surface        #FFFFFF           #121829
+--surface-sunken #F6F8FC           #0B1020
+--sidebar        #FAFBFE           #0F1526
+--border         #E6EAF2           #263048
+--border-strong  #8A93A6           #5F6A82
+--text           #101A33           #E8ECF6
+--text-muted     #5B6478           #A0A9BD
+--text-subtle    #7C8499           #7F89A0
 ```
 
-**Accent** — one colour, used for interactive affordances and the primary data series only.
+**Accent** — navy carries weight (primary buttons, the selected segment, the avatar); blue
+carries what you can follow (links, the active navigation icon); lavender marks where you are.
 
 ```
---accent         #2563A8    (deep restrained blue)
---accent-hover   #1E5191
---accent-subtle  #EAF1F9  /  #16283D
+--accent         #1F2B5B  /  #8AA4FF   (navy)
+--accent-text    #2E55D6  /  #A8BCFF   (blue)
+--accent-subtle  #EEF0FD  /  #1C2547   (lavender)
 ```
 
-**Semantic** — reserved for meaning, never for decoration.
+**Semantic** — reserved for meaning, never for decoration. The reference's green, red and
+orange were a shade too light for 12px text and were darkened to pass.
 
 ```
---positive  #1B7A4B   favourable change
---negative  #B4342B   unfavourable change
---warning   #A66412   attention, low stock
---neutral   --text-muted   no change / not applicable
+--positive  #15803D   favourable change
+--negative  #C81E1E   unfavourable change
+--warning   #C2410C   attention, low stock, money going out
 ```
+
+**Chart series** — blue, orange, teal, lilac, navy, slate. Sparklines use their own decorative
+strokes (`--spark-*`), because a sparkline never carries a value on its own.
 
 **Rules.**
 
@@ -116,8 +123,9 @@ Light                              Dark
    component reads that flag. Colouring by sign alone is a real reporting error.
 2. **Never colour alone.** A change is always an arrow or `+`/`−` sign **and** a colour, so
    colour-blind users and greyscale prints lose nothing.
-3. Categorical chart palette: a maximum of six hues, derived from the accent by rotation
-   with controlled lightness, checked for deuteranopia and protanopia distinguishability.
+3. Categorical chart palette: a maximum of six hues, separated by lightness as much as by
+   hue, and held by `tests/contrast.test.js` to a minimum perceptual distance under
+   simulated protanopia and deuteranopia.
    Beyond six series, the chart aggregates into "Other" instead of adding colours.
 4. Sequential scales (heatmaps) are single-hue light-to-dark. Diverging scales are used
    only where a meaningful midpoint exists.
@@ -255,8 +263,13 @@ refunded   warning
   12 units to stock and removes BHD 840.00 from August revenue." Not "Are you sure?".
 - Toasts for completed background-ish actions; inline messages for anything needing a
   decision. Errors never appear only in a toast that can be missed.
-- Motion: 120–160 ms, ease-out, on state transitions only. No page-transition animation, no
-  staggered list entrances, no number counting. `prefers-reduced-motion` removes all of it.
+- Motion, revised in the dashboard redesign (v2). Controls: 120–160 ms, ease-out, on state
+  transitions. Content: three entrance effects, each short and each played once — panels
+  *rise* 6px into place staggered in reading order, sparklines *reveal* from their start
+  edge, share and progress bars *grow*; charts draw in over ~800 ms. Nothing loops, nothing
+  animates on a refetch (a changed figure must not be disguised by an arriving one), no
+  number counting, and no hover lift on panels that are not clickable. `prefers-reduced-motion`
+  removes all of it — CSS through a media query, Recharts through `useReducedMotion()`.
 
 ## 8. Accessibility
 

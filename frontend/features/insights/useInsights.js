@@ -13,11 +13,12 @@ import * as analytics from '@/services/analytics';
  * wrong" and "the rules were not allowed to run" — and rendering both as blank
  * space tells the reader the first when the truth is the second.
  */
-export function useInsights(period) {
+export function useInsights(period, options = {}) {
   const query = useQuery({
     queryKey: queryKeys.insights.list(period),
     queryFn: () => analytics.getInsights(period),
     placeholderData: (previous) => previous,
+    ...options,
   });
 
   return {

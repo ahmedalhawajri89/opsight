@@ -131,7 +131,7 @@ export function BreakdownChart({
                 key={row.key}
                 // "Other" is deliberately neutral: it is an aggregate, not a
                 // competitor in the ranking.
-                fill={row.is_other ? 'var(--series-6)' : 'var(--series-2)'}
+                fill={row.is_other ? 'var(--series-6)' : 'var(--series-1)'}
               />
             ))}
           </Bar>

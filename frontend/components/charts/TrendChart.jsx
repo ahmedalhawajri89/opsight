@@ -14,7 +14,10 @@ import {
 
 import { ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/format';
+import { useId } from 'react';
+
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { formatCompact, formatMoney, formatNumber } from '@/lib/format';
 import { formatBucketLabel } from '@/lib/periods';
 
 /**
@@ -31,7 +34,12 @@ import { formatBucketLabel } from '@/lib/periods';
  *    them here would reintroduce the lie about slope.
  *  - The partial final bucket is SHADED and annotated, so an unfinished month
  *    does not read as a collapse.
- *  - No gradient fill, no 3D, no entry animation.
+ *  - No 3D and no looping motion. The area fades from the line to nothing, so
+ *    the fill reads as "under this line" rather than as a second shape, and
+ *    the line draws in once, briefly, unless the reader has asked for less
+ *    motion.
+ *  - Axis ticks are bare compact numbers; the currency is stated once, in the
+ *    description, instead of on every tick where it only adds noise.
  */
 export function TrendChart({
   title,
@@ -43,18 +51,21 @@ export function TrendChart({
   loading = false,
   error = null,
   onRetry,
-  colour = 'var(--series-2)',
+  colour = 'var(--series-1)',
   height = 260,
+  icon,
   className,
+  style,
 }) {
   const { t, dir } = useI18n();
   const rtl = dir === 'rtl';
+  const reducedMotion = useReducedMotion();
+  const gradientId = useId().replaceAll(':', '');
 
   const formatValue = (value) =>
     format === 'money' ? formatMoney(value, { currency, decimals }) : formatNumber(value);
 
-  const formatAxis = (value) =>
-    format === 'money' ? formatMoneyCompact(value, { currency }) : formatNumber(value);
+  const formatAxis = (value) => (format === 'money' ? formatCompact(value) : formatNumber(value));
 
   // Relabelled for the reader; the values are the API's, untouched.
   const series = rawSeries.map((bucket) => ({
@@ -89,12 +100,21 @@ export function TrendChart({
       error={error}
       onRetry={onRetry}
       height={height}
+      icon={icon}
       className={className}
+      style={style}
       emptyDescription={t('charts.trendEmpty')}
       footnote={partial ? t('charts.partialFootnote') : undefined}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={colour} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={colour} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
           {/* Horizontal gridlines only, at the lightest border token. */}
           <CartesianGrid vertical={false} stroke="var(--border-subtle)" strokeDasharray="0" />
 
@@ -124,7 +144,7 @@ export function TrendChart({
             tickLine={false}
             axisLine={false}
             tickMargin={4}
-            width={72}
+            width={48}
             domain={[0, 'auto']}
           />
 
@@ -167,13 +187,13 @@ export function TrendChart({
             type="monotone"
             dataKey="value"
             stroke={colour}
-            strokeWidth={2}
-            fill={colour}
-            // A flat wash, not a gradient — decoration competing with data.
-            fillOpacity={0.07}
-            isAnimationActive={false}
+            strokeWidth={2.25}
+            fill={`url(#${gradientId})`}
+            isAnimationActive={!reducedMotion}
+            animationDuration={800}
+            animationEasing="ease-out"
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
+            activeDot={{ r: 5, strokeWidth: 2.5, stroke: 'var(--surface)', fill: colour }}
           />
         </AreaChart>
       </ResponsiveContainer>

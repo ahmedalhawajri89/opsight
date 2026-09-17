@@ -45,11 +45,16 @@ test('an unauthenticated visitor is sent to the login screen', async ({ page }) 
 });
 
 test('an owner signs in, sees the dashboard, and signs out', async ({ page }) => {
-  await signIn(page, OWNER);
+  const user = await signIn(page, OWNER);
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
-  await expect(page.getByText(OWNER.email)).toBeVisible();
 
+  // The signed-in identity is on screen, named as the server named it.
+  await expect(page.getByText(user.name, { exact: true })).toBeVisible();
+  await expect(page.getByText(user.role_label, { exact: true })).toBeVisible();
+
+  // Sign out lives in the account menu in the top bar.
+  await page.getByRole('button', { name: /^Account:/ }).click();
   await page.getByRole('button', { name: 'Sign out' }).click();
 
   await expect(page).toHaveURL(/\/login/);

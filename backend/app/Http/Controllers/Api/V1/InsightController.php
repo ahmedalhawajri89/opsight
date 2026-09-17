@@ -112,7 +112,7 @@ class InsightController extends Controller
     private function resolvePeriod(Request $request): array
     {
         $validated = $request->validate([
-            'preset' => ['nullable', ValidationRule::in(['7d', '30d', '90d', 'mtd', 'qtd', 'ytd', 'custom'])],
+            'preset' => ['nullable', ValidationRule::in(['7d', '30d', '90d', '365d', 'mtd', 'qtd', 'ytd', 'custom'])],
             'from' => ['nullable', 'date_format:Y-m-d', 'required_if:preset,custom'],
             'to' => ['nullable', 'date_format:Y-m-d', 'required_if:preset,custom', 'after_or_equal:from'],
             'comparison' => ['nullable', ValidationRule::in(array_column(Comparison::cases(), 'value'))],

@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
       {meta?.comparison?.compares_partial_against_complete && (
         <p
           role="status"
-          className="flex flex-wrap items-center gap-2 rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
+          className="flex flex-wrap items-center gap-2.5 rounded-(--radius-lg) border border-(--color-warning-subtle) bg-(--color-warning-subtle)/60 px-4 py-2.5 text-[0.8125rem] text-(--color-text-muted)"
         >
           <PartialBadge />
           {t('analytics.partial')}
@@ -133,7 +133,9 @@ export default function AnalyticsPage() {
                   currency={currency}
                   decimals={decimals}
                   comparisonLabel={meta?.comparison?.label ?? ''}
-                  partial={meta?.period?.is_partial ?? false}
+                  // No per-tile "Incomplete" badge: the period is flagged once,
+                  // beside the range and in the notice above. Fifteen identical
+                  // badges trained the eye to skip all of them.
                 />
               ))}
         </StatGrid>

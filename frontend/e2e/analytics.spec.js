@@ -94,8 +94,14 @@ test.describe('dashboard, as an owner', () => {
   test('labels low stock as a point-in-time figure, not a period one', async ({ page }) => {
     await page.goto('/dashboard');
 
-    await expect(page.getByRole('heading', { name: 'Low stock' })).toBeVisible();
-    await expect(page.getByText('As of now — not for the selected period')).toBeVisible();
+    const panel = page
+      .getByRole('heading', { name: 'Inventory Status' })
+      .locator('xpath=ancestor::section[1]');
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText('Low Stock', { exact: true })).toBeVisible();
+
+    // Stated to assistive technology and in the panel's tooltip, not by position.
+    await expect(panel.getByText('As of now — not for the selected period')).toHaveCount(1);
   });
 });
 

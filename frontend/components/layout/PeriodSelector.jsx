@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn';
 import {
   COMPARISON,
   PRESETS,
-  PRESET_DAYS,
+  PRESET_LABEL_COUNTS,
   describePeriod,
   isPartialPeriod,
   resolvePreset,
@@ -71,7 +71,7 @@ export function PeriodSelector({
         onChange={(event) => handlePreset(event.target.value)}
         options={Object.values(PRESETS).map((value) => ({
           value,
-          label: t(`period.presets.${value}`, { count: PRESET_DAYS[value] }),
+          label: t(`period.presets.${value}`, { count: PRESET_LABEL_COUNTS[value] }),
         }))}
         className="h-9 w-auto min-w-36"
       />

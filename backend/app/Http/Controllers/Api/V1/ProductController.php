@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Export\CsvExport;
 use App\Domain\Inventory\AdjustStock;
 use App\Domain\Inventory\StockLedger;
+use App\Domain\Inventory\StockLevel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
@@ -61,7 +62,7 @@ class ProductController extends Controller
                 'low_stock' => fn ($query, string $value) => filter_var($value, FILTER_VALIDATE_BOOLEAN)
                     ? $query->whereHas(
                         'inventoryItem',
-                        fn ($q) => $q->whereColumn('stock_on_hand', '<=', 'reorder_point'),
+                        fn ($q) => $q->tap(fn ($inner) => StockLevel::whereLow($inner)),
                     )
                     : $query,
             ],

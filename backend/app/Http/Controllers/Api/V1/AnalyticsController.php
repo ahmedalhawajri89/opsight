@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Authorization\Ability;
+use App\Domain\Inventory\StockLevel;
 use App\Domain\Metrics\Breakdown;
 use App\Domain\Metrics\Comparison;
 use App\Domain\Metrics\MetricCalculator;
 use App\Domain\Metrics\MetricSummary;
 use App\Domain\Metrics\Period;
+use App\Domain\Metrics\QuickStats;
 use App\Domain\Metrics\TimeSeries;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryItemResource;
 use App\Models\BusinessSetting;
 use App\Models\InventoryItem;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 /**
@@ -33,6 +37,7 @@ class AnalyticsController extends Controller
         private readonly TimeSeries $timeSeries,
         private readonly Breakdown $breakdown,
         private readonly MetricCalculator $metrics,
+        private readonly QuickStats $quickStats,
     ) {}
 
     /** Every headline metric for a period, with its comparison. */
@@ -59,9 +64,7 @@ class AnalyticsController extends Controller
         $this->authorizeAnalytics($request);
 
         $validated = $request->validate([
-            'metric' => ['required', Rule::in([
-                'net_revenue', 'gross_revenue', 'orders_count', 'cogs', 'gross_profit',
-            ])],
+            'metric' => ['required', Rule::in(TimeSeries::METRICS)],
             'grain' => ['nullable', Rule::in(['day', 'week', 'month'])],
         ]);
 
@@ -125,21 +128,25 @@ class AnalyticsController extends Controller
         [$period, $comparison] = $this->resolvePeriod($request);
 
         $canSeeCost = $this->summary->canSeeCost($user);
+        $grain = TimeSeries::grainFor($period);
 
         $payload = [
             'metrics' => array_map(
                 fn ($metric): array => $metric->toArray(),
                 $this->summary->for($period, $comparison, $user),
             ),
-            'revenue_trend' => $this->timeSeries->build(
+            'revenue_trend' => $this->timeSeries->build($period, 'net_revenue', $grain, $user),
+            'orders_trend' => $this->timeSeries->build($period, 'orders_count', $grain, $user),
+            'aov_trend' => $this->timeSeries->build($period, 'average_order_value', $grain, $user),
+            'top_products' => $this->topProducts($period, $comparison, $user),
+            'quick_stats' => $this->quickStats->for($period, $user),
+            /*
+             * Revenue by category, for the share-of-sales chart. Five named
+             * categories and an Other row, so the slices sum to the whole.
+             */
+            'category_breakdown' => $this->breakdown->build(
                 $period,
-                'net_revenue',
-                TimeSeries::grainFor($period),
-                $user,
-            ),
-            'top_products' => $this->breakdown->build(
-                $period,
-                'product',
+                'category',
                 'net_revenue',
                 $user,
                 5,
@@ -150,22 +157,36 @@ class AnalyticsController extends Controller
                     InventoryItem::query()
                         ->with('product')
                         ->whereHas('product', fn ($q) => $q->whereNull('deleted_at')->where('is_active', true))
-                        ->whereColumn('stock_on_hand', '<=', 'reorder_point')
+                        ->tap(fn ($q) => StockLevel::whereLow($q))
                         ->orderBy('stock_on_hand')
                         ->limit(5)
                         ->get(),
                 )->toArray($request),
             ],
+            // Point in time, like low_stock: how the catalogue's stock is spread now.
+            'inventory_status' => $this->metrics->inventoryStatus(),
         ];
 
         // Only computed, and only present, for a role that may see cost.
         if ($canSeeCost) {
-            $payload['profit_trend'] = $this->timeSeries->build(
-                $period,
-                'gross_profit',
-                TimeSeries::grainFor($period),
-                $user,
-            );
+            $payload['profit_trend'] = $this->timeSeries->build($period, 'gross_profit', $grain, $user);
+            $payload['expenses_trend'] = $this->timeSeries->build($period, 'operating_expenses', $grain, $user);
+            $payload['margin_trend'] = $this->timeSeries->build($period, 'gross_margin', $grain, $user);
+
+            /*
+             * Revenue against operating expenses, month by month over the last
+             * six calendar months INCLUDING the current one — deliberately not
+             * the selected period, which for the default 30 days would be one
+             * bar. It states its own window in `cash_flow.period`, and the
+             * current month is flagged partial like any other series.
+             */
+            $trailing = $this->trailingMonths(6);
+
+            $payload['cash_flow'] = [
+                'period' => $trailing->toArray(),
+                'revenue' => $this->timeSeries->build($trailing, 'net_revenue', 'month', $user),
+                'expenses' => $this->timeSeries->build($trailing, 'operating_expenses', 'month', $user),
+            ];
         }
 
         return response()->json([
@@ -175,6 +196,75 @@ class AnalyticsController extends Controller
     }
 
     /* ---------------------------------------------------------------------- */
+
+    /**
+     * The five best-selling products, each with its units and its trend.
+     *
+     * Ranked by net line revenue like the breakdown it comes from, then
+     * enriched from two more breakdowns of the SAME definition — units over
+     * the period, and revenue over the comparison period — joined on the
+     * snapshot SKU the ranking groups by. A product that did not sell in the
+     * comparison period has no trend (null), not an infinite one.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function topProducts(Period $period, Comparison $comparison, ?User $user): array
+    {
+        $rows = $this->breakdown->build($period, 'product', 'net_revenue', $user, 5)['rows'];
+
+        $units = $this->keyed($this->breakdown->build($period, 'product', 'units_sold', $user, PHP_INT_MAX)['rows']);
+
+        $previousPeriod = $period->comparison($comparison->value);
+        $previous = $previousPeriod === null
+            ? []
+            : $this->keyed($this->breakdown->build($previousPeriod, 'product', 'net_revenue', $user, PHP_INT_MAX)['rows']);
+
+        return array_map(function (array $row) use ($units, $previous): array {
+            if ($row['is_other'] ?? false) {
+                return $row;
+            }
+
+            $before = $previous[$row['key']] ?? null;
+
+            return $row + [
+                'units' => (int) ($units[$row['key']] ?? 0),
+                'previous_value' => $before,
+                'change_pct' => $before !== null && bccomp((string) $before, '0', 2) > 0
+                    ? round((float) bcdiv(bcsub((string) $row['value'], (string) $before, 2), (string) $before, 10), 6)
+                    : null,
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<string, string>
+     */
+    private function keyed(array $rows): array
+    {
+        $keyed = [];
+
+        foreach ($rows as $row) {
+            if (! ($row['is_other'] ?? false)) {
+                $keyed[(string) $row['key']] = (string) $row['value'];
+            }
+        }
+
+        return $keyed;
+    }
+
+    /** The last `$months` calendar months, the current one included, to today. */
+    private function trailingMonths(int $months): Period
+    {
+        $timezone = BusinessSetting::current()->timezone;
+        $today = Carbon::now($timezone)->startOfDay();
+
+        return Period::between(
+            $today->clone()->startOfMonth()->subMonths($months - 1)->toDateString(),
+            $today->toDateString(),
+            $timezone,
+        );
+    }
 
     private function authorizeAnalytics(Request $request): void
     {
@@ -189,7 +279,7 @@ class AnalyticsController extends Controller
     private function resolvePeriod(Request $request): array
     {
         $validated = $request->validate([
-            'preset' => ['nullable', Rule::in(['7d', '30d', '90d', 'mtd', 'qtd', 'ytd', 'custom'])],
+            'preset' => ['nullable', Rule::in(['7d', '30d', '90d', '365d', 'mtd', 'qtd', 'ytd', 'custom'])],
             'from' => ['nullable', 'date_format:Y-m-d', 'required_if:preset,custom'],
             'to' => ['nullable', 'date_format:Y-m-d', 'required_if:preset,custom', 'after_or_equal:from'],
             'comparison' => ['nullable', Rule::in(array_column(Comparison::cases(), 'value'))],

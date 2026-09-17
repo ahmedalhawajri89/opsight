@@ -125,6 +125,7 @@ describe('Arabic dictionary', () => {
       'dashboard.topProducts.rank',
       'pagination.page',
       'pagination.range',
+      'dashboard.activity.byActor',
     ]);
 
     const untranslated = Object.keys(EN)

@@ -404,6 +404,72 @@ piece of work rather than a rewrite.
 
 ---
 
+## Dashboard redesign v2 *(between Phase 07 and Phase 06)*
+
+A second pass on the dashboard's presentation, at the owner's request, working from a
+reference layout: greeting header, six KPI cards with sparklines, revenue trend, sales by
+category, revenue against expenses, key changes, top products and inventory status.
+
+- **Palette** changed from blue to petrol and sand (UI_UX_DIRECTION.md §4), contrast- and
+  colour-blindness-tested in both themes.
+- **Data, not decoration.** Panels in the reference with nothing behind them — global
+  search, notifications, a Reports page, an AI promotion card, product photos — were left
+  out. Panels that needed data got small read-only additions to `GET /dashboard`:
+  `orders_trend`, `expenses_trend` and `cash_flow` (cost roles only), `category_breakdown`,
+  `inventory_status`; and `operating_expenses` became a time-series metric.
+- **Motion** added, short and once, removed under reduced motion (§7).
+
+**Found and fixed along the way.**
+
+- **"Low stock" had four definitions.** The dashboard count used the product threshold and
+  the reorder point; the dashboard list, the inventory filter and the product filter used
+  only the reorder point; nothing used the business default. The dashboard could report
+  three items beside a list of one. `StockLevel` is now the one rule, with a regression test
+  across all four surfaces.
+- **The analytics screen badged every one of fifteen tiles "Incomplete"** beside a notice
+  saying the same. The period is now flagged once.
+- The sidebar truncated the signed-in email to "owner@o…"; it shows the role instead.
+
+**Known, not changed:** the category and product rankings sum LINE totals, which exclude
+order-level discounts and refunds, so they do not add up to the net revenue headline. The
+category chart therefore shows shares, not a total. Whether rankings should allocate
+order-level adjustments is a metrics decision, not a presentation one.
+
+---
+
+## Dashboard v3 — the reference layout *(between Phase 07 and Phase 06)*
+
+The owner asked for the dashboard to match a reference image exactly, in its colours, with
+every element in it working for real.
+
+- **Shell.** A top bar with global search (Ctrl/⌘+K: screens, orders, customers, products —
+  each through its own endpoint and the role's abilities), a key-changes bell, and an account
+  menu holding language and sign-out. The sidebar gained the reference's grouping, promo card
+  and version line.
+- **Dashboard.** Greeting header; four headline cards with sparklines and eight compact cards;
+  Revenue & Expenses trend with a 7D/30D/90D/1Y switch; sales by category; top-selling products
+  with units and trend; recent orders; business performance; quick stats; recent activity; key
+  insights; inventory status; and a way into Analytics.
+- **New read-only data on `GET /dashboard`:** `aov_trend`, `margin_trend` (cost roles),
+  `quick_stats` (products and customers with growth across the period; inventory value for cost
+  roles; active users for `users.view`), and units plus a comparison-period trend on
+  `top_products`. `average_order_value` and `gross_margin` became time-series metrics (null in a
+  bucket with nothing to divide), and `365d` a period preset.
+- **Not invented:** products have no images, so their tiles show initials; the reference's
+  "Reports" page does not exist and is not in the navigation.
+
+**Found and fixed along the way.**
+
+- **The bell would have spent the analytics rate limit on every page.** It now reads the
+  dashboard's cached key changes for its dot and asks the server only when opened — found when
+  the E2E suite, which loads many pages a minute, hit the 60/min analytics limit.
+- **The dashboard's range switch and the date control shared the name "Period".** Two controls
+  with one accessible name; the switch is now "Quick range".
+- **Latin product and category names truncated from the wrong end in Arabic.** Names now carry
+  `dir="auto"`.
+
+---
+
 ## Phase 08 — Post-MVP depth
 
 Ordered by likely value, not committed:
