@@ -125,7 +125,7 @@ const ar = {
     groups: {
       overview: 'نظرة عامة',
       operations: 'العمليات',
-      analysis: 'التحليل',
+      analysis: 'التحليلات',
       development: 'التطوير',
       administration: 'الإدارة',
     },
@@ -137,6 +137,7 @@ const ar = {
       inventory: 'المخزون',
       expenses: 'المصروفات',
       analytics: 'التحليلات',
+      reports: 'التقارير',
       gallery: 'معرض المكوّنات',
       activity: 'سجل النشاط',
       users: 'المستخدمون والأدوار',

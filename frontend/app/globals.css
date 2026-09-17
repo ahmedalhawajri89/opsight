@@ -25,13 +25,14 @@
 
 :root {
   /*
-   * PALETTE — v3, taken from the reference layout the owner supplied.
+   * PALETTE — v4, from the dashboard specification.
    *
-   * A cool white ground, deep navy for weight (primary actions, the selected
-   * control, identity), a clear royal blue for data and links, and a lavender
-   * wash for the current place in the navigation. Every value was sampled from
-   * the reference and then moved only as far as WCAG AA demands: the reference's
-   * green, red and orange text were a shade too light to read at 12px.
+   * A light blue-grey ground, white cards, deep navy for weight (primary
+   * buttons, the selected segment, the avatar) and indigo for what you can
+   * follow (links, the current place in the navigation). Values are the
+   * specification's own, moved only where WCAG AA required it: the spec's
+   * green, red, amber and muted grey are too light for 12px text, so the TEXT
+   * tokens are darker while the tints keep the spec's hue.
    *
    * Every pair below is held to WCAG AA by tests/contrast.test.js, and the six
    * chart series to a minimum perceptual distance under simulated protanopia
@@ -40,77 +41,75 @@
 
   /* Surfaces. */
   --surface: #ffffff;
-  --surface-sunken: #f6f8fc;
+  --surface-sunken: #f5f7fb;
   --surface-raised: #ffffff;
-  --surface-hover: #f1f4fa;
-  --surface-selected: #eef0fd;
-  --sidebar: #fafbfe;
+  --surface-hover: #f2f4f9;
+  --surface-selected: #eef0ff;
+  --sidebar: #ffffff;
 
   /*
    * Lines. Three weights, each with a job:
-   *   subtle — separators inside a panel (table rows, KPI dividers)
-   *   border — the edge of a panel
+   *   subtle — separators inside a panel (table rows)
+   *   border — the edge of a card
    *   strong — the boundary of a CONTROL, which WCAG 1.4.11 holds to 3:1
    */
-  --border-subtle: #eef1f6;
-  --border: #e6eaf2;
+  --border-subtle: #f1f3f8;
+  --border: #edf0f6;
   --border-strong: #8a93a6;
 
-  /* Text. Near-black with a navy cast. */
-  --text: #101a33;
-  --text-muted: #5b6478;
-  --text-subtle: #7c8499;
+  /* Text: headings, body, captions. */
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #7b879c;
   --text-inverse: #ffffff;
 
-  /*
-   * Accent. Navy carries weight — primary buttons, the selected segment, the
-   * avatar. Blue carries meaning you can follow — links and the active icon.
-   * Lavender marks where you are.
-   */
-  --accent: #1f2b5b;
-  --accent-hover: #18234b;
-  --accent-active: #121a3a;
-  --accent-subtle: #eef0fd;
-  --accent-text: #2e55d6;
+  /* Accent: navy carries weight, indigo carries navigation and links. */
+  --accent: #1e2a5e;
+  --accent-hover: #172150;
+  --accent-active: #111936;
+  --accent-subtle: #eef0ff;
+  --accent-text: #4f46e5;
 
-  /* Semantic — meaning only, never decoration. */
+  /* Semantic — meaning only, never decoration. Each has a ~10% tint. */
   --positive: #15803d;
-  --positive-subtle: #ecf8f0;
+  --positive-subtle: #ebf7ef;
   --negative: #c81e1e;
-  --negative-subtle: #fdf1f1;
-  --warning: #c2410c;
-  --warning-subtle: #fff1e6;
-  --info: #2e55d6;
-  --info-subtle: #eaf0ff;
+  --negative-subtle: #fdecec;
+  --warning: #b45309;
+  --warning-subtle: #fef5e7;
+  --info: #2563eb;
+  --info-subtle: #e9effd;
+
+  /* Two more tints for icons (never text on their own). */
+  --purple: #7c3aed;
+  --purple-subtle: #f2ebfd;
+  --teal: #0f766e;
+  --teal-subtle: #e6f6f4;
 
   /*
-   * Categorical series: blue, orange, teal, lilac, navy, slate. Separated by
+   * Categorical series: blue, amber, teal, violet, navy, cyan. Separated by
    * lightness as much as by hue, because the red-green axis collapses under
    * the two common forms of colour blindness.
    */
-  --series-1: #3b6cf6;
-  --series-2: #ea6a12;
-  --series-3: #0f8b80;
-  --series-4: #ac78f2;
-  --series-5: #1c2757;
-  --series-6: #4b5468;
+  --series-1: #2563eb;
+  --series-2: #d97706;
+  --series-3: #0f9a8d;
+  --series-4: #a275f0;
+  --series-5: #1e2a5e;
+  --series-6: #0e7490;
 
-  /*
-   * Sparkline strokes. Decorative marks beneath a stated figure — never the
-   * only carrier of a value — so they follow the reference rather than the
-   * categorical palette.
-   */
-  --spark-green: #22a35a;
-  --spark-blue: #3b6cf6;
-  --spark-purple: #8b5cf6;
+  /* Sparkline strokes: decorative marks beneath a stated figure. */
+  --spark-green: #16a34a;
+  --spark-blue: #2563eb;
+  --spark-purple: #7c3aed;
   --spark-teal: #14b8a6;
 
   /* The product mark. */
-  --brand-from: #7c5cff;
-  --brand-to: #3b82f6;
+  --brand-from: #6366f1;
+  --brand-to: #4f46e5;
 
   /* Focus */
-  --focus-ring: #2e55d6;
+  --focus-ring: #4f46e5;
 }
 
 :root[data-theme='dark'] {
@@ -118,8 +117,8 @@
   --surface-sunken: #0b1020;
   --surface-raised: #1a2236;
   --surface-hover: #1a2236;
-  --surface-selected: #1c2547;
-  --sidebar: #0f1526;
+  --surface-selected: #1f2552;
+  --sidebar: #121829;
 
   --border-subtle: #1c2436;
   --border: #263048;
@@ -130,37 +129,42 @@
   --text-subtle: #7f89a0;
   --text-inverse: #0b1020;
 
-  --accent: #8aa4ff;
-  --accent-hover: #a8bcff;
-  --accent-active: #c2d0ff;
-  --accent-subtle: #1c2547;
-  --accent-text: #a8bcff;
+  --accent: #a5b4fc;
+  --accent-hover: #c7d2fe;
+  --accent-active: #e0e7ff;
+  --accent-subtle: #1f2552;
+  --accent-text: #a5b4fc;
 
   --positive: #4ade80;
   --positive-subtle: #10281a;
   --negative: #f87171;
   --negative-subtle: #2e1618;
-  --warning: #fb923c;
-  --warning-subtle: #2d1c10;
-  --info: #8aa4ff;
+  --warning: #fbbf24;
+  --warning-subtle: #2d220e;
+  --info: #93b4fd;
   --info-subtle: #1c2547;
 
+  --purple: #c4b5fd;
+  --purple-subtle: #241c42;
+  --teal: #5eead4;
+  --teal-subtle: #10302c;
+
   --series-1: #6b8cff;
-  --series-2: #fb923c;
+  --series-2: #fbbf24;
   --series-3: #2dd4bf;
   --series-4: #c4b5fd;
   --series-5: #e2e8f0;
-  --series-6: #64748b;
+  --series-6: #0e9fbf;
 
   --spark-green: #4ade80;
   --spark-blue: #6b8cff;
   --spark-purple: #c4b5fd;
   --spark-teal: #2dd4bf;
 
-  --brand-from: #7c5cff;
-  --brand-to: #3b82f6;
+  --brand-from: #818cf8;
+  --brand-to: #6366f1;
 
-  --focus-ring: #8aa4ff;
+  --focus-ring: #a5b4fc;
 }
 
 @theme inline {
@@ -194,6 +198,10 @@
   --color-warning-subtle: var(--warning-subtle);
   --color-info: var(--info);
   --color-info-subtle: var(--info-subtle);
+  --color-purple: var(--purple);
+  --color-purple-subtle: var(--purple-subtle);
+  --color-teal: var(--teal);
+  --color-teal-subtle: var(--teal-subtle);
 
   --color-series-1: var(--series-1);
   --color-series-2: var(--series-2);
@@ -216,15 +224,20 @@
    */
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 14px;
 
   /*
    * Shadow. A panel gets a soft two-layer lift so white separates from the
    * off-white ground without a heavier border. Genuinely floating layers get
    * the overlay shadow. There is no third step.
    */
-  --shadow-card: 0 1px 2px rgb(16 26 51 / 0.04), 0 1px 3px rgb(16 26 51 / 0.03);
-  --shadow-overlay: 0 16px 40px -12px rgb(16 26 51 / 0.22), 0 4px 10px -4px rgb(16 26 51 / 0.08);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04);
+  --shadow-overlay: 0 16px 40px -12px rgb(16 24 40 / 0.22), 0 4px 10px -4px rgb(16 24 40 / 0.08);
+
+  /* Motion: hover and focus transitions. */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 /*

@@ -65,6 +65,14 @@ const NAV_GROUPS = [
         icon: 'chart',
         ability: 'analytics.view',
       },
+      // Not built yet: shown disabled and labelled, never as a link to nothing.
+      {
+        href: '/reports',
+        label: 'nav.items.reports',
+        icon: 'fileChart',
+        ability: 'analytics.view',
+        ready: false,
+      },
     ],
   },
   ...(process.env.NEXT_PUBLIC_ENABLE_GALLERY === 'true'
@@ -192,7 +200,10 @@ export function AppShell({ children }) {
   const pages = useMemo(
     () =>
       groups.flatMap((group) =>
-        group.items.map((item) => ({ href: item.href, icon: item.icon, label: t(item.label) })),
+        group.items
+          // A screen that does not exist yet is not a search result.
+          .filter((item) => item.ready !== false)
+          .map((item) => ({ href: item.href, icon: item.icon, label: t(item.label) })),
       ),
     [groups, t],
   );
@@ -307,7 +318,7 @@ function Sidebar({ groups, current, canAnalyse }) {
 
   return (
     <>
-      <div className="flex h-[62px] shrink-0 items-center px-5">
+      <div className="flex h-16 shrink-0 items-center px-5">
         <Link href="/dashboard" className="rounded-(--radius-sm)" aria-label={t('common.appName')}>
           <Logo />
         </Link>
@@ -318,7 +329,7 @@ function Sidebar({ groups, current, canAnalyse }) {
           const id = group.label ? `nav-${group.label.replaceAll('.', '-')}` : `nav-group-${index}`;
 
           return (
-            <div key={id} className={cn(index > 0 && 'mt-5')}>
+            <div key={id} className={cn(index > 0 && 'mt-6')}>
               {/*
                 A label, not a heading: as <h2>s these put headings in the
                 outline BEFORE the page's <h1>.
@@ -326,7 +337,7 @@ function Sidebar({ groups, current, canAnalyse }) {
               {group.label && (
                 <p
                   id={id}
-                  className="px-3 pb-2 text-[0.6875rem] font-semibold tracking-[0.08em] text-(--color-text-subtle) uppercase"
+                  className="px-3 pb-2 text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-subtle) uppercase"
                 >
                   {t(group.label)}
                 </p>
@@ -335,7 +346,11 @@ function Sidebar({ groups, current, canAnalyse }) {
               <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
                 {group.items.map((item) => (
                   <li key={item.href}>
-                    <NavLink item={item} active={current === item.href} />
+                    {item.ready === false ? (
+                      <DisabledNavItem item={item} />
+                    ) : (
+                      <NavLink item={item} active={current === item.href} />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -345,10 +360,10 @@ function Sidebar({ groups, current, canAnalyse }) {
       </nav>
 
       <div className="shrink-0 px-3 pb-4">
-        <div className="rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) p-4">
+        <div className="rounded-(--radius-lg) bg-(--color-accent-subtle) p-4">
           <span
             aria-hidden="true"
-            className="inline-flex size-8 items-center justify-center rounded-(--radius-md) bg-linear-to-br from-(--brand-from) to-(--brand-to) text-white"
+            className="inline-flex size-8 items-center justify-center rounded-(--radius-md) bg-(--color-accent-text) text-(--color-text-inverse)"
           >
             <Icon name="chart" size={16} strokeWidth={2} />
           </span>
@@ -363,7 +378,7 @@ function Sidebar({ groups, current, canAnalyse }) {
               <Link
                 href="/analytics"
                 aria-label={t('nav.items.analytics')}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-(--color-line) text-(--color-accent-text) transition-colors hover:bg-(--color-accent-subtle)"
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--color-surface) text-(--color-accent-text) shadow-(--shadow-card) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover)"
               >
                 <Icon name="arrowRight" size={14} className="rtl:-scale-x-100" />
               </Link>
@@ -387,19 +402,35 @@ function NavLink({ item, active }) {
       href={item.href}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] transition-colors duration-150',
+        'flex h-9 items-center gap-3 rounded-(--radius-md) px-3 text-[0.8125rem] transition-colors duration-(--duration-fast) ease-(--ease-out)',
         active
-          ? 'bg-(--color-accent-subtle) font-semibold text-(--color-accent)'
-          : 'text-(--color-text) hover:bg-(--color-surface-hover)',
+          ? 'bg-(--color-accent-subtle) font-semibold text-(--color-accent-text)'
+          : 'font-medium text-(--color-text-muted) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
       )}
     >
       <Icon
         name={item.icon}
         size={18}
-        className={active ? 'text-(--color-accent-text)' : 'text-(--color-text-muted)'}
+        className={active ? 'text-(--color-accent-text)' : 'text-(--color-text-subtle)'}
       />
       {t(item.label)}
     </Link>
+  );
+}
+
+function DisabledNavItem({ item }) {
+  const { t } = useI18n();
+
+  return (
+    <span
+      aria-disabled="true"
+      title={t('nav.comingLater')}
+      className="flex h-9 cursor-not-allowed items-center gap-3 rounded-(--radius-md) px-3 text-[0.8125rem] font-medium text-(--color-text-subtle)"
+    >
+      <Icon name={item.icon} size={18} />
+      <span className="flex-1">{t(item.label)}</span>
+      <span className="sr-only">{t('nav.comingLater')}</span>
+    </span>
   );
 }
 

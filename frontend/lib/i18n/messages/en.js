@@ -110,7 +110,7 @@ const en = {
     groups: {
       overview: 'Overview',
       operations: 'Operations',
-      analysis: 'Analysis',
+      analysis: 'Analytics',
       development: 'Development',
       administration: 'Administration',
     },
@@ -122,6 +122,7 @@ const en = {
       inventory: 'Inventory',
       expenses: 'Expenses',
       analytics: 'Analytics',
+      reports: 'Reports',
       gallery: 'Component gallery',
       activity: 'Activity Log',
       users: 'Users & Roles',

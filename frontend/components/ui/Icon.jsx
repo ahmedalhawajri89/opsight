@@ -191,6 +191,12 @@ const PATHS = {
   ),
   undo: <path d="M9 14 4.5 9.5 9 5M4.5 9.5h10a5 5 0 0 1 0 10H11" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  fileChart: (
+    <>
+      <path d="M6 3.5h8l4 4v13H6v-17Z" />
+      <path d="M14 3.5v4h4M9.5 17v-3M12 17v-5M14.5 17v-2" />
+    </>
+  ),
   table: (
     <>
       <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" />
