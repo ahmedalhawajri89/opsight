@@ -2,6 +2,8 @@
 
 import { useActivity, useActivityActions } from '@/features/admin/useAdmin';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { describeFilters } from '@/lib/i18n/filters';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DateInput, Select } from '@/components/ui/Field';
@@ -37,6 +39,7 @@ const FILTER_CONFIG = {
 
 export default function ActivityPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, clearFilters, activeKeys } = useUrlFilters(FILTER_CONFIG);
 
   const { entries, nextCursor, prevCursor, isLoading, isError, error, refetch } = useActivity({
@@ -59,20 +62,20 @@ export default function ActivityPage() {
   const columns = [
     {
       key: 'occurred_at',
-      header: 'When',
+      header: t('activity.columns.when'),
       numeric: true,
       width: '12rem',
       cell: (row) => formatDateTime(row.occurred_at),
     },
     {
       key: 'action',
-      header: 'Action',
+      header: t('activity.columns.action'),
       width: '13rem',
       cell: (row) => <ActionBadge action={row.action} />,
     },
     {
       key: 'actor',
-      header: 'Who',
+      header: t('activity.columns.who'),
       width: '14rem',
       // Null for a failed sign-in: whoever submitted it did not prove they
       // were the account holder, so the row names no actor.
@@ -83,19 +86,21 @@ export default function ActivityPage() {
             <span className="ms-1.5 text-(--color-text-subtle)">{row.actor.role_label}</span>
           </span>
         ) : (
-          <span className="text-(--color-text-subtle)">Not signed in</span>
+          <span className="text-(--color-text-subtle)">{t('activity.notSignedIn')}</span>
         ),
     },
     {
       key: 'subject',
-      header: 'Subject',
+      header: t('activity.columns.subject'),
       width: '10rem',
       cell: (row) =>
-        row.subject_type ? `${row.subject_type} ${row.subject_id ?? ''}`.trim() : '—',
+        row.subject_type
+          ? `${translateOr(t, `activity.subjectTypes.${row.subject_type}`, row.subject_type)} ${row.subject_id ?? ''}`.trim()
+          : '—',
     },
     {
       key: 'changes',
-      header: 'Detail',
+      header: t('activity.columns.detail'),
       cell: (row) => <Detail changes={row.changes} context={row.context} />,
     },
   ];
@@ -103,8 +108,8 @@ export default function ActivityPage() {
   return (
     <div>
       <PageHeader
-        title="Activity log"
-        description="Append-only. Nothing in this application can edit or delete an entry, and every export of it is itself recorded here."
+        title={t('nav.items.activity')}
+        description={t('activity.description')}
         actions={
           can('activity.export') ? (
             <ExportButton
@@ -125,21 +130,21 @@ export default function ActivityPage() {
 
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Select
-          aria-label="Action"
-          placeholder="Any action"
+          aria-label={t('filters.action')}
+          placeholder={t('activity.anyAction')}
           value={filters.action ?? ''}
           onChange={(event) => setFilters({ action: event.target.value, cursor: undefined })}
-          options={actions.map((action) => ({ value: action, label: action }))}
+          options={actions.map((action) => ({ value: action, label: describeAction(t, action) }))}
           className="w-56"
         />
         <DateInput
-          aria-label="From"
+          aria-label={t('filters.from')}
           value={filters.from ?? ''}
           onChange={(event) => setFilters({ from: event.target.value, cursor: undefined })}
           className="w-40"
         />
         <DateInput
-          aria-label="To"
+          aria-label={t('filters.to')}
           value={filters.to ?? ''}
           onChange={(event) => setFilters({ to: event.target.value, cursor: undefined })}
           className="w-40"
@@ -148,18 +153,18 @@ export default function ActivityPage() {
 
       <Card padded={false}>
         <DataTable
-          caption="Activity log"
+          caption={t('nav.items.activity')}
           columns={columns}
           rows={entries}
           loading={isLoading}
           error={isError ? error : null}
           onRetry={refetch}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
           empty={
             <EmptyState
-              title="No matching activity"
-              description="Nothing has been recorded for these filters."
+              title={t('activity.empty.title')}
+              description={t('activity.empty.description')}
             />
           }
         />
@@ -175,10 +180,28 @@ export default function ActivityPage() {
 }
 
 /**
+ * A dictionary lookup that falls back to a readable form of the raw value.
+ *
+ * The audit log's vocabulary is open-ended: a later feature can start writing
+ * an action this screen has no translation for yet. That must still render as
+ * something a person can read rather than as a dictionary key.
+ */
+function translateOr(t, key, fallback) {
+  return t.has(key) ? t(key) : String(fallback).replaceAll('_', ' ');
+}
+
+function describeAction(t, action) {
+  const [subject, verb] = String(action).split('.');
+
+  return `${translateOr(t, `activity.subjects.${subject}`, subject)} · ${translateOr(t, `activity.verbs.${verb}`, verb)}`;
+}
+
+/**
  * `order.confirmed` reads better split than as one identifier, and the noun is
  * what a reader scans for. The verb carries the tone.
  */
 function ActionBadge({ action }) {
+  const { t } = useI18n();
   const [subject, verb] = String(action).split('.');
 
   const tone =
@@ -192,8 +215,10 @@ function ActionBadge({ action }) {
 
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      <Badge tone={tone}>{verb?.replaceAll('_', ' ') ?? action}</Badge>
-      <span className="text-(--color-text-muted)">{subject}</span>
+      <Badge tone={tone}>{verb ? translateOr(t, `activity.verbs.${verb}`, verb) : action}</Badge>
+      <span className="text-(--color-text-muted)">
+        {translateOr(t, `activity.subjects.${subject}`, subject)}
+      </span>
     </span>
   );
 }
@@ -207,6 +232,7 @@ function ActionBadge({ action }) {
  * is already what the reader is allowed to see.
  */
 function Detail({ changes, context }) {
+  const { t } = useI18n();
   const after = changes?.after ?? null;
   const before = changes?.before ?? null;
 
@@ -220,7 +246,9 @@ function Detail({ changes, context }) {
     <div className="space-y-0.5 text-[0.8125rem]">
       {fields.slice(0, 4).map((field) => (
         <p key={field} className="truncate">
-          <span className="text-(--color-text-muted)">{field.replaceAll('_', ' ')}: </span>
+          <span className="text-(--color-text-muted)">
+            {translateOr(t, `activity.fields.${field}`, field)}:{' '}
+          </span>
           {before?.[field] !== undefined && before?.[field] !== null && (
             <span className="text-(--color-text-subtle) line-through">{String(before[field])}</span>
           )}{' '}
@@ -229,7 +257,9 @@ function Detail({ changes, context }) {
       ))}
 
       {fields.length > 4 && (
-        <p className="text-(--color-text-subtle)">and {fields.length - 4} more</p>
+        <p className="text-(--color-text-subtle)">
+          {t('activity.moreFields', { count: fields.length - 4 })}
+        </p>
       )}
 
       {context && <ContextLine context={context} />}
@@ -237,10 +267,16 @@ function Detail({ changes, context }) {
   );
 }
 
+/*
+ * Recorded values are shown as recorded — digits included. This is an audit
+ * trail: its job is to show exactly what was written, and reformatting a value
+ * would put a presentation layer between the reader and the evidence.
+ */
 function ContextLine({ context }) {
+  const { t } = useI18n();
   const parts = Object.entries(context)
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
-    .map(([key, value]) => `${key.replaceAll('_', ' ')}: ${format(value)}`);
+    .map(([key, value]) => `${translateOr(t, `activity.fields.${key}`, key)}: ${format(value)}`);
 
   if (parts.length === 0) return null;
 
@@ -261,21 +297,20 @@ function format(value) {
  * to avoid.
  */
 function CursorPager({ prevCursor, nextCursor, onMove }) {
+  const { t } = useI18n();
+
   if (!prevCursor && !nextCursor) return null;
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-(--color-line) px-3 py-2">
-      <p className="text-[0.8125rem] text-(--color-text-subtle)">
-        Newest first. Paged by position rather than page number, so no entry can slip between pages
-        as new ones arrive.
-      </p>
+      <p className="text-[0.8125rem] text-(--color-text-subtle)">{t('activity.pagerNote')}</p>
 
       <div className="flex gap-2">
         <Button size="sm" disabled={!prevCursor} onClick={() => onMove(prevCursor)}>
-          Newer
+          {t('activity.newer')}
         </Button>
         <Button size="sm" disabled={!nextCursor} onClick={() => onMove(nextCursor)}>
-          Older
+          {t('activity.older')}
         </Button>
       </div>
     </div>

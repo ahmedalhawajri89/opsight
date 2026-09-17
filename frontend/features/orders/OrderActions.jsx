@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { Field, NumberInput, Textarea } from '@/components/ui/Field';
+import { Trans, useI18n } from '@/features/i18n/I18nProvider';
 import { useOrderActions } from './useOrders';
 import { formatMoney } from '@/lib/format';
 
@@ -17,6 +18,7 @@ import { formatMoney } from '@/lib/format';
  * user gets a button that 403s (OrderResource::availableActionsFor).
  */
 export function OrderActions({ order, onDone }) {
+  const { t } = useI18n();
   const actions = order.available_actions ?? [];
   const { confirm, fulfil, cancel, refund } = useOrderActions(order.id);
 
@@ -39,7 +41,8 @@ export function OrderActions({ order, onDone }) {
       return true;
     } catch (error) {
       // A 409 is a business rule refusing, e.g. insufficient stock. Its message
-      // is written for the user, so it is shown as-is.
+      // is written for the user — in their language, by the server — so it is
+      // shown as-is.
       setFailure(error.message);
 
       return false;
@@ -64,25 +67,25 @@ export function OrderActions({ order, onDone }) {
       <div className="flex flex-wrap gap-2">
         {actions.includes('confirm') && (
           <Button variant="primary" loading={confirm.isPending} onClick={() => run(confirm)}>
-            Confirm order
+            {t('orderActions.confirm')}
           </Button>
         )}
 
         {actions.includes('fulfil') && (
           <Button variant="secondary" loading={fulfil.isPending} onClick={() => run(fulfil)}>
-            Mark fulfilled
+            {t('orderActions.fulfil')}
           </Button>
         )}
 
         {actions.includes('cancel') && (
           <Button variant="danger" onClick={() => setCancelOpen(true)}>
-            Cancel order
+            {t('orderActions.cancel')}
           </Button>
         )}
 
         {actions.includes('refund') && (
           <Button variant="danger" onClick={() => setRefundOpen(true)}>
-            Record refund
+            {t('orderActions.refund')}
           </Button>
         )}
       </div>
@@ -95,22 +98,21 @@ export function OrderActions({ order, onDone }) {
       <ConfirmDialog
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
-        title={`Cancel ${order.reference}?`}
-        consequence={
-          `This returns ${unitCount} unit${unitCount === 1 ? '' : 's'} to stock and removes ` +
-          `${formatMoney(order.total_amount)} from revenue for the period it was placed in. ` +
-          `The order stays on record as cancelled.`
-        }
-        confirmLabel="Cancel order"
+        title={t('orderActions.cancelTitle', { reference: order.reference })}
+        consequence={t('orderActions.cancelConsequence', {
+          count: unitCount,
+          amount: formatMoney(order.total_amount),
+        })}
+        confirmLabel={t('orderActions.cancel')}
         loading={cancel.isPending}
         onConfirm={async () => {
           if (await run(cancel, cancelReason)) setCancelOpen(false);
         }}
       >
-        <Field label="Reason" required>
+        <Field label={t('orderActions.reason')} required>
           {(props) => (
             <Textarea
-              placeholder="Why is this order being cancelled?"
+              placeholder={t('orderActions.reasonPlaceholder')}
               value={cancelReason}
               onChange={(event) => setCancelReason(event.target.value)}
               {...props}
@@ -122,13 +124,13 @@ export function OrderActions({ order, onDone }) {
       <Dialog
         open={refundOpen}
         onClose={() => setRefundOpen(false)}
-        title={`Record a refund for ${order.reference}`}
-        description={`Order total is ${formatMoney(order.total_amount)}.`}
+        title={t('orderActions.refundTitle', { reference: order.reference })}
+        description={t('orderActions.refundTotal', { amount: formatMoney(order.total_amount) })}
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setRefundOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="danger"
@@ -138,13 +140,13 @@ export function OrderActions({ order, onDone }) {
                 if (ok) setRefundOpen(false);
               }}
             >
-              Record refund
+              {t('orderActions.refund')}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Refund amount" required>
+          <Field label={t('orderActions.refundAmount')} required>
             {(props) => (
               <NumberInput
                 value={refundAmount}
@@ -162,17 +164,18 @@ export function OrderActions({ order, onDone }) {
               className="mt-0.5 size-3.5 accent-(--color-accent)"
             />
             <span>
-              Return the goods to stock
+              {t('orderActions.returnStock')}
               <span className="mt-0.5 block text-[0.8125rem] text-(--color-text-subtle)">
-                Leave this unchecked for damaged goods — restocking them would overstate what is
-                sellable.
+                {t('orderActions.returnStockHint')}
               </span>
             </span>
           </label>
 
           <p className="text-[0.8125rem] text-(--color-text-subtle)">
-            The refund reduces revenue in the period the order was <strong>placed</strong>, not
-            today.
+            <Trans
+              k="orderActions.refundPeriodNote"
+              tags={{ strong: (text) => <strong>{text}</strong> }}
+            />
           </p>
         </div>
       </Dialog>

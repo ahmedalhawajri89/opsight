@@ -3,6 +3,8 @@
 import { useBreakdown, useSummary, useTimeseries } from '@/features/analytics/useAnalytics';
 import { MetricTile } from '@/features/analytics/MetricTile';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { Trans, useI18n } from '@/features/i18n/I18nProvider';
+import { describePeriod } from '@/lib/periods';
 import { PartialBadge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Field';
 import { StatGrid } from '@/components/data/StatTile';
@@ -45,6 +47,7 @@ const TILE_ORDER = [
 
 export default function AnalyticsPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters } = useUrlFilters(FILTER_CONFIG);
 
   const period = {
@@ -75,22 +78,17 @@ export default function AnalyticsPage() {
   // Cost-bearing series are refused by the API rather than returned as zeros,
   // so they are only offered to a role that may see them.
   const metricOptions = [
-    { value: 'net_revenue', label: 'Net revenue' },
-    { value: 'gross_revenue', label: 'Gross revenue' },
-    { value: 'orders_count', label: 'Orders' },
-    ...(showCost
-      ? [
-          { value: 'gross_profit', label: 'Gross profit' },
-          { value: 'cogs', label: 'Cost of goods' },
-        ]
-      : []),
-  ];
+    'net_revenue',
+    'gross_revenue',
+    'orders_count',
+    ...(showCost ? ['gross_profit', 'cogs'] : []),
+  ].map((value) => ({ value, label: t(`metrics.${value}.label`) }));
 
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Analytics"
-        description="Every figure is computed from source records at the moment you ask. Nothing here is stored."
+        title={t('nav.items.analytics')}
+        description={t('analytics.description')}
         actions={
           <PeriodSelector
             preset={filters.preset}
@@ -115,7 +113,7 @@ export default function AnalyticsPage() {
           className="flex flex-wrap items-center gap-2 rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
         >
           <PartialBadge />
-          This period is still in progress and is being compared against a complete one.
+          {t('analytics.partial')}
         </p>
       )}
 
@@ -142,10 +140,19 @@ export default function AnalyticsPage() {
       )}
 
       <TrendChart
-        title="Trend"
+        title={t('analytics.trend')}
         description={
+          /*
+            Composed from translated parts rather than from the raw API values.
+            The previous version built "day" + "ly" and printed "dayly", and
+            showed ISO dates to the reader.
+          */
           trend.meta
-            ? `${trend.meta.metric.replaceAll('_', ' ')} · ${trend.meta.grain}ly · ${trend.meta.period.from} to ${trend.meta.period.to}`
+            ? [
+                t(`metrics.${trend.meta.metric}.label`),
+                t(`analytics.grains.${trend.meta.grain}`),
+                describePeriod(trend.meta.period.from, trend.meta.period.to),
+              ].join(' · ')
             : undefined
         }
         series={trend.series}
@@ -161,7 +168,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
-            Metric
+            {t('analytics.metric')}
           </span>
           <Select
             value={filters.metric}
@@ -173,41 +180,41 @@ export default function AnalyticsPage() {
 
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
-            Grain
+            {t('analytics.grain')}
           </span>
           <Select
             value={filters.grain}
             onChange={(event) => setFilters({ grain: event.target.value })}
-            placeholder="Automatic"
-            options={[
-              { value: 'day', label: 'Daily' },
-              { value: 'week', label: 'Weekly' },
-              { value: 'month', label: 'Monthly' },
-            ]}
+            placeholder={t('analytics.automatic')}
+            options={['day', 'week', 'month'].map((value) => ({
+              value,
+              label: t(`analytics.grains.${value}`),
+            }))}
             className="w-40"
           />
         </label>
 
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
-            Break down by
+            {t('analytics.breakDownBy')}
           </span>
           <Select
             value={filters.dimension}
             onChange={(event) => setFilters({ dimension: event.target.value })}
-            options={[
-              { value: 'product', label: 'Product' },
-              { value: 'category', label: 'Category' },
-              { value: 'customer', label: 'Customer' },
-            ]}
+            options={['product', 'category', 'customer'].map((value) => ({
+              value,
+              label: t(`analytics.dimensions.${value}`),
+            }))}
             className="w-44"
           />
         </label>
       </div>
 
       <BreakdownChart
-        title={`Net revenue by ${filters.dimension}`}
-        description="Ranked, with everything outside the top ten grouped as Other"
+        // A whole title per dimension, not "Net revenue by {dimension}": the
+        // word order and the definite article differ by language.
+        title={t(`analytics.breakdownTitles.${filters.dimension}`)}
+        description={t('analytics.breakdownDescription')}
         rows={breakdown.rows}
         format="money"
         currency={currency}
@@ -219,27 +226,18 @@ export default function AnalyticsPage() {
       />
 
       <Card>
-        <h2 className="text-sm font-semibold text-(--color-text)">How to read these figures</h2>
+        <h2 className="text-sm font-semibold text-(--color-text)">{t('analytics.help.title')}</h2>
         <ul className="mt-2 space-y-1.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
+          <li>{t('analytics.help.revenue')}</li>
           <li>
-            Revenue excludes tax and shipping. Tax is collected for a tax authority; shipping is
-            treated as cost recovery.
+            <Trans k="analytics.help.cost" tags={{ strong: (text) => <strong>{text}</strong> }} />
           </li>
           <li>
-            Cost of goods uses the cost recorded <strong>at the moment of sale</strong>, so changing
-            a product&rsquo;s cost today never moves a past figure.
+            <Trans k="analytics.help.refund" tags={{ strong: (text) => <strong>{text}</strong> }} />
           </li>
+          <li>{t('analytics.help.emDash')}</li>
           <li>
-            A refund reduces the period the order was <strong>placed</strong> in, not the period the
-            refund was issued.
-          </li>
-          <li>
-            An em dash means the figure cannot be computed — usually a division by zero. It never
-            means zero.
-          </li>
-          <li>
-            Changes between two ratios are shown in percentage <strong>points</strong> (pp), not
-            percentages.
+            <Trans k="analytics.help.points" tags={{ strong: (text) => <strong>{text}</strong> }} />
           </li>
         </ul>
       </Card>

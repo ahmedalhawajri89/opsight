@@ -45,12 +45,11 @@ final class RevenueDrop extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Net revenue is down',
-            message: sprintf(
-                'Net revenue fell %s%% against the %s.',
-                $this->pct($revenue->changePercent),
-                $context->comparison->label(),
-            ),
+            title: __('insights.revenue_drop.title'),
+            message: __('insights.revenue_drop.message', [
+                'pct' => $this->pct($revenue->changePercent),
+                'basis' => $this->basis($context),
+            ]),
             link: $context->link(['metric' => 'net_revenue']),
             values: ['change_pct' => round($revenue->changePercent, 4)],
         );

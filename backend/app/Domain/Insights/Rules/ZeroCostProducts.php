@@ -48,12 +48,8 @@ final class ZeroCostProducts extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Margin is overstated',
-            message: sprintf(
-                '%d sold %s no recorded cost, so gross profit and margin for this period are higher than the truth.',
-                $count,
-                $count === 1 ? 'line item has' : 'line items have',
-            ),
+            title: __('insights.zero_cost_products.title'),
+            message: trans_choice('insights.zero_cost_products.message', $count, ['count' => $this->count($count)]),
             link: $context->link(['metric' => 'gross_profit']),
             values: ['count' => $count],
         );

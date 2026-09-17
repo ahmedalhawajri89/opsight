@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useOrders } from '@/features/orders/useOrders';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Can } from '@/features/auth/Can';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DateInput, Input, Select } from '@/components/ui/Field';
@@ -16,6 +17,7 @@ import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatDate, formatMoney } from '@/lib/format';
+import { describeFilters } from '@/lib/i18n/filters';
 import { exportOrders } from '@/services/orders';
 
 /*
@@ -30,17 +32,12 @@ const FILTER_CONFIG = {
   sortable: ['reference', 'placed_at', 'total_amount', 'status', 'created_at'],
 };
 
-const STATUS_OPTIONS = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'fulfilled', label: 'Fulfilled' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'refunded', label: 'Refunded' },
-];
+const STATUSES = ['draft', 'confirmed', 'fulfilled', 'cancelled', 'refunded'];
 
 export default function OrdersPage() {
   const router = useRouter();
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
@@ -66,7 +63,7 @@ export default function OrdersPage() {
   const columns = [
     {
       key: 'reference',
-      header: 'Order',
+      header: t('orders.columns.order'),
       sortable: true,
       mono: true,
       width: '13rem',
@@ -82,21 +79,23 @@ export default function OrdersPage() {
     },
     {
       key: 'customer',
-      header: 'Customer',
+      header: t('orders.columns.customer'),
       // A walk-in order has no customer record, and saying so is more useful
       // than an empty cell.
       cell: (row) =>
-        row.customer?.name ?? <span className="text-(--color-text-subtle)">Walk-in</span>,
+        row.customer?.name ?? (
+          <span className="text-(--color-text-subtle)">{t('common.walkIn')}</span>
+        ),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('orders.columns.status'),
       width: '9rem',
       cell: (row) => <OrderStatusBadge status={row.status} />,
     },
     {
       key: 'placed_at',
-      header: 'Placed',
+      header: t('orders.columns.placed'),
       sortable: true,
       numeric: true,
       width: '9rem',
@@ -106,7 +105,7 @@ export default function OrdersPage() {
     },
     {
       key: 'total_amount',
-      header: 'Total',
+      header: t('orders.columns.total'),
       sortable: true,
       numeric: true,
       width: '10rem',
@@ -120,7 +119,7 @@ export default function OrdersPage() {
   if (can('orders.view_margin')) {
     columns.push({
       key: 'gross_profit',
-      header: 'Gross profit',
+      header: t('metrics.gross_profit.label'),
       numeric: true,
       width: '10rem',
       cell: (row) => formatMoney(row.gross_profit),
@@ -130,14 +129,14 @@ export default function OrdersPage() {
   return (
     <div>
       <PageHeader
-        title="Orders"
-        description="Every committed sale, and the drafts on their way to becoming one."
+        title={t('nav.items.orders')}
+        description={t('orders.description')}
         actions={
           <div className="flex flex-wrap items-start gap-2">
             {can('orders.export') && <ExportButton onExport={exportOrders} filters={query} />}
             <Can ability="orders.create">
               <Button variant="primary" onClick={() => router.push('/orders/new')}>
-                New order
+                {t('orders.new')}
               </Button>
             </Can>
           </div>
@@ -147,28 +146,28 @@ export default function OrdersPage() {
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Input
           type="search"
-          placeholder="Search by reference…"
-          aria-label="Search orders"
+          placeholder={t('orders.searchPlaceholder')}
+          aria-label={t('orders.searchLabel')}
           defaultValue={filters.search ?? ''}
           onChange={(event) => setFilters({ search: event.target.value })}
           className="w-56"
         />
         <Select
-          aria-label="Status"
-          placeholder="Any status"
-          options={STATUS_OPTIONS}
+          aria-label={t('filters.status')}
+          placeholder={t('orders.anyStatus')}
+          options={STATUSES.map((value) => ({ value, label: t(`orderStatus.${value}`) }))}
           value={filters.status ?? ''}
           onChange={(event) => setFilters({ status: event.target.value })}
           className="w-40"
         />
         <DateInput
-          aria-label="Placed from"
+          aria-label={t('filters.placed_from')}
           value={filters.placed_from ?? ''}
           onChange={(event) => setFilters({ placed_from: event.target.value })}
           className="w-40"
         />
         <DateInput
-          aria-label="Placed to"
+          aria-label={t('filters.placed_to')}
           value={filters.placed_to ?? ''}
           onChange={(event) => setFilters({ placed_to: event.target.value })}
           className="w-40"
@@ -177,7 +176,7 @@ export default function OrdersPage() {
 
       <Card padded={false}>
         <DataTable
-          caption="Orders"
+          caption={t('nav.items.orders')}
           columns={columns}
           rows={orders}
           loading={isLoading}
@@ -186,16 +185,16 @@ export default function OrdersPage() {
           sort={filters.sort}
           onSortChange={setSort}
           onRowClick={(row) => router.push(`/orders/${row.id}`)}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
           empty={
             <EmptyState
-              title="No orders yet"
-              description="Orders you create will appear here with their status, dates and totals."
+              title={t('orders.empty.title')}
+              description={t('orders.empty.description')}
               action={
                 <Can ability="orders.create">
                   <Button variant="primary" onClick={() => router.push('/orders/new')}>
-                    Create the first order
+                    {t('orders.empty.action')}
                   </Button>
                 </Can>
               }

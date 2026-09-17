@@ -11,7 +11,8 @@ import { Field, NumberInput, Select, Textarea } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { EmptyState } from '@/components/data/States';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
-import { formatMoney } from '@/lib/format';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { formatMoney, formatNumber } from '@/lib/format';
 
 /**
  * Order creation.
@@ -27,6 +28,7 @@ import { formatMoney } from '@/lib/format';
  */
 export default function NewOrderPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [draftId, setDraftId] = useState(null);
 
   const { create, addItem, removeItem } = useOrderDraft();
@@ -74,12 +76,18 @@ export default function NewOrderPage() {
   }
 
   const itemColumns = [
-    { key: 'product_sku', header: 'SKU', mono: true, width: '10rem' },
-    { key: 'product_name', header: 'Product' },
-    { key: 'quantity', header: 'Qty', numeric: true, width: '6rem' },
+    { key: 'product_sku', header: t('orderDetail.columns.sku'), mono: true, width: '10rem' },
+    { key: 'product_name', header: t('orderDetail.columns.product') },
+    {
+      key: 'quantity',
+      header: t('orderDetail.columns.quantity'),
+      numeric: true,
+      width: '6rem',
+      cell: (row) => formatNumber(row.quantity),
+    },
     {
       key: 'unit_price',
-      header: 'Unit price',
+      header: t('orderDetail.columns.unitPrice'),
       numeric: true,
       width: '9rem',
       cell: (row) => formatMoney(row.unit_price, { decimals: 4 }),
@@ -97,7 +105,7 @@ export default function NewOrderPage() {
             refetch();
           }}
         >
-          Remove
+          {t('newOrder.remove')}
         </Button>
       ),
     },
@@ -106,11 +114,11 @@ export default function NewOrderPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="New order"
+        title={t('orders.new')}
         description={
           order
-            ? `Draft ${order.reference} — add items, then confirm.`
-            : 'Start a draft, then add items to it.'
+            ? t('newOrder.draftDescription', { reference: order.reference })
+            : t('newOrder.description')
         }
       />
 
@@ -124,15 +132,12 @@ export default function NewOrderPage() {
       )}
 
       {!draftId ? (
-        <Card title="Order details">
+        <Card title={t('newOrder.details')}>
           <div className="grid max-w-2xl gap-4">
-            <Field
-              label="Customer"
-              hint="Leave empty for walk-in trade — new-customer metrics exclude those."
-            >
+            <Field label={t('newOrder.customer')} hint={t('newOrder.customerHint')}>
               {(props) => (
                 <Select
-                  placeholder="Walk-in (no customer)"
+                  placeholder={t('newOrder.walkInOption')}
                   options={customers.map((customer) => ({
                     value: customer.id,
                     label: customer.name,
@@ -144,10 +149,10 @@ export default function NewOrderPage() {
               )}
             </Field>
 
-            <Field label="Notes">
+            <Field label={t('newOrder.notes')}>
               {(props) => (
                 <Textarea
-                  placeholder="Anything worth recording about this order…"
+                  placeholder={t('newOrder.notesPlaceholder')}
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   {...props}
@@ -157,19 +162,19 @@ export default function NewOrderPage() {
 
             <div>
               <Button variant="primary" loading={create.isPending} onClick={startDraft}>
-                Start draft
+                {t('newOrder.start')}
               </Button>
             </div>
           </div>
         </Card>
       ) : (
         <>
-          <Card title="Add an item">
+          <Card title={t('newOrder.addItemTitle')}>
             <div className="flex flex-wrap items-end gap-3">
-              <Field label="Product" className="min-w-64 flex-1">
+              <Field label={t('orderDetail.columns.product')} className="min-w-64 flex-1">
                 {(props) => (
                   <Select
-                    placeholder="Choose a product"
+                    placeholder={t('newOrder.chooseProduct')}
                     options={products.map((product) => ({
                       value: product.id,
                       label: `${product.sku} — ${product.name}`,
@@ -181,7 +186,7 @@ export default function NewOrderPage() {
                 )}
               </Field>
 
-              <Field label="Quantity" className="w-28">
+              <Field label={t('newOrder.quantity')} className="w-28">
                 {(props) => (
                   <NumberInput
                     value={quantity}
@@ -197,26 +202,25 @@ export default function NewOrderPage() {
                 disabled={!productId}
                 onClick={handleAddItem}
               >
-                Add item
+                {t('newOrder.addItem')}
               </Button>
             </div>
 
             <p className="mt-3 text-[0.8125rem] text-(--color-text-subtle)">
-              Prices shown on a draft are indicative. The figures that count are snapshotted from
-              the catalog at the moment you confirm.
+              {t('newOrder.priceNote')}
             </p>
           </Card>
 
-          <Card title="Items" padded={false}>
+          <Card title={t('orderDetail.items')} padded={false}>
             <DataTable
-              caption="Draft items"
+              caption={t('newOrder.draftItems')}
               columns={itemColumns}
               rows={order?.items ?? []}
               density="compact"
               empty={
                 <EmptyState
-                  title="No items yet"
-                  description="An order cannot be confirmed until it has at least one item."
+                  title={t('newOrder.noItems')}
+                  description={t('newOrder.noItemsDescription')}
                 />
               }
             />
@@ -228,7 +232,7 @@ export default function NewOrderPage() {
               onDone={() => router.push(`/orders/${draftId}`)}
             />
             <Button variant="ghost" onClick={() => router.push(`/orders/${draftId}`)}>
-              Save and view draft
+              {t('newOrder.saveAndView')}
             </Button>
           </div>
         </>

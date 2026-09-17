@@ -3,6 +3,8 @@
 import { useState } from 'react';
 
 import { useSettings, useUpdateSettings } from '@/features/admin/useAdmin';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { getFormatLocale } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, NumberInput, Select } from '@/components/ui/Field';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
@@ -19,20 +21,20 @@ import { Card, PageHeader } from '@/components/layout/PageHeader';
  * names the affected fields so this list cannot go stale.
  */
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-].map((label, index) => ({ value: String(index + 1), label }));
+/*
+ * Month names come from Intl rather than the dictionaries. Arabic has more than
+ * one accepted set — the Levantine كانون الثاني and the Egyptian/Gulf يناير —
+ * and the locale data already picks the one used in the region of the locale
+ * (ar-BH), which is the same choice every date on screen makes.
+ */
+function monthOptions() {
+  const formatter = new Intl.DateTimeFormat(getFormatLocale(), { month: 'long', timeZone: 'UTC' });
+
+  return Array.from({ length: 12 }, (_, index) => ({
+    value: String(index + 1),
+    label: formatter.format(new Date(Date.UTC(2026, index, 1))),
+  }));
+}
 
 /*
  * A short list rather than the full IANA set.
@@ -54,6 +56,7 @@ const TIMEZONES = [
 ].map((zone) => ({ value: zone, label: zone }));
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const { settings, meta, isLoading, isError, error, refetch } = useSettings();
   const mutation = useUpdateSettings();
 
@@ -81,7 +84,7 @@ export default function SettingsPage() {
   if (isError) {
     return (
       <div>
-        <PageHeader title="Settings" />
+        <PageHeader title={t('nav.items.settings')} />
         <Card padded={false}>
           <ErrorState error={error} onRetry={refetch} />
         </Card>
@@ -117,24 +120,20 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Settings"
-        description="Business configuration, editable at runtime. These are decisions the company makes, not the server it runs on, which is why they are here rather than in a deployment file."
-      />
+      <PageHeader title={t('nav.items.settings')} description={t('settings.description')} />
 
       {!editable && (
         <p
           role="status"
           className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] text-(--color-text-muted)"
         >
-          These values are shown because every screen needs the currency and timezone to render
-          figures correctly. Only an Owner can change them.
+          {t('settings.readOnly')}
         </p>
       )}
 
-      <Card title="Business" description="Identity and money formatting">
+      <Card title={t('settings.business.title')} description={t('settings.business.description')}>
         <form onSubmit={submit} className="max-w-xl space-y-3">
-          <Field label="Company name" error={fieldErrors.company_name}>
+          <Field label={t('settings.companyName')} error={fieldErrors.company_name}>
             {(props) => (
               <Input
                 value={form?.company_name ?? ''}
@@ -147,8 +146,8 @@ export default function SettingsPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
-              label="Currency"
-              hint="ISO 4217, e.g. BHD. One currency for the whole installation."
+              label={t('settings.currency')}
+              hint={t('settings.currencyHint')}
               error={fieldErrors.currency}
             >
               {(props) => (
@@ -163,8 +162,8 @@ export default function SettingsPage() {
             </Field>
 
             <Field
-              label="Decimal places"
-              hint="Three for the Bahraini dinar; two for most currencies."
+              label={t('settings.decimals')}
+              hint={t('settings.decimalsHint')}
               error={fieldErrors.currency_decimals}
             >
               {(props) => (
@@ -181,8 +180,8 @@ export default function SettingsPage() {
           </div>
 
           <Field
-            label="Low stock threshold"
-            hint="Used for any product that does not set its own."
+            label={t('settings.lowStock')}
+            hint={t('settings.lowStockHint')}
             error={fieldErrors.default_low_stock_threshold}
           >
             {(props) => (
@@ -198,17 +197,15 @@ export default function SettingsPage() {
 
           <fieldset className="space-y-3 rounded-(--radius-sm) border border-(--color-line) p-3">
             <legend className="px-1 text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
-              Reporting periods
+              {t('settings.periods.title')}
             </legend>
 
             <p className="text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
-              These two decide where every period begins and ends. Changing either one leaves every
-              record untouched but moves which month, quarter or year it is counted in, so
-              historical totals will shift.
+              {t('settings.periods.description')}
             </p>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Business timezone" error={fieldErrors.timezone}>
+              <Field label={t('settings.timezone')} error={fieldErrors.timezone}>
                 {(props) => (
                   <Select
                     value={form?.timezone ?? ''}
@@ -220,12 +217,12 @@ export default function SettingsPage() {
                 )}
               </Field>
 
-              <Field label="Fiscal year starts" error={fieldErrors.fiscal_year_start_month}>
+              <Field label={t('settings.fiscalYear')} error={fieldErrors.fiscal_year_start_month}>
                 {(props) => (
                   <Select
                     value={String(form?.fiscal_year_start_month ?? '')}
                     onChange={(event) => set('fiscal_year_start_month', Number(event.target.value))}
-                    options={MONTHS}
+                    options={monthOptions()}
                     disabled={!editable || isLoading}
                     {...props}
                   />
@@ -238,9 +235,7 @@ export default function SettingsPage() {
                 role="alert"
                 className="rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
               >
-                You have changed a field that moves historical figures. Saving will change the
-                totals reported for periods that have already closed. The underlying orders and
-                expenses are not modified.
+                {t('settings.periods.warning')}
               </p>
             )}
           </fieldset>
@@ -248,12 +243,12 @@ export default function SettingsPage() {
           {editable && (
             <div className="flex items-center gap-3 pt-1">
               <Button type="submit" variant="primary" loading={mutation.isPending}>
-                Save settings
+                {t('settings.save')}
               </Button>
 
               {saved && !mutation.isPending && (
                 <span role="status" className="text-[0.8125rem] text-(--color-positive)">
-                  Saved. Every figure on screen has been recomputed.
+                  {t('settings.saved')}
                 </span>
               )}
 

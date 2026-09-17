@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/layout/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Key changes — the insights feed.
@@ -24,31 +25,31 @@ import { cn } from '@/lib/cn';
  */
 const SEVERITY = {
   warning: {
-    label: 'Warning',
+    label: 'insights.severity.warning',
     icon: 'alert',
     tile: 'bg-(--color-warning-subtle) text-(--color-warning)',
     text: 'text-(--color-warning)',
   },
   action: {
-    label: 'Action',
+    label: 'insights.severity.action',
     icon: 'bolt',
     tile: 'bg-(--color-accent-subtle) text-(--color-accent-text)',
     text: 'text-(--color-accent-text)',
   },
   positive: {
-    label: 'Good news',
+    label: 'insights.severity.positive',
     icon: 'check',
     tile: 'bg-(--color-positive-subtle) text-(--color-positive)',
     text: 'text-(--color-positive)',
   },
   opportunity: {
-    label: 'Opportunity',
+    label: 'insights.severity.opportunity',
     icon: 'spark',
     tile: 'bg-(--color-accent-subtle) text-(--color-accent-text)',
     text: 'text-(--color-accent-text)',
   },
   data_quality: {
-    label: 'Data quality',
+    label: 'insights.severity.data_quality',
     icon: 'database',
     tile: 'bg-(--color-surface-hover) text-(--color-text-muted)',
     text: 'text-(--color-text-muted)',
@@ -56,10 +57,12 @@ const SEVERITY = {
 };
 
 export function InsightFeed({ insights = [], suppressed = null, loading = false, className }) {
+  const { t } = useI18n();
+
   return (
     <Card
-      title="Key changes"
-      description="Rule-based checks on these figures and on current stock"
+      title={t('insights.title')}
+      description={t('insights.description')}
       className={cn('flex flex-col', className)}
       bodyClassName="flex-1"
     >
@@ -89,6 +92,7 @@ export function InsightFeed({ insights = [], suppressed = null, loading = false,
 }
 
 function InsightRow({ insight }) {
+  const { t } = useI18n();
   const severity = SEVERITY[insight.severity] ?? SEVERITY.warning;
   const target = linkFor(insight.link);
 
@@ -111,7 +115,7 @@ function InsightRow({ insight }) {
             severity.text,
           )}
         >
-          {severity.label}
+          {t(severity.label)}
         </p>
         <p className="mt-0.5 text-sm font-medium text-(--color-text)">{insight.title}</p>
         <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
@@ -129,7 +133,7 @@ function InsightRow({ insight }) {
               today's. A "check this" that lands on different numbers is worse
               than no link at all.
             */}
-            {target.label}
+            {t(target.label)}
             <Icon
               name="arrowRight"
               size={14}
@@ -152,6 +156,8 @@ function InsightRow({ insight }) {
  * often.
  */
 function EmptyFeed({ suppressed }) {
+  const { t } = useI18n();
+
   if (suppressed?.message) {
     return (
       <div className="flex gap-3 rounded-(--radius-md) bg-(--color-surface-sunken) p-3.5">
@@ -159,8 +165,8 @@ function EmptyFeed({ suppressed }) {
         <div>
           <p className="text-[0.8125rem] font-medium text-(--color-text)">
             {suppressed.reason === 'partial_period'
-              ? 'Held back until this period finishes'
-              : 'Held back on this period'}
+              ? t('insights.heldBackPartial')
+              : t('insights.heldBack')}
           </p>
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
             {suppressed.message}
@@ -173,9 +179,7 @@ function EmptyFeed({ suppressed }) {
   return (
     <div className="flex gap-3 rounded-(--radius-md) bg-(--color-surface-sunken) p-3.5">
       <Icon name="check" className="mt-0.5 shrink-0 text-(--color-positive)" />
-      <p className="text-[0.8125rem] text-(--color-text-muted)">
-        Nothing in this period crossed a reporting threshold.
-      </p>
+      <p className="text-[0.8125rem] text-(--color-text-muted)">{t('insights.nothingCrossed')}</p>
     </div>
   );
 }
@@ -185,9 +189,9 @@ function EmptyFeed({ suppressed }) {
  * reader knows where they are going before they go.
  */
 const DESTINATION_LABELS = {
-  '/inventory': 'Check inventory',
-  '/customers': 'View customers',
-  '/expenses': 'Review expenses',
+  '/inventory': 'insights.links.inventory',
+  '/customers': 'insights.links.customers',
+  '/expenses': 'insights.links.expenses',
 };
 
 /**
@@ -226,6 +230,6 @@ function linkFor(link) {
 
   return {
     href: search ? `${target}?${search}` : target,
-    label: DESTINATION_LABELS[target] ?? 'Check the figures',
+    label: DESTINATION_LABELS[target] ?? 'insights.links.figures',
   };
 }

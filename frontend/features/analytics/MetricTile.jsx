@@ -1,6 +1,7 @@
 'use client';
 
 import { StatTile } from '@/components/data/StatTile';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { formatMoney, formatNumber, formatPercent } from '@/lib/format';
 
 /**
@@ -15,46 +16,37 @@ import { formatMoney, formatNumber, formatPercent } from '@/lib/format';
  * would eventually disagree about some metric nobody re-checked.
  */
 
-/** Plain-language definitions, taken from docs/database/METRICS.md §2. */
-export const METRIC_DEFINITIONS = {
-  net_revenue:
-    'Subtotal less discounts and refunds, for orders placed in this period. Excludes tax and shipping.',
-  gross_revenue: 'Total value of goods sold, before discounts, tax, shipping and refunds.',
-  orders_count: 'Orders committed in this period. Drafts and cancellations are excluded.',
-  units_sold: 'Total item quantity sold. Not reduced by refunds.',
-  average_order_value: 'Net revenue divided by the number of orders.',
-  cogs: 'What the business paid for the goods sold, using the cost recorded at the moment of sale.',
-  gross_profit: 'Net revenue less cost of goods.',
-  gross_margin: 'Gross profit as a proportion of net revenue.',
-  operating_expenses:
-    'Running costs incurred in this period. Excludes cost of goods, which is counted separately.',
-  net_profit: 'Gross profit less operating expenses. An operating figure, not a statutory one.',
-  net_margin: 'Net profit as a proportion of net revenue.',
-  cancellation_rate:
-    'Cancelled orders as a share of all orders placed. The denominator includes cancellations.',
-  refund_rate: 'Refunded value as a share of gross revenue.',
-  new_customers:
-    'Customers whose first ever order falls in this period. Walk-in trade is excluded.',
-  returning_customers: 'Customers who ordered in this period and had ordered before it.',
-};
+/*
+ * Metric names and their plain-language definitions (docs/database/METRICS.md
+ * §2) live in the dictionaries under `metrics.<key>`, so a definition is read in
+ * the reader's language — a financial definition is exactly the text that must
+ * not be left in English.
+ */
+const KNOWN_METRICS = [
+  'net_revenue',
+  'gross_revenue',
+  'orders_count',
+  'units_sold',
+  'average_order_value',
+  'cogs',
+  'gross_profit',
+  'gross_margin',
+  'operating_expenses',
+  'net_profit',
+  'net_margin',
+  'cancellation_rate',
+  'refund_rate',
+  'new_customers',
+  'returning_customers',
+];
 
-export const METRIC_LABELS = {
-  net_revenue: 'Net revenue',
-  gross_revenue: 'Gross revenue',
-  orders_count: 'Orders',
-  units_sold: 'Units sold',
-  average_order_value: 'Average order value',
-  cogs: 'Cost of goods',
-  gross_profit: 'Gross profit',
-  gross_margin: 'Gross margin',
-  operating_expenses: 'Operating expenses',
-  net_profit: 'Operating profit',
-  net_margin: 'Net margin',
-  cancellation_rate: 'Cancellation rate',
-  refund_rate: 'Refund rate',
-  new_customers: 'New customers',
-  returning_customers: 'Returning customers',
-};
+export function metricLabel(t, key) {
+  return KNOWN_METRICS.includes(key) ? t(`metrics.${key}.label`) : key;
+}
+
+export function metricDefinition(t, key) {
+  return KNOWN_METRICS.includes(key) ? t(`metrics.${key}.definition`) : undefined;
+}
 
 /**
  * How one metric is shown: formatted value and previous value, and which change
@@ -104,8 +96,10 @@ export function MetricTile({
   partial,
   loading,
 }) {
+  const { t } = useI18n();
+
   if (loading) {
-    return <StatTile label={METRIC_LABELS[metricKey] ?? metricKey} loading />;
+    return <StatTile label={metricLabel(t, metricKey)} loading />;
   }
 
   if (!metric) return null;
@@ -114,9 +108,9 @@ export function MetricTile({
 
   return (
     <StatTile
-      label={METRIC_LABELS[metricKey] ?? metricKey}
+      label={metricLabel(t, metricKey)}
       value={shown.value}
-      definition={METRIC_DEFINITIONS[metricKey]}
+      definition={metricDefinition(t, metricKey)}
       change={shown.change}
       changeFormat={shown.changeFormat}
       favourable={metric.favourable}

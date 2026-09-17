@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 
 import { cn } from '@/lib/cn';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Tooltip.
@@ -68,11 +69,13 @@ export function Tooltip({ content, side = 'top', children, className }) {
  * (UI_UX_DIRECTION.md §6).
  */
 export function InfoTip({ label, content }) {
+  const { t } = useI18n();
+
   return (
     <Tooltip content={content}>
       <button
         type="button"
-        aria-label={`What is ${label}?`}
+        aria-label={t('comparison.whatIs', { label })}
         className="rounded-full text-(--color-text-subtle) transition-colors hover:text-(--color-text-muted)"
       >
         <svg viewBox="0 0 16 16" className="size-3.5" fill="none" aria-hidden="true">

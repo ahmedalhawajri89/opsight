@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Metrics;
 
+use App\Support\Localization\Localizer;
+
 enum Comparison: string
 {
     case PreviousPeriod = 'previous_period';
@@ -12,11 +14,7 @@ enum Comparison: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::PreviousPeriod => 'Previous period',
-            self::PreviousYear => 'Same period last year',
-            self::None => 'No comparison',
-        };
+        return __('labels.comparison.'.$this->value);
     }
 
     /**
@@ -28,9 +26,15 @@ enum Comparison: string
      */
     public function describe(Period $period): string
     {
+        $days = $period->lengthInDays();
+
+        // The grammatical form follows the raw count; the count shown is in
+        // the reader's digits.
         return match ($this) {
-            self::PreviousPeriod => "vs previous {$period->lengthInDays()} days",
-            self::PreviousYear => 'vs same period last year',
+            self::PreviousPeriod => trans_choice('labels.versus.previous_days', $days, [
+                'days' => app(Localizer::class)->number($days),
+            ]),
+            self::PreviousYear => __('labels.versus.previous_year'),
             self::None => '',
         };
     }

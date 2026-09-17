@@ -41,12 +41,11 @@ final class DormantCustomers extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Customers have gone quiet',
-            message: sprintf(
-                '%d customers who used to order have not placed one in %d days.',
-                $count,
-                $days,
-            ),
+            title: __('insights.dormant_customers.title'),
+            message: __('insights.dormant_customers.message', [
+                'count' => $this->count($count),
+                'days' => $this->count($days),
+            ]),
             link: ['href' => '/customers'],
             values: ['count' => $count, 'days' => $days],
         );

@@ -10,8 +10,9 @@
  * All dates here are plain calendar dates (yyyy-mm-dd), never instants.
  */
 
-import { DEFAULT_LOCALE, toIsoDate } from './format';
+import { getFormatLocale, toIsoDate } from './format';
 
+// Labels for these values live in the dictionaries (period.presets / period.comparisons).
 export const PRESETS = {
   Last7: '7d',
   Last30: '30d',
@@ -22,26 +23,18 @@ export const PRESETS = {
   Custom: 'custom',
 };
 
-export const PRESET_LABELS = {
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  '90d': 'Last 90 days',
-  mtd: 'Month to date',
-  qtd: 'Quarter to date',
-  ytd: 'Year to date',
-  custom: 'Custom range',
+// The length of each rolling preset, passed to its label as `{count}` so the
+// number is written in the reader's digits rather than baked into a sentence.
+export const PRESET_DAYS = {
+  [PRESETS.Last7]: 7,
+  [PRESETS.Last30]: 30,
+  [PRESETS.Last90]: 90,
 };
 
 export const COMPARISON = {
   PreviousPeriod: 'previous_period',
   PreviousYear: 'previous_year',
   None: 'none',
-};
-
-export const COMPARISON_LABELS = {
-  previous_period: 'Previous period',
-  previous_year: 'Same period last year',
-  none: 'No comparison',
 };
 
 function startOfDay(date) {
@@ -164,7 +157,7 @@ export function isPartialPeriod(to, { today = new Date() } = {}) {
 }
 
 /** Human label for a resolved range, used in headers and comparison captions. */
-export function describePeriod(from, to, { locale = DEFAULT_LOCALE } = {}) {
+export function describePeriod(from, to, { locale = getFormatLocale() } = {}) {
   if (!from || !to) return '';
 
   const start = new Date(from);
@@ -200,4 +193,26 @@ export function describeComparison(basis, from, to) {
   const days = periodLengthInDays(from, to);
 
   return `vs previous ${days} days`;
+}
+
+/**
+ * The on-screen label of one time-series bucket, in the reader's language and
+ * digits.
+ *
+ * The API also sends a `label`, but it is written for a CSV and a log line —
+ * English month abbreviations with Western digits. The grain is read from the
+ * bucket's own span rather than passed in, so every caller of a series gets
+ * the right label without having to know how it was requested.
+ */
+export function formatBucketLabel(bucket, bucketEnd, { locale = getFormatLocale() } = {}) {
+  if (!bucket) return '';
+
+  const start = new Date(`${bucket}T00:00:00Z`);
+  const span = bucketEnd ? (new Date(`${bucketEnd}T00:00:00Z`) - start) / 86_400_000 : 0;
+  const monthly = span >= 27;
+
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: 'UTC',
+    ...(monthly ? { month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' }),
+  }).format(start);
 }

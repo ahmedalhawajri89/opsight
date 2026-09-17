@@ -9,6 +9,7 @@ import {
   formatPercent,
   formatPoints,
 } from '@/lib/format';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * A period-over-period change.
@@ -56,6 +57,7 @@ export function ComparisonValue({
   variant = 'inline',
   className,
 }) {
+  const { t } = useI18n();
   const tone = changeTone(change, favourable);
   const unavailable = change === null || change === undefined;
 
@@ -81,11 +83,7 @@ export function ComparisonValue({
             ? cn('rounded-(--radius-sm) px-1.5 py-px text-xs', CHIP_CLASSES[tone])
             : TONE_CLASSES[tone],
         )}
-        title={
-          unavailable
-            ? 'No comparison available — the previous period had no value to compare against.'
-            : undefined
-        }
+        title={unavailable ? t('comparison.unavailable') : undefined}
       >
         {!unavailable && (
           <span aria-hidden="true" className="text-[0.625rem]">

@@ -80,7 +80,7 @@ export function DataTable({
         {activeFilters.length > 0 ? (
           <NoResultsState activeFilters={activeFilters} onClear={onClearFilters} />
         ) : (
-          (empty ?? <EmptyState title="Nothing here yet" />)
+          (empty ?? <EmptyState />)
         )}
       </Shell>
     );

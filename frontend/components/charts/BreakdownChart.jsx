@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 
 import { ChartFrame } from './ChartFrame';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { formatMoney, formatMoneyCompact, formatNumber, formatPercent } from '@/lib/format';
 
 /**
@@ -39,15 +40,18 @@ export function BreakdownChart({
   height = 320,
   className,
 }) {
+  const { t, dir } = useI18n();
+  const rtl = dir === 'rtl';
+
   const formatValue = (value) =>
     format === 'money' ? formatMoney(value, { currency, decimals }) : formatNumber(value);
 
   const columns = [
-    { key: 'label', header: 'Name' },
+    { key: 'label', header: t('charts.name') },
     { key: 'value', header: title, numeric: true, cell: (row) => formatValue(row.value) },
     {
       key: 'share',
-      header: 'Share',
+      header: t('charts.share'),
       numeric: true,
       // A share of a zero total is undefined, not zero.
       cell: (row) => formatPercent(row.share),
@@ -67,20 +71,18 @@ export function BreakdownChart({
       onRetry={onRetry}
       height={height}
       className={className}
-      emptyDescription="Nothing was sold in this period, so there is nothing to rank."
-      footnote={
-        rows.some((row) => row.is_other)
-          ? 'Everything outside the top rows is grouped as Other, so the shares still sum to the whole.'
-          : undefined
-      }
+      emptyDescription={t('charts.rankEmpty')}
+      footnote={rows.some((row) => row.is_other) ? t('charts.otherFootnote') : undefined}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
           <CartesianGrid horizontal={false} stroke="var(--border)" />
 
           {/* Baseline at zero, always. */}
+          {/* Bars grow away from the reading start: from the right in Arabic. */}
           <XAxis
             type="number"
+            reversed={rtl}
             domain={[0, 'auto']}
             tickFormatter={(value) =>
               format === 'money' ? formatMoneyCompact(value, { currency }) : formatNumber(value)
@@ -92,6 +94,7 @@ export function BreakdownChart({
 
           <YAxis
             type="category"
+            orientation={rtl ? 'right' : 'left'}
             dataKey="label"
             tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
             tickLine={false}
@@ -107,12 +110,15 @@ export function BreakdownChart({
               const row = payload[0].payload;
 
               return (
-                <div className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-2.5 py-2 text-[0.8125rem] shadow-(--shadow-overlay)">
+                <div
+                  dir={dir}
+                  className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-2.5 py-2 text-[0.8125rem] shadow-(--shadow-overlay)"
+                >
                   <p className="font-medium text-(--color-text)">{row.label}</p>
                   {row.sublabel && <p className="text-(--color-text-subtle)">{row.sublabel}</p>}
                   <p className="tabular text-(--color-text)">{formatValue(row.value)}</p>
                   <p className="tabular text-(--color-text-muted)">
-                    {formatPercent(row.share)} of the period
+                    {t('charts.shareOfPeriod', { share: formatPercent(row.share) })}
                   </p>
                 </div>
               );

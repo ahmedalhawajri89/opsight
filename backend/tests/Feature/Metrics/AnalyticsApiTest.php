@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Carbon\Carbon;
 use Tests\Support\MetricFixture;
 
 beforeEach(function (): void {
@@ -161,6 +162,31 @@ it('chooses a sensible grain for the span', function (string $from, string $to, 
     'a quarter is weekly' => ['2026-06-01', '2026-08-31', 'week'],
     'a year is monthly' => ['2025-09-01', '2026-08-31', 'month'],
 ]);
+
+it('buckets weeks identically whatever language the reader chose', function (): void {
+    /*
+     * Regression: Carbon's default week start follows the application locale,
+     * and Arabic starts the week on Saturday. The buckets were built from
+     * Saturdays while SQL grouped from Mondays, so an Arabic reader saw every
+     * weekly value as zero.
+     */
+    $url = "/api/v1/analytics/timeseries{$this->range}&metric=orders_count&grain=week";
+
+    $english = $this->actingAs(User::factory()->owner()->create())->getJson($url)->assertOk();
+
+    $arabic = User::factory()->owner()->create();
+    $arabic->forceFill(['locale' => 'ar'])->save();
+    $arabicResponse = $this->actingAs($arabic)->getJson($url)->assertOk();
+
+    $shape = fn ($response) => collect($response->json('data'))
+        ->map(fn (array $bucket) => [$bucket['bucket'], $bucket['bucket_end'], $bucket['value']])
+        ->all();
+
+    expect($shape($arabicResponse))->toBe($shape($english))
+        ->and(collect($english->json('data'))->sum('value'))->toBeGreaterThan(0)
+        // Monday-based, matching the SQL grouping.
+        ->and(Carbon::parse($english->json('data.1.bucket'))->dayOfWeekIso)->toBe(1);
+});
 
 it('rejects an unknown time series metric', function (): void {
     $this->actingAs(User::factory()->owner()->create());

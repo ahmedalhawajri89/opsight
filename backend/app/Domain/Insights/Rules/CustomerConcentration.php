@@ -60,12 +60,11 @@ final class CustomerConcentration extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Revenue is concentrated',
-            message: sprintf(
-                '%s accounts for %s%% of net revenue this period.',
-                (string) ($top['label'] ?? 'One customer'),
-                $this->pct($share),
-            ),
+            title: __('insights.customer_concentration.title'),
+            message: __('insights.customer_concentration.message', [
+                'customer' => (string) ($top['label'] ?? __('insights.customer_concentration.fallback_customer')),
+                'pct' => $this->pct($share),
+            ]),
             link: $context->link(['dimension' => 'customer']),
             values: ['customer' => $top['label'] ?? null, 'share' => round($share, 4)],
         );

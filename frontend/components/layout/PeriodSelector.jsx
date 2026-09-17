@@ -3,15 +3,15 @@
 import { cn } from '@/lib/cn';
 import {
   COMPARISON,
-  COMPARISON_LABELS,
   PRESETS,
-  PRESET_LABELS,
+  PRESET_DAYS,
   describePeriod,
   isPartialPeriod,
   resolvePreset,
 } from '@/lib/periods';
 import { DateInput, Select } from '@/components/ui/Field';
 import { PartialBadge } from '@/components/ui/Badge';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * The global period selector.
@@ -40,6 +40,8 @@ export function PeriodSelector({
   showPartial = true,
   className,
 }) {
+  const { t } = useI18n();
+
   const resolved =
     preset === PRESETS.Custom && from && to
       ? { from, to }
@@ -64,12 +66,12 @@ export function PeriodSelector({
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <Select
-        aria-label="Period"
+        aria-label={t('period.selector.period')}
         value={preset}
         onChange={(event) => handlePreset(event.target.value)}
         options={Object.values(PRESETS).map((value) => ({
           value,
-          label: PRESET_LABELS[value],
+          label: t(`period.presets.${value}`, { count: PRESET_DAYS[value] }),
         }))}
         className="h-9 w-auto min-w-36"
       />
@@ -77,7 +79,7 @@ export function PeriodSelector({
       {preset === PRESETS.Custom && (
         <>
           <DateInput
-            aria-label="From date"
+            aria-label={t('period.selector.from')}
             value={resolved.from ?? ''}
             max={resolved.to ?? undefined}
             onChange={(event) =>
@@ -89,7 +91,7 @@ export function PeriodSelector({
             –
           </span>
           <DateInput
-            aria-label="To date"
+            aria-label={t('period.selector.to')}
             value={resolved.to ?? ''}
             min={resolved.from ?? undefined}
             onChange={(event) =>
@@ -101,12 +103,12 @@ export function PeriodSelector({
       )}
 
       <Select
-        aria-label="Comparison"
+        aria-label={t('period.selector.comparison')}
         value={comparison}
         onChange={(event) => onChange?.({ preset, ...resolved, comparison: event.target.value })}
         options={Object.values(COMPARISON).map((value) => ({
           value,
-          label: COMPARISON_LABELS[value],
+          label: t(`period.comparisons.${value}`),
         }))}
         className="h-9 w-auto min-w-44"
       />

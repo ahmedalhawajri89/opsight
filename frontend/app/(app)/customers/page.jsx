@@ -2,6 +2,8 @@
 
 import { useCustomers } from '@/features/catalog/useCatalog';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { describeFilters } from '@/lib/i18n/filters';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
@@ -21,6 +23,7 @@ const FILTER_CONFIG = {
 
 export default function CustomersPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
@@ -41,27 +44,39 @@ export default function CustomersPage() {
   const columns = [
     {
       key: 'name',
-      header: 'Customer',
+      header: t('customers.columns.customer'),
       sortable: true,
       cell: (row) => (
         <span className="flex items-center gap-2">
           {row.name}
-          {!row.is_active && <Badge tone="neutral">Inactive</Badge>}
+          {!row.is_active && <Badge tone="neutral">{t('common.inactive')}</Badge>}
         </span>
       ),
     },
     {
       key: 'email',
-      header: 'Email',
+      header: t('customers.columns.email'),
       sortable: true,
-      // Walk-in trade has no email, and the unique index allows that.
-      cell: (row) => row.email ?? <span className="text-(--color-text-subtle)">—</span>,
+      // Walk-in trade has no email, and the unique index allows that. An
+      // address is isolated left-to-right so its punctuation stays in place
+      // inside an Arabic row.
+      cell: (row) =>
+        row.email ? (
+          <bdi dir="ltr">{row.email}</bdi>
+        ) : (
+          <span className="text-(--color-text-subtle)">—</span>
+        ),
     },
-    { key: 'company', header: 'Company', cell: (row) => row.company ?? '—' },
-    { key: 'country', header: 'Country', width: '7rem', cell: (row) => row.country ?? '—' },
+    { key: 'company', header: t('customers.columns.company'), cell: (row) => row.company ?? '—' },
+    {
+      key: 'country',
+      header: t('customers.columns.country'),
+      width: '7rem',
+      cell: (row) => row.country ?? '—',
+    },
     {
       key: 'created_at',
-      header: 'Added',
+      header: t('customers.columns.added'),
       sortable: true,
       numeric: true,
       width: '9rem',
@@ -72,8 +87,8 @@ export default function CustomersPage() {
   return (
     <div>
       <PageHeader
-        title="Customers"
-        description="Order history, lifetime value and growth are computed from orders — they are metrics, not stored columns."
+        title={t('nav.items.customers')}
+        description={t('customers.description')}
         actions={
           /*
            * The most sensitive export in the system: the business's entire
@@ -89,18 +104,18 @@ export default function CustomersPage() {
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Input
           type="search"
-          placeholder="Search name, email or company…"
-          aria-label="Search customers"
+          placeholder={t('customers.searchPlaceholder')}
+          aria-label={t('customers.searchLabel')}
           defaultValue={filters.search ?? ''}
           onChange={(event) => setFilters({ search: event.target.value })}
           className="w-64"
         />
         <Select
-          aria-label="Active state"
-          placeholder="All customers"
+          aria-label={t('catalog.activeState')}
+          placeholder={t('customers.all')}
           options={[
-            { value: 'true', label: 'Active only' },
-            { value: 'false', label: 'Inactive only' },
+            { value: 'true', label: t('catalog.activeOnly') },
+            { value: 'false', label: t('catalog.inactiveOnly') },
           ]}
           value={filters.is_active ?? ''}
           onChange={(event) => setFilters({ is_active: event.target.value })}
@@ -110,7 +125,7 @@ export default function CustomersPage() {
 
       <Card padded={false}>
         <DataTable
-          caption="Customers"
+          caption={t('nav.items.customers')}
           columns={columns}
           rows={customers}
           loading={isLoading}
@@ -118,12 +133,12 @@ export default function CustomersPage() {
           onRetry={refetch}
           sort={filters.sort}
           onSortChange={setSort}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
           empty={
             <EmptyState
-              title="No customers yet"
-              description="Customers let orders be attributed to a buyer, which is what makes growth and retention measurable."
+              title={t('customers.empty.title')}
+              description={t('customers.empty.description')}
             />
           }
         />

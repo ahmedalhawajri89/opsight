@@ -7,12 +7,37 @@
  * See docs/architecture/FRONTEND_ARCHITECTURE.md §4.
  */
 
+import en from '@/lib/i18n/messages/en';
+import ar from '@/lib/i18n/messages/ar';
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 /** Fired once, globally, when the session is gone. */
 export const SESSION_EXPIRED_EVENT = 'opsight:session-expired';
 
 const UNSAFE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
+/*
+ * The language the server should write in, sent on every request.
+ *
+ * For a signed-in user the server trusts their saved preference and ignores
+ * this; it matters for requests with no user yet — the sign-in form, whose
+ * validation and throttle messages must match the language of the page. Set
+ * by the I18nProvider.
+ */
+let requestLanguage = 'en';
+
+export function setRequestLanguage(locale) {
+  requestLanguage = locale || 'en';
+}
+
+/*
+ * The one message the client writes itself: when the server could not be
+ * reached, there is no server to have written it.
+ */
+function networkMessage() {
+  return (requestLanguage === 'ar' ? ar : en).states.error.network;
+}
 
 /**
  * A single error shape for every failure — HTTP, validation, or network.
@@ -139,6 +164,7 @@ export async function request(
 
   const headers = {
     Accept: 'application/json',
+    'Accept-Language': requestLanguage,
   };
 
   if (body !== undefined) {
@@ -168,7 +194,7 @@ export async function request(
     throw new ApiError({
       status: 0,
       code: 'network.unreachable',
-      message: 'Could not reach the server. Check your connection and try again.',
+      message: networkMessage(),
     });
   }
 
@@ -221,14 +247,15 @@ export async function download(path, { params, fallbackName = 'export.csv' } = {
   try {
     response = await fetch(`${BASE_URL}/api/v1${path}${buildQuery(params)}`, {
       method: 'GET',
-      headers: { Accept: 'text/csv, application/json' },
+      // CSV column headers are written in the reader's language too.
+      headers: { Accept: 'text/csv, application/json', 'Accept-Language': requestLanguage },
       credentials: 'include',
     });
   } catch {
     throw new ApiError({
       status: 0,
       code: 'network.unreachable',
-      message: 'Could not reach the server. Check your connection and try again.',
+      message: networkMessage(),
     });
   }
 

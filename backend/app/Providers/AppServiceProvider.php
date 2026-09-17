@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\RecordAuthActivity;
+use App\Support\Localization\Localizer;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
@@ -23,7 +24,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        /*
+         * One Localizer per request. A singleton would carry one user's
+         * language into the next request on a long-lived worker (Octane, a
+         * queue daemon); scoped instances are flushed between them.
+         */
+        $this->app->scoped(Localizer::class);
     }
 
     /**

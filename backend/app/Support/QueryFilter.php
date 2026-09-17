@@ -64,7 +64,7 @@ final class QueryFilter
 
         if (! is_array($requested)) {
             throw ValidationException::withMessages([
-                'filter' => 'Filters must be supplied as filter[key]=value.',
+                'filter' => __('errors.filter.malformed'),
             ]);
         }
 
@@ -72,8 +72,10 @@ final class QueryFilter
 
         if ($unknown !== []) {
             throw ValidationException::withMessages([
-                'filter' => 'Unknown filter: '.implode(', ', $unknown)
-                    .'. Allowed: '.implode(', ', array_keys($this->filters)).'.',
+                'filter' => __('errors.filter.unknown', [
+                    'unknown' => implode(', ', $unknown),
+                    'allowed' => implode(', ', array_keys($this->filters)),
+                ]),
             ]);
         }
 
@@ -108,8 +110,10 @@ final class QueryFilter
          */
         if ($requested !== null && ! in_array($field, $this->sortable, strict: true)) {
             throw ValidationException::withMessages([
-                'sort' => "Cannot sort by '{$field}'. Allowed: "
-                    .implode(', ', $this->sortable).'.',
+                'sort' => __('errors.filter.unsortable', [
+                    'field' => $field,
+                    'allowed' => implode(', ', $this->sortable),
+                ]),
             ]);
         }
 

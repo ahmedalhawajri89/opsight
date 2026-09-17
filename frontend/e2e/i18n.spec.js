@@ -1,0 +1,130 @@
+import { expect, test } from '@playwright/test';
+
+import { authFile } from './support/authState';
+
+/**
+ * Arabic, through a real browser against a real backend.
+ *
+ * What only an end-to-end test can show: that the choice is saved on the
+ * account and survives a reload, that the page is laid out right to left from
+ * its first byte, and that the server's own figures and the client's labels
+ * arrive in the same language and the same digits.
+ *
+ * The database is shared by every spec, so a test that switches an account to
+ * Arabic puts it back in `finally` — a failure half way must not leave the
+ * rest of the suite reading a page in a language it does not expect.
+ */
+
+const API = process.env.E2E_API_URL ?? 'http://localhost:8000';
+
+/** Saves preferences through the API with the page's own session and CSRF token. */
+async function savePreferences(page, preferences) {
+  return page.evaluate(
+    async ({ api, body }) => {
+      const token = decodeURIComponent(
+        document.cookie
+          .split('; ')
+          .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+          ?.split('=')[1] ?? '',
+      );
+
+      const response = await fetch(`${api}/api/v1/me/preferences`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': token,
+        },
+        body: JSON.stringify(body),
+      });
+
+      return response.status;
+    },
+    { api: API, body: preferences },
+  );
+}
+
+test.describe('a signed-in user choosing Arabic', () => {
+  test.use({ storageState: authFile('manager') });
+
+  test('is saved to the account, lays the page out right to left and survives a reload', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard');
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+
+    try {
+      await page.getByRole('button', { name: /Language/ }).click();
+
+      const dialog = page.getByRole('dialog');
+      // The dialog stays in the current language until the choice is saved.
+      await dialog.getByRole('radio', { name: /العربية/ }).check();
+      await dialog.getByRole('radio', { name: /Arabic-Indic/ }).check();
+
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url().includes('/me/preferences') && response.request().method() === 'PATCH',
+      );
+      await dialog.getByRole('button', { name: 'Save' }).click();
+      expect((await saved).status()).toBe(200);
+
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+      await expect(page.getByRole('heading', { name: 'لوحة المعلومات' })).toBeVisible();
+
+      // Figures are written in the chosen digits.
+      await expect(page.getByRole('heading', { name: 'الطلبات', level: 3 })).toBeVisible();
+      await expect(page.locator('main')).toContainText(/[٠-٩]/);
+
+      // A server-written sentence arrives in Arabic too.
+      await expect(page.getByText(/مقارنة/).first()).toBeVisible();
+
+      // Reload: the saved choice, and right-to-left from the first byte.
+      await page.reload();
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      await expect(page.getByRole('heading', { name: 'لوحة المعلومات' })).toBeVisible();
+    } finally {
+      expect(await savePreferences(page, { locale: 'en', numerals: 'latn' })).toBe(200);
+    }
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+  });
+
+  test('keeps Western digits by default', async ({ page }) => {
+    await page.goto('/dashboard');
+
+    try {
+      expect(await savePreferences(page, { locale: 'ar' })).toBe(200);
+      await page.reload();
+
+      await expect(page.getByRole('heading', { name: 'لوحة المعلومات' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'الطلبات', level: 3 })).toBeVisible();
+      await expect(page.locator('main')).not.toContainText(/[٠-٩]/);
+    } finally {
+      expect(await savePreferences(page, { locale: 'en', numerals: 'latn' })).toBe(200);
+    }
+  });
+});
+
+test.describe('a visitor on the sign-in page', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('can read it in Arabic before signing in', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByRole('button', { name: 'العربية' }).click();
+
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.getByLabel('البريد الإلكتروني')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'تسجيل الدخول' })).toBeVisible();
+
+    // Remembered on this browser, so the next visit starts in Arabic.
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+
+    await page.getByRole('button', { name: 'English' }).click();
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+  });
+});

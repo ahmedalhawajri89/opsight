@@ -48,13 +48,12 @@ final class CancellationSpike extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Cancellations are climbing',
-            message: sprintf(
-                'Cancellations reached %s%% of orders, up %s percentage points on the %s.',
-                $this->pct($current),
-                $this->points($rate->changeAbsolute),
-                $context->comparison->label(),
-            ),
+            title: __('insights.cancellation_spike.title'),
+            message: __('insights.cancellation_spike.message', [
+                'rate' => $this->pct($current),
+                'points' => $this->points($rate->changeAbsolute),
+                'basis' => $this->basis($context),
+            ]),
             link: $context->link(['metric' => 'orders_count']),
             values: [
                 'rate' => round($current, 4),

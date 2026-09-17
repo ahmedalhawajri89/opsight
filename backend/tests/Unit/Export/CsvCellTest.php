@@ -64,7 +64,8 @@ it('renders null as an empty cell rather than the word null', function (): void 
 
 it('renders booleans as words, not as 1 and an empty string', function (): void {
     // PHP casts false to '', which in a CSV is indistinguishable from null.
-    // "Active: " and "Active: false" are different statements.
-    expect(CsvCell::escape(true))->toBe('true')
-        ->and(CsvCell::escape(false))->toBe('false');
+    // "Active: " and "Active: No" are different statements — and they are
+    // words for a reader, in the reader's language, not programming literals.
+    expect(CsvCell::escape(true))->toBe('Yes')
+        ->and(CsvCell::escape(false))->toBe('No');
 });

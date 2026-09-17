@@ -4,6 +4,7 @@ import { useDashboard } from '@/features/analytics/useAnalytics';
 import { KpiPanel } from '@/features/analytics/KpiPanel';
 import { LowStockCard, PeriodStatus, TopProductsCard } from '@/features/analytics/DashboardPanels';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { InsightFeed } from '@/features/insights/InsightFeed';
 import { useInsights } from '@/features/insights/useInsights';
 import { RecentOrdersCard } from '@/features/orders/RecentOrdersCard';
@@ -40,6 +41,7 @@ const PERIOD_CONFIG = {
  */
 export default function DashboardPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters } = useUrlFilters(PERIOD_CONFIG);
 
   const period = {
@@ -80,12 +82,12 @@ export default function DashboardPage() {
       {comparisonLabel && ` · ${comparisonLabel}`}
     </>
   ) : (
-    'Business performance for the selected period'
+    t('dashboard.description')
   );
 
   const header = (
     <PageHeader
-      title="Dashboard"
+      title={t('nav.items.dashboard')}
       description={context}
       actions={
         <PeriodSelector
@@ -150,7 +152,7 @@ export default function DashboardPage() {
         */}
         <div className="grid gap-4 xl:grid-cols-12">
           <TrendChart
-            title="Net revenue"
+            title={t('metrics.net_revenue.label')}
             description={`${currency} · ${meta ? describePeriod(meta.period.from, meta.period.to) : ''}`}
             series={dashboard?.revenue_trend ?? []}
             format="money"
@@ -172,8 +174,8 @@ export default function DashboardPage() {
           {/* Absent entirely for a cost-blind role — the server never sent it. */}
           {hasProfitTrend && (
             <TrendChart
-              title="Gross profit"
-              description={`${currency} · net revenue less cost of goods at the time of sale`}
+              title={t('metrics.gross_profit.label')}
+              description={`${currency} · ${t('dashboard.profitDescription')}`}
               series={dashboard.profit_trend}
               format="money"
               currency={currency}

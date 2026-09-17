@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { Badge, PartialBadge } from '@/components/ui/Badge';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { Icon } from '@/components/ui/Icon';
 import { Card } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/cn';
@@ -18,6 +19,8 @@ import { EMPTY, formatMoney, formatNumber, formatPercent } from '@/lib/format';
  * is how it was before and which trained the eye to skip it.
  */
 export function PeriodStatus({ show }) {
+  const { t } = useI18n();
+
   if (!show) return null;
 
   return (
@@ -27,10 +30,7 @@ export function PeriodStatus({ show }) {
     >
       <Icon name="clock" className="shrink-0 text-(--color-warning)" />
       <PartialBadge />
-      <span>
-        This period is still in progress, so it is being compared against a complete one. Expect
-        figures to read low until it finishes.
-      </span>
+      <span>{t('period.status')}</span>
     </p>
   );
 }
@@ -48,10 +48,12 @@ export function PeriodStatus({ show }) {
  * undefined, not zero, and renders as an em dash.
  */
 export function TopProductsCard({ rows = [], currency, decimals, loading, className }) {
+  const { t } = useI18n();
+
   return (
     <Card
-      title="Top products"
-      description="By net revenue, grouped by the SKU recorded at the time of sale"
+      title={t('dashboard.topProducts.title')}
+      description={t('dashboard.topProducts.description')}
       padded={false}
       className={className}
     >
@@ -59,21 +61,21 @@ export function TopProductsCard({ rows = [], currency, decimals, loading, classN
         <RowsSkeleton />
       ) : rows.length === 0 ? (
         <p className="px-5 py-6 text-[0.8125rem] text-(--color-text-muted)">
-          Nothing was sold in this period, so there is nothing to rank.
+          {t('charts.rankEmpty')}
         </p>
       ) : (
         <table className="w-full text-sm">
-          <caption className="sr-only">Top products by net revenue</caption>
+          <caption className="sr-only">{t('dashboard.topProducts.caption')}</caption>
           <thead>
             <tr className="text-[0.6875rem] tracking-[0.05em] text-(--color-text-muted) uppercase">
               <th scope="col" className="w-8 py-2.5 ps-5 text-start font-medium">
-                #
+                {t('dashboard.topProducts.rank')}
               </th>
               <th scope="col" className="py-2.5 text-start font-medium">
-                Product
+                {t('dashboard.topProducts.product')}
               </th>
               <th scope="col" className="py-2.5 pe-5 text-end font-medium">
-                Revenue
+                {t('dashboard.topProducts.revenue')}
               </th>
             </tr>
           </thead>
@@ -145,18 +147,19 @@ function ShareBar({ share, muted }) {
  * — otherwise a reader takes it as "low stock during August" (METRICS.md §2.18).
  */
 export function LowStockCard({ data, loading, className }) {
+  const { t } = useI18n();
   const items = data?.items ?? [];
 
   return (
     <Card
-      title="Low stock"
-      description="As of now — not for the selected period"
+      title={t('dashboard.lowStock.title')}
+      description={t('dashboard.lowStock.description')}
       padded={false}
       className={cn('flex flex-col', className)}
       bodyClassName="flex flex-1 flex-col"
       actions={
         data?.count > 0 ? (
-          <Badge tone="warning">{formatNumber(data.count)} below reorder point</Badge>
+          <Badge tone="warning">{t('dashboard.lowStock.count', { count: data.count })}</Badge>
         ) : null
       }
     >
@@ -165,7 +168,7 @@ export function LowStockCard({ data, loading, className }) {
       ) : items.length === 0 ? (
         <p className="flex flex-1 items-start gap-2.5 px-5 py-5 text-[0.8125rem] text-(--color-text-muted)">
           <Icon name="check" className="mt-0.5 shrink-0 text-(--color-positive)" />
-          Nothing is at or below its reorder point.
+          {t('dashboard.lowStock.none')}
         </p>
       ) : (
         <ul className="flex-1">
@@ -185,12 +188,12 @@ export function LowStockCard({ data, loading, className }) {
                   <span className="font-semibold text-(--color-warning)">
                     {formatNumber(item.stock_on_hand)}
                   </span>
-                  <span className="text-(--color-text-muted)"> left</span>
+                  <span className="text-(--color-text-muted)"> {t('dashboard.lowStock.left')}</span>
                 </p>
               </div>
               {item.threshold > 0 && (
                 <p className="tabular mt-0.5 text-xs text-(--color-text-subtle)">
-                  Reorder point {formatNumber(item.threshold)}
+                  {t('dashboard.lowStock.reorderPoint', { value: formatNumber(item.threshold) })}
                 </p>
               )}
             </li>
@@ -203,7 +206,7 @@ export function LowStockCard({ data, loading, className }) {
           href="/inventory?low_stock=true"
           className="group inline-flex items-center gap-1 text-[0.8125rem] font-medium text-(--color-accent-text) hover:underline"
         >
-          View all inventory
+          {t('dashboard.lowStock.viewAll')}
           <Icon
             name="arrowRight"
             size={14}

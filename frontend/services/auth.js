@@ -21,3 +21,11 @@ export function logout() {
 export function fetchMe() {
   return request('/me', { suppressExpiryEvent: true });
 }
+
+/**
+ * The signed-in user's own language and digits. Returns the updated user, so
+ * the auth cache can be replaced rather than refetched.
+ */
+export function updatePreferences({ locale, numerals }) {
+  return api.patch('/me/preferences', { locale, numerals });
+}

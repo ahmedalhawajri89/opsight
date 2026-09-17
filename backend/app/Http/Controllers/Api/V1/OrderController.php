@@ -49,17 +49,17 @@ class OrderController extends Controller
             query: $this->listing($request),
             resource: OrderResource::class,
             columns: [
-                'reference' => 'Reference',
-                'status_label' => 'Status',
-                'placed_at' => 'Placed at',
-                'customer.name' => 'Customer',
-                'customer.email' => 'Customer email',
-                'subtotal_amount' => 'Subtotal',
-                'discount_amount' => 'Discount',
-                'tax_amount' => 'Tax',
-                'shipping_amount' => 'Shipping',
-                'total_amount' => 'Total',
-                'refunded_amount' => 'Refunded',
+                'reference' => __('labels.csv.reference'),
+                'status_label' => __('labels.csv.status'),
+                'placed_at' => __('labels.csv.placed_at'),
+                'customer.name' => __('labels.csv.customer'),
+                'customer.email' => __('labels.csv.customer_email'),
+                'subtotal_amount' => __('labels.csv.subtotal'),
+                'discount_amount' => __('labels.csv.discount'),
+                'tax_amount' => __('labels.csv.tax'),
+                'shipping_amount' => __('labels.csv.shipping'),
+                'total_amount' => __('labels.csv.total'),
+                'refunded_amount' => __('labels.csv.refunded'),
                 /*
                  * Dropped automatically for a role without orders.view_margin:
                  * OrderResource omits both keys, so CsvExport never sees them
@@ -67,8 +67,8 @@ class OrderController extends Controller
                  * precisely because presence is decided by the resource and
                  * not by this array.
                  */
-                'cogs_amount' => 'Cost of goods',
-                'gross_profit' => 'Gross profit',
+                'cogs_amount' => __('labels.csv.cogs'),
+                'gross_profit' => __('labels.csv.gross_profit'),
             ],
             request: $request,
             filename: 'orders',

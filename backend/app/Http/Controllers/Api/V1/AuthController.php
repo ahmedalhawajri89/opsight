@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\UpdatePreferencesRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\Localization\Localizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +22,7 @@ use Illuminate\Support\Facades\Auth;
  */
 class AuthController extends Controller
 {
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, Localizer $localizer): JsonResponse
     {
         $request->authenticate();
 
@@ -33,6 +35,11 @@ class AuthController extends Controller
         assert($user instanceof User);
 
         $user->forceFill(['last_login_at' => now()])->save();
+
+        // The request began before anyone was signed in, so it is running in
+        // the language of the sign-in screen. The response describes the user
+        // (role label and so on), so it switches to the user's own language.
+        $localizer->use($user->locale ?? 'en', $user->numerals ?? 'latn');
 
         return UserResource::make($user)
             ->response()
@@ -61,5 +68,24 @@ class AuthController extends Controller
         assert($user instanceof User);
 
         return UserResource::make($user);
+    }
+
+    /**
+     * The signed-in user's own language and digits.
+     *
+     * Audited like any other change to a user row — the observer writes
+     * `user.updated` with the before and after — and applied to THIS response
+     * immediately, so the confirmation comes back in the language just chosen.
+     */
+    public function updatePreferences(UpdatePreferencesRequest $request, Localizer $localizer): UserResource
+    {
+        $user = $request->user();
+        assert($user instanceof User);
+
+        $user->fill($request->validated())->save();
+
+        $localizer->use($user->locale, $user->numerals);
+
+        return UserResource::make($user->refresh());
     }
 }

@@ -7,21 +7,24 @@ import Link from 'next/link';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { PreferencesDialog } from '@/features/i18n/PreferencesDialog';
 
 /**
  * Navigation is filtered by ability, so a user never sees a link that would
  * 403 (ROLES_AND_PERMISSIONS.md §5).
  *
  * An entry without `ready: true` renders as disabled rather than as a dead link
- * that looks broken.
+ * that looks broken. Labels are dictionary KEYS, resolved at render time, so
+ * the navigation follows the reader's language.
  */
 const NAV_GROUPS = [
   {
-    label: 'Overview',
+    label: 'nav.groups.overview',
     items: [
       {
         href: '/dashboard',
-        label: 'Dashboard',
+        label: 'nav.items.dashboard',
         icon: 'dashboard',
         ability: 'dashboard.view',
         ready: true,
@@ -29,33 +32,39 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Operations',
+    label: 'nav.groups.operations',
     items: [
-      { href: '/orders', label: 'Orders', icon: 'orders', ability: 'orders.view', ready: true },
+      {
+        href: '/orders',
+        label: 'nav.items.orders',
+        icon: 'orders',
+        ability: 'orders.view',
+        ready: true,
+      },
       {
         href: '/customers',
-        label: 'Customers',
+        label: 'nav.items.customers',
         icon: 'customers',
         ability: 'customers.view',
         ready: true,
       },
       {
         href: '/products',
-        label: 'Products',
+        label: 'nav.items.products',
         icon: 'products',
         ability: 'products.view',
         ready: true,
       },
       {
         href: '/inventory',
-        label: 'Inventory',
+        label: 'nav.items.inventory',
         icon: 'inventory',
         ability: 'inventory.view',
         ready: true,
       },
       {
         href: '/expenses',
-        label: 'Expenses',
+        label: 'nav.items.expenses',
         icon: 'expenses',
         ability: 'expenses.view',
         ready: true,
@@ -63,11 +72,11 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Analysis',
+    label: 'nav.groups.analysis',
     items: [
       {
         href: '/analytics',
-        label: 'Analytics',
+        label: 'nav.items.analytics',
         icon: 'analytics',
         ability: 'analytics.view',
         ready: true,
@@ -77,11 +86,11 @@ const NAV_GROUPS = [
   ...(process.env.NEXT_PUBLIC_ENABLE_GALLERY === 'true'
     ? [
         {
-          label: 'Development',
+          label: 'nav.groups.development',
           items: [
             {
               href: '/gallery',
-              label: 'Component gallery',
+              label: 'nav.items.gallery',
               icon: 'gallery',
               ability: 'dashboard.view',
               ready: true,
@@ -91,25 +100,25 @@ const NAV_GROUPS = [
       ]
     : []),
   {
-    label: 'Administration',
+    label: 'nav.groups.administration',
     items: [
       {
         href: '/activity',
-        label: 'Activity log',
+        label: 'nav.items.activity',
         icon: 'activity',
         ability: 'activity.view',
         ready: true,
       },
       {
         href: '/settings/users',
-        label: 'Users',
+        label: 'nav.items.users',
         icon: 'users',
         ability: 'users.view',
         ready: true,
       },
       {
         href: '/settings',
-        label: 'Settings',
+        label: 'nav.items.settings',
         icon: 'settings',
         ability: 'settings.view',
         ready: true,
@@ -134,6 +143,8 @@ function activeHref(pathname, groups) {
 
 export function AppShell({ children }) {
   const { user, can, logout } = useAuth();
+  const { t } = useI18n();
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -189,7 +200,7 @@ export function AppShell({ children }) {
         href="#main-content"
         className="sr-only z-50 rounded-(--radius-sm) bg-(--color-surface) px-3 py-2 text-sm font-medium text-(--color-accent-text) shadow-(--shadow-overlay) focus:not-sr-only focus:fixed focus:start-3 focus:top-3"
       >
-        Skip to content
+        {t('nav.skipToContent')}
       </a>
 
       {/*
@@ -199,19 +210,31 @@ export function AppShell({ children }) {
         in its place, leaving phone users no way to move between modules.
       */}
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-e border-(--color-line) bg-(--color-surface) lg:flex">
-        <Sidebar groups={groups} current={current} user={user} onSignOut={handleSignOut} />
+        <Sidebar
+          groups={groups}
+          current={current}
+          user={user}
+          onSignOut={handleSignOut}
+          onPreferences={() => setPreferencesOpen(true)}
+        />
       </aside>
 
       {drawerOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
-            aria-label="Close navigation"
+            aria-label={t('nav.closeNavigation')}
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 size-full bg-(--color-text)/25"
           />
           <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col border-e border-(--color-line) bg-(--color-surface) shadow-(--shadow-overlay)">
-            <Sidebar groups={groups} current={current} user={user} onSignOut={handleSignOut} />
+            <Sidebar
+              groups={groups}
+              current={current}
+              user={user}
+              onSignOut={handleSignOut}
+              onPreferences={() => setPreferencesOpen(true)}
+            />
           </aside>
         </div>
       )}
@@ -225,7 +248,7 @@ export function AppShell({ children }) {
               setDrawerOpen(true);
             }}
             aria-expanded={drawerOpen}
-            aria-label="Open navigation"
+            aria-label={t('nav.openNavigation')}
             className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-sm) text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
           >
             <Icon name="menu" size={20} />
@@ -240,6 +263,8 @@ export function AppShell({ children }) {
           conveys nothing — the prohibition on outline:none is about controls,
           which all keep theirs.
         */}
+        <PreferencesDialog open={preferencesOpen} onClose={() => setPreferencesOpen(false)} />
+
         <main
           id="main-content"
           tabIndex={-1}
@@ -253,6 +278,8 @@ export function AppShell({ children }) {
 }
 
 function Brand() {
+  const { t } = useI18n();
+
   return (
     <span className="flex items-center gap-2.5">
       {/* The product mark: a bar chart in the accent. Identity, used once. */}
@@ -263,20 +290,22 @@ function Brand() {
         <Icon name="analytics" size={16} strokeWidth={2.25} />
       </span>
       <span className="text-[0.9375rem] font-semibold tracking-tight text-(--color-text)">
-        Opsight
+        {t('common.appName')}
       </span>
     </span>
   );
 }
 
-function Sidebar({ groups, current, user, onSignOut }) {
+function Sidebar({ groups, current, user, onSignOut, onPreferences }) {
+  const { t, locale } = useI18n();
+
   return (
     <>
       <div className="flex h-15 shrink-0 items-center px-5">
         <Brand />
       </div>
 
-      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 pb-4 pt-1">
+      <nav aria-label={t('nav.main')} className="flex-1 overflow-y-auto px-3 pb-4 pt-1">
         {groups.map((group) => (
           <div key={group.label} className="mt-4 first:mt-1">
             {/*
@@ -286,13 +315,13 @@ function Sidebar({ groups, current, user, onSignOut }) {
               they were on. The list is named by the label instead.
             */}
             <p
-              id={`nav-${group.label}`}
+              id={`nav-${group.label.replaceAll('.', '-')}`}
               className="px-2.5 pb-1.5 text-[0.6875rem] font-medium tracking-[0.06em] text-(--color-text-subtle) uppercase"
             >
-              {group.label}
+              {t(group.label)}
             </p>
 
-            <ul aria-labelledby={`nav-${group.label}`} className="space-y-px">
+            <ul aria-labelledby={`nav-${group.label.replaceAll('.', '-')}`} className="space-y-px">
               {group.items.map((item) =>
                 item.ready ? (
                   <li key={item.href}>
@@ -302,11 +331,11 @@ function Sidebar({ groups, current, user, onSignOut }) {
                   <li key={item.href}>
                     <span
                       aria-disabled="true"
-                      title="Arrives in a later phase"
+                      title={t('nav.comingLater')}
                       className="flex cursor-not-allowed items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-1.5 text-[0.8125rem] text-(--color-text-subtle)"
                     >
                       <Icon name={item.icon} />
-                      {item.label}
+                      {t(item.label)}
                     </span>
                   </li>
                 ),
@@ -317,6 +346,24 @@ function Sidebar({ groups, current, user, onSignOut }) {
       </nav>
 
       <div className="shrink-0 border-t border-(--color-line) p-3">
+        {/*
+          Language is reachable by every role from every screen, not buried in
+          the Owner-only settings: it is a personal preference, and the person
+          who most needs to change it is the one who cannot read the current one.
+          The button names the language in its own script, for that reason.
+        */}
+        <button
+          type="button"
+          onClick={onPreferences}
+          className="mb-1 flex w-full items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-1.5 text-[0.8125rem] text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+        >
+          <Icon name="globe" className="text-(--color-text-subtle)" />
+          <span className="flex-1 text-start">{t('preferences.open')}</span>
+          <span lang={locale === 'ar' ? 'en' : 'ar'} className="text-xs text-(--color-text-subtle)">
+            {locale === 'ar' ? 'English' : 'العربية'}
+          </span>
+        </button>
+
         <div className="flex items-center gap-2.5 rounded-(--radius-md) px-2 py-1.5">
           <span
             aria-hidden="true"
@@ -335,8 +382,8 @@ function Sidebar({ groups, current, user, onSignOut }) {
           <button
             type="button"
             onClick={onSignOut}
-            title="Sign out"
-            aria-label="Sign out"
+            title={t('nav.signOut')}
+            aria-label={t('nav.signOut')}
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-sm) text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
           >
             <Icon name="signOut" />
@@ -348,6 +395,8 @@ function Sidebar({ groups, current, user, onSignOut }) {
 }
 
 function NavLink({ item, active }) {
+  const { t } = useI18n();
+
   return (
     <Link
       href={item.href}
@@ -370,7 +419,7 @@ function NavLink({ item, active }) {
         />
       )}
       <Icon name={item.icon} className={active ? undefined : 'text-(--color-text-subtle)'} />
-      {item.label}
+      {t(item.label)}
     </Link>
   );
 }

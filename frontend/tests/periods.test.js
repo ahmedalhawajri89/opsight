@@ -4,6 +4,7 @@ import {
   COMPARISON,
   PRESETS,
   describeComparison,
+  formatBucketLabel,
   describePeriod,
   fiscalQuarterStart,
   fiscalYearStart,
@@ -190,5 +191,23 @@ describe('describeComparison', () => {
 
   it('says nothing when there is no comparison', () => {
     expect(describeComparison(COMPARISON.None, '2026-08-01', '2026-08-31')).toBe('');
+  });
+});
+
+describe('formatBucketLabel', () => {
+  it('labels a day or a week by its first day', () => {
+    expect(formatBucketLabel('2026-09-07', '2026-09-07', { locale: 'en-GB' })).toBe('7 Sept');
+    expect(formatBucketLabel('2026-09-07', '2026-09-13', { locale: 'en-GB' })).toBe('7 Sept');
+  });
+
+  it('labels a month by month and year', () => {
+    expect(formatBucketLabel('2026-08-01', '2026-08-31', { locale: 'en-GB' })).toBe('Aug 2026');
+  });
+
+  it('writes Arabic month names in the chosen digits', () => {
+    const label = formatBucketLabel('2026-09-07', '2026-09-07', { locale: 'ar-BH-u-nu-arab' });
+
+    expect(label).toContain('٧');
+    expect(label).not.toMatch(/[0-9]/);
   });
 });

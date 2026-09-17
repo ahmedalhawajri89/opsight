@@ -19,7 +19,7 @@ final class LastOwnerException extends DomainException
     public static function cannotDemote(): self
     {
         return new self(
-            'This is the last active Owner. Promote another user to Owner before changing this role.',
+            __('errors.users.last_owner_demote'),
             'users.last_owner',
         );
     }
@@ -27,7 +27,7 @@ final class LastOwnerException extends DomainException
     public static function cannotDeactivate(): self
     {
         return new self(
-            'This is the last active Owner. Promote another user to Owner before deactivating this account.',
+            __('errors.users.last_owner_deactivate'),
             'users.last_owner',
         );
     }

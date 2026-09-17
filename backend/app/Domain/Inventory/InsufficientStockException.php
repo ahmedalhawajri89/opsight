@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace App\Domain\Inventory;
 
 use App\Support\DomainException;
+use App\Support\Localization\Localizer;
 
 class InsufficientStockException extends DomainException
 {
     public static function forProduct(string $productName, int $requested, int $available): self
     {
         return new self(
-            "{$productName} has {$available} in stock but {$requested} were requested.",
+            __('errors.inventory.insufficient_stock', [
+                'product' => $productName,
+                'available' => app(Localizer::class)->number($available),
+                'requested' => app(Localizer::class)->number($requested),
+            ]),
             'inventory.insufficient_stock',
         );
     }
@@ -19,7 +24,10 @@ class InsufficientStockException extends DomainException
     public static function wouldGoNegative(string $productName, int $resulting): self
     {
         return new self(
-            "This adjustment would leave {$productName} at {$resulting}. Stock cannot be negative.",
+            __('errors.inventory.negative_stock', [
+                'product' => $productName,
+                'resulting' => app(Localizer::class)->number($resulting),
+            ]),
             'inventory.negative_stock',
         );
     }
@@ -27,7 +35,7 @@ class InsufficientStockException extends DomainException
     public static function reasonRequired(): self
     {
         return new self(
-            'A manual stock adjustment requires a reason.',
+            __('errors.inventory.reason_required'),
             'inventory.adjustment_reason_required',
         );
     }

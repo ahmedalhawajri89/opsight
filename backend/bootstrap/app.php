@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SetLocale;
 use App\Support\DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -38,6 +39,12 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        // After the stateful middleware, so the session — and with it the
+        // signed-in user's saved language — is available when it runs.
+        $middleware->api(append: [
+            SetLocale::class,
         ]);
 
         $middleware->alias([
@@ -81,7 +88,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof AuthenticationException => [
                     401,
                     'auth.unauthenticated',
-                    'Authentication required.',
+                    __('errors.http.unauthenticated'),
                 ],
                 /*
                  * The status check is not redundant, for the same reason as
@@ -94,7 +101,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof HttpExceptionInterface && $e->getStatusCode() === 403 => [
                     403,
                     'auth.forbidden',
-                    'This action is not available for your role.',
+                    __('errors.http.forbidden'),
                 ],
                 /*
                  * A violated business rule — an illegal order transition,
@@ -111,12 +118,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof NotFoundHttpException => [
                     404,
                     'resource.not_found',
-                    'Resource not found.',
+                    __('errors.http.not_found'),
                 ],
                 $e instanceof ThrottleRequestsException => [
                     429,
                     'rate_limit.exceeded',
-                    'Too many requests. Please slow down.',
+                    __('errors.http.rate_limited'),
                 ],
                 /*
                  * CSRF gets its own code so the client can refresh the token and
@@ -132,7 +139,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof HttpExceptionInterface && $e->getStatusCode() === 419 => [
                     419,
                     'csrf.token_mismatch',
-                    'Your session token expired. Please retry.',
+                    __('errors.http.csrf'),
                 ],
                 $e instanceof HttpExceptionInterface => [
                     $e->getStatusCode(),
@@ -142,7 +149,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 default => [
                     500,
                     'server.error',
-                    'An unexpected error occurred.',
+                    __('errors.http.server'),
                 ],
             };
 

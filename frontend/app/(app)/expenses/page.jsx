@@ -3,6 +3,8 @@
 import { useExpenseCategories } from '@/features/admin/useAdmin';
 import { useExpenses } from '@/features/catalog/useCatalog';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { describeFilters } from '@/lib/i18n/filters';
 import { DateInput, Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { ExportButton } from '@/components/data/ExportButton';
@@ -29,6 +31,7 @@ const FILTER_CONFIG = {
 
 export default function ExpensesPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
@@ -52,24 +55,29 @@ export default function ExpensesPage() {
   const columns = [
     {
       key: 'incurred_on',
-      header: 'Incurred',
+      header: t('expenses.columns.incurred'),
       sortable: true,
       numeric: true,
       width: '9rem',
       // The business date, which may be backdated. Not the entry date.
       cell: (row) => formatDate(row.incurred_on),
     },
-    { key: 'description', header: 'Description', sortable: true },
+    { key: 'description', header: t('expenses.columns.description'), sortable: true },
     {
       key: 'category',
-      header: 'Category',
+      header: t('products.columns.category'),
       width: '11rem',
       cell: (row) => row.category?.name ?? '—',
     },
-    { key: 'vendor', header: 'Vendor', width: '12rem', cell: (row) => row.vendor ?? '—' },
+    {
+      key: 'vendor',
+      header: t('expenses.columns.vendor'),
+      width: '12rem',
+      cell: (row) => row.vendor ?? '—',
+    },
     {
       key: 'amount',
-      header: 'Amount',
+      header: t('expenses.columns.amount'),
       sortable: true,
       numeric: true,
       width: '10rem',
@@ -80,8 +88,8 @@ export default function ExpensesPage() {
   return (
     <div>
       <PageHeader
-        title="Expenses"
-        description="Operating costs only. Stock purchases reach profit through cost of goods at the point of sale — recording them here would count them twice."
+        title={t('nav.items.expenses')}
+        description={t('expenses.description')}
         actions={
           can('expenses.export') ? <ExportButton onExport={exportExpenses} filters={query} /> : null
         }
@@ -90,15 +98,15 @@ export default function ExpensesPage() {
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Input
           type="search"
-          placeholder="Search description or vendor…"
-          aria-label="Search expenses"
+          placeholder={t('expenses.searchPlaceholder')}
+          aria-label={t('expenses.searchLabel')}
           defaultValue={filters.search ?? ''}
           onChange={(event) => setFilters({ search: event.target.value })}
           className="w-64"
         />
         <Select
-          aria-label="Category"
-          placeholder="Any category"
+          aria-label={t('filters.expense_category_id')}
+          placeholder={t('expenses.anyCategory')}
           value={filters.expense_category_id ?? ''}
           onChange={(event) => setFilters({ expense_category_id: event.target.value })}
           options={categories.map((category) => ({
@@ -108,13 +116,13 @@ export default function ExpensesPage() {
           className="w-44"
         />
         <DateInput
-          aria-label="Incurred from"
+          aria-label={t('filters.incurred_from')}
           value={filters.incurred_from ?? ''}
           onChange={(event) => setFilters({ incurred_from: event.target.value })}
           className="w-40"
         />
         <DateInput
-          aria-label="Incurred to"
+          aria-label={t('filters.incurred_to')}
           value={filters.incurred_to ?? ''}
           onChange={(event) => setFilters({ incurred_to: event.target.value })}
           className="w-40"
@@ -123,7 +131,7 @@ export default function ExpensesPage() {
 
       <Card padded={false}>
         <DataTable
-          caption="Expenses"
+          caption={t('nav.items.expenses')}
           columns={columns}
           rows={expenses}
           loading={isLoading}
@@ -131,12 +139,12 @@ export default function ExpensesPage() {
           onRetry={refetch}
           sort={filters.sort}
           onSortChange={setSort}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
           empty={
             <EmptyState
-              title="No expenses recorded"
-              description="Without expenses, Opsight reports revenue rather than profit."
+              title={t('expenses.empty.title')}
+              description={t('expenses.empty.description')}
             />
           }
         />

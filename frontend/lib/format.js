@@ -42,6 +42,29 @@ export function figureDirection(text) {
  */
 export const DEFAULT_LOCALE = 'en-GB';
 
+/*
+ * The ACTIVE locale: the reader's language plus numbering system, as one BCP 47
+ * tag (e.g. `ar-BH-u-nu-arab`). Set once by the I18nProvider whenever the
+ * preference changes; every formatter below defaults to it.
+ *
+ * Module state rather than an argument threaded through ~150 call sites. It is
+ * safe here because formatting happens only in the browser, for one reader at
+ * a time, and the provider remounts the tree when the language changes — so no
+ * component can hold a figure formatted under the previous language. Callers
+ * that need a specific locale (tests, exports) still pass `locale` explicitly.
+ */
+let activeLocale = DEFAULT_LOCALE;
+let pointsUnit = 'pp';
+
+export function setFormatLocale(tag, { points = 'pp' } = {}) {
+  activeLocale = tag || DEFAULT_LOCALE;
+  pointsUnit = points;
+}
+
+export function getFormatLocale() {
+  return activeLocale;
+}
+
 function isBlank(value) {
   return value === null || value === undefined || value === '';
 }
@@ -54,7 +77,7 @@ function isBlank(value) {
  */
 export function formatMoney(
   value,
-  { currency = 'BHD', decimals = 3, locale = DEFAULT_LOCALE, sign = false } = {},
+  { currency = 'BHD', decimals = 3, locale = activeLocale, sign = false } = {},
 ) {
   if (isBlank(value)) return EMPTY;
 
@@ -89,7 +112,7 @@ export function formatMoney(
  */
 export function formatMoneyParts(
   value,
-  { currency = 'BHD', decimals = 3, locale = DEFAULT_LOCALE } = {},
+  { currency = 'BHD', decimals = 3, locale = activeLocale } = {},
 ) {
   if (isBlank(value)) return null;
 
@@ -121,7 +144,7 @@ export function formatMoneyParts(
  * Money with the magnitude shortened — for chart axes and tight tiles only,
  * never for a figure someone might reconcile against an invoice.
  */
-export function formatMoneyCompact(value, { currency = 'BHD', locale = DEFAULT_LOCALE } = {}) {
+export function formatMoneyCompact(value, { currency = 'BHD', locale = activeLocale } = {}) {
   if (isBlank(value)) return EMPTY;
 
   const numeric = Number(value);
@@ -136,7 +159,7 @@ export function formatMoneyCompact(value, { currency = 'BHD', locale = DEFAULT_L
   }).format(numeric);
 }
 
-export function formatNumber(value, { decimals = 0, locale = DEFAULT_LOCALE, sign = false } = {}) {
+export function formatNumber(value, { decimals = 0, locale = activeLocale, sign = false } = {}) {
   if (isBlank(value)) return EMPTY;
 
   const numeric = Number(value);
@@ -150,7 +173,7 @@ export function formatNumber(value, { decimals = 0, locale = DEFAULT_LOCALE, sig
   }).format(numeric);
 }
 
-export function formatCompact(value, { locale = DEFAULT_LOCALE } = {}) {
+export function formatCompact(value, { locale = activeLocale } = {}) {
   if (isBlank(value)) return EMPTY;
 
   const numeric = Number(value);
@@ -169,7 +192,7 @@ export function formatCompact(value, { locale = DEFAULT_LOCALE } = {}) {
  * The API returns raw decimals (0.3841), never pre-formatted percentages, so
  * the client owns presentation and the server owns the number.
  */
-export function formatPercent(value, { decimals = 1, locale = DEFAULT_LOCALE, sign = false } = {}) {
+export function formatPercent(value, { decimals = 1, locale = activeLocale, sign = false } = {}) {
   if (isBlank(value)) return EMPTY;
 
   const numeric = Number(value);
@@ -193,7 +216,7 @@ export function formatPercent(value, { decimals = 1, locale = DEFAULT_LOCALE, si
  *
  * @param {number|null} value  a difference of two ratios, e.g. -0.042
  */
-export function formatPoints(value, { decimals = 1, locale = DEFAULT_LOCALE } = {}) {
+export function formatPoints(value, { decimals = 1, locale = activeLocale } = {}) {
   if (isBlank(value)) return EMPTY;
 
   const numeric = Number(value);
@@ -206,7 +229,8 @@ export function formatPoints(value, { decimals = 1, locale = DEFAULT_LOCALE } = 
     signDisplay: 'exceptZero',
   }).format(numeric * 100);
 
-  return `${formatted} pp`;
+  // The unit follows the language: "pp" in English, "نقطة" in Arabic.
+  return `${formatted} ${pointsUnit}`;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -221,7 +245,7 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function formatDate(value, { locale = DEFAULT_LOCALE, timeZone } = {}) {
+export function formatDate(value, { locale = activeLocale, timeZone } = {}) {
   const date = toDate(value);
 
   if (!date) return EMPTY;
@@ -234,7 +258,7 @@ export function formatDate(value, { locale = DEFAULT_LOCALE, timeZone } = {}) {
   }).format(date);
 }
 
-export function formatDateTime(value, { locale = DEFAULT_LOCALE, timeZone } = {}) {
+export function formatDateTime(value, { locale = activeLocale, timeZone } = {}) {
   const date = toDate(value);
 
   if (!date) return EMPTY;
@@ -263,7 +287,7 @@ export function toIsoDate(value) {
   return `${year}-${month}-${day}`;
 }
 
-export function formatRelative(value, { locale = DEFAULT_LOCALE, now = new Date() } = {}) {
+export function formatRelative(value, { locale = activeLocale, now = new Date() } = {}) {
   const date = toDate(value);
 
   if (!date) return EMPTY;

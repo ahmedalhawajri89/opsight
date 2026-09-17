@@ -60,6 +60,25 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        // Personal preferences, set by the user for themselves through
+        // PATCH /me/preferences — not a privilege, so not guarded like role.
+        'locale',
+        'numerals',
+    ];
+
+    /**
+     * The column defaults, mirrored on the model.
+     *
+     * The database supplies them on INSERT, but an instance created in PHP
+     * does not read them back — so a new user updated with only `locale`
+     * still held `numerals = null` in memory, and passing that on crashed the
+     * request. Declaring them here makes every instance carry a real value.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'locale' => 'en',
+        'numerals' => 'latn',
     ];
 
     /**

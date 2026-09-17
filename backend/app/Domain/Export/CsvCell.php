@@ -52,7 +52,8 @@ final class CsvCell
         }
 
         if (is_bool($value)) {
-            return $value ? 'true' : 'false';
+            // In the reader's language: "Active: Yes" / "نشط: نعم".
+            return __($value ? 'labels.boolean.true' : 'labels.boolean.false');
         }
 
         $string = (string) $value;

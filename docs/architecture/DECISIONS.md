@@ -501,6 +501,57 @@ is to widen the pattern deliberately, not to drop the check.
 
 ---
 
+## ADR-017 — In-house translation, no i18n library
+
+**Status:** Accepted
+**Affects:** Every screen, every server-written sentence. Supersedes the "localization library"
+line of ROADMAP Phase 07.
+
+**Decision.** English and Arabic are served by a translation engine of about a hundred lines
+(`frontend/lib/i18n/translate.js`) over two plain dictionaries (`messages/en.js`,
+`messages/ar.js`), and by Laravel's own `lang/` files on the server. No `next-intl`,
+`react-i18next` or ICU message parser.
+
+**The problem.** The product speaks exactly two languages, both known now. What a library adds
+over a lookup table is plural selection, number formatting, routing by locale and message
+extraction tooling. The first two are already in the platform — `Intl.PluralRules` knows Arabic
+has six plural categories, and `Intl.NumberFormat` with `-u-nu-arab` writes Arabic-Indic
+digits. Locale routing (`/ar/dashboard`) is wrong for this product: the language is a
+preference of the signed-in person, saved on their account, not a property of a URL a
+colleague might share.
+
+**Alternatives.**
+
+1. *next-intl.* A good library, but built around locale segments in the route; adopting it
+   means restructuring `app/` for a behaviour the product does not want, and adding a
+   dependency the project rule says must earn its place.
+2. *react-i18next.* Heavier, and its ICU support is a second plugin.
+3. *Plain dictionaries and `Intl`.* Chosen.
+
+**Reasoning.** The genuinely hard parts are handled by the platform. What remains — nested
+lookup, `{placeholder}` interpolation, choosing a plural form, emphasis tags — is small, fully
+unit-tested, and has no behaviour a reader cannot see in one file.
+
+**How it holds together.**
+
+- The preference (`locale`, `numerals`) lives on `users`, is changed through
+  `PATCH /me/preferences`, and the server answers in it (`SetLocale` middleware), so validation
+  messages, insights and CSV headers match the screen.
+- A cookie remembers the last choice so the server renders `<html lang dir>` correctly on the
+  first byte — no left-to-right flash before the session is known.
+- `tests/i18n.test.js` fails if Arabic lacks a key, uses a different placeholder, keeps an
+  English sentence or writes a literal digit, or if source code asks for a key that does not
+  exist. `TranslationParityTest` does the same for the server's `lang/` files.
+
+**Cost accepted.** No extraction tooling: a new string is added to both dictionaries by hand,
+and the parity test is what makes forgetting it impossible to ship.
+
+**Revisit if** the product adds a third language, needs translator tooling, or needs
+locale-addressable URLs for public pages. The dictionaries are plain objects and convert to
+JSON losslessly.
+
+---
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

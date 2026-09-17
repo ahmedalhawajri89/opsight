@@ -7,6 +7,7 @@ namespace App\Domain\Metrics;
 use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
 use App\Models\User;
+use App\Support\Localization\Localizer;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -72,10 +73,12 @@ final class Breakdown
 
             $result[] = [
                 'key' => 'other',
-                'label' => 'Other',
+                'label' => __('labels.breakdown.other'),
                 // Named so the reader knows what is behind the row rather than
                 // wondering how much is hidden.
-                'sublabel' => count($remainder).' more',
+                'sublabel' => trans_choice('labels.breakdown.more', count($remainder), [
+                    'count' => app(Localizer::class)->number(count($remainder)),
+                ]),
                 'value' => $otherValue,
                 'share' => $this->share($otherValue, $total),
                 'is_other' => true,
@@ -188,7 +191,7 @@ final class Breakdown
         }
 
         if (! ($user?->can(Ability::MetricsViewCost->value) ?? false)) {
-            abort(403, 'This metric is not available for your role.');
+            abort(403, __('errors.http.metric_not_permitted'));
         }
     }
 }

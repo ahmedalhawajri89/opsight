@@ -42,12 +42,10 @@ final class LowStock extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Stock needs reordering',
-            message: sprintf(
-                '%d %s at or below the reorder point, as of now.',
-                $count,
-                $count === 1 ? 'product is' : 'products are',
-            ),
+            title: __('insights.low_stock.title'),
+            // trans_choice picks the grammatical form from the raw count; the
+            // count shown is formatted in the reader's digits.
+            message: trans_choice('insights.low_stock.message', $count, ['count' => $this->count($count)]),
             // Not a period link: this figure is about now, so sending the
             // reader to a dated analytics view would be sending them to a
             // screen that cannot show what the sentence said.

@@ -100,8 +100,18 @@ final class TimeSeries
         $cursor = Carbon::parse($period->from, $timezone)->startOfDay();
         $end = Carbon::parse($period->to, $timezone)->startOfDay();
 
+        /*
+         * The week boundaries are named, never left to the default.
+         *
+         * Carbon's default first day of the week follows the application
+         * locale, and Arabic starts the week on Saturday. The SQL grouping
+         * below uses WEEKDAY(), which is always Monday-based, so under an
+         * Arabic request the bucket keys stopped matching the grouped rows and
+         * every weekly value came back as zero. A metric must not change with
+         * the reader's language.
+         */
         $cursor = match ($grain) {
-            'week' => $cursor->startOfWeek(),
+            'week' => $cursor->startOfWeek(Carbon::MONDAY),
             'month' => $cursor->startOfMonth(),
             default => $cursor,
         };
@@ -110,7 +120,7 @@ final class TimeSeries
 
         while ($cursor <= $end) {
             $bucketEnd = match ($grain) {
-                'week' => $cursor->clone()->endOfWeek(),
+                'week' => $cursor->clone()->endOfWeek(Carbon::SUNDAY),
                 'month' => $cursor->clone()->endOfMonth(),
                 default => $cursor->clone(),
             };
@@ -220,7 +230,7 @@ final class TimeSeries
         }
 
         if (! ($user?->can(Ability::MetricsViewCost->value) ?? false)) {
-            abort(403, 'This metric is not available for your role.');
+            abort(403, __('errors.http.metric_not_permitted'));
         }
     }
 }

@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Empty, filtered-empty and error states.
@@ -27,12 +28,14 @@ function Frame({ className, children }) {
 
 /** Nothing exists yet. Offer the action that creates the first record. */
 export function EmptyState({ title, description, action, icon, className }) {
+  const { t } = useI18n();
+
   return (
     <Frame className={className}>
       {icon && <div className="text-(--color-text-subtle)">{icon}</div>}
 
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-text)">{title}</p>
+        <p className="text-sm font-medium text-(--color-text)">{title ?? t('states.empty')}</p>
         {description && (
           <p className="mx-auto max-w-sm text-[0.8125rem] text-(--color-text-muted)">
             {description}
@@ -52,31 +55,42 @@ export function EmptyState({ title, description, action, icon, className }) {
  * excluded their data rather than concluding it is gone.
  */
 export function NoResultsState({ activeFilters = [], onClear, className }) {
+  const { t, tag } = useI18n();
+
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-text)">No matching records</p>
+        <p className="text-sm font-medium text-(--color-text)">{t('states.noResults.title')}</p>
         <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">
           {activeFilters.length > 0 ? (
             <>
-              Nothing matches{' '}
-              {activeFilters.map((filter, index) => (
-                <span key={filter}>
-                  {index > 0 && ', '}
-                  <span className="font-medium text-(--color-text)">{filter}</span>
-                </span>
-              ))}
-              .
+              {t('states.noResults.matching')}{' '}
+              {/*
+                Joined by Intl.ListFormat, not by ", ": the separator and the
+                word before the last item are the language's ("a, b and c" /
+                "أ وب وج"), and a hand-built comma list is English-only.
+              */}
+              {new Intl.ListFormat(tag, { type: 'conjunction' })
+                .formatToParts(activeFilters)
+                .map((part, index) =>
+                  part.type === 'element' ? (
+                    <span key={index} className="font-medium text-(--color-text)">
+                      {part.value}
+                    </span>
+                  ) : (
+                    <span key={index}>{part.value}</span>
+                  ),
+                )}
             </>
           ) : (
-            'Nothing matches the current filters.'
+            t('states.noResults.description')
           )}
         </p>
       </div>
 
       {onClear && (
         <Button variant="secondary" size="sm" onClick={onClear}>
-          Clear filters
+          {t('states.noResults.clear')}
         </Button>
       )}
     </Frame>
@@ -89,26 +103,37 @@ export function NoResultsState({ activeFilters = [], onClear, className }) {
  * Shows the request reference id so a user can quote it in a bug report and it
  * can be found in the logs — the whole point of returning one (SECURITY.md §11).
  * Scoped to the widget: one failing chart must not blank the dashboard.
+ *
+ * A server error's message is already in the reader's language — the API
+ * writes it. A failure that never reached the server has no server message, so
+ * it is named by its code here instead.
  */
-export function ErrorState({ title = 'Could not load this', error, onRetry, className }) {
-  const message = error?.message ?? 'An unexpected error occurred.';
+export function ErrorState({ title, error, onRetry, className }) {
+  const { t } = useI18n();
+
+  const message =
+    error?.code === 'network.unreachable'
+      ? t('states.error.network')
+      : (error?.message ?? t('states.error.unexpected'));
   const reference = error?.reference;
 
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-negative)">{title}</p>
+        <p className="text-sm font-medium text-(--color-negative)">
+          {title ?? t('states.error.title')}
+        </p>
         <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">{message}</p>
         {reference && (
           <p className="font-mono text-[0.6875rem] text-(--color-text-subtle)">
-            Reference: {reference}
+            {t('states.error.reference', { reference })}
           </p>
         )}
       </div>
 
       {onRetry && (
         <Button variant="secondary" size="sm" onClick={onRetry}>
-          Try again
+          {t('states.error.retry')}
         </Button>
       )}
     </Frame>
@@ -122,12 +147,14 @@ export function ErrorState({ title = 'Could not load this', error, onRetry, clas
  * shared URL will reach it.
  */
 export function ForbiddenState({ className }) {
+  const { t } = useI18n();
+
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-text)">Not available for your role</p>
+        <p className="text-sm font-medium text-(--color-text)">{t('states.forbidden.title')}</p>
         <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">
-          Ask an owner if you need access to this area.
+          {t('states.forbidden.description')}
         </p>
       </div>
     </Frame>

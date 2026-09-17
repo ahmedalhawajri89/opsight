@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Insights\Rules;
 
+use App\Domain\Insights\InsightContext;
 use App\Domain\Insights\InsightRule;
+use App\Support\Localization\Localizer;
 
 /**
  * Shared plumbing for the rule set.
@@ -43,7 +45,7 @@ abstract class Rule implements InsightRule
      */
     protected function pct(float $ratio): string
     {
-        return number_format(abs($ratio) * 100, 1);
+        return $this->localizer()->percent($ratio);
     }
 
     /**
@@ -54,6 +56,31 @@ abstract class Rule implements InsightRule
      */
     protected function points(float $delta): string
     {
-        return number_format(abs($delta) * 100, 1);
+        return $this->localizer()->points($delta);
+    }
+
+    /** A whole number in the reader's digits. */
+    protected function count(int $value): string
+    {
+        return $this->localizer()->number($value);
+    }
+
+    /**
+     * The comparison as it reads INSIDE a sentence — "the previous period",
+     * "بالفترة السابقة" — rather than as the title-case label of a control.
+     */
+    protected function basis(InsightContext $context): string
+    {
+        return __('labels.against.'.$context->comparison->value);
+    }
+
+    /**
+     * Resolved per call rather than injected: rules are instantiated by the
+     * engine through the container, and the Localizer is request-scoped, so a
+     * constructor-held instance could outlive the request it belongs to.
+     */
+    private function localizer(): Localizer
+    {
+        return app(Localizer::class);
     }
 }

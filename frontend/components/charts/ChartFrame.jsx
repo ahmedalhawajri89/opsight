@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DataTable } from '@/components/data/DataTable';
 import { EmptyState, ErrorState } from '@/components/data/States';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * The shell every chart sits in.
@@ -29,7 +30,7 @@ export function ChartFrame({
   loading = false,
   error = null,
   onRetry,
-  emptyTitle = 'No data for this period',
+  emptyTitle,
   emptyDescription,
   footnote,
   actions,
@@ -37,6 +38,7 @@ export function ChartFrame({
   className,
   children,
 }) {
+  const { t } = useI18n();
   const [asTable, setAsTable] = useState(false);
 
   const hasData = Array.isArray(rows) && rows.length > 0;
@@ -62,7 +64,7 @@ export function ChartFrame({
           {actions}
           {hasData && !loading && !error && (
             <Button size="sm" variant="ghost" onClick={() => setAsTable((value) => !value)}>
-              {asTable ? 'View as chart' : 'View as table'}
+              {asTable ? t('charts.viewAsChart') : t('charts.viewAsTable')}
             </Button>
           )}
         </div>
@@ -77,7 +79,7 @@ export function ChartFrame({
           // Scoped to the widget: one failing chart must not blank the page.
           <ErrorState error={error} onRetry={onRetry} />
         ) : !hasData ? (
-          <EmptyState title={emptyTitle} description={emptyDescription} />
+          <EmptyState title={emptyTitle ?? t('charts.noData')} description={emptyDescription} />
         ) : asTable ? (
           <DataTable
             caption={title}
@@ -89,7 +91,18 @@ export function ChartFrame({
           />
         ) : (
           <>
-            <div style={{ height }}>{children}</div>
+            {/*
+              The drawing surface is always laid out left to right. Recharts
+              positions every label with SVG text-anchor, and an inherited
+              right-to-left direction flips what "start" and "end" mean — the
+              category labels of a ranking were drawn across their own bars.
+              The charts mirror themselves for Arabic explicitly instead
+              (reversed axes, axis on the right), and Arabic text inside the
+              SVG still shapes and orders correctly.
+            */}
+            <div dir="ltr" style={{ height }}>
+              {children}
+            </div>
 
             {/*
               The same rows, available to assistive technology without the

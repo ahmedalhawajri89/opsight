@@ -357,7 +357,7 @@ procedure.
 
 ---
 
-## Phase 07 — Arabic / RTL localization
+## Phase 07 — Arabic / RTL localization ✅ *(complete)*
 
 Deliberately a phase of its own, and deliberately late — the preparation in Phase 02
 (logical properties, centralised strings, `Intl` formatting) is what makes it a contained
@@ -371,6 +371,36 @@ piece of work rather than a rewrite.
 - Language switcher, persisted per user.
 
 **Done when:** every screen is fully usable in Arabic RTL with no layout defects.
+
+**Outcome.**
+
+- An in-house translation engine and two dictionaries instead of a library (ADR-017). Plural
+  forms come from `Intl.PluralRules`, so Arabic counted nouns agree with the number
+  (منتج واحد، منتجان، ٣ منتجات، ١١ منتجًا).
+- Language and digits are saved on the account (`users.locale`, `users.numerals`): Western
+  digits by default, Arabic-Indic as a choice. The server answers in the same preference —
+  validation and business-rule messages, insights, comparison phrases, CSV headers.
+- Every screen is translated except the development-only component gallery, which stays in
+  English on purpose.
+- IBM Plex Sans Arabic; no letter-spacing in Arabic; charts mirror (time runs right to left,
+  value axis on the right); figures are isolated with `<bdi>` so signs and currency keep their
+  place inside Arabic sentences.
+- Guards: `tests/i18n.test.js` (key and placeholder parity, no untranslated sentence, no literal
+  digit, every key used in source exists), `TranslationParityTest` and `LocalizationTest` on the
+  server, and `e2e/i18n.spec.js` (saved preference, RTL from the first byte after a reload,
+  Arabic-Indic digits, the sign-in page before an account is known).
+
+**Found and fixed along the way.**
+
+- **Weekly analytics were all zero in Arabic.** Carbon's default week start follows the app
+  locale, and Arabic weeks start on Saturday; SQL grouped from Monday, so no bucket matched.
+  Week boundaries are now named explicitly, with a regression test comparing both languages.
+- **Chart labels were drawn across their own bars in RTL.** An inherited `direction: rtl` flips
+  SVG `text-anchor`. The drawing surface is now always LTR and the charts mirror explicitly.
+- **The cancel-order reason field never rendered.** `ConfirmDialog` ignored its children, so
+  the required reason input was invisible. Present since Phase 03.
+- Chart period labels were the API's English CSV labels; they are now formatted on the client
+  in the reader's language and digits. The analytics trend caption printed "dayly".
 
 ---
 

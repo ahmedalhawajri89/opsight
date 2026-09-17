@@ -76,6 +76,6 @@ enum OrderStatus: string
 
     public function label(): string
     {
-        return ucfirst($this->value);
+        return __('labels.order_status.'.$this->value);
     }
 }

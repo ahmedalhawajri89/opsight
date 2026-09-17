@@ -11,6 +11,7 @@ use App\Domain\Metrics\Comparison;
 use App\Domain\Metrics\MetricCalculator;
 use App\Domain\Metrics\Period;
 use App\Http\Controllers\Controller;
+use App\Support\Localization\Localizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule as ValidationRule;
@@ -82,10 +83,7 @@ class InsightController extends Controller
         if ($period->isPartial()) {
             return [
                 'reason' => 'partial_period',
-                'message' => 'This period is still in progress, so trend insights are held back. '
-                    .'A part-finished period compared against a complete one reads as a collapse '
-                    .'in trade rather than as a period that has barely started. '
-                    .'Stock alerts are unaffected — they describe now.',
+                'message' => __('insights.suppressed.partial_period'),
             ];
         }
 
@@ -99,12 +97,9 @@ class InsightController extends Controller
         if ($orders < $minimum || $previousOrders < $minimum) {
             return [
                 'reason' => 'too_few_orders',
-                'message' => sprintf(
-                    'Fewer than %d orders in this period or the one it is compared against, '
-                    .'so percentage-based insights are held back. Swings on a handful of orders '
-                    .'are noise, and reporting them would make the whole feed harder to trust.',
-                    $minimum,
-                ),
+                'message' => __('insights.suppressed.too_few_orders', [
+                    'minimum' => app(Localizer::class)->number($minimum),
+                ]),
             ];
         }
 

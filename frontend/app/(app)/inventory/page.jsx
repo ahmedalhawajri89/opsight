@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { useInventory, useStockActions } from '@/features/catalog/useCatalog';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { Trans, useI18n } from '@/features/i18n/I18nProvider';
+import { describeFilters } from '@/lib/i18n/filters';
 import { Can } from '@/features/auth/Can';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -26,6 +28,7 @@ const FILTER_CONFIG = {
 
 export default function InventoryPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
@@ -48,24 +51,24 @@ export default function InventoryPage() {
   const columns = [
     {
       key: 'sku',
-      header: 'SKU',
+      header: t('orderDetail.columns.sku'),
       mono: true,
       width: '10rem',
       cell: (row) => row.product?.sku ?? '—',
     },
     {
       key: 'product',
-      header: 'Product',
+      header: t('orderDetail.columns.product'),
       cell: (row) => (
         <span className="flex items-center gap-2">
           {row.product?.name ?? '—'}
-          {row.is_low && <Badge tone="warning">Low stock</Badge>}
+          {row.is_low && <Badge tone="warning">{t('dashboard.lowStock.title')}</Badge>}
         </span>
       ),
     },
     {
       key: 'stock_on_hand',
-      header: 'On hand',
+      header: t('inventory.columns.onHand'),
       sortable: true,
       numeric: true,
       width: '8rem',
@@ -77,14 +80,14 @@ export default function InventoryPage() {
     },
     {
       key: 'threshold',
-      header: 'Reorder at',
+      header: t('inventory.columns.reorderAt'),
       numeric: true,
       width: '8rem',
       cell: (row) => formatNumber(row.threshold),
     },
     {
       key: 'last_movement_at',
-      header: 'Last movement',
+      header: t('inventory.columns.lastMovement'),
       sortable: true,
       numeric: true,
       width: '12rem',
@@ -104,7 +107,7 @@ export default function InventoryPage() {
               setAdjusting(row);
             }}
           >
-            Adjust
+            {t('inventory.adjust')}
           </Button>
         </Can>
       ),
@@ -114,8 +117,8 @@ export default function InventoryPage() {
   return (
     <div>
       <PageHeader
-        title="Inventory"
-        description="Stock on hand is a cache over an append-only ledger. Every change is recorded with a reason."
+        title={t('nav.items.inventory')}
+        description={t('inventory.description')}
         actions={
           can('inventory.export') ? (
             <ExportButton onExport={exportInventory} filters={query} />
@@ -126,16 +129,16 @@ export default function InventoryPage() {
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Input
           type="search"
-          placeholder="Search product or SKU…"
-          aria-label="Search inventory"
+          placeholder={t('inventory.searchPlaceholder')}
+          aria-label={t('inventory.searchLabel')}
           defaultValue={filters.search ?? ''}
           onChange={(event) => setFilters({ search: event.target.value })}
           className="w-64"
         />
         <Select
-          aria-label="Stock level"
-          placeholder="All products"
-          options={[{ value: 'true', label: 'Low stock only' }]}
+          aria-label={t('catalog.stockLevel')}
+          placeholder={t('products.all')}
+          options={[{ value: 'true', label: t('catalog.lowStockOnly') }]}
           value={filters.low_stock ?? ''}
           onChange={(event) => setFilters({ low_stock: event.target.value })}
           className="w-44"
@@ -144,7 +147,7 @@ export default function InventoryPage() {
 
       <Card padded={false}>
         <DataTable
-          caption="Inventory"
+          caption={t('nav.items.inventory')}
           columns={columns}
           rows={items}
           // An inventory row is keyed by its product: the resource exposes
@@ -156,12 +159,12 @@ export default function InventoryPage() {
           onRetry={refetch}
           sort={filters.sort}
           onSortChange={setSort}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
           empty={
             <EmptyState
-              title="No stock records yet"
-              description="Every product gets an inventory row when it is created."
+              title={t('inventory.empty.title')}
+              description={t('inventory.empty.description')}
             />
           }
         />
@@ -185,6 +188,7 @@ export default function InventoryPage() {
  * is auditable (MVP_SCOPE.md §6.6).
  */
 function AdjustStockDialog({ item, onClose, onDone }) {
+  const { t } = useI18n();
   const { adjust, restock } = useStockActions();
 
   const [mode, setMode] = useState('adjust');
@@ -232,15 +236,15 @@ function AdjustStockDialog({ item, onClose, onDone }) {
     <Dialog
       open={Boolean(item)}
       onClose={onClose}
-      title={`Adjust stock — ${item.product?.name ?? ''}`}
-      description={`Currently ${formatNumber(item.stock_on_hand)} on hand.`}
+      title={t('inventory.dialog.title', { product: item.product?.name ?? '' })}
+      description={t('inventory.dialog.current', { count: formatNumber(item.stock_on_hand) })}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={pending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button variant="primary" loading={pending} onClick={submit} disabled={!delta}>
-            {mode === 'restock' ? 'Receive stock' : 'Apply adjustment'}
+            {mode === 'restock' ? t('inventory.dialog.receive') : t('inventory.dialog.apply')}
           </Button>
         </>
       }
@@ -252,14 +256,14 @@ function AdjustStockDialog({ item, onClose, onDone }) {
           </p>
         )}
 
-        <Field label="Type">
+        <Field label={t('inventory.dialog.type')}>
           {(props) => (
             <Select
               value={mode}
               onChange={(event) => setMode(event.target.value)}
               options={[
-                { value: 'adjust', label: 'Correction, damage or loss' },
-                { value: 'restock', label: 'Receiving stock' },
+                { value: 'adjust', label: t('inventory.dialog.typeAdjust') },
+                { value: 'restock', label: t('inventory.dialog.typeRestock') },
               ]}
               {...props}
             />
@@ -269,9 +273,12 @@ function AdjustStockDialog({ item, onClose, onDone }) {
         {mode === 'adjust' ? (
           <>
             <Field
-              label="Change"
+              label={t('inventory.dialog.change')}
               required
-              hint="A signed delta: -3 removes three units, +5 adds five."
+              hint={t('inventory.dialog.changeHint', {
+                remove: formatNumber(-3, { sign: true }),
+                add: formatNumber(5, { sign: true }),
+              })}
             >
               {(props) => (
                 <NumberInput
@@ -283,15 +290,15 @@ function AdjustStockDialog({ item, onClose, onDone }) {
               )}
             </Field>
 
-            <Field label="Reason">
+            <Field label={t('orderDetail.reason')}>
               {(props) => (
                 <Select
                   value={reason}
                   onChange={(event) => setReason(event.target.value)}
                   options={[
-                    { value: 'adjustment', label: 'Stock count correction' },
-                    { value: 'damage', label: 'Damaged' },
-                    { value: 'loss', label: 'Lost' },
+                    { value: 'adjustment', label: t('inventory.dialog.reasonCount') },
+                    { value: 'damage', label: t('inventory.dialog.reasonDamage') },
+                    { value: 'loss', label: t('inventory.dialog.reasonLoss') },
                   ]}
                   {...props}
                 />
@@ -300,7 +307,7 @@ function AdjustStockDialog({ item, onClose, onDone }) {
           </>
         ) : (
           <>
-            <Field label="Quantity received" required>
+            <Field label={t('inventory.dialog.quantityReceived')} required>
               {(props) => (
                 <NumberInput
                   placeholder="50"
@@ -312,8 +319,8 @@ function AdjustStockDialog({ item, onClose, onDone }) {
             </Field>
 
             <Field
-              label="Unit cost"
-              hint="Recorded on the movement. It does not change the product's catalog cost."
+              label={t('orderDetail.columns.unitCost')}
+              hint={t('inventory.dialog.unitCostHint')}
             >
               {(props) => (
                 <NumberInput
@@ -328,9 +335,9 @@ function AdjustStockDialog({ item, onClose, onDone }) {
         )}
 
         <Field
-          label="Note"
+          label={t('inventory.dialog.note')}
           required={mode === 'adjust'}
-          hint="An unexplained stock change is indistinguishable from theft when someone reviews the ledger later."
+          hint={t('inventory.dialog.noteHint')}
         >
           {(props) => (
             <Textarea
@@ -344,9 +351,10 @@ function AdjustStockDialog({ item, onClose, onDone }) {
 
         {mode === 'restock' && (
           <p className="text-[0.8125rem] text-(--color-text-subtle)">
-            Receiving stock does <strong>not</strong> create an expense. Stock cost reaches profit
-            through cost of goods at the point of sale — recording it as an expense too would count
-            it twice.
+            <Trans
+              k="inventory.dialog.noExpense"
+              tags={{ strong: (text) => <strong>{text}</strong> }}
+            />
           </p>
         )}
       </div>

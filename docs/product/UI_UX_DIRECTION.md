@@ -293,9 +293,8 @@ phone is not an MVP goal, and pretending otherwise would produce a form nobody c
 
 ## 10. Internationalisation readiness
 
-**Localization is not implemented in the MVP.** English only, one locale. But the following
-are required from the first component so that adding Arabic RTL later is a translation
-task, not a rewrite:
+**Implemented in Phase 07** — English and Arabic (ADR-017). The rules below began as
+preparation and remain binding: every new component must follow them.
 
 1. **CSS logical properties everywhere.** Tailwind's `ms-*`, `me-*`, `ps-*`, `pe-*`,
    `text-start`, `text-end`, `border-s`, `border-e`. **No `ml-*`, `mr-*`, `pl-*`, `pr-*`,
@@ -303,17 +302,26 @@ task, not a rewrite:
    preparation and is a lint rule, not a guideline.
 2. `dir` is set on `<html>` from a single place, and the layout must survive `dir="rtl"`
    without a stylesheet change.
-3. **No hard-coded user-facing strings in JSX.** All copy comes from one
-   `lib/strings.js` module — a plain JavaScript object, not a localization library. It
-   becomes the English dictionary when a library is introduced.
-4. Dates, numbers and currency go through `lib/format.js`, which wraps `Intl.*` with an
-   explicit locale argument that currently always receives `en`. No manual formatting, no
-   string concatenation of currency symbols.
+3. **No hard-coded user-facing strings in JSX.** All copy comes from
+   `lib/i18n/messages/en.js` and its Arabic twin, through `useI18n().t`. A new string goes
+   into both files; `tests/i18n.test.js` fails otherwise.
+4. Dates, numbers and currency go through `lib/format.js`, which wraps `Intl.*` with the
+   reader's locale tag (`ar-BH-u-nu-arab` for Arabic-Indic digits). No manual formatting, no
+   string concatenation of currency symbols, and **no digit written into a translated
+   sentence** — numbers arrive through placeholders.
 5. No English text baked into images or icons.
 6. Layouts accommodate roughly 30% text expansion; fixed-width labels and truncation that
    depends on English word length are avoided.
 7. Directional icons (arrows, chevrons, back) are marked so they can mirror; semantic
    icons (search, calendar) are marked so they do not.
+8. **A figure inside text is isolated** with `<bdi dir={figureDirection(value)}>`, so a sign,
+   a percent sign or a currency code keeps its place in an Arabic sentence.
+9. **Charts mirror explicitly, never by inheritance.** The SVG surface is always LTR (an
+   inherited RTL direction flips `text-anchor`); Arabic reverses the time axis and puts the
+   value axis on the right.
+10. **Arabic sets no letter-spacing.** Tracking breaks the joins between Arabic letters, so
+    `tracking-*` is neutralised under `html[lang='ar']`.
+11. **Counted nouns use plural objects**, never `count === 1 ? … : …`. Arabic has six forms.
 
 ## 11. Design system deliverables (Phase 02)
 

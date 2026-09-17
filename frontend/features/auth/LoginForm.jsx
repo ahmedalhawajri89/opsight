@@ -5,9 +5,11 @@ import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth } from './AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 export function LoginForm() {
   const { login } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState(null);
@@ -52,7 +54,7 @@ export function LoginForm() {
           role="status"
           className="rounded-(--radius-sm) border border-(--color-warning) bg-(--color-surface) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
         >
-          Your session expired. Please sign in again.
+          {t('auth.sessionExpired')}
         </p>
       )}
 
@@ -70,17 +72,20 @@ export function LoginForm() {
           htmlFor="email"
           className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
         >
-          Email
+          {t('auth.email')}
         </label>
         <input
           id="email"
           type="email"
+          // An address is left-to-right in every language; typed into a
+          // right-to-left field its "@" and "." visibly jump around.
+          dir="ltr"
           autoComplete="username"
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-describedby={errors.email ? 'email-error' : undefined}
           className="w-full rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) placeholder:text-(--color-text-subtle)"
           placeholder="you@company.com"
-          {...register('email', { required: 'Email is required.' })}
+          {...register('email', { required: t('auth.emailRequired') })}
         />
         {errors.email && (
           <p id="email-error" className="text-[0.8125rem] text-(--color-negative)">
@@ -94,16 +99,17 @@ export function LoginForm() {
           htmlFor="password"
           className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
         >
-          Password
+          {t('auth.password')}
         </label>
         <input
           id="password"
           type="password"
+          dir="ltr"
           autoComplete="current-password"
           aria-invalid={errors.password ? 'true' : 'false'}
           aria-describedby={errors.password ? 'password-error' : undefined}
           className="w-full rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text)"
-          {...register('password', { required: 'Password is required.' })}
+          {...register('password', { required: t('auth.passwordRequired') })}
         />
         {errors.password && (
           <p id="password-error" className="text-[0.8125rem] text-(--color-negative)">
@@ -117,7 +123,7 @@ export function LoginForm() {
         disabled={isSubmitting}
         className="w-full rounded-(--radius-sm) bg-(--color-accent) px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-(--color-accent-hover) disabled:opacity-60"
       >
-        {isSubmitting ? 'Signing in…' : 'Sign in'}
+        {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
       </button>
     </form>
   );

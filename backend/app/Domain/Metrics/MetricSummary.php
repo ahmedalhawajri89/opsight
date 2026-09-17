@@ -66,7 +66,7 @@ final class MetricSummary
                 previous: $previous ? $this->metrics->averageOrderValue($previous) : null,
                 favourable: 'up',
                 format: 'money',
-                emptyReason: 'No orders in this period, so there is no average to compute.',
+                emptyReason: __('labels.empty_reason.no_orders_average'),
             ),
             'new_customers' => MetricValue::make(
                 key: 'new_customers',
@@ -97,7 +97,7 @@ final class MetricSummary
                 previous: $previous ? $this->metrics->cancellationRate($previous) : null,
                 favourable: 'down',
                 format: 'ratio',
-                emptyReason: 'No orders were placed in this period.',
+                emptyReason: __('labels.empty_reason.no_orders'),
             ),
             'refund_rate' => MetricValue::make(
                 key: 'refund_rate',
@@ -105,7 +105,7 @@ final class MetricSummary
                 previous: $previous ? $this->metrics->refundRate($previous) : null,
                 favourable: 'down',
                 format: 'ratio',
-                emptyReason: 'No revenue in this period to refund against.',
+                emptyReason: __('labels.empty_reason.no_revenue_refund'),
             ),
         ];
 
@@ -148,7 +148,7 @@ final class MetricSummary
                 previous: $previous ? $this->metrics->grossMargin($previous) : null,
                 favourable: 'up',
                 format: 'ratio',
-                emptyReason: 'No net revenue in this period, so there is no margin.',
+                emptyReason: __('labels.empty_reason.no_revenue_margin'),
             ),
             'operating_expenses' => MetricValue::make(
                 key: 'operating_expenses',
@@ -170,7 +170,7 @@ final class MetricSummary
                 previous: $previous ? $this->metrics->netMargin($previous) : null,
                 favourable: 'up',
                 format: 'ratio',
-                emptyReason: 'No net revenue in this period, so there is no margin.',
+                emptyReason: __('labels.empty_reason.no_revenue_margin'),
             ),
         ];
     }

@@ -5,7 +5,8 @@ import { InfoTip } from '@/components/ui/Tooltip';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
 import { EMPTY, figureDirection, formatMoneyParts } from '@/lib/format';
-import { METRIC_DEFINITIONS, METRIC_LABELS, presentMetric } from './MetricTile';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { metricDefinition, metricLabel, presentMetric } from './MetricTile';
 
 /**
  * The dashboard's KPI section, in two tiers.
@@ -58,6 +59,8 @@ export function tierMetrics(metrics = {}) {
 }
 
 export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading = false }) {
+  const { t } = useI18n();
+
   if (loading) {
     return (
       <section aria-busy="true" className="space-y-3">
@@ -80,7 +83,7 @@ export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading
   return (
     <section aria-labelledby="kpi-heading" className="space-y-3">
       <h2 id="kpi-heading" className="sr-only">
-        Key metrics
+        {t('dashboard.keyMetrics')}
       </h2>
 
       <Band columns="sm:grid-cols-2 xl:grid-cols-4">
@@ -121,7 +124,9 @@ function Band({ columns, children }) {
 }
 
 function Kpi({ metricKey, metric, tier, currency, decimals, comparisonLabel }) {
-  const label = METRIC_LABELS[metricKey] ?? metricKey;
+  const { t } = useI18n();
+  const label = metricLabel(t, metricKey);
+  const definition = metricDefinition(t, metricKey);
   const shown = presentMetric(metric, { currency, decimals });
   const primary = tier === 'primary';
 
@@ -146,9 +151,7 @@ function Kpi({ metricKey, metric, tier, currency, decimals, comparisonLabel }) {
         >
           {label}
         </h3>
-        {METRIC_DEFINITIONS[metricKey] && (
-          <InfoTip label={label} content={METRIC_DEFINITIONS[metricKey]} />
-        )}
+        {definition && <InfoTip label={label} content={definition} />}
       </div>
 
       <FigureValue
@@ -170,7 +173,8 @@ function Kpi({ metricKey, metric, tier, currency, decimals, comparisonLabel }) {
 
       {shown.previous && (
         <p className="tabular mt-1.5 truncate text-xs text-(--color-text-subtle)">
-          Previous <bdi dir={figureDirection(shown.previous)}>{shown.previous}</bdi>
+          {t('comparison.previousLabel')}{' '}
+          <bdi dir={figureDirection(shown.previous)}>{shown.previous}</bdi>
         </p>
       )}
     </div>
@@ -186,6 +190,7 @@ function Kpi({ metricKey, metric, tier, currency, decimals, comparisonLabel }) {
  * locale rather than being assumed to lead.
  */
 function FigureValue({ metric, shown, currency, decimals, primary }) {
+  const { t } = useI18n();
   const empty = shown.value === null;
   const size = primary ? 'text-2xl sm:text-[1.75rem]' : 'text-lg';
 
@@ -193,7 +198,7 @@ function FigureValue({ metric, shown, currency, decimals, primary }) {
     return (
       <p
         className={cn('tabular mt-2 leading-none font-semibold text-(--color-text-subtle)', size)}
-        title={metric.empty_reason ?? 'No value for this period.'}
+        title={metric.empty_reason ?? t('comparison.noValue')}
       >
         {EMPTY}
       </p>

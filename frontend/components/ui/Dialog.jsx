@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/cn';
 import { Button } from './Button';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Modal dialog.
@@ -16,6 +17,7 @@ import { Button } from './Button';
  * dialog and lands at the top of the document has lost their place.
  */
 export function Dialog({ open, onClose, title, description, footer, size = 'md', children }) {
+  const { t } = useI18n();
   const ref = useRef(null);
   const previouslyFocused = useRef(null);
 
@@ -80,7 +82,7 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
         <button
           type="button"
           onClick={() => ref.current?.close()}
-          aria-label="Close dialog"
+          aria-label={t('dialog.close')}
           className="-me-1 rounded-(--radius-sm) p-1 text-(--color-text-subtle) hover:bg-(--color-surface-hover) hover:text-(--color-text)"
         >
           <svg viewBox="0 0 16 16" className="size-4" fill="none" aria-hidden="true">
@@ -119,9 +121,12 @@ export function ConfirmDialog({
   onConfirm,
   title,
   consequence,
-  confirmLabel = 'Confirm',
+  confirmLabel,
   loading = false,
+  children,
 }) {
+  const { t } = useI18n();
+
   return (
     <Dialog
       open={open}
@@ -131,15 +136,23 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={loading}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={onConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel ?? t('common.confirm')}
           </Button>
         </>
       }
     >
       <p className="text-(--color-text-muted)">{consequence}</p>
+
+      {/*
+        Rendered below the consequence. It was previously accepted and silently
+        dropped, so the only caller that passed content — the cancellation
+        reason field, which the server REQUIRES — never appeared, and no order
+        could be cancelled from the screen.
+      */}
+      {children && <div className="mt-4">{children}</div>}
     </Dialog>
   );
 }

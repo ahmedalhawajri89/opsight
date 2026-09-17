@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Downloads the current view as CSV.
@@ -18,13 +19,8 @@ import { Button } from '@/components/ui/Button';
  * would navigate the user out of the application and into a page of raw JSON.
  * The refusal is a sentence under the button instead.
  */
-export function ExportButton({
-  onExport,
-  filters,
-  label = 'Export CSV',
-  disabled = false,
-  className,
-}) {
+export function ExportButton({ onExport, filters, label, disabled = false, className }) {
+  const { t } = useI18n();
   const [state, setState] = useState({ busy: false, error: null });
 
   async function run() {
@@ -41,7 +37,7 @@ export function ExportButton({
   return (
     <div className={className}>
       <Button variant="secondary" size="sm" onClick={run} loading={state.busy} disabled={disabled}>
-        {state.busy ? 'Preparing…' : label}
+        {state.busy ? t('export.preparing') : (label ?? t('export.label'))}
       </Button>
 
       {state.error && (
@@ -51,21 +47,21 @@ export function ExportButton({
             reader to narrow the filters, so showing the server's message is
             more useful than a generic "export failed".
           */}
-          {messageFor(state.error)}
+          {messageFor(state.error, t)}
         </p>
       )}
     </div>
   );
 }
 
-function messageFor(error) {
+function messageFor(error, t) {
   if (error?.isForbidden) {
-    return 'Exporting is not available for your role.';
+    return t('export.forbidden');
   }
 
   if (error?.isValidation) {
     return error.fieldErrors?.filter ?? error.message;
   }
 
-  return error?.message ?? 'The export could not be prepared.';
+  return error?.message ?? t('export.failed');
 }

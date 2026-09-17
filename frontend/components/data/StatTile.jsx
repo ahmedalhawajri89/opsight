@@ -6,6 +6,7 @@ import { PartialBadge } from '@/components/ui/Badge';
 import { InfoTip } from '@/components/ui/Tooltip';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ComparisonValue } from './ComparisonValue';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * The most-repeated component in the product, so it is specified exactly.
@@ -38,6 +39,8 @@ export function StatTile({
   className,
   children,
 }) {
+  const { t } = useI18n();
+
   if (loading) {
     return (
       <div
@@ -82,7 +85,7 @@ export function StatTile({
           'tabular mt-2 text-2xl leading-[1.2] font-semibold tracking-tight break-words',
           isEmpty ? 'text-(--color-text-subtle)' : 'text-(--color-text)',
         )}
-        title={isEmpty ? (emptyReason ?? 'No value for this period.') : undefined}
+        title={isEmpty ? (emptyReason ?? t('comparison.noValue')) : undefined}
       >
         {isEmpty ? EMPTY : value}
       </p>

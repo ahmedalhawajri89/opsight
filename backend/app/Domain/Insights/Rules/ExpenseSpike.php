@@ -89,14 +89,13 @@ final class ExpenseSpike extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Spending rose sharply',
-            message: sprintf(
-                '%s spending rose %s%% against the %s, and is now %s%% of net revenue.',
-                $worst['category'],
-                $this->pct($worst['change']),
-                $context->comparison->label(),
-                $this->pct($worst['amount'] / $revenue),
-            ),
+            title: __('insights.expense_spike.title'),
+            message: __('insights.expense_spike.message', [
+                'category' => $worst['category'],
+                'pct' => $this->pct($worst['change']),
+                'basis' => $this->basis($context),
+                'share' => $this->pct($worst['amount'] / $revenue),
+            ]),
             link: $context->link(['href' => '/expenses']),
             values: [
                 'category' => $worst['category'],

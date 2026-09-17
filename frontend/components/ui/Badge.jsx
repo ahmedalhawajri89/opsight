@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/cn';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Status and label badges.
@@ -42,20 +43,22 @@ export function Badge({ tone = 'neutral', dot = false, className, children, ...p
  * styled two different ways in two places. Statuses mirror the backend state
  * machine exactly (MVP_SCOPE.md §6.3).
  */
-const ORDER_STATUS = {
-  draft: { label: 'Draft', tone: 'neutral' },
-  confirmed: { label: 'Confirmed', tone: 'accent' },
-  fulfilled: { label: 'Fulfilled', tone: 'positive' },
-  cancelled: { label: 'Cancelled', tone: 'neutral' },
-  refunded: { label: 'Refunded', tone: 'warning' },
+const ORDER_STATUS_TONE = {
+  draft: 'neutral',
+  confirmed: 'accent',
+  fulfilled: 'positive',
+  cancelled: 'neutral',
+  refunded: 'warning',
 };
 
 export function OrderStatusBadge({ status, className }) {
-  const config = ORDER_STATUS[status] ?? { label: status ?? 'Unknown', tone: 'neutral' };
+  const { t } = useI18n();
+
+  const known = Object.hasOwn(ORDER_STATUS_TONE, status);
 
   return (
-    <Badge tone={config.tone} dot className={className}>
-      {config.label}
+    <Badge tone={known ? ORDER_STATUS_TONE[status] : 'neutral'} dot className={className}>
+      {known ? t(`orderStatus.${status}`) : (status ?? t('common.unknown'))}
     </Badge>
   );
 }
@@ -67,9 +70,11 @@ export function OrderStatusBadge({ status, className }) {
  * comparison drawn from it is wrong by omission (METRICS.md §1.2).
  */
 export function PartialBadge({ className }) {
+  const { t } = useI18n();
+
   return (
-    <Badge tone="warning" className={className} title="This period is still in progress">
-      Incomplete
+    <Badge tone="warning" className={className} title={t('period.inProgressTitle')}>
+      {t('period.incomplete')}
     </Badge>
   );
 }

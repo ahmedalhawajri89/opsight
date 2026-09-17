@@ -17,7 +17,7 @@ class OrderTransitionException extends DomainException
     public static function illegal(OrderStatus $from, OrderStatus $to): self
     {
         return new self(
-            "An order cannot move from {$from->value} to {$to->value}.",
+            __('errors.order.illegal_transition', ['from' => $from->label(), 'to' => $to->label()]),
             'order.illegal_transition',
         );
     }
@@ -25,7 +25,7 @@ class OrderTransitionException extends DomainException
     public static function emptyOrder(): self
     {
         return new self(
-            'An order cannot be confirmed without at least one item.',
+            __('errors.order.empty'),
             'order.empty_cannot_confirm',
         );
     }
@@ -33,7 +33,7 @@ class OrderTransitionException extends DomainException
     public static function notEditable(OrderStatus $status): self
     {
         return new self(
-            "A {$status->value} order cannot be edited. Cancel it and enter a correction instead.",
+            __('errors.order.not_editable', ['status' => $status->label()]),
             'order.not_editable',
         );
     }
@@ -41,7 +41,7 @@ class OrderTransitionException extends DomainException
     public static function reasonRequired(): self
     {
         return new self(
-            'A cancellation reason is required.',
+            __('errors.order.reason_required'),
             'order.cancellation_reason_required',
         );
     }
@@ -49,7 +49,7 @@ class OrderTransitionException extends DomainException
     public static function refundExceedsTotal(): self
     {
         return new self(
-            'A refund cannot exceed the order total.',
+            __('errors.order.refund_exceeds_total'),
             'order.refund_exceeds_total',
         );
     }

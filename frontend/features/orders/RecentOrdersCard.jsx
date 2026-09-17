@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/data/States';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { formatDate, formatMoney } from '@/lib/format';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /*
  * The five most recently placed orders.
@@ -22,12 +23,13 @@ import { formatDate, formatMoney } from '@/lib/format';
 const QUERY = { page: 1, per_page: 5, sort: '-placed_at' };
 
 export function RecentOrdersCard({ currency, decimals, className }) {
+  const { t } = useI18n();
   const { orders, isLoading, isError, error, refetch } = useOrders(QUERY);
 
   const columns = [
     {
       key: 'reference',
-      header: 'Order',
+      header: t('dashboard.recentOrders.order'),
       cell: (row) => (
         <Link
           href={`/orders/${row.id}`}
@@ -39,17 +41,23 @@ export function RecentOrdersCard({ currency, decimals, className }) {
     },
     {
       key: 'customer',
-      header: 'Customer',
+      header: t('dashboard.recentOrders.customer'),
       cell: (row) => (
         <span className="block max-w-56 truncate">
-          {row.customer?.name ?? <span className="text-(--color-text-muted)">Walk-in</span>}
+          {row.customer?.name ?? (
+            <span className="text-(--color-text-muted)">{t('common.walkIn')}</span>
+          )}
         </span>
       ),
     },
-    { key: 'status', header: 'Status', cell: (row) => <OrderStatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: t('dashboard.recentOrders.status'),
+      cell: (row) => <OrderStatusBadge status={row.status} />,
+    },
     {
       key: 'placed_at',
-      header: 'Placed',
+      header: t('dashboard.recentOrders.placed'),
       numeric: true,
       cell: (row) => (
         <span className="text-(--color-text-muted)">
@@ -59,7 +67,7 @@ export function RecentOrdersCard({ currency, decimals, className }) {
     },
     {
       key: 'total_amount',
-      header: 'Total',
+      header: t('dashboard.recentOrders.total'),
       numeric: true,
       cell: (row) => (
         <span className="font-medium">{formatMoney(row.total_amount, { currency, decimals })}</span>
@@ -69,8 +77,8 @@ export function RecentOrdersCard({ currency, decimals, className }) {
 
   return (
     <Card
-      title="Recent orders"
-      description="Latest activity, regardless of the selected period"
+      title={t('dashboard.recentOrders.title')}
+      description={t('dashboard.recentOrders.description')}
       padded={false}
       className={className}
       actions={
@@ -78,7 +86,7 @@ export function RecentOrdersCard({ currency, decimals, className }) {
           href="/orders"
           className="group inline-flex items-center gap-1 text-[0.8125rem] font-medium text-(--color-accent-text) hover:underline"
         >
-          All orders
+          {t('dashboard.recentOrders.all')}
           <Icon
             name="arrowRight"
             size={14}
@@ -88,14 +96,14 @@ export function RecentOrdersCard({ currency, decimals, className }) {
       }
     >
       <DataTable
-        caption="Recent orders"
+        caption={t('dashboard.recentOrders.title')}
         columns={columns}
         rows={orders}
         loading={isLoading}
         error={isError ? error : null}
         onRetry={refetch}
         bare
-        empty={<EmptyState title="No orders yet" />}
+        empty={<EmptyState title={t('dashboard.recentOrders.empty')} />}
       />
     </Card>
   );

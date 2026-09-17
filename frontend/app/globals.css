@@ -163,7 +163,10 @@
   --color-series-5: var(--series-5);
   --color-series-6: var(--series-6);
 
-  --font-sans: var(--font-inter);
+  /* Inter for Latin glyphs, IBM Plex Sans Arabic for Arabic ones — chosen per
+     character, so a line mixing an Arabic label with "BHD" or an SKU renders
+     each script in the face designed for it. */
+  --font-sans: var(--font-inter), var(--font-arabic), system-ui, sans-serif;
   --font-mono: var(--font-mono-ui);
 
   /*
@@ -214,6 +217,28 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Arabic
+ * ---------------------------------------------------------------------------
+ *
+ * Letter-spacing BREAKS Arabic. The script is cursive: letters join, and
+ * tracking pulls them apart into disconnected glyphs that read as broken
+ * rendering. Every tracked label in the interface (section eyebrows, table
+ * headers) is therefore reset under Arabic rather than trusting each component
+ * to remember. Uppercase has no effect on Arabic and needs no reset.
+ *
+ * Arabic also carries taller ascenders and descenders and more diacritic room
+ * than Latin at the same size, so body line-height is opened slightly.
+ */
+html[lang='ar'] [class*='tracking-'] {
+  letter-spacing: 0 !important;
+}
+
+html[lang='ar'] body {
+  line-height: 1.65;
 }
 
 /* Focus is always visible. `outline: none` is prohibited project-wide. */

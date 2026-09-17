@@ -2,6 +2,8 @@
 
 import { useProducts } from '@/features/catalog/useCatalog';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { describeFilters } from '@/lib/i18n/filters';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
@@ -21,6 +23,7 @@ const FILTER_CONFIG = {
 
 export default function ProductsPage() {
   const { can } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
@@ -43,27 +46,33 @@ export default function ProductsPage() {
   const { products, meta, isLoading, isError, error, refetch } = useProducts(query);
 
   const columns = [
-    { key: 'sku', header: 'SKU', sortable: true, mono: true, width: '10rem' },
+    {
+      key: 'sku',
+      header: t('orderDetail.columns.sku'),
+      sortable: true,
+      mono: true,
+      width: '10rem',
+    },
     {
       key: 'name',
-      header: 'Product',
+      header: t('orderDetail.columns.product'),
       sortable: true,
       cell: (row) => (
         <span className="flex items-center gap-2">
           {row.name}
-          {!row.is_active && <Badge tone="neutral">Inactive</Badge>}
+          {!row.is_active && <Badge tone="neutral">{t('common.inactive')}</Badge>}
         </span>
       ),
     },
     {
       key: 'category',
-      header: 'Category',
+      header: t('products.columns.category'),
       width: '11rem',
       cell: (row) => row.category?.name ?? '—',
     },
     {
       key: 'price',
-      header: 'Price',
+      header: t('products.columns.price'),
       sortable: true,
       numeric: true,
       width: '9rem',
@@ -75,7 +84,7 @@ export default function ProductsPage() {
       ? [
           {
             key: 'cost',
-            header: 'Cost',
+            header: t('products.columns.cost'),
             numeric: true,
             width: '9rem',
             cell: (row) => formatMoney(row.cost, { decimals: 4 }),
@@ -84,7 +93,7 @@ export default function ProductsPage() {
       : []),
     {
       key: 'stock',
-      header: 'Stock',
+      header: t('products.columns.stock'),
       numeric: true,
       width: '8rem',
       cell: (row) =>
@@ -101,8 +110,8 @@ export default function ProductsPage() {
   return (
     <div>
       <PageHeader
-        title="Products"
-        description="The catalog. Editing a price or cost affects future orders only — past orders keep their own snapshots."
+        title={t('nav.items.products')}
+        description={t('products.description')}
         actions={
           can('products.export') ? <ExportButton onExport={exportProducts} filters={query} /> : null
         }
@@ -111,27 +120,27 @@ export default function ProductsPage() {
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Input
           type="search"
-          placeholder="Search name or SKU…"
-          aria-label="Search products"
+          placeholder={t('products.searchPlaceholder')}
+          aria-label={t('products.searchLabel')}
           defaultValue={filters.search ?? ''}
           onChange={(event) => setFilters({ search: event.target.value })}
           className="w-56"
         />
         <Select
-          aria-label="Active state"
-          placeholder="All products"
+          aria-label={t('catalog.activeState')}
+          placeholder={t('products.all')}
           options={[
-            { value: 'true', label: 'Active only' },
-            { value: 'false', label: 'Inactive only' },
+            { value: 'true', label: t('catalog.activeOnly') },
+            { value: 'false', label: t('catalog.inactiveOnly') },
           ]}
           value={filters.is_active ?? ''}
           onChange={(event) => setFilters({ is_active: event.target.value })}
           className="w-40"
         />
         <Select
-          aria-label="Stock level"
-          placeholder="Any stock level"
-          options={[{ value: 'true', label: 'Low stock only' }]}
+          aria-label={t('catalog.stockLevel')}
+          placeholder={t('catalog.anyStockLevel')}
+          options={[{ value: 'true', label: t('catalog.lowStockOnly') }]}
           value={filters.low_stock ?? ''}
           onChange={(event) => setFilters({ low_stock: event.target.value })}
           className="w-44"
@@ -140,7 +149,7 @@ export default function ProductsPage() {
 
       <Card padded={false}>
         <DataTable
-          caption="Products"
+          caption={t('nav.items.products')}
           columns={columns}
           rows={products}
           loading={isLoading}
@@ -148,12 +157,12 @@ export default function ProductsPage() {
           onRetry={refetch}
           sort={filters.sort}
           onSortChange={setSort}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
           empty={
             <EmptyState
-              title="No products yet"
-              description="Products supply the price and cost used at the moment of sale."
+              title={t('products.empty.title')}
+              description={t('products.empty.description')}
             />
           }
         />

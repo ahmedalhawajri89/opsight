@@ -53,25 +53,22 @@ final class MarginDecline extends Rule
         $revenue = $context->metric('net_revenue');
 
         $cause = $cogs?->changePercent !== null && $revenue?->changePercent !== null
-            ? sprintf(
-                ' Cost of goods %s %s%% while net revenue %s %s%%.',
-                $cogs->changePercent >= 0 ? 'rose' : 'fell',
-                $this->pct($cogs->changePercent),
-                $revenue->changePercent >= 0 ? 'rose' : 'fell',
-                $this->pct($revenue->changePercent),
-            )
+            ? ' '.__('insights.margin_decline.cause', [
+                'cogs_verb' => __('insights.verbs.cogs_'.($cogs->changePercent >= 0 ? 'rose' : 'fell')),
+                'cogs_pct' => $this->pct($cogs->changePercent),
+                'revenue_verb' => __('insights.verbs.revenue_'.($revenue->changePercent >= 0 ? 'rose' : 'fell')),
+                'revenue_pct' => $this->pct($revenue->changePercent),
+            ])
             : '';
 
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Gross margin is down',
-            message: sprintf(
-                'Gross margin fell %s percentage points against the %s.%s',
-                $this->points($margin->changeAbsolute),
-                $context->comparison->label(),
-                $cause,
-            ),
+            title: __('insights.margin_decline.title'),
+            message: __('insights.margin_decline.message', [
+                'points' => $this->points($margin->changeAbsolute),
+                'basis' => $this->basis($context),
+            ]).$cause,
             link: $context->link(['metric' => 'gross_profit']),
             values: [
                 'margin_change_points' => round($margin->changeAbsolute, 4),

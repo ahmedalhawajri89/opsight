@@ -6,6 +6,7 @@ namespace App\Domain\Insights\Rules;
 
 use App\Domain\Insights\Insight;
 use App\Domain\Insights\InsightContext;
+use App\Support\Localization\Localizer;
 
 /**
  * Products that will run out within days at the current sales rate.
@@ -34,6 +35,26 @@ final class StockoutRisk extends Rule
         return true;
     }
 
+    /**
+     * @param  array{name: string, days: float}  $first
+     */
+    private function sentence(array $first, int $rest): string
+    {
+        $message = __('insights.stockout_risk.message', [
+            'product' => $first['name'],
+            'days' => app(Localizer::class)->number($first['days'], 1),
+        ]);
+
+        if ($rest === 0) {
+            return $message;
+        }
+
+        return trans_choice('insights.stockout_risk.others', $rest, [
+            'message' => rtrim($message, '.'),
+            'count' => $this->count($rest),
+        ]).'.';
+    }
+
     public function evaluate(InsightContext $context): ?Insight
     {
         $risks = $context->calculator()->stockoutRisks(
@@ -53,13 +74,8 @@ final class StockoutRisk extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Products may run out',
-            message: sprintf(
-                '%s has about %s days of stock left at its recent sales rate%s.',
-                $first['name'],
-                number_format($first['days'], 1),
-                $rest > 0 ? sprintf(' (%d other %s close behind)', $rest, $rest === 1 ? 'product is' : 'products are') : '',
-            ),
+            title: __('insights.stockout_risk.title'),
+            message: $this->sentence($first, $rest),
             link: ['href' => '/inventory'],
             values: ['products' => $risks],
         );

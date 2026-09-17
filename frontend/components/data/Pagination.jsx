@@ -3,6 +3,7 @@
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Server-driven pagination.
@@ -15,6 +16,8 @@ import { Button } from '@/components/ui/Button';
  * enough for COUNT(*) to be cheap (ARCHITECTURE.md §4).
  */
 export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
+  const { t } = useI18n();
+
   if (!meta) return null;
 
   const {
@@ -40,19 +43,19 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
         aria-live="polite"
         className="tabular text-[0.8125rem] text-(--color-text-muted)"
       >
-        {total === 0 ? (
-          'No records'
-        ) : (
-          <>
-            {formatNumber(first)}–{formatNumber(last)} of {formatNumber(total)}
-          </>
-        )}
+        {total === 0
+          ? t('pagination.none')
+          : t('pagination.range', {
+              first: formatNumber(first),
+              last: formatNumber(last),
+              total: formatNumber(total),
+            })}
       </p>
 
       <div className="flex items-center gap-3">
         {onPerPageChange && (
           <label className="flex items-center gap-1.5 text-[0.8125rem] text-(--color-text-muted)">
-            Rows
+            {t('pagination.rows')}
             <select
               value={perPage}
               onChange={(event) => onPerPageChange(Number(event.target.value))}
@@ -60,7 +63,7 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
             >
               {[25, 50, 100].map((size) => (
                 <option key={size} value={size}>
-                  {size}
+                  {formatNumber(size)}
                 </option>
               ))}
             </select>
@@ -73,13 +76,13 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
             variant="ghost"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            aria-label="Previous page"
+            aria-label={t('pagination.previousPage')}
           >
-            Previous
+            {t('pagination.previous')}
           </Button>
 
           <span className="tabular px-2 text-[0.8125rem] text-(--color-text-muted)">
-            {page} / {lastPage}
+            {t('pagination.page', { page: formatNumber(page), pages: formatNumber(lastPage) })}
           </span>
 
           <Button
@@ -87,9 +90,9 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
             variant="ghost"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= lastPage}
-            aria-label="Next page"
+            aria-label={t('pagination.nextPage')}
           >
-            Next
+            {t('pagination.next')}
           </Button>
         </div>
       </div>

@@ -23,12 +23,7 @@ enum Role: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Owner => 'Owner',
-            self::Manager => 'Manager',
-            self::Analyst => 'Analyst',
-            self::Staff => 'Staff',
-        };
+        return __('labels.roles.'.$this->value);
     }
 
     /**

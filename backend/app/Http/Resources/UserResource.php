@@ -27,6 +27,11 @@ class UserResource extends JsonResource
             'is_active' => $this->is_active,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
 
+            // Drive the interface language and digits on every device the user
+            // signs in from (Phase 07).
+            'locale' => $this->locale ?? 'en',
+            'numerals' => $this->numerals ?? 'latn',
+
             // The frontend's only source for permission decisions. There is no
             // second copy of the role → ability table in JavaScript
             // (ROLES_AND_PERMISSIONS.md §5.8).

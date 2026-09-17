@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Export;
 
 use App\Domain\Audit\AuditRecorder;
+use App\Support\Localization\Localizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -67,11 +68,10 @@ final class CsvExport
 
         if ($total > $max) {
             throw ValidationException::withMessages([
-                'filter' => sprintf(
-                    'This export would contain %s rows, above the limit of %s. Narrow the filters and try again.',
-                    number_format($total),
-                    number_format($max),
-                ),
+                'filter' => __('errors.export.too_many_rows', [
+                    'rows' => app(Localizer::class)->number($total),
+                    'limit' => app(Localizer::class)->number($max),
+                ]),
             ]);
         }
 

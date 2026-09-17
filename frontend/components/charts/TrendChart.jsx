@@ -13,7 +13,9 @@ import {
 } from 'recharts';
 
 import { ChartFrame } from './ChartFrame';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/format';
+import { formatBucketLabel } from '@/lib/periods';
 
 /**
  * A metric over time.
@@ -34,7 +36,7 @@ import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/format';
 export function TrendChart({
   title,
   description,
-  series = [],
+  series: rawSeries = [],
   format = 'money',
   currency = 'BHD',
   decimals = 3,
@@ -45,16 +47,25 @@ export function TrendChart({
   height = 260,
   className,
 }) {
+  const { t, dir } = useI18n();
+  const rtl = dir === 'rtl';
+
   const formatValue = (value) =>
     format === 'money' ? formatMoney(value, { currency, decimals }) : formatNumber(value);
 
   const formatAxis = (value) =>
     format === 'money' ? formatMoneyCompact(value, { currency }) : formatNumber(value);
 
+  // Relabelled for the reader; the values are the API's, untouched.
+  const series = rawSeries.map((bucket) => ({
+    ...bucket,
+    label: formatBucketLabel(bucket.bucket, bucket.bucket_end) || bucket.label,
+  }));
+
   const partial = series.find((bucket) => bucket.is_partial);
 
   const columns = [
-    { key: 'label', header: 'Period' },
+    { key: 'label', header: t('charts.period') },
     {
       key: 'value',
       header: title,
@@ -63,8 +74,8 @@ export function TrendChart({
     },
     {
       key: 'is_partial',
-      header: 'Complete',
-      cell: (row) => (row.is_partial ? 'In progress' : 'Yes'),
+      header: t('charts.complete'),
+      cell: (row) => (row.is_partial ? t('charts.inProgress') : t('common.yes')),
     },
   ];
 
@@ -79,18 +90,22 @@ export function TrendChart({
       onRetry={onRetry}
       height={height}
       className={className}
-      emptyDescription="Nothing was sold in this period, so there is no trend to draw."
-      footnote={
-        partial ? 'The shaded final period is still in progress and will keep rising.' : undefined
-      }
+      emptyDescription={t('charts.trendEmpty')}
+      footnote={partial ? t('charts.partialFootnote') : undefined}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
           {/* Horizontal gridlines only, at the lightest border token. */}
           <CartesianGrid vertical={false} stroke="var(--border-subtle)" strokeDasharray="0" />
 
+          {/*
+            Time runs in the reading direction. In Arabic the earliest period
+            is on the right and the value axis sits on the right edge, so the
+            chart reads the same way as the sentence above it.
+          */}
           <XAxis
             dataKey="label"
+            reversed={rtl}
             tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
@@ -103,6 +118,7 @@ export function TrendChart({
             every movement on it.
           */}
           <YAxis
+            orientation={rtl ? 'right' : 'left'}
             tickFormatter={formatAxis}
             tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
             tickLine={false}
@@ -120,13 +136,16 @@ export function TrendChart({
               const point = payload[0].payload;
 
               return (
-                <div className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] shadow-(--shadow-overlay)">
+                <div
+                  dir={dir}
+                  className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] shadow-(--shadow-overlay)"
+                >
                   <p className="text-xs text-(--color-text-muted)">{point.label}</p>
                   <p className="tabular mt-0.5 font-semibold text-(--color-text)">
                     {formatValue(point.value)}
                   </p>
                   {point.is_partial && (
-                    <p className="mt-1 text-(--color-warning)">Still in progress</p>
+                    <p className="mt-1 text-(--color-warning)">{t('charts.stillInProgress')}</p>
                   )}
                 </div>
               );

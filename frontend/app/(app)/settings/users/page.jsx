@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { useUserActions, useUsers } from '@/features/admin/useAdmin';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
+import { describeFilters } from '@/lib/i18n/filters';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
@@ -21,15 +23,18 @@ const FILTER_CONFIG = {
   sortable: ['name', 'email', 'role', 'last_login_at', 'created_at'],
 };
 
-const ROLES = [
-  { value: 'owner', label: 'Owner' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'analyst', label: 'Analyst' },
-  { value: 'staff', label: 'Staff' },
-];
+// Mirrors the server's rule (SECURITY.md §3); the server is the one that enforces it.
+const MIN_PASSWORD_LENGTH = 12;
+
+const ROLES = ['owner', 'manager', 'analyst', 'staff'];
+
+function roleOptions(t) {
+  return ROLES.map((value) => ({ value, label: t(`roles.${value}`) }));
+}
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
+  const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
 
@@ -52,47 +57,53 @@ export default function UsersPage() {
   const columns = [
     {
       key: 'name',
-      header: 'Name',
+      header: t('users.columns.name'),
       sortable: true,
       cell: (row) => (
         <span>
           {row.name}
           {row.id === currentUser?.id && (
-            <span className="ms-2 text-(--color-text-subtle)">(you)</span>
+            <span className="ms-2 text-(--color-text-subtle)">{t('users.you')}</span>
           )}
         </span>
       ),
     },
-    { key: 'email', header: 'Email', sortable: true, width: '16rem' },
+    {
+      key: 'email',
+      header: t('customers.columns.email'),
+      sortable: true,
+      width: '16rem',
+      cell: (row) => <bdi dir="ltr">{row.email}</bdi>,
+    },
     {
       key: 'role',
-      header: 'Role',
+      header: t('filters.role'),
       sortable: true,
       width: '11rem',
       cell: (row) => (
         <Select
-          aria-label={`Role for ${row.name}`}
+          aria-label={t('users.roleFor', { name: row.name })}
           value={row.role}
           onChange={(event) => actions.changeRole.mutate({ id: row.id, role: event.target.value })}
-          options={ROLES}
+          options={roleOptions(t)}
           className="w-32"
         />
       ),
     },
     {
       key: 'is_active',
-      header: 'Status',
+      header: t('filters.status'),
       width: '8rem',
       cell: (row) =>
         row.is_active ? (
-          <Badge tone="positive">Active</Badge>
+          <Badge tone="positive">{t('users.active')}</Badge>
         ) : (
-          <Badge tone="neutral">Deactivated</Badge>
+          <Badge tone="neutral">{t('users.deactivated')}</Badge>
         ),
     },
     {
       key: 'last_login_at',
-      header: 'Last signed in',
+      header: t('users.columns.lastSignedIn'),
       sortable: true,
       numeric: true,
       width: '12rem',
@@ -102,7 +113,7 @@ export default function UsersPage() {
         row.last_login_at ? (
           formatDateTime(row.last_login_at)
         ) : (
-          <span className="text-(--color-text-subtle)">Never</span>
+          <span className="text-(--color-text-subtle)">{t('users.never')}</span>
         ),
     },
     {
@@ -119,7 +130,7 @@ export default function UsersPage() {
               : actions.setActive.mutate({ id: row.id, active: true })
           }
         >
-          {row.is_active ? 'Deactivate' : 'Reactivate'}
+          {row.is_active ? t('users.deactivate') : t('users.reactivate')}
         </Button>
       ),
     },
@@ -138,11 +149,11 @@ export default function UsersPage() {
   return (
     <div>
       <PageHeader
-        title="Users"
-        description="Accounts are deactivated, never deleted. A deleted user takes their audit trail with them, and every past action becomes unattributable."
+        title={t('nav.items.users')}
+        description={t('users.description')}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            Add user
+            {t('users.add')}
           </Button>
         }
       />
@@ -159,25 +170,25 @@ export default function UsersPage() {
       <FilterBar activeCount={activeKeys.length} onClear={clearFilters}>
         <Input
           type="search"
-          placeholder="Search name or email…"
-          aria-label="Search users"
+          placeholder={t('users.searchPlaceholder')}
+          aria-label={t('users.searchLabel')}
           defaultValue={filters.search ?? ''}
           onChange={(event) => setFilters({ search: event.target.value })}
           className="w-64"
         />
         <Select
-          aria-label="Role"
-          placeholder="Any role"
+          aria-label={t('filters.role')}
+          placeholder={t('users.anyRole')}
           value={filters.role ?? ''}
           onChange={(event) => setFilters({ role: event.target.value })}
-          options={ROLES}
+          options={roleOptions(t)}
           className="w-40"
         />
       </FilterBar>
 
       <Card padded={false}>
         <DataTable
-          caption="Users"
+          caption={t('nav.items.users')}
           columns={columns}
           rows={users}
           loading={isLoading}
@@ -185,9 +196,9 @@ export default function UsersPage() {
           onRetry={refetch}
           sort={filters.sort}
           onSortChange={setSort}
-          activeFilters={activeKeys.map((key) => `${key}: ${filters[key]}`)}
+          activeFilters={describeFilters(activeKeys, filters, t)}
           onClearFilters={clearFilters}
-          empty={<EmptyState title="No matching users" />}
+          empty={<EmptyState title={t('users.empty')} />}
         />
         <Pagination
           meta={meta}
@@ -205,14 +216,18 @@ export default function UsersPage() {
       <ConfirmDialog
         open={confirming !== null}
         onClose={() => setConfirming(null)}
-        title="Deactivate this account?"
+        title={t('users.confirm.title')}
         /*
           Stated in business terms, as ConfirmDialog requires. Deactivation is
           not "sign them out": it takes effect on their very next request,
           mid-session, and it is not a deletion — the audit trail stays.
         */
-        consequence={`${confirming?.name ?? 'This user'} will lose access on their next request, even if they are signed in right now, and will not be able to sign in again. Everything they have already done stays on record.`}
-        confirmLabel="Deactivate"
+        consequence={
+          confirming?.name
+            ? t('users.confirm.consequence', { name: confirming.name })
+            : t('users.confirm.consequenceUnnamed')
+        }
+        confirmLabel={t('users.deactivate')}
         onConfirm={() => {
           actions.setActive.mutate({ id: confirming.id, active: false });
           setConfirming(null);
@@ -223,6 +238,7 @@ export default function UsersPage() {
 }
 
 function CreateUserDialog({ open, onClose, mutation }) {
+  const { t } = useI18n();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -245,9 +261,9 @@ function CreateUserDialog({ open, onClose, mutation }) {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Add user">
+    <Dialog open={open} onClose={onClose} title={t('users.add')}>
       <form onSubmit={submit} className="space-y-3">
-        <Field label="Name" required error={fieldErrors.name}>
+        <Field label={t('users.columns.name')} required error={fieldErrors.name}>
           {(props) => (
             <Input
               value={form.name}
@@ -258,7 +274,7 @@ function CreateUserDialog({ open, onClose, mutation }) {
           )}
         </Field>
 
-        <Field label="Email" required error={fieldErrors.email}>
+        <Field label={t('customers.columns.email')} required error={fieldErrors.email}>
           {(props) => (
             <Input
               type="email"
@@ -271,12 +287,12 @@ function CreateUserDialog({ open, onClose, mutation }) {
         </Field>
 
         <Field
-          label="Password"
+          label={t('auth.password')}
           required
           error={fieldErrors.password}
           // Length and breach-checking outperform composition rules, which
           // mostly produce `Password1!` (SECURITY.md §3).
-          hint="At least 12 characters. The new user should change it after signing in."
+          hint={t('users.passwordHint', { count: MIN_PASSWORD_LENGTH })}
         >
           {(props) => (
             <Input
@@ -289,7 +305,7 @@ function CreateUserDialog({ open, onClose, mutation }) {
           )}
         </Field>
 
-        <Field label="Confirm password" required>
+        <Field label={t('users.confirmPassword')} required>
           {(props) => (
             <Input
               type="password"
@@ -301,21 +317,21 @@ function CreateUserDialog({ open, onClose, mutation }) {
           )}
         </Field>
 
-        <Field label="Role" required error={fieldErrors.role}>
+        <Field label={t('filters.role')} required error={fieldErrors.role}>
           {(props) => (
             <Select
               value={form.role}
               onChange={(event) => setForm({ ...form, role: event.target.value })}
-              options={ROLES}
+              options={roleOptions(t)}
               {...props}
             />
           )}
         </Field>
 
         <div className="flex justify-end gap-2 pt-1">
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
           <Button type="submit" variant="primary" loading={mutation.isPending}>
-            Create user
+            {t('users.create')}
           </Button>
         </div>
       </form>

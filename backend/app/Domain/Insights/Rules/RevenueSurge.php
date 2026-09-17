@@ -46,13 +46,12 @@ final class RevenueSurge extends Rule
         return new Insight(
             id: $this->id(),
             severity: $this->severity(),
-            title: 'Net revenue is up',
-            message: sprintf(
-                'Net revenue rose %s%% against the %s%s.',
-                $this->pct($revenue->changePercent),
-                $context->comparison->label(),
-                $top === null ? '' : ', led by '.$top,
-            ),
+            title: __('insights.revenue_surge.title'),
+            message: __($top === null ? 'insights.revenue_surge.message' : 'insights.revenue_surge.message_led', [
+                'pct' => $this->pct($revenue->changePercent),
+                'basis' => $this->basis($context),
+                'category' => (string) $top,
+            ]),
             link: $context->link(['dimension' => 'category']),
             values: ['change_pct' => round($revenue->changePercent, 4), 'top_category' => $top],
         );
