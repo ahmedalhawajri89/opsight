@@ -250,7 +250,7 @@ export default function GalleryPage() {
           meta={{ current_page: page, last_page: 17, per_page: 25, total: 417 }}
           onPageChange={setPage}
           onPerPageChange={() => {}}
-          className="rounded-b-[--radius-md] border border-t-0 border-[--color-line] bg-[--color-surface]"
+          className="rounded-b-(--radius-md) border border-t-0 border-(--color-line) bg-(--color-surface)"
         />
       </Section>
 
@@ -336,7 +336,7 @@ export default function GalleryPage() {
           <Tooltip content="Appears on hover and on focus — reachable by keyboard.">
             <Button>Hover or focus me</Button>
           </Tooltip>
-          <span className="inline-flex items-center gap-1.5 text-sm text-[--color-text-muted]">
+          <span className="inline-flex items-center gap-1.5 text-sm text-(--color-text-muted)">
             Net revenue
             <InfoTip
               label="Net revenue"
@@ -368,7 +368,7 @@ export default function GalleryPage() {
             </>
           }
         >
-          <p className="text-[--color-text-muted]">
+          <p className="text-(--color-text-muted)">
             Built on the native &lt;dialog&gt; element, so focus trapping and the top layer come
             from the platform rather than from hand-written key handlers.
           </p>
@@ -388,17 +388,17 @@ export default function GalleryPage() {
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {SWATCHES.map((group) => (
             <div key={group.title} className="space-y-1.5">
-              <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-[--color-text-muted]">
+              <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-(--color-text-muted)">
                 {group.title}
               </p>
               {group.tokens.map((token) => (
                 <div key={token} className="flex items-center gap-2">
                   <span
-                    className="size-5 shrink-0 rounded-[2px] border border-[--color-line]"
+                    className="size-5 shrink-0 rounded-[2px] border border-(--color-line)"
                     style={{ background: `var(${token})` }}
                     aria-hidden="true"
                   />
-                  <code className="font-mono text-[0.6875rem] text-[--color-text-muted]">
+                  <code className="font-mono text-[0.6875rem] text-(--color-text-muted)">
                     {token}
                   </code>
                 </div>
@@ -416,9 +416,9 @@ export default function GalleryPage() {
 function Section({ title, note, children }) {
   return (
     <section className="space-y-3">
-      <div className="border-b border-[--color-line] pb-1.5">
-        <h2 className="text-sm font-semibold text-[--color-text]">{title}</h2>
-        {note && <p className="mt-0.5 text-[0.8125rem] text-[--color-text-muted]">{note}</p>}
+      <div className="border-b border-(--color-line) pb-1.5">
+        <h2 className="text-sm font-semibold text-(--color-text)">{title}</h2>
+        {note && <p className="mt-0.5 text-[0.8125rem] text-(--color-text-muted)">{note}</p>}
       </div>
       {children}
     </section>
@@ -428,7 +428,7 @@ function Section({ title, note, children }) {
 function Row({ label, children }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="w-24 shrink-0 text-[0.6875rem] uppercase tracking-wide text-[--color-text-subtle]">
+      <span className="w-24 shrink-0 text-[0.6875rem] uppercase tracking-wide text-(--color-text-subtle)">
         {label}
       </span>
       {children}
@@ -439,7 +439,7 @@ function Row({ label, children }) {
 function Demo({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[0.6875rem] uppercase tracking-wide text-[--color-text-subtle]">{label}</p>
+      <p className="text-[0.6875rem] uppercase tracking-wide text-(--color-text-subtle)">{label}</p>
       {children}
     </div>
   );

@@ -42,7 +42,7 @@ export function TrendChart({
   error = null,
   onRetry,
   colour = 'var(--series-2)',
-  height = 280,
+  height = 260,
   className,
 }) {
   const formatValue = (value) =>
@@ -87,14 +87,15 @@ export function TrendChart({
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
           {/* Horizontal gridlines only, at the lightest border token. */}
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="0" />
+          <CartesianGrid vertical={false} stroke="var(--border-subtle)" strokeDasharray="0" />
 
           <XAxis
             dataKey="label"
-            tick={{ fill: 'var(--text-subtle)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
-            minTickGap={24}
+            tickMargin={8}
+            minTickGap={28}
           />
 
           {/*
@@ -103,28 +104,29 @@ export function TrendChart({
           */}
           <YAxis
             tickFormatter={formatAxis}
-            tick={{ fill: 'var(--text-subtle)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
+            tickMargin={4}
             width={72}
             domain={[0, 'auto']}
           />
 
           <Tooltip
-            cursor={{ stroke: 'var(--border-strong)' }}
+            cursor={{ stroke: 'var(--border-strong)', strokeDasharray: '3 3' }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
 
               const point = payload[0].payload;
 
               return (
-                <div className="rounded-[--radius-sm] border border-[--color-line] bg-[--color-surface-raised] px-2.5 py-2 text-[0.8125rem] shadow-[--shadow-overlay]">
-                  <p className="text-[--color-text-muted]">{point.label}</p>
-                  <p className="tabular font-medium text-[--color-text]">
+                <div className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] shadow-(--shadow-overlay)">
+                  <p className="text-xs text-(--color-text-muted)">{point.label}</p>
+                  <p className="tabular mt-0.5 font-semibold text-(--color-text)">
                     {formatValue(point.value)}
                   </p>
                   {point.is_partial && (
-                    <p className="mt-1 text-[--color-warning]">Still in progress</p>
+                    <p className="mt-1 text-(--color-warning)">Still in progress</p>
                   )}
                 </div>
               );
@@ -149,10 +151,10 @@ export function TrendChart({
             strokeWidth={2}
             fill={colour}
             // A flat wash, not a gradient — decoration competing with data.
-            fillOpacity={0.08}
+            fillOpacity={0.07}
             isAnimationActive={false}
             dot={false}
-            activeDot={{ r: 3, strokeWidth: 0 }}
+            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
           />
         </AreaChart>
       </ResponsiveContainer>

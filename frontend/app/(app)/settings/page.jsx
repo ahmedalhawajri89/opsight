@@ -125,7 +125,7 @@ export default function SettingsPage() {
       {!editable && (
         <p
           role="status"
-          className="rounded-[--radius-sm] border border-[--color-line] bg-[--color-surface-raised] px-3 py-2 text-[0.8125rem] text-[--color-text-muted]"
+          className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] text-(--color-text-muted)"
         >
           These values are shown because every screen needs the currency and timezone to render
           figures correctly. Only an Owner can change them.
@@ -196,12 +196,12 @@ export default function SettingsPage() {
             )}
           </Field>
 
-          <fieldset className="space-y-3 rounded-[--radius-sm] border border-[--color-line] p-3">
-            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-[--color-text-muted]">
+          <fieldset className="space-y-3 rounded-(--radius-sm) border border-(--color-line) p-3">
+            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
               Reporting periods
             </legend>
 
-            <p className="text-[0.8125rem] leading-relaxed text-[--color-text-muted]">
+            <p className="text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
               These two decide where every period begins and ends. Changing either one leaves every
               record untouched but moves which month, quarter or year it is counted in, so
               historical totals will shift.
@@ -236,7 +236,7 @@ export default function SettingsPage() {
             {historyChanged && (
               <p
                 role="alert"
-                className="rounded-[--radius-sm] border border-[--color-warning] bg-[--color-warning-subtle] px-3 py-2 text-[0.8125rem] text-[--color-warning]"
+                className="rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
               >
                 You have changed a field that moves historical figures. Saving will change the
                 totals reported for periods that have already closed. The underlying orders and
@@ -252,13 +252,13 @@ export default function SettingsPage() {
               </Button>
 
               {saved && !mutation.isPending && (
-                <span role="status" className="text-[0.8125rem] text-[--color-positive]">
+                <span role="status" className="text-[0.8125rem] text-(--color-positive)">
                   Saved. Every figure on screen has been recomputed.
                 </span>
               )}
 
               {mutation.isError && !mutation.error?.isValidation && (
-                <span role="alert" className="text-[0.8125rem] text-[--color-negative]">
+                <span role="alert" className="text-[0.8125rem] text-(--color-negative)">
                   {mutation.error?.message}
                 </span>
               )}

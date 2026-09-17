@@ -55,7 +55,7 @@ export function OrderActions({ order, onDone }) {
       {failure && (
         <p
           role="alert"
-          className="rounded-[--radius-sm] border border-[--color-negative] bg-[--color-negative-subtle] px-3 py-2 text-[0.8125rem] text-[--color-negative]"
+          className="rounded-(--radius-sm) border border-(--color-negative) bg-(--color-negative-subtle) px-3 py-2 text-[0.8125rem] text-(--color-negative)"
         >
           {failure}
         </p>
@@ -159,18 +159,18 @@ export function OrderActions({ order, onDone }) {
               type="checkbox"
               checked={returnStock}
               onChange={(event) => setReturnStock(event.target.checked)}
-              className="mt-0.5 size-3.5 accent-[--color-accent]"
+              className="mt-0.5 size-3.5 accent-(--color-accent)"
             />
             <span>
               Return the goods to stock
-              <span className="mt-0.5 block text-[0.8125rem] text-[--color-text-subtle]">
+              <span className="mt-0.5 block text-[0.8125rem] text-(--color-text-subtle)">
                 Leave this unchecked for damaged goods — restocking them would overstate what is
                 sellable.
               </span>
             </span>
           </label>
 
-          <p className="text-[0.8125rem] text-[--color-text-subtle]">
+          <p className="text-[0.8125rem] text-(--color-text-subtle)">
             The refund reduces revenue in the period the order was <strong>placed</strong>, not
             today.
           </p>

@@ -80,10 +80,10 @@ export default function ActivityPage() {
         row.actor ? (
           <span>
             {row.actor.name}
-            <span className="ms-1.5 text-[--color-text-subtle]">{row.actor.role_label}</span>
+            <span className="ms-1.5 text-(--color-text-subtle)">{row.actor.role_label}</span>
           </span>
         ) : (
-          <span className="text-[--color-text-subtle]">Not signed in</span>
+          <span className="text-(--color-text-subtle)">Not signed in</span>
         ),
     },
     {
@@ -193,7 +193,7 @@ function ActionBadge({ action }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       <Badge tone={tone}>{verb?.replaceAll('_', ' ') ?? action}</Badge>
-      <span className="text-[--color-text-muted]">{subject}</span>
+      <span className="text-(--color-text-muted)">{subject}</span>
     </span>
   );
 }
@@ -213,23 +213,23 @@ function Detail({ changes, context }) {
   const fields = after ? Object.keys(after) : [];
 
   if (fields.length === 0 && !context) {
-    return <span className="text-[--color-text-subtle]">—</span>;
+    return <span className="text-(--color-text-subtle)">—</span>;
   }
 
   return (
     <div className="space-y-0.5 text-[0.8125rem]">
       {fields.slice(0, 4).map((field) => (
         <p key={field} className="truncate">
-          <span className="text-[--color-text-muted]">{field.replaceAll('_', ' ')}: </span>
+          <span className="text-(--color-text-muted)">{field.replaceAll('_', ' ')}: </span>
           {before?.[field] !== undefined && before?.[field] !== null && (
-            <span className="text-[--color-text-subtle] line-through">{String(before[field])}</span>
+            <span className="text-(--color-text-subtle) line-through">{String(before[field])}</span>
           )}{' '}
-          <span className="text-[--color-text]">{String(after[field])}</span>
+          <span className="text-(--color-text)">{String(after[field])}</span>
         </p>
       ))}
 
       {fields.length > 4 && (
-        <p className="text-[--color-text-subtle]">and {fields.length - 4} more</p>
+        <p className="text-(--color-text-subtle)">and {fields.length - 4} more</p>
       )}
 
       {context && <ContextLine context={context} />}
@@ -244,7 +244,7 @@ function ContextLine({ context }) {
 
   if (parts.length === 0) return null;
 
-  return <p className="truncate text-[--color-text-muted]">{parts.join(' · ')}</p>;
+  return <p className="truncate text-(--color-text-muted)">{parts.join(' · ')}</p>;
 }
 
 function format(value) {
@@ -264,8 +264,8 @@ function CursorPager({ prevCursor, nextCursor, onMove }) {
   if (!prevCursor && !nextCursor) return null;
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-[--color-line] px-3 py-2">
-      <p className="text-[0.8125rem] text-[--color-text-subtle]">
+    <div className="flex items-center justify-between gap-3 border-t border-(--color-line) px-3 py-2">
+      <p className="text-[0.8125rem] text-(--color-text-subtle)">
         Newest first. Paged by position rather than page number, so no entry can slip between pages
         as new ones arrive.
       </p>

@@ -54,7 +54,7 @@ export default function OrderDetailPage({ params }) {
         row.product_id ? (
           <Link
             href={`/products/${row.product_id}`}
-            className="text-[--color-accent-text] hover:underline"
+            className="text-(--color-accent-text) hover:underline"
           >
             {row.product_name}
           </Link>
@@ -99,7 +99,7 @@ export default function OrderDetailPage({ params }) {
             <>
               <Link
                 href={`/customers/${order.customer.id}`}
-                className="text-[--color-accent-text] hover:underline"
+                className="text-(--color-accent-text) hover:underline"
               >
                 {order.customer.name}
               </Link>
@@ -131,7 +131,7 @@ export default function OrderDetailPage({ params }) {
           </dl>
 
           {order.status === 'draft' && (
-            <p className="mt-4 rounded-[--radius-sm] border border-[--color-line] bg-[--color-surface-sunken] p-3 text-[0.8125rem] text-[--color-text-muted]">
+            <p className="mt-4 rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-sunken) p-3 text-[0.8125rem] text-(--color-text-muted)">
               This is a draft. It appears in no metric until it is confirmed, and prices are
               snapshotted at that moment — not now.
             </p>
@@ -144,20 +144,20 @@ export default function OrderDetailPage({ params }) {
             <Row label="Discount" value={formatMoney(order.discount_amount)} numeric />
             <Row label="Tax" value={formatMoney(order.tax_amount)} numeric />
             <Row label="Shipping" value={formatMoney(order.shipping_amount)} numeric />
-            <div className="border-t border-[--color-line] pt-2.5">
+            <div className="border-t border-(--color-line) pt-2.5">
               <Row label="Total" value={formatMoney(order.total_amount)} numeric strong />
             </div>
 
             {/* Absent, not null, for a cost-blind role. */}
             {order.cogs_amount !== undefined && (
-              <div className="border-t border-[--color-line] pt-2.5">
+              <div className="border-t border-(--color-line) pt-2.5">
                 <Row label="Cost of goods" value={formatMoney(order.cogs_amount)} numeric />
                 <Row label="Gross profit" value={formatMoney(order.gross_profit)} numeric strong />
               </div>
             )}
           </dl>
 
-          <p className="mt-4 text-[0.8125rem] text-[--color-text-subtle]">
+          <p className="mt-4 text-[0.8125rem] text-(--color-text-subtle)">
             Tax and shipping are excluded from revenue. Tax is collected for a tax authority, and
             shipping is treated as cost recovery.
           </p>
@@ -181,11 +181,11 @@ export default function OrderDetailPage({ params }) {
 function Row({ label, value, numeric = false, strong = false }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[--color-text-muted]">{label}</dt>
+      <dt className="text-(--color-text-muted)">{label}</dt>
       <dd
         className={[
           numeric ? 'tabular text-end' : '',
-          strong ? 'font-semibold text-[--color-text]' : 'text-[--color-text]',
+          strong ? 'font-semibold text-(--color-text)' : 'text-(--color-text)',
         ].join(' ')}
       >
         {value}

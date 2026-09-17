@@ -11,11 +11,11 @@ import { cn } from '@/lib/cn';
  */
 
 const TONES = {
-  neutral: 'text-[--color-text-muted] border-[--color-line-strong] bg-[--color-surface]',
-  accent: 'text-[--color-accent-text] border-[--color-accent] bg-[--color-accent-subtle]',
-  positive: 'text-[--color-positive] border-[--color-positive] bg-[--color-positive-subtle]',
-  negative: 'text-[--color-negative] border-[--color-negative] bg-[--color-negative-subtle]',
-  warning: 'text-[--color-warning] border-[--color-warning] bg-[--color-warning-subtle]',
+  neutral: 'text-(--color-text-muted) border-(--color-line-strong) bg-(--color-surface)',
+  accent: 'text-(--color-accent-text) border-(--color-accent) bg-(--color-accent-subtle)',
+  positive: 'text-(--color-positive) border-(--color-positive) bg-(--color-positive-subtle)',
+  negative: 'text-(--color-negative) border-(--color-negative) bg-(--color-negative-subtle)',
+  warning: 'text-(--color-warning) border-(--color-warning) bg-(--color-warning-subtle)',
 };
 
 export function Badge({ tone = 'neutral', dot = false, className, children, ...props }) {

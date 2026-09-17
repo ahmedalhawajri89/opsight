@@ -29,12 +29,12 @@ function Frame({ className, children }) {
 export function EmptyState({ title, description, action, icon, className }) {
   return (
     <Frame className={className}>
-      {icon && <div className="text-[--color-text-subtle]">{icon}</div>}
+      {icon && <div className="text-(--color-text-subtle)">{icon}</div>}
 
       <div className="space-y-1">
-        <p className="text-sm font-medium text-[--color-text]">{title}</p>
+        <p className="text-sm font-medium text-(--color-text)">{title}</p>
         {description && (
-          <p className="mx-auto max-w-sm text-[0.8125rem] text-[--color-text-muted]">
+          <p className="mx-auto max-w-sm text-[0.8125rem] text-(--color-text-muted)">
             {description}
           </p>
         )}
@@ -55,15 +55,15 @@ export function NoResultsState({ activeFilters = [], onClear, className }) {
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-[--color-text]">No matching records</p>
-        <p className="mx-auto max-w-md text-[0.8125rem] text-[--color-text-muted]">
+        <p className="text-sm font-medium text-(--color-text)">No matching records</p>
+        <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">
           {activeFilters.length > 0 ? (
             <>
               Nothing matches{' '}
               {activeFilters.map((filter, index) => (
                 <span key={filter}>
                   {index > 0 && ', '}
-                  <span className="font-medium text-[--color-text]">{filter}</span>
+                  <span className="font-medium text-(--color-text)">{filter}</span>
                 </span>
               ))}
               .
@@ -97,10 +97,10 @@ export function ErrorState({ title = 'Could not load this', error, onRetry, clas
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-[--color-negative]">{title}</p>
-        <p className="mx-auto max-w-md text-[0.8125rem] text-[--color-text-muted]">{message}</p>
+        <p className="text-sm font-medium text-(--color-negative)">{title}</p>
+        <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">{message}</p>
         {reference && (
-          <p className="font-mono text-[0.6875rem] text-[--color-text-subtle]">
+          <p className="font-mono text-[0.6875rem] text-(--color-text-subtle)">
             Reference: {reference}
           </p>
         )}
@@ -125,8 +125,8 @@ export function ForbiddenState({ className }) {
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-[--color-text]">Not available for your role</p>
-        <p className="mx-auto max-w-md text-[0.8125rem] text-[--color-text-muted]">
+        <p className="text-sm font-medium text-(--color-text)">Not available for your role</p>
+        <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">
           Ask an owner if you need access to this area.
         </p>
       </div>

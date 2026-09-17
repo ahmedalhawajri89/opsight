@@ -2,46 +2,81 @@
 
 import Link from 'next/link';
 
-import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/layout/PageHeader';
+import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
 
 /**
- * The insights feed.
+ * Key changes — the insights feed.
  *
  * Every line is a sentence and a route to the evidence behind it. A dashboard
  * that asserts "gross margin fell" without letting the reader check it is
  * asking to be believed, and the first time a reader finds an insight was an
  * artefact of a partial period they stop reading the whole feed.
  *
- * Severity is a KIND, not a rank. `action` and `opportunity` are not degrees
- * of badness, so they are not on a red-to-green ramp: each carries a word as
- * well as a colour, because a colour alone is lost to a colour-blind reader, a
- * greyscale print and a screenshot in a report (UI_UX_DIRECTION.md §6).
+ * These are DETERMINISTIC rules over the figures (METRICS.md §4), and the panel
+ * says so in its description. Nothing here is generated, scored or inferred.
+ *
+ * Severity is a KIND, not a rank. `action` and `opportunity` are not degrees of
+ * badness, so they are not on a red-to-green ramp. Each carries three signals —
+ * an icon shape, a word, and a tone — so no reader depends on colour to tell a
+ * warning from good news (UI_UX_DIRECTION.md §6).
  */
 const SEVERITY = {
-  warning: { tone: 'warning', label: 'Warning' },
-  action: { tone: 'accent', label: 'Action' },
-  positive: { tone: 'positive', label: 'Good news' },
-  opportunity: { tone: 'accent', label: 'Opportunity' },
-  data_quality: { tone: 'neutral', label: 'Data quality' },
+  warning: {
+    label: 'Warning',
+    icon: 'alert',
+    tile: 'bg-(--color-warning-subtle) text-(--color-warning)',
+    text: 'text-(--color-warning)',
+  },
+  action: {
+    label: 'Action',
+    icon: 'bolt',
+    tile: 'bg-(--color-accent-subtle) text-(--color-accent-text)',
+    text: 'text-(--color-accent-text)',
+  },
+  positive: {
+    label: 'Good news',
+    icon: 'check',
+    tile: 'bg-(--color-positive-subtle) text-(--color-positive)',
+    text: 'text-(--color-positive)',
+  },
+  opportunity: {
+    label: 'Opportunity',
+    icon: 'spark',
+    tile: 'bg-(--color-accent-subtle) text-(--color-accent-text)',
+    text: 'text-(--color-accent-text)',
+  },
+  data_quality: {
+    label: 'Data quality',
+    icon: 'database',
+    tile: 'bg-(--color-surface-hover) text-(--color-text-muted)',
+    text: 'text-(--color-text-muted)',
+  },
 };
 
 export function InsightFeed({ insights = [], suppressed = null, loading = false, className }) {
   return (
     <Card
-      title="What changed"
-      description="Deterministic rules over the figures on this page"
-      className={className}
+      title="Key changes"
+      description="Rule-based checks on these figures and on current stock"
+      className={cn('flex flex-col', className)}
+      bodyClassName="flex-1"
     >
       {loading ? (
-        <ul className="space-y-2" aria-busy="true">
+        <ul className="space-y-3" aria-busy="true">
           {[0, 1, 2].map((row) => (
-            <li key={row} className="skeleton h-10 rounded-[--radius-sm]" />
+            <li key={row} className="flex gap-3">
+              <div className="skeleton size-8 shrink-0 rounded-(--radius-md)" />
+              <div className="flex-1 space-y-2">
+                <div className="skeleton h-3.5 w-2/3 rounded-(--radius-sm)" />
+                <div className="skeleton h-3 w-full rounded-(--radius-sm)" />
+              </div>
+            </li>
           ))}
         </ul>
       ) : insights.length > 0 ? (
-        <ul className="divide-y divide-[--color-line]">
+        <ul className="-my-3 divide-y divide-(--color-line-subtle)">
           {insights.map((insight) => (
             <InsightRow key={insight.id} insight={insight} />
           ))}
@@ -55,35 +90,54 @@ export function InsightFeed({ insights = [], suppressed = null, loading = false,
 
 function InsightRow({ insight }) {
   const severity = SEVERITY[insight.severity] ?? SEVERITY.warning;
-  const href = linkFor(insight.link);
+  const target = linkFor(insight.link);
 
   return (
-    <li className="flex flex-wrap items-start gap-x-3 gap-y-1.5 py-2.5 first:pt-0 last:pb-0">
-      <Badge tone={severity.tone} className="mt-0.5 shrink-0">
-        {severity.label}
-      </Badge>
+    <li className="flex gap-3 py-3">
+      <span
+        aria-hidden="true"
+        className={cn(
+          'inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md)',
+          severity.tile,
+        )}
+      >
+        <Icon name={severity.icon} size={16} />
+      </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-[--color-text]">{insight.title}</p>
-        <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-[--color-text-muted]">
+        <p
+          className={cn(
+            'text-[0.6875rem] font-semibold tracking-[0.06em] uppercase',
+            severity.text,
+          )}
+        >
+          {severity.label}
+        </p>
+        <p className="mt-0.5 text-sm font-medium text-(--color-text)">{insight.title}</p>
+        <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
           {insight.message}
         </p>
-      </div>
 
-      {href && (
-        <Link
-          href={href}
-          className="mt-0.5 shrink-0 text-[0.8125rem] text-[--color-accent-text] hover:underline"
-        >
-          {/*
-            The link carries the period the insight was computed for, so the
-            screen it opens shows the figures the sentence quoted rather than
-            today's. A "check this" that lands on different numbers is worse
-            than no link at all.
-          */}
-          Check the figures
-        </Link>
-      )}
+        {target && (
+          <Link
+            href={target.href}
+            className="group mt-1.5 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-(--color-accent-text) hover:underline"
+          >
+            {/*
+              The link carries the period the insight was computed for, so the
+              screen it opens shows the figures the sentence quoted rather than
+              today's. A "check this" that lands on different numbers is worse
+              than no link at all.
+            */}
+            {target.label}
+            <Icon
+              name="arrowRight"
+              size={14}
+              className="transition-transform duration-150 group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+            />
+          </Link>
+        )}
+      </div>
     </li>
   );
 }
@@ -100,30 +154,44 @@ function InsightRow({ insight }) {
 function EmptyFeed({ suppressed }) {
   if (suppressed?.message) {
     return (
-      <div
-        className={cn('rounded-[--radius-sm] border border-dashed border-[--color-line]', 'p-3')}
-      >
-        <p className="text-sm font-medium text-[--color-text]">
-          {suppressed.reason === 'partial_period'
-            ? 'Held back until this period finishes'
-            : 'Held back on this period'}
-        </p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-[--color-text-muted]">
-          {suppressed.message}
-        </p>
+      <div className="flex gap-3 rounded-(--radius-md) bg-(--color-surface-sunken) p-3.5">
+        <Icon name="clock" className="mt-0.5 shrink-0 text-(--color-text-subtle)" />
+        <div>
+          <p className="text-[0.8125rem] font-medium text-(--color-text)">
+            {suppressed.reason === 'partial_period'
+              ? 'Held back until this period finishes'
+              : 'Held back on this period'}
+          </p>
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
+            {suppressed.message}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <p className="text-sm text-[--color-text-muted]">
-      Nothing in this period crossed a reporting threshold.
-    </p>
+    <div className="flex gap-3 rounded-(--radius-md) bg-(--color-surface-sunken) p-3.5">
+      <Icon name="check" className="mt-0.5 shrink-0 text-(--color-positive)" />
+      <p className="text-[0.8125rem] text-(--color-text-muted)">
+        Nothing in this period crossed a reporting threshold.
+      </p>
+    </div>
   );
 }
 
+/*
+ * Where a point-in-time rule's evidence lives, named in the link itself so the
+ * reader knows where they are going before they go.
+ */
+const DESTINATION_LABELS = {
+  '/inventory': 'Check inventory',
+  '/customers': 'View customers',
+  '/expenses': 'Review expenses',
+};
+
 /**
- * Turns a rule's link payload into a route.
+ * Turns a rule's link payload into a route and a label.
  *
  * Point-in-time rules link to an operational screen (`href`), period rules to
  * analytics with their own dates attached. Both shapes are produced by the
@@ -156,5 +224,8 @@ function linkFor(link) {
 
   const target = href ?? '/analytics';
 
-  return search ? `${target}?${search}` : target;
+  return {
+    href: search ? `${target}?${search}` : target,
+    label: DESTINATION_LABELS[target] ?? 'Check the figures',
+  };
 }

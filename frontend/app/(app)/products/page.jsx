@@ -89,7 +89,7 @@ export default function ProductsPage() {
       width: '8rem',
       cell: (row) =>
         row.stock ? (
-          <span className={row.stock.is_low ? 'text-[--color-warning]' : undefined}>
+          <span className={row.stock.is_low ? 'text-(--color-warning)' : undefined}>
             {formatNumber(row.stock.on_hand)}
           </span>
         ) : (

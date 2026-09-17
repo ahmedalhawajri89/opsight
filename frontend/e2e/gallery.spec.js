@@ -66,11 +66,22 @@ test('renders every component section without a runtime error', async ({ page })
 });
 
 test('renders in dark mode without a runtime error', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-
   const errors = await openGallery(page);
 
+  /*
+   * Dark is an explicit choice (data-theme), not an OS-following media query,
+   * since the dashboard redesign made light the product. Emulating
+   * prefers-color-scheme would now render light and pass without testing dark
+   * at all, so the attribute is set directly.
+   */
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+
   await expect(page.getByRole('heading', { name: 'Stat tiles' })).toBeVisible();
+
+  // Proves the dark tokens actually applied, rather than only that nothing threw.
+  const ground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(ground).toBe('rgb(11, 14, 18)');
+
   expect(errors).toEqual([]);
 });
 

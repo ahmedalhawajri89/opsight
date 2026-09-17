@@ -1,0 +1,153 @@
+/**
+ * The icon set. One style, no dependency.
+ *
+ * Every glyph is a 24-unit outline drawn at a single 1.75 stroke in
+ * `currentColor`, so an icon takes its tone from the text beside it and can
+ * never introduce a colour of its own. A package would bring hundreds of glyphs
+ * to use twenty, and a second visual dialect the first time someone reached for
+ * one it did not have.
+ *
+ * Icons here SUPPORT recognition; they never carry meaning alone. Every use
+ * sits beside a text label, so they are `aria-hidden` by default. Where an icon
+ * genuinely stands alone (a menu button) the caller supplies `label`.
+ */
+
+const PATHS = {
+  dashboard: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="8" rx="1" />
+      <rect x="13.5" y="3.5" width="7" height="5" rx="1" />
+      <rect x="13.5" y="11.5" width="7" height="9" rx="1" />
+      <rect x="3.5" y="14.5" width="7" height="6" rx="1" />
+    </>
+  ),
+  orders: (
+    <>
+      <path d="M6 3.5h12a1 1 0 0 1 1 1v16l-2.5-1.5-2.25 1.5L12 19l-2.25 1.5L7.5 19 5 20.5v-16a1 1 0 0 1 1-1Z" />
+      <path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4" />
+    </>
+  ),
+  customers: (
+    <>
+      <circle cx="9" cy="8.5" r="3.5" />
+      <path d="M3 20c.6-3.3 3-5.5 6-5.5s5.4 2.2 6 5.5" />
+      <path d="M15.5 5.3a3.5 3.5 0 0 1 0 6.4M17.5 14.9c1.8.8 3.1 2.6 3.5 5.1" />
+    </>
+  ),
+  products: (
+    <>
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
+    </>
+  ),
+  inventory: (
+    <>
+      <path d="M3.5 9 12 4l8.5 5v11.5h-17V9Z" />
+      <path d="M7.5 20.5v-7h9v7M7.5 16.5h9" />
+    </>
+  ),
+  expenses: (
+    <>
+      <rect x="3.5" y="6" width="17" height="13" rx="1.5" />
+      <path d="M3.5 10h17M16 14.5h1.5" />
+      <path d="M6.5 6V4.5h11V6" />
+    </>
+  ),
+  analytics: <path d="M4 20.5h16M7 17v-5M12 17V7M17 17v-8" />,
+  activity: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6" />
+    </>
+  ),
+  settings: <path d="M4 7h9M17 7h3M4 17h3M11 17h9M13 4.5v5M9 14.5v5" />,
+  gallery: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11v5.5M12 7.75v.25" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l2.75 1.75" />
+    </>
+  ),
+  alert: (
+    <>
+      <path d="M10.3 4.2 2.9 17.5A2 2 0 0 0 4.6 20.5h14.8a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9.5V13.5M12 16.75V17" />
+    </>
+  ),
+  check: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m8.5 12.25 2.25 2.25 4.75-4.75" />
+    </>
+  ),
+  bolt: <path d="M13 3.5 5.5 13.5H12l-1 7 7.5-10H12l1-7Z" />,
+  spark: (
+    <path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" />
+  ),
+  database: (
+    <>
+      <ellipse cx="12" cy="6" rx="7.5" ry="2.75" />
+      <path d="M4.5 6v12c0 1.5 3.4 2.75 7.5 2.75s7.5-1.25 7.5-2.75V6M4.5 12c0 1.5 3.4 2.75 7.5 2.75s7.5-1.25 7.5-2.75" />
+    </>
+  ),
+  arrowRight: <path d="M5 12h14M13.5 6.5 19 12l-5.5 5.5" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+  signOut: (
+    <>
+      <path d="M14 4.5h4.5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H14" />
+      <path d="M10 8 6 12l4 4M6 12h10" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="1.5" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
+};
+
+export function Icon({ name, size = 16, label, className, strokeWidth = 1.75 }) {
+  const glyph = PATHS[name];
+
+  if (!glyph) return null;
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden={label ? undefined : 'true'}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      focusable="false"
+    >
+      {glyph}
+    </svg>
+  );
+}

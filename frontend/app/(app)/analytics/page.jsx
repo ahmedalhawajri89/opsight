@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
       {meta?.comparison?.compares_partial_against_complete && (
         <p
           role="status"
-          className="flex flex-wrap items-center gap-2 rounded-[--radius-sm] border border-[--color-warning] bg-[--color-warning-subtle] px-3 py-2 text-[0.8125rem] text-[--color-warning]"
+          className="flex flex-wrap items-center gap-2 rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
         >
           <PartialBadge />
           This period is still in progress and is being compared against a complete one.
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-[--color-text-muted]">
+          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
             Metric
           </span>
           <Select
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-[--color-text-muted]">
+          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
             Grain
           </span>
           <Select
@@ -189,7 +189,7 @@ export default function AnalyticsPage() {
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-[--color-text-muted]">
+          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
             Break down by
           </span>
           <Select
@@ -219,8 +219,8 @@ export default function AnalyticsPage() {
       />
 
       <Card>
-        <h2 className="text-sm font-semibold text-[--color-text]">How to read these figures</h2>
-        <ul className="mt-2 space-y-1.5 text-[0.8125rem] leading-relaxed text-[--color-text-muted]">
+        <h2 className="text-sm font-semibold text-(--color-text)">How to read these figures</h2>
+        <ul className="mt-2 space-y-1.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
           <li>
             Revenue excludes tax and shipping. Tax is collected for a tax authority; shipping is
             treated as cost recovery.

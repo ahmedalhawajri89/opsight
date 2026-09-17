@@ -58,7 +58,7 @@ export default function UsersPage() {
         <span>
           {row.name}
           {row.id === currentUser?.id && (
-            <span className="ms-2 text-[--color-text-subtle]">(you)</span>
+            <span className="ms-2 text-(--color-text-subtle)">(you)</span>
           )}
         </span>
       ),
@@ -102,7 +102,7 @@ export default function UsersPage() {
         row.last_login_at ? (
           formatDateTime(row.last_login_at)
         ) : (
-          <span className="text-[--color-text-subtle]">Never</span>
+          <span className="text-(--color-text-subtle)">Never</span>
         ),
     },
     {
@@ -150,7 +150,7 @@ export default function UsersPage() {
       {guardError && (
         <p
           role="alert"
-          className="mb-3 rounded-[--radius-sm] border border-[--color-warning] bg-[--color-warning-subtle] px-3 py-2 text-[0.8125rem] text-[--color-warning]"
+          className="mb-3 rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
         >
           {guardError.message}
         </p>

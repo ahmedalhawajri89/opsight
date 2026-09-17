@@ -14,14 +14,27 @@ import { cn } from '@/lib/cn';
  */
 
 const CONTROL_BASE =
-  'w-full rounded-[--radius-sm] border bg-[--color-surface] text-sm text-[--color-text] ' +
-  'placeholder:text-[--color-text-subtle] transition-colors duration-150 ' +
-  'disabled:cursor-not-allowed disabled:bg-[--color-surface-sunken] disabled:text-[--color-text-subtle]';
+  'rounded-(--radius-sm) border bg-(--color-surface) text-sm text-(--color-text) ' +
+  'placeholder:text-(--color-text-subtle) transition-colors duration-150 ' +
+  'hover:border-(--color-text-subtle) ' +
+  'disabled:cursor-not-allowed disabled:bg-(--color-surface-sunken) disabled:text-(--color-text-subtle)';
 
+/**
+ * Full width unless the caller sizes the control.
+ *
+ * `cn` is plain clsx, which concatenates rather than resolving conflicts, so
+ * `w-full` in the base plus a caller's `w-48` put BOTH in the class list and
+ * the winner was decided by stylesheet order — `w-full` won, and every sized
+ * control in the application silently stretched. The base now yields when a
+ * width is given.
+ */
 function controlClasses(invalid, extra) {
+  const sized = typeof extra === 'string' && /(^|\s)(w-|min-w-|max-w-|flex-)/.test(extra);
+
   return cn(
     CONTROL_BASE,
-    invalid ? 'border-[--color-negative]' : 'border-[--color-line-strong]',
+    !sized && 'w-full',
+    invalid ? 'border-(--color-negative)' : 'border-(--color-line-strong)',
     extra,
   );
 }
@@ -42,11 +55,11 @@ export function Field({ label, hint, error, required = false, className, childre
     <div className={cn('space-y-1.5', className)}>
       <label
         htmlFor={id}
-        className="block text-xs font-medium uppercase tracking-wide text-[--color-text-muted]"
+        className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
       >
         {label}
         {required && (
-          <span className="ms-1 text-[--color-negative]" aria-hidden="true">
+          <span className="ms-1 text-(--color-negative)" aria-hidden="true">
             *
           </span>
         )}
@@ -60,13 +73,13 @@ export function Field({ label, hint, error, required = false, className, childre
       })}
 
       {hint && !error && (
-        <p id={`${id}-hint`} className="text-[0.8125rem] text-[--color-text-subtle]">
+        <p id={`${id}-hint`} className="text-[0.8125rem] text-(--color-text-subtle)">
           {hint}
         </p>
       )}
 
       {error && (
-        <p id={`${id}-error`} className="text-[0.8125rem] text-[--color-negative]">
+        <p id={`${id}-error`} className="text-[0.8125rem] text-(--color-negative)">
           {error}
         </p>
       )}
@@ -172,11 +185,11 @@ export const Checkbox = forwardRef(function Checkbox({ label, className, id, ...
         ref={ref}
         id={inputId}
         type="checkbox"
-        className="size-3.5 rounded-[2px] border-[--color-line-strong] accent-[--color-accent]"
+        className="size-3.5 rounded-[2px] border-(--color-line-strong) accent-(--color-accent)"
         {...props}
       />
       {label && (
-        <label htmlFor={inputId} className="select-none text-sm text-[--color-text]">
+        <label htmlFor={inputId} className="select-none text-sm text-(--color-text)">
           {label}
         </label>
       )}
@@ -194,11 +207,11 @@ export const Radio = forwardRef(function Radio({ label, className, id, ...props 
         ref={ref}
         id={inputId}
         type="radio"
-        className="size-3.5 border-[--color-line-strong] accent-[--color-accent]"
+        className="size-3.5 border-(--color-line-strong) accent-(--color-accent)"
         {...props}
       />
       {label && (
-        <label htmlFor={inputId} className="select-none text-sm text-[--color-text]">
+        <label htmlFor={inputId} className="select-none text-sm text-(--color-text)">
           {label}
         </label>
       )}

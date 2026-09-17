@@ -30,7 +30,7 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center justify-between gap-3 border-t border-[--color-line] px-3 py-2',
+        'flex flex-wrap items-center justify-between gap-3 border-t border-(--color-line) px-3 py-2',
         className,
       )}
     >
@@ -38,7 +38,7 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
       <p
         role="status"
         aria-live="polite"
-        className="tabular text-[0.8125rem] text-[--color-text-muted]"
+        className="tabular text-[0.8125rem] text-(--color-text-muted)"
       >
         {total === 0 ? (
           'No records'
@@ -51,12 +51,12 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
 
       <div className="flex items-center gap-3">
         {onPerPageChange && (
-          <label className="flex items-center gap-1.5 text-[0.8125rem] text-[--color-text-muted]">
+          <label className="flex items-center gap-1.5 text-[0.8125rem] text-(--color-text-muted)">
             Rows
             <select
               value={perPage}
               onChange={(event) => onPerPageChange(Number(event.target.value))}
-              className="h-7 rounded-[--radius-sm] border border-[--color-line-strong] bg-[--color-surface] px-1.5 text-[0.8125rem] text-[--color-text]"
+              className="h-7 rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-1.5 text-[0.8125rem] text-(--color-text)"
             >
               {[25, 50, 100].map((size) => (
                 <option key={size} value={size}>
@@ -78,7 +78,7 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
             Previous
           </Button>
 
-          <span className="tabular px-2 text-[0.8125rem] text-[--color-text-muted]">
+          <span className="tabular px-2 text-[0.8125rem] text-(--color-text-muted)">
             {page} / {lastPage}
           </span>
 

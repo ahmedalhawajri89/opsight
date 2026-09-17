@@ -124,9 +124,17 @@ Light                              Dark
 5. Contrast: **WCAG AA minimum** — 4.5:1 for body text, 3:1 for large text and for the
    boundary of any meaningful graphical element. Verified with an automated check, not by eye.
 
-**Dark mode is a first-class requirement, not a toggle bolted on later.** Every colour is
-a CSS custom property defined for both themes; no component hard-codes a hex value. The
-default follows the system preference, with an explicit override persisted per user.
+**Light is the product; dark is complete but explicit.** Every colour is a CSS custom
+property defined for both themes, both are contrast-tested, and no component hard-codes a
+hex value. *Revised in the dashboard redesign:* the default no longer follows the operating
+system. The charts, tones and density were designed and verified on a light ground, and an
+OS set to dark was silently giving users a theme nobody had reviewed. Dark applies only via
+`data-theme="dark"` on `<html>`; a user-facing toggle is not yet built.
+
+**Referencing a token from markup** is `bg-(--color-surface)` in Tailwind v4. The v3 form
+`bg-` + `[--color-surface]` compiles to invalid CSS in v4 and the browser drops it without
+an error — which is how no token in this document reached the screen between Phase 02 and
+the redesign, while every test passed. `tests/tokens.test.js` refuses the old form.
 
 ## 5. Layout and density
 
@@ -156,12 +164,19 @@ default follows the system preference, with an explicit override persisted per u
 
 **Spacing.** 4px base scale: 4, 8, 12, 16, 24, 32, 48. Nothing off-scale.
 
-**Radii.** `sm` 3px (inputs, badges), `md` 5px (cards, dialogs). Nothing larger. No pills
-except status badges, where the shape itself carries meaning.
+**Radii.** `sm` 4px (controls, badges), `md` 6px (icon tiles, dialogs), `lg` 8px (panels).
+Nothing larger. No pills except status badges, where the shape itself carries meaning.
+*Revised in the redesign* from 3/5px: on white panels over an off-white ground, 5px corners
+read as unfinished rather than as restraint.
 
-**Borders over shadows.** Cards are a 1px border on `--surface`. Shadow is reserved for
-genuinely floating layers — dropdowns, dialogs, tooltips — and is a single subtle token,
-not a five-step elevation system.
+**Borders first, then one hairline.** Panels are a 1px border on `--surface` with
+`--shadow-card` — a 1px, 4%-opacity lift that separates white from the off-white ground
+without a heavier frame. Genuinely floating layers get `--shadow-overlay`. Two shadow
+tokens, no elevation scale.
+
+**Hierarchy by tier, not by frame.** A group of figures that describe one period is ONE
+panel divided by hairlines (the dashboard KPI band), not a grid of identically framed
+tiles. Twelve equal boxes give the eye no place to start.
 
 **Density modes.** Comfortable (44px rows) and Compact (32px rows), user-selectable and
 persisted. Compact exists because a manager reviewing 200 orders wants more rows, and that

@@ -6,48 +6,63 @@
  * ---------------------------------------------------------------------------
  *
  * Every colour, radius and shadow in the application is defined here. No
- * component may use a raw hex value — that is what makes dark mode a property
- * of the system rather than a per-component retrofit
+ * component may use a raw hex value — that is what makes a theme a property of
+ * the system rather than a per-component retrofit
  * (docs/product/UI_UX_DIRECTION.md §11).
  *
- * Light is the base. Dark redefines the same names, so components never know
- * which theme they are in.
+ * REFERENCING A TOKEN FROM MARKUP: Tailwind v4 spells it `bg-(--color-surface)`.
+ * The v3 shorthand (`bg-` then `[--color-surface]`) compiles to invalid CSS in v4 and is
+ * silently discarded by the browser — which is exactly what happened to every
+ * token in this file until the dashboard redesign. tests/tokens.test.js now
+ * refuses the old form.
+ *
+ * LIGHT IS THE PRODUCT. It is applied regardless of the operating system's
+ * preference, because this is a daily working instrument whose charts, tones
+ * and density were designed and verified on a light ground. The dark set below
+ * is complete and contrast-tested, and applies only when a theme is chosen
+ * explicitly (`data-theme="dark"` on <html>).
  */
 
 :root {
-  /* Surfaces */
+  /* Surfaces. The page ground is a cool off-white; panels are white. */
   --surface: #ffffff;
-  --surface-sunken: #f7f8fa;
+  --surface-sunken: #f5f6f8;
   --surface-raised: #ffffff;
   --surface-hover: #f2f4f7;
-  --surface-selected: #eaf1f9;
+  --surface-selected: #edf3fb;
 
-  /* Lines. Hierarchy comes from these and from spacing, not from shadow. */
+  /*
+   * Lines. Three weights, each with a job:
+   *   subtle — separators inside a panel (table rows, KPI dividers)
+   *   border — the edge of a panel
+   *   strong — the boundary of a CONTROL, which WCAG 1.4.11 holds to 3:1
+   */
+  --border-subtle: #eef0f3;
   --border: #e3e6eb;
   --border-strong: #8a94a3;
 
-  /* Text */
-  --text: #14181f;
-  --text-muted: #5b6472;
-  --text-subtle: #8b95a3;
+  /* Text. Near-black with a navy cast: calmer than pure black on white. */
+  --text: #111827;
+  --text-muted: #525c6b;
+  --text-subtle: #7b8594;
   --text-inverse: #ffffff;
 
   /* One accent: interactive affordances and the primary data series. */
-  --accent: #2563a8;
-  --accent-hover: #1e5191;
-  --accent-active: #17416f;
-  --accent-subtle: #eaf1f9;
-  --accent-text: #1e5191;
+  --accent: #1f5fae;
+  --accent-hover: #1a5096;
+  --accent-active: #15427c;
+  --accent-subtle: #edf3fb;
+  --accent-text: #1a5096;
 
   /* Semantic — meaning only, never decoration. */
-  --positive: #1b7a4b;
-  --positive-subtle: #e8f4ed;
-  --negative: #b4342b;
-  --negative-subtle: #fbeceb;
-  --warning: #9a5d10;
-  --warning-subtle: #fdf3e4;
-  --info: #2563a8;
-  --info-subtle: #eaf1f9;
+  --positive: #16734a;
+  --positive-subtle: #e9f5ee;
+  --negative: #b42a22;
+  --negative-subtle: #fcedeb;
+  --warning: #955b0c;
+  --warning-subtle: #fdf4e3;
+  --info: #1f5fae;
+  --info-subtle: #edf3fb;
 
   /*
    * Categorical series for charts. Six, deliberately: beyond that a chart
@@ -56,10 +71,7 @@
    * Separated along the blue-amber axis and by lightness, because the
    * red-green axis collapses under the two common forms of colour blindness.
    * tests/contrast.test.js simulates protanopia and deuteranopia and asserts a
-   * minimum CIE76 dE between every pair; this set measures dE 16.4 (light) and
-   * 23.0 (dark), with every series at or above 3:1 against its surface.
-   * An earlier, prettier palette measured dE 1.8 -- two series that a
-   * deuteranopic viewer simply could not tell apart.
+   * minimum CIE76 dE between every pair.
    */
   --series-1: #17375e;
   --series-2: #4a8fd4;
@@ -69,49 +81,48 @@
   --series-6: #767f8c;
 
   /* Focus */
-  --focus-ring: #2563a8;
+  --focus-ring: #1f5fae;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #0e1116;
-    --surface-sunken: #090b0f;
-    --surface-raised: #1b212a;
-    --surface-hover: #1b212a;
-    --surface-selected: #16283d;
+:root[data-theme='dark'] {
+  --surface: #11151b;
+  --surface-sunken: #0b0e12;
+  --surface-raised: #1a2029;
+  --surface-hover: #1a2029;
+  --surface-selected: #16283d;
 
-    --border: #262d38;
-    --border-strong: #5a6573;
+  --border-subtle: #1c222b;
+  --border: #262d38;
+  --border-strong: #5f6a78;
 
-    --text: #e8ecf2;
-    --text-muted: #96a1b0;
-    --text-subtle: #6e7986;
-    --text-inverse: #0e1116;
+  --text: #e8ecf2;
+  --text-muted: #9aa5b3;
+  --text-subtle: #7a8593;
+  --text-inverse: #0e1116;
 
-    --accent: #6ba4de;
-    --accent-hover: #8ab9e8;
-    --accent-active: #a5cbef;
-    --accent-subtle: #16283d;
-    --accent-text: #8ab9e8;
+  --accent: #6ba4de;
+  --accent-hover: #8ab9e8;
+  --accent-active: #a5cbef;
+  --accent-subtle: #16283d;
+  --accent-text: #8ab9e8;
 
-    --positive: #52bb8b;
-    --positive-subtle: #12291f;
-    --negative: #ef8279;
-    --negative-subtle: #2e1917;
-    --warning: #e0a94f;
-    --warning-subtle: #2c2212;
-    --info: #6ba4de;
-    --info-subtle: #16283d;
+  --positive: #52bb8b;
+  --positive-subtle: #12291f;
+  --negative: #ef8279;
+  --negative-subtle: #2e1917;
+  --warning: #e0a94f;
+  --warning-subtle: #2c2212;
+  --info: #6ba4de;
+  --info-subtle: #16283d;
 
-    --series-1: #516986;
-    --series-2: #4a8fd4;
-    --series-3: #92531e;
-    --series-4: #d4b382;
-    --series-5: #dedde2;
-    --series-6: #989fa9;
+  --series-1: #516986;
+  --series-2: #4a8fd4;
+  --series-3: #92531e;
+  --series-4: #d4b382;
+  --series-5: #dedde2;
+  --series-6: #989fa9;
 
-    --focus-ring: #6ba4de;
-  }
+  --focus-ring: #6ba4de;
 }
 
 @theme inline {
@@ -121,6 +132,7 @@
   --color-surface-hover: var(--surface-hover);
   --color-surface-selected: var(--surface-selected);
 
+  --color-line-subtle: var(--border-subtle);
   --color-line: var(--border);
   --color-line-strong: var(--border-strong);
 
@@ -154,13 +166,23 @@
   --font-sans: var(--font-inter);
   --font-mono: var(--font-mono-ui);
 
-  /* Small radii. Nothing larger — large corners waste density and read as a
-     consumer app rather than an instrument. */
-  --radius-sm: 3px;
-  --radius-md: 5px;
+  /*
+   * Radii. Small, and a scale of three: controls, panels, and the page-level
+   * containers that group panels. Nothing approaches a pill except a status
+   * badge, where the shape itself is the signal.
+   */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 
-  /* Shadow is reserved for genuinely floating layers, and there is one. */
-  --shadow-overlay: 0 4px 16px -2px rgb(0 0 0 / 0.16), 0 2px 6px -2px rgb(0 0 0 / 0.1);
+  /*
+   * Shadow. A panel gets a hairline lift so the white of a card separates from
+   * the off-white ground without a heavier border — it is barely visible, and
+   * that is the point. Genuinely floating layers get the overlay shadow. There
+   * is no third step.
+   */
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04);
+  --shadow-overlay: 0 8px 24px -6px rgb(16 24 40 / 0.16), 0 2px 6px -2px rgb(16 24 40 / 0.08);
 }
 
 /*
@@ -170,7 +192,11 @@
  */
 
 html {
-  color-scheme: light dark;
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 body {

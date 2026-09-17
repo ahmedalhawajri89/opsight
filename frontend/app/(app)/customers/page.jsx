@@ -55,7 +55,7 @@ export default function CustomersPage() {
       header: 'Email',
       sortable: true,
       // Walk-in trade has no email, and the unique index allows that.
-      cell: (row) => row.email ?? <span className="text-[--color-text-subtle]">—</span>,
+      cell: (row) => row.email ?? <span className="text-(--color-text-subtle)">—</span>,
     },
     { key: 'company', header: 'Company', cell: (row) => row.company ?? '—' },
     { key: 'country', header: 'Country', width: '7rem', cell: (row) => row.country ?? '—' },

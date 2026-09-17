@@ -26,7 +26,7 @@ export default function AuthenticatedLayout({ children }) {
   if (isLoading) {
     return (
       <div aria-busy="true" className="min-h-dvh p-6">
-        <div className="h-12 w-48 rounded-[--radius-sm] bg-[--color-surface]" />
+        <div className="h-12 w-48 rounded-(--radius-sm) bg-(--color-surface)" />
       </div>
     );
   }

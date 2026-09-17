@@ -16,7 +16,7 @@ import { formatMoney, formatNumber, formatPercent } from '@/lib/format';
  */
 
 /** Plain-language definitions, taken from docs/database/METRICS.md §2. */
-const DEFINITIONS = {
+export const METRIC_DEFINITIONS = {
   net_revenue:
     'Subtotal less discounts and refunds, for orders placed in this period. Excludes tax and shipping.',
   gross_revenue: 'Total value of goods sold, before discounts, tax, shipping and refunds.',
@@ -38,7 +38,7 @@ const DEFINITIONS = {
   returning_customers: 'Customers who ordered in this period and had ordered before it.',
 };
 
-const LABELS = {
+export const METRIC_LABELS = {
   net_revenue: 'Net revenue',
   gross_revenue: 'Gross revenue',
   orders_count: 'Orders',
@@ -56,22 +56,16 @@ const LABELS = {
   returning_customers: 'Returning customers',
 };
 
-export function MetricTile({
-  metricKey,
-  metric,
-  currency,
-  decimals,
-  comparisonLabel,
-  partial,
-  loading,
-}) {
-  if (loading) {
-    return <StatTile label={LABELS[metricKey] ?? metricKey} loading />;
-  }
-
-  if (!metric) return null;
-
-  const present = (value) => {
+/**
+ * How one metric is shown: formatted value and previous value, and which change
+ * to display.
+ *
+ * Shared by MetricTile and the dashboard KPI band, so the ratio rule below has
+ * one implementation. Two components each deciding "points or percent" is how
+ * one of them ends up printing a margin change as a percentage.
+ */
+export function presentMetric(metric, { currency, decimals }) {
+  const format = (value) => {
     if (value === null || value === undefined) return null;
 
     return metric.format === 'money'
@@ -83,27 +77,51 @@ export function MetricTile({
 
   const isRatio = metric.format === 'ratio';
 
-  /*
-   * For a RATIO, the meaningful change is the difference in PERCENTAGE POINTS,
-   * which is `change_absolute` — not `change_pct`.
-   *
-   * A margin moving 38.4% to 34.2% has change_absolute -0.042 (that is -4.2 pp)
-   * and change_pct -0.1063 (it fell by 10.6% of itself). Showing the second
-   * with a "pp" label states a number that is both wrong and confidently
-   * labelled, which is worse than showing nothing (METRICS.md §1.6).
-   */
-  const change = isRatio ? metric.change_absolute : metric.change_pct;
+  return {
+    value: format(metric.value),
+    previous: metric.previous !== null ? format(metric.previous) : undefined,
+    /*
+     * For a RATIO, the meaningful change is the difference in PERCENTAGE
+     * POINTS, which is `change_absolute` — not `change_pct`.
+     *
+     * A margin moving 38.4% to 34.2% has change_absolute -0.042 (that is
+     * -4.2 pp) and change_pct -0.1063 (it fell by 10.6% of itself). Showing the
+     * second with a "pp" label states a number that is both wrong and
+     * confidently labelled, which is worse than showing nothing
+     * (METRICS.md §1.6).
+     */
+    change: isRatio ? metric.change_absolute : metric.change_pct,
+    changeFormat: isRatio ? 'points' : 'percent',
+  };
+}
+
+export function MetricTile({
+  metricKey,
+  metric,
+  currency,
+  decimals,
+  comparisonLabel,
+  partial,
+  loading,
+}) {
+  if (loading) {
+    return <StatTile label={METRIC_LABELS[metricKey] ?? metricKey} loading />;
+  }
+
+  if (!metric) return null;
+
+  const shown = presentMetric(metric, { currency, decimals });
 
   return (
     <StatTile
-      label={LABELS[metricKey] ?? metricKey}
-      value={present(metric.value)}
-      definition={DEFINITIONS[metricKey]}
-      change={change}
-      changeFormat={isRatio ? 'points' : 'percent'}
+      label={METRIC_LABELS[metricKey] ?? metricKey}
+      value={shown.value}
+      definition={METRIC_DEFINITIONS[metricKey]}
+      change={shown.change}
+      changeFormat={shown.changeFormat}
       favourable={metric.favourable}
       comparisonBasis={comparisonLabel}
-      previousLabel={metric.previous !== null ? present(metric.previous) : undefined}
+      previousLabel={shown.previous}
       partial={partial}
       emptyReason={metric.empty_reason}
     />

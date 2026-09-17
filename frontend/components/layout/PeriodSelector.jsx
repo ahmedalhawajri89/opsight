@@ -31,6 +31,13 @@ export function PeriodSelector({
   comparison = COMPARISON.PreviousPeriod,
   fiscalStartMonth = 1,
   onChange,
+  /*
+   * A page that states the resolved range and the partial-period status
+   * elsewhere — the dashboard puts both in its header and context banner —
+   * turns these off rather than saying the same thing twice in one line.
+   */
+  showRange = true,
+  showPartial = true,
   className,
 }) {
   const resolved =
@@ -64,7 +71,7 @@ export function PeriodSelector({
           value,
           label: PRESET_LABELS[value],
         }))}
-        className="w-auto"
+        className="h-9 w-auto min-w-36"
       />
 
       {preset === PRESETS.Custom && (
@@ -76,9 +83,9 @@ export function PeriodSelector({
             onChange={(event) =>
               onChange?.({ preset, from: event.target.value, to: resolved.to, comparison })
             }
-            className="w-auto"
+            className="h-9 w-auto"
           />
-          <span className="text-[--color-text-subtle]" aria-hidden="true">
+          <span className="text-(--color-text-subtle)" aria-hidden="true">
             –
           </span>
           <DateInput
@@ -88,7 +95,7 @@ export function PeriodSelector({
             onChange={(event) =>
               onChange?.({ preset, from: resolved.from, to: event.target.value, comparison })
             }
-            className="w-auto"
+            className="h-9 w-auto"
           />
         </>
       )}
@@ -101,15 +108,17 @@ export function PeriodSelector({
           value,
           label: COMPARISON_LABELS[value],
         }))}
-        className="w-auto"
+        className="h-9 w-auto min-w-44"
       />
 
-      {/* The resolved range is always shown, so the preset is never ambiguous. */}
-      <span className="tabular hidden text-[0.8125rem] text-[--color-text-muted] lg:inline">
-        {describePeriod(resolved.from, resolved.to)}
-      </span>
+      {/* The resolved range is shown, so the preset is never ambiguous. */}
+      {showRange && (
+        <span className="tabular hidden text-[0.8125rem] text-(--color-text-muted) lg:inline">
+          {describePeriod(resolved.from, resolved.to)}
+        </span>
+      )}
 
-      {partial && <PartialBadge />}
+      {showPartial && partial && <PartialBadge />}
     </div>
   );
 }

@@ -14,13 +14,13 @@ import { cn } from '@/lib/cn';
  */
 const VARIANTS = {
   primary:
-    'bg-[--color-accent] text-[--color-text-inverse] hover:bg-[--color-accent-hover] active:bg-[--color-accent-active] border border-transparent',
+    'bg-(--color-accent) text-(--color-text-inverse) hover:bg-(--color-accent-hover) active:bg-(--color-accent-active) border border-transparent',
   secondary:
-    'bg-[--color-surface] text-[--color-text] border border-[--color-line-strong] hover:bg-[--color-surface-hover]',
+    'bg-(--color-surface) text-(--color-text) border border-(--color-line-strong) hover:bg-(--color-surface-hover)',
   ghost:
-    'bg-transparent text-[--color-text-muted] border border-transparent hover:bg-[--color-surface-hover] hover:text-[--color-text]',
+    'bg-transparent text-(--color-text-muted) border border-transparent hover:bg-(--color-surface-hover) hover:text-(--color-text)',
   danger:
-    'bg-[--color-surface] text-[--color-negative] border border-[--color-negative] hover:bg-[--color-negative-subtle]',
+    'bg-(--color-surface) text-(--color-negative) border border-(--color-negative) hover:bg-(--color-negative-subtle)',
 };
 
 const SIZES = {
@@ -52,7 +52,7 @@ export const Button = forwardRef(function Button(
       // Announced to assistive technology rather than only shown visually.
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex select-none items-center justify-center rounded-[--radius-sm] font-medium',
+        'inline-flex select-none items-center justify-center rounded-(--radius-sm) font-medium',
         'transition-colors duration-150',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANTS[variant] ?? VARIANTS.secondary,

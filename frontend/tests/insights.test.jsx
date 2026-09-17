@@ -67,7 +67,8 @@ describe('a finding', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: /check the figures/i }).getAttribute('href')).toBe(
+    // Named for where it goes: a reader should know before following it.
+    expect(screen.getByRole('link', { name: /check inventory/i }).getAttribute('href')).toBe(
       '/inventory?low_stock=true',
     );
   });

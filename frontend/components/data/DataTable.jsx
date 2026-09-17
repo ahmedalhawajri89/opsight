@@ -48,13 +48,19 @@ export function DataTable({
 
   onRowClick,
   density = 'comfortable',
+  /*
+   * Drop the table's own frame when it sits inside a panel that already has
+   * one — a bordered table inside a bordered card is a box in a box, and the
+   * second edge adds nothing but noise.
+   */
+  bare = false,
   className,
 }) {
-  const rowHeight = density === 'compact' ? 'h-8' : 'h-11';
+  const rowHeight = density === 'compact' ? 'h-9' : 'h-11';
 
   if (loading) {
     return (
-      <Shell className={className}>
+      <Shell className={className} bare={bare}>
         <SkeletonTable columns={columns.length} rows={6} />
       </Shell>
     );
@@ -62,7 +68,7 @@ export function DataTable({
 
   if (error) {
     return (
-      <Shell className={className}>
+      <Shell className={className} bare={bare}>
         <ErrorState error={error} onRetry={onRetry} />
       </Shell>
     );
@@ -70,7 +76,7 @@ export function DataTable({
 
   if (!rows || rows.length === 0) {
     return (
-      <Shell className={className}>
+      <Shell className={className} bare={bare}>
         {activeFilters.length > 0 ? (
           <NoResultsState activeFilters={activeFilters} onClear={onClearFilters} />
         ) : (
@@ -81,14 +87,14 @@ export function DataTable({
   }
 
   return (
-    <Shell className={className}>
+    <Shell className={className} bare={bare}>
       {/* Only the table scrolls horizontally; the page body never does. */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           {caption && <caption className="sr-only">{caption}</caption>}
 
           <thead>
-            <tr className="border-b border-[--color-line]">
+            <tr className="border-b border-(--color-line) bg-(--color-surface-sunken)/70">
               {columns.map((column) => (
                 <HeaderCell
                   key={column.key}
@@ -106,19 +112,26 @@ export function DataTable({
                 key={getRowId(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
-                  'border-b border-[--color-line] transition-colors',
+                  // Subtle separators and a hover on every row: in a dense
+                  // table the eye needs help staying on a line as it crosses
+                  // from a name to a figure.
+                  'border-b border-(--color-line-subtle) transition-colors duration-150 last:border-b-0',
+                  'hover:bg-(--color-surface-hover)/70',
                   rowHeight,
-                  onRowClick && 'cursor-pointer hover:bg-[--color-surface-hover]',
+                  onRowClick && 'cursor-pointer',
                 )}
               >
                 {columns.map((column) => (
                   <td
                     key={column.key}
                     className={cn(
-                      'px-3 align-middle',
+                      'px-3 align-middle text-(--color-text) first:ps-5 last:pe-5',
                       // Numbers are end-aligned with tabular figures so columns
                       // of currency line up and can be scanned.
-                      column.numeric && 'tabular text-end',
+                      // …and never wrap: a figure or date broken over two
+                      // lines cannot be read down a column. A narrow screen
+                      // scrolls the table sideways instead.
+                      column.numeric && 'tabular text-end whitespace-nowrap',
                       column.mono && 'font-mono text-[0.8125rem]',
                       column.className,
                     )}
@@ -135,11 +148,12 @@ export function DataTable({
   );
 }
 
-function Shell({ className, children }) {
+function Shell({ bare, className, children }) {
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-[--radius-md] border border-[--color-line] bg-[--color-surface]',
+        'overflow-hidden bg-(--color-surface)',
+        !bare && 'rounded-(--radius-lg) border border-(--color-line) shadow-(--shadow-card)',
         className,
       )}
     >
@@ -172,8 +186,8 @@ function HeaderCell({ column, sort, onSortChange }) {
       style={column.width ? { width: column.width } : undefined}
       aria-sort={column.sortable ? ariaSort : undefined}
       className={cn(
-        'px-3 py-2 text-[0.6875rem] font-medium uppercase tracking-wide',
-        'text-[--color-text-muted]',
+        'px-3 py-2.5 text-[0.6875rem] font-medium tracking-[0.05em] whitespace-nowrap uppercase first:ps-5 last:pe-5',
+        'text-(--color-text-muted)',
         // Header alignment follows its column so the label sits over its data.
         column.numeric ? 'text-end' : 'text-start',
       )}
@@ -183,8 +197,11 @@ function HeaderCell({ column, sort, onSortChange }) {
           type="button"
           onClick={toggle}
           className={cn(
-            'inline-flex items-center gap-1 rounded-[2px] transition-colors hover:text-[--color-text]',
-            active && 'text-[--color-text]',
+            // Buttons reset text-transform and letter-spacing in Tailwind's
+            // preflight, so a sortable header rendered in sentence case beside
+            // uppercase static ones. Inherit both from the <th> instead.
+            'inline-flex items-center gap-1 rounded-[2px] tracking-[inherit] uppercase transition-colors hover:text-(--color-text)',
+            active && 'text-(--color-text)',
           )}
         >
           {column.header}

@@ -70,7 +70,7 @@ export default function InventoryPage() {
       numeric: true,
       width: '8rem',
       cell: (row) => (
-        <span className={row.is_low ? 'font-medium text-[--color-warning]' : undefined}>
+        <span className={row.is_low ? 'font-medium text-(--color-warning)' : undefined}>
           {formatNumber(row.stock_on_hand)}
         </span>
       ),
@@ -247,7 +247,7 @@ function AdjustStockDialog({ item, onClose, onDone }) {
     >
       <div className="space-y-4">
         {failure && (
-          <p role="alert" className="text-[0.8125rem] text-[--color-negative]">
+          <p role="alert" className="text-[0.8125rem] text-(--color-negative)">
             {failure}
           </p>
         )}
@@ -343,7 +343,7 @@ function AdjustStockDialog({ item, onClose, onDone }) {
         </Field>
 
         {mode === 'restock' && (
-          <p className="text-[0.8125rem] text-[--color-text-subtle]">
+          <p className="text-[0.8125rem] text-(--color-text-subtle)">
             Receiving stock does <strong>not</strong> create an expense. Stock cost reaches profit
             through cost of goods at the point of sale — recording it as an expense too would count
             it twice.

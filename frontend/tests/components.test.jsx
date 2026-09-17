@@ -21,21 +21,21 @@ describe('ComparisonValue', () => {
   it('colours a rise as favourable when up is good', () => {
     const { container } = render(<ComparisonValue change={0.096} favourable="up" />);
 
-    expect(container.querySelector('.text-\\[--color-positive\\]')).not.toBeNull();
+    expect(container.querySelector('[data-tone="positive"]')).not.toBeNull();
   });
 
   it('colours a rise as UNFAVOURABLE when down is good', () => {
     // Expenses rising is bad news even though the number grew.
     const { container } = render(<ComparisonValue change={0.41} favourable="down" />);
 
-    expect(container.querySelector('.text-\\[--color-negative\\]')).not.toBeNull();
-    expect(container.querySelector('.text-\\[--color-positive\\]')).toBeNull();
+    expect(container.querySelector('[data-tone="negative"]')).not.toBeNull();
+    expect(container.querySelector('[data-tone="positive"]')).toBeNull();
   });
 
   it('colours a fall as favourable when down is good', () => {
     const { container } = render(<ComparisonValue change={-0.05} favourable="down" />);
 
-    expect(container.querySelector('.text-\\[--color-positive\\]')).not.toBeNull();
+    expect(container.querySelector('[data-tone="positive"]')).not.toBeNull();
   });
 
   it('pairs the colour with an arrow, so colour is never the only signal', () => {

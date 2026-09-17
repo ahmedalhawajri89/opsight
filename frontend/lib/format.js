@@ -15,6 +15,23 @@
 export const EMPTY = '—';
 
 /**
+ * The direction a formatted figure must be laid out in.
+ *
+ * Digits, signs, "%" and date separators are direction-NEUTRAL, so inside a
+ * right-to-left page they take the page's direction and reorder: "-80.1%"
+ * displays as "80.1%-" and "+0.7 pp" as "pp 0.7+". For a financial figure that
+ * is not cosmetic — the sign moves to the other end of the number. A figure
+ * formatted with Latin digits is therefore isolated as left-to-right; one
+ * formatted for an Arabic-script locale already carries its own direction
+ * marks from Intl and is left to them.
+ *
+ * Use with <bdi dir={figureDirection(text)}>.
+ */
+export function figureDirection(text) {
+  return /[\u0600-\u06FF]/.test(String(text ?? '')) ? undefined : 'ltr';
+}
+
+/**
  * The locale is explicit at every call site so Phase 07 changes one default.
  *
  * `en-GB` rather than `en`: it renders dates day-first ("31 Aug 2026") instead
@@ -52,6 +69,52 @@ export function formatMoney(
     maximumFractionDigits: decimals,
     signDisplay: sign ? 'exceptZero' : 'auto',
   }).format(numeric);
+}
+
+/**
+ * Money split into its currency and its amount, for typography only.
+ *
+ * A KPI reads the amount; the currency is the same on every figure in the
+ * installation, so it can be set smaller and quieter without losing anything.
+ * The split comes from the SAME Intl formatter as `formatMoney` via
+ * `formatToParts`, so the digits rendered are exactly the digits that function
+ * would produce — this is not a second money formatter.
+ *
+ * Whether the currency leads or trails is the LOCALE's decision, not this
+ * function's: `en-GB` puts it first, several Arabic locales put it last, and
+ * `position` carries that through so a caller never hardcodes an order.
+ *
+ * @returns {{ currency: string, amount: string, position: 'before'|'after' }|null}
+ *          null for a blank value, which the caller renders as an em dash.
+ */
+export function formatMoneyParts(
+  value,
+  { currency = 'BHD', decimals = 3, locale = DEFAULT_LOCALE } = {},
+) {
+  if (isBlank(value)) return null;
+
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric)) return null;
+
+  const parts = new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).formatToParts(numeric);
+
+  const currencyIndex = parts.findIndex((part) => part.type === 'currency');
+  const firstDigit = parts.findIndex((part) => part.type === 'integer');
+
+  return {
+    currency: currencyIndex === -1 ? '' : parts[currencyIndex].value,
+    amount: parts
+      .filter((part) => part.type !== 'currency' && part.type !== 'literal')
+      .map((part) => part.value)
+      .join(''),
+    position: currencyIndex !== -1 && currencyIndex > firstDigit ? 'after' : 'before',
+  };
 }
 
 /**

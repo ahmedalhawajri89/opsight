@@ -50,7 +50,7 @@ export function LoginForm() {
       {sessionExpired && (
         <p
           role="status"
-          className="rounded-[--radius-sm] border border-[--color-warning] bg-[--color-surface] px-3 py-2 text-[0.8125rem] text-[--color-warning]"
+          className="rounded-(--radius-sm) border border-(--color-warning) bg-(--color-surface) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
         >
           Your session expired. Please sign in again.
         </p>
@@ -59,7 +59,7 @@ export function LoginForm() {
       {formError && (
         <p
           role="alert"
-          className="rounded-[--radius-sm] border border-[--color-negative] bg-[--color-surface] px-3 py-2 text-[0.8125rem] text-[--color-negative]"
+          className="rounded-(--radius-sm) border border-(--color-negative) bg-(--color-surface) px-3 py-2 text-[0.8125rem] text-(--color-negative)"
         >
           {formError}
         </p>
@@ -68,7 +68,7 @@ export function LoginForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="email"
-          className="block text-xs font-medium uppercase tracking-wide text-[--color-text-muted]"
+          className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
         >
           Email
         </label>
@@ -78,12 +78,12 @@ export function LoginForm() {
           autoComplete="username"
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-describedby={errors.email ? 'email-error' : undefined}
-          className="w-full rounded-[--radius-sm] border border-[--color-line-strong] bg-[--color-surface] px-3 py-2 text-sm text-[--color-text] placeholder:text-[--color-text-subtle]"
+          className="w-full rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) placeholder:text-(--color-text-subtle)"
           placeholder="you@company.com"
           {...register('email', { required: 'Email is required.' })}
         />
         {errors.email && (
-          <p id="email-error" className="text-[0.8125rem] text-[--color-negative]">
+          <p id="email-error" className="text-[0.8125rem] text-(--color-negative)">
             {errors.email.message}
           </p>
         )}
@@ -92,7 +92,7 @@ export function LoginForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="password"
-          className="block text-xs font-medium uppercase tracking-wide text-[--color-text-muted]"
+          className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
         >
           Password
         </label>
@@ -102,11 +102,11 @@ export function LoginForm() {
           autoComplete="current-password"
           aria-invalid={errors.password ? 'true' : 'false'}
           aria-describedby={errors.password ? 'password-error' : undefined}
-          className="w-full rounded-[--radius-sm] border border-[--color-line-strong] bg-[--color-surface] px-3 py-2 text-sm text-[--color-text]"
+          className="w-full rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text)"
           {...register('password', { required: 'Password is required.' })}
         />
         {errors.password && (
-          <p id="password-error" className="text-[0.8125rem] text-[--color-negative]">
+          <p id="password-error" className="text-[0.8125rem] text-(--color-negative)">
             {errors.password.message}
           </p>
         )}
@@ -115,7 +115,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-[--radius-sm] bg-[--color-accent] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[--color-accent-hover] disabled:opacity-60"
+        className="w-full rounded-(--radius-sm) bg-(--color-accent) px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-(--color-accent-hover) disabled:opacity-60"
       >
         {isSubmitting ? 'Signing in…' : 'Sign in'}
       </button>

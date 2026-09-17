@@ -1,21 +1,20 @@
 'use client';
 
-import Link from 'next/link';
-
 import { useDashboard } from '@/features/analytics/useAnalytics';
-import { MetricTile } from '@/features/analytics/MetricTile';
+import { KpiPanel } from '@/features/analytics/KpiPanel';
+import { LowStockCard, PeriodStatus, TopProductsCard } from '@/features/analytics/DashboardPanels';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { InsightFeed } from '@/features/insights/InsightFeed';
 import { useInsights } from '@/features/insights/useInsights';
-import { Badge, PartialBadge } from '@/components/ui/Badge';
-import { StatGrid } from '@/components/data/StatTile';
+import { RecentOrdersCard } from '@/features/orders/RecentOrdersCard';
 import { ErrorState } from '@/components/data/States';
-import { BreakdownChart } from '@/components/charts/BreakdownChart';
 import { TrendChart } from '@/components/charts/TrendChart';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
 import { PeriodSelector } from '@/components/layout/PeriodSelector';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
-import { formatNumber } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { figureDirection } from '@/lib/format';
+import { describePeriod } from '@/lib/periods';
 
 const PERIOD_CONFIG = {
   defaults: { preset: '30d', comparison: 'previous_period' },
@@ -23,31 +22,24 @@ const PERIOD_CONFIG = {
   sortable: [],
 };
 
-/*
- * The order tiles appear in, and which are cost-bearing.
+/**
+ * The dashboard.
  *
- * The dashboard endpoint returns a DIFFERENT SET OF KEYS per role — cost tiles
- * are absent, not null, for a cost-blind role. This list is filtered against
- * what actually arrived rather than assuming a fixed shape
- * (ROLES_AND_PERMISSIONS.md §4).
+ * Read top to bottom, it answers three questions in order of how often they are
+ * asked, and gives each less visual weight than the one before:
+ *
+ *   1. HOW ARE WE DOING?    the KPI band — four large figures, eight quiet ones
+ *   2. WHY, AND WHAT MOVED?  the revenue trend beside the rule-based key changes,
+ *                            then profit and the products behind it
+ *   3. WHAT NEEDS DOING?     recent orders and stock at or below reorder point
+ *
+ * Every figure comes from the dashboard endpoint, the insights endpoint or the
+ * ordinary orders list. This page computes nothing: no totals, no percentages,
+ * no derived figures — the server owns every number, and the page owns only
+ * where it goes.
  */
-const TILE_ORDER = [
-  'net_revenue',
-  'orders_count',
-  'average_order_value',
-  'new_customers',
-  'gross_profit',
-  'gross_margin',
-  'operating_expenses',
-  'net_profit',
-  'cancellation_rate',
-  'refund_rate',
-  'units_sold',
-  'returning_customers',
-];
-
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { can } = useAuth();
   const { filters, setFilters } = useUrlFilters(PERIOD_CONFIG);
 
   const period = {
@@ -68,18 +60,58 @@ export default function DashboardPage() {
   const insights = useInsights(period);
 
   const metrics = dashboard?.metrics ?? {};
-  const partial = meta?.period?.is_partial ?? false;
   const comparisonLabel = meta?.comparison?.label ?? '';
   const currency = meta?.currency ?? 'BHD';
   const decimals = meta?.currency_decimals ?? 3;
+  const hasProfitTrend = Boolean(dashboard?.profit_trend);
 
-  // Only the keys the server actually sent, in the documented order.
-  const visibleTiles = TILE_ORDER.filter((key) => key in metrics);
+  /*
+   * The header states the resolved window and the basis in words, from the
+   * SERVER's meta rather than from the selector's own idea of the preset — the
+   * server is the authority on what the figures actually cover.
+   */
+  const range = meta ? describePeriod(meta.period.from, meta.period.to) : null;
+  const context = range ? (
+    <>
+      {/* A date range is neutral characters too, and reorders in RTL. */}
+      <bdi dir={figureDirection(range)} className="tabular">
+        {range}
+      </bdi>
+      {comparisonLabel && ` · ${comparisonLabel}`}
+    </>
+  ) : (
+    'Business performance for the selected period'
+  );
+
+  const header = (
+    <PageHeader
+      title="Dashboard"
+      description={context}
+      actions={
+        <PeriodSelector
+          preset={filters.preset}
+          from={filters.from}
+          to={filters.to}
+          comparison={filters.comparison}
+          showRange={false}
+          showPartial={false}
+          onChange={(next) =>
+            setFilters({
+              preset: next.preset,
+              from: next.preset === 'custom' ? next.from : undefined,
+              to: next.preset === 'custom' ? next.to : undefined,
+              comparison: next.comparison,
+            })
+          }
+        />
+      }
+    />
+  );
 
   if (isError) {
     return (
       <div>
-        <PageHeader title="Dashboard" />
+        {header}
         <Card padded={false}>
           <ErrorState error={error} onRetry={refetch} />
         </Card>
@@ -88,163 +120,106 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Dashboard"
-        description={`Signed in as ${user.name} · ${user.role_label}`}
-        actions={
-          <PeriodSelector
-            preset={filters.preset}
-            from={filters.from}
-            to={filters.to}
-            comparison={filters.comparison}
-            onChange={(next) =>
-              setFilters({
-                preset: next.preset,
-                from: next.preset === 'custom' ? next.from : undefined,
-                to: next.preset === 'custom' ? next.to : undefined,
-                comparison: next.comparison,
-              })
-            }
-          />
-        }
-      />
+    <div>
+      {header}
 
       {/*
-        An incomplete period compared against a complete one is stated outright.
-        Without it, a dashboard on the 2nd of the month reads as a collapse in
-        trade rather than as a month that has barely started.
+        An incomplete period compared against a complete one is stated
+        outright, once. Without it, a dashboard on the 2nd of the month reads as
+        a collapse in trade rather than as a month that has barely started.
       */}
-      {meta?.comparison?.compares_partial_against_complete && (
-        <p
-          role="status"
-          className="flex flex-wrap items-center gap-2 rounded-[--radius-sm] border border-[--color-warning] bg-[--color-warning-subtle] px-3 py-2 text-[0.8125rem] text-[--color-warning]"
-        >
-          <PartialBadge />
-          This period is still in progress, so it is being compared against a complete one. Expect
-          every figure to look low until it finishes.
-        </p>
-      )}
+      <PeriodStatus show={meta?.comparison?.compares_partial_against_complete} />
 
-      <StatGrid>
-        {isLoading && visibleTiles.length === 0
-          ? TILE_ORDER.slice(0, 4).map((key) => <MetricTile key={key} metricKey={key} loading />)
-          : visibleTiles.map((key) => (
-              <MetricTile
-                key={key}
-                metricKey={key}
-                metric={metrics[key]}
-                currency={currency}
-                decimals={decimals}
-                comparisonLabel={comparisonLabel}
-                partial={partial}
-              />
-            ))}
-      </StatGrid>
-
-      <InsightFeed
-        insights={insights.insights}
-        suppressed={insights.suppressed}
-        loading={insights.isLoading}
-      />
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <TrendChart
-          title="Net revenue"
-          description={meta ? `${meta.period.from} to ${meta.period.to}` : undefined}
-          series={dashboard?.revenue_trend ?? []}
-          format="money"
+      <div className="space-y-6">
+        {/* ---- 1. How are we doing ------------------------------------ */}
+        <KpiPanel
+          metrics={metrics}
           currency={currency}
           decimals={decimals}
-          loading={isLoading}
+          comparisonLabel={comparisonLabel}
+          loading={isLoading && !dashboard}
         />
 
-        {/* Absent entirely for a cost-blind role — the server never sent it. */}
-        {dashboard?.profit_trend && (
+        {/* ---- 2. Why, and what moved --------------------------------- */}
+        {/*
+          Side by side from 1280px. Below that each panel takes the full width:
+          at 1024px a 5-of-12 column is ~300px, which truncated product names
+          and pushed figures past the card edge. When stacked, key changes come
+          FIRST — on a narrow screen, what needs attention precedes the chart
+          that explains it.
+        */}
+        <div className="grid gap-4 xl:grid-cols-12">
           <TrendChart
-            title="Gross profit"
-            description="Net revenue less the cost recorded at the moment of sale"
-            series={dashboard.profit_trend}
+            title="Net revenue"
+            description={`${currency} · ${meta ? describePeriod(meta.period.from, meta.period.to) : ''}`}
+            series={dashboard?.revenue_trend ?? []}
             format="money"
             currency={currency}
             decimals={decimals}
             loading={isLoading}
-            colour="var(--series-3)"
+            className="xl:col-span-8"
           />
-        )}
-      </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <BreakdownChart
-          title="Top products by revenue"
-          description="Grouped by the SKU recorded at the time of sale"
-          rows={dashboard?.top_products ?? []}
-          format="money"
-          currency={currency}
-          decimals={decimals}
-          loading={isLoading}
-          height={260}
-        />
+          <InsightFeed
+            insights={insights.insights}
+            suppressed={insights.suppressed}
+            loading={insights.isLoading}
+            className="order-first xl:order-none xl:col-span-4"
+          />
+        </div>
 
-        <LowStockCard data={dashboard?.low_stock} loading={isLoading} />
+        <div className="grid gap-4 xl:grid-cols-12">
+          {/* Absent entirely for a cost-blind role — the server never sent it. */}
+          {hasProfitTrend && (
+            <TrendChart
+              title="Gross profit"
+              description={`${currency} · net revenue less cost of goods at the time of sale`}
+              series={dashboard.profit_trend}
+              format="money"
+              currency={currency}
+              decimals={decimals}
+              loading={isLoading}
+              colour="var(--series-3)"
+              className="xl:col-span-7"
+            />
+          )}
+
+          <TopProductsCard
+            rows={dashboard?.top_products ?? []}
+            currency={currency}
+            decimals={decimals}
+            loading={isLoading}
+            className={hasProfitTrend ? 'xl:col-span-5' : 'xl:col-span-7'}
+          />
+
+          {!hasProfitTrend && (
+            <LowStockCard
+              data={dashboard?.low_stock}
+              loading={isLoading}
+              className="xl:col-span-5"
+            />
+          )}
+        </div>
+
+        {/* ---- 3. What needs doing ------------------------------------ */}
+        <div className="grid gap-4 xl:grid-cols-12">
+          {can('orders.view') && (
+            <RecentOrdersCard
+              currency={currency}
+              decimals={decimals}
+              className={cn(hasProfitTrend ? 'xl:col-span-8' : 'xl:col-span-12')}
+            />
+          )}
+
+          {hasProfitTrend && (
+            <LowStockCard
+              data={dashboard?.low_stock}
+              loading={isLoading}
+              className={can('orders.view') ? 'xl:col-span-4' : 'xl:col-span-12'}
+            />
+          )}
+        </div>
       </div>
     </div>
-  );
-}
-
-/**
- * Low stock.
- *
- * A POINT-IN-TIME figure: it reflects now, not the selected period, and says so
- * — otherwise a reader takes it as "low stock during August" (METRICS.md §2.18).
- */
-function LowStockCard({ data, loading }) {
-  const items = data?.items ?? [];
-
-  return (
-    <Card
-      title="Low stock"
-      description="As of now — not for the selected period"
-      actions={
-        data?.count > 0 ? (
-          <Badge tone="warning">{formatNumber(data.count)} below reorder point</Badge>
-        ) : null
-      }
-    >
-      {loading ? (
-        <div className="space-y-2" aria-busy="true">
-          <div className="skeleton h-4 rounded-[--radius-sm]" />
-          <div className="skeleton h-4 rounded-[--radius-sm]" />
-          <div className="skeleton h-4 rounded-[--radius-sm]" />
-        </div>
-      ) : items.length === 0 ? (
-        <p className="text-sm text-[--color-text-muted]">
-          Nothing is at or below its reorder point.
-        </p>
-      ) : (
-        <ul className="divide-y divide-[--color-line]">
-          {items.map((item) => (
-            <li key={item.product_id} className="flex items-center justify-between gap-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm text-[--color-text]">{item.product?.name}</p>
-                <p className="font-mono text-[0.6875rem] text-[--color-text-subtle]">
-                  {item.product?.sku}
-                </p>
-              </div>
-              <span className="tabular shrink-0 text-sm font-medium text-[--color-warning]">
-                {formatNumber(item.stock_on_hand)} left
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <Link
-        href="/inventory?low_stock=true"
-        className="mt-3 inline-block text-[0.8125rem] text-[--color-accent-text] hover:underline"
-      >
-        View all inventory
-      </Link>
-    </Card>
   );
 }

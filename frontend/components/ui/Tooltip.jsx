@@ -23,8 +23,10 @@ export function Tooltip({ content, side = 'top', children, className }) {
   if (!content) return children;
 
   const positions = {
-    top: 'bottom-full start-1/2 -translate-x-1/2 mb-1.5',
-    bottom: 'top-full start-1/2 -translate-x-1/2 mt-1.5',
+    // `start-1/2` mirrors in RTL but a translate does not, so the centring
+    // offset flips explicitly or the tooltip lands half a width to one side.
+    top: 'bottom-full start-1/2 -translate-x-1/2 rtl:translate-x-1/2 mb-1.5',
+    bottom: 'top-full start-1/2 -translate-x-1/2 rtl:translate-x-1/2 mt-1.5',
     start: 'end-full top-1/2 -translate-y-1/2 me-1.5',
     end: 'start-full top-1/2 -translate-y-1/2 ms-1.5',
   };
@@ -44,9 +46,9 @@ export function Tooltip({ content, side = 'top', children, className }) {
           id={id}
           role="tooltip"
           className={cn(
-            'absolute z-50 w-max max-w-[16rem] rounded-[--radius-sm] px-2 py-1',
-            'border border-[--color-line] bg-[--color-surface-raised] text-[--color-text]',
-            'text-[0.8125rem] leading-snug shadow-[--shadow-overlay]',
+            'absolute z-50 w-max max-w-[16rem] rounded-(--radius-sm) px-2 py-1',
+            'border border-(--color-line) bg-(--color-surface-raised) text-(--color-text)',
+            'text-[0.8125rem] leading-snug shadow-(--shadow-overlay)',
             positions[side] ?? positions.top,
           )}
         >
@@ -71,7 +73,7 @@ export function InfoTip({ label, content }) {
       <button
         type="button"
         aria-label={`What is ${label}?`}
-        className="rounded-full text-[--color-text-subtle] transition-colors hover:text-[--color-text-muted]"
+        className="rounded-full text-(--color-text-subtle) transition-colors hover:text-(--color-text-muted)"
       >
         <svg viewBox="0 0 16 16" className="size-3.5" fill="none" aria-hidden="true">
           <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.25" />

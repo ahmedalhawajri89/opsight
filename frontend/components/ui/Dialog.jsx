@@ -59,21 +59,21 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
         if (event.target === ref.current) ref.current.close();
       }}
       className={cn(
-        'w-[calc(100vw-2rem)] rounded-[--radius-md] border border-[--color-line] p-0',
-        'bg-[--color-surface] text-[--color-text] shadow-[--shadow-overlay]',
+        'w-[calc(100vw-2rem)] rounded-(--radius-md) border border-(--color-line) p-0',
+        'bg-(--color-surface) text-(--color-text) shadow-(--shadow-overlay)',
         'backdrop:bg-black/40',
         widths[size] ?? widths.md,
       )}
     >
-      <div className="flex items-start justify-between gap-4 border-b border-[--color-line] px-4 py-3">
+      <div className="flex items-start justify-between gap-4 border-b border-(--color-line) px-4 py-3">
         <div>
           {title && (
-            <h2 id="dialog-title" className="text-sm font-semibold text-[--color-text]">
+            <h2 id="dialog-title" className="text-sm font-semibold text-(--color-text)">
               {title}
             </h2>
           )}
           {description && (
-            <p className="mt-1 text-[0.8125rem] text-[--color-text-muted]">{description}</p>
+            <p className="mt-1 text-[0.8125rem] text-(--color-text-muted)">{description}</p>
           )}
         </div>
 
@@ -81,7 +81,7 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
           type="button"
           onClick={() => ref.current?.close()}
           aria-label="Close dialog"
-          className="-me-1 rounded-[--radius-sm] p-1 text-[--color-text-subtle] hover:bg-[--color-surface-hover] hover:text-[--color-text]"
+          className="-me-1 rounded-(--radius-sm) p-1 text-(--color-text-subtle) hover:bg-(--color-surface-hover) hover:text-(--color-text)"
         >
           <svg viewBox="0 0 16 16" className="size-4" fill="none" aria-hidden="true">
             <path
@@ -97,7 +97,7 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
       {children && <div className="px-4 py-4 text-sm">{children}</div>}
 
       {footer && (
-        <div className="flex justify-end gap-2 border-t border-[--color-line] bg-[--color-surface-sunken] px-4 py-3">
+        <div className="flex justify-end gap-2 border-t border-(--color-line) bg-(--color-surface-sunken) px-4 py-3">
           {footer}
         </div>
       )}
@@ -139,7 +139,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-[--color-text-muted]">{consequence}</p>
+      <p className="text-(--color-text-muted)">{consequence}</p>
     </Dialog>
   );
 }

@@ -29,7 +29,9 @@ function parseTokens(block) {
 }
 
 function extractThemes(css) {
-  const darkIndex = css.indexOf('@media (prefers-color-scheme: dark)');
+  // Dark is an explicit choice rather than an OS-following media query, so the
+  // light set is everything before the attribute block.
+  const darkIndex = css.indexOf(":root[data-theme='dark']");
 
   expect(darkIndex, 'globals.css must define a dark theme').toBeGreaterThan(-1);
 
@@ -151,6 +153,10 @@ const TEXT_PAIRS = [
   ['text-muted', 'surface', 4.5, 'secondary text on a card'],
   ['text-muted', 'surface-sunken', 4.5, 'secondary text on the page ground'],
   ['text-subtle', 'surface', 3, 'labels and captions (large/secondary)'],
+  ['text-subtle', 'surface-sunken', 3, 'metadata on the page ground'],
+  ['text-muted', 'surface-hover', 4.5, 'secondary text on a hovered row'],
+  ['accent-text', 'info-subtle', 4.5, 'context banner text'],
+  ['text', 'surface-selected', 4.5, 'body text on a selected row'],
   ['accent-text', 'surface', 4.5, 'link text'],
   ['accent-text', 'accent-subtle', 4.5, 'active navigation item'],
   ['positive', 'surface', 4.5, 'favourable change'],

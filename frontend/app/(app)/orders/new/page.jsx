@@ -117,7 +117,7 @@ export default function NewOrderPage() {
       {failure && (
         <p
           role="alert"
-          className="rounded-[--radius-sm] border border-[--color-negative] bg-[--color-negative-subtle] px-3 py-2 text-[0.8125rem] text-[--color-negative]"
+          className="rounded-(--radius-sm) border border-(--color-negative) bg-(--color-negative-subtle) px-3 py-2 text-[0.8125rem] text-(--color-negative)"
         >
           {failure}
         </p>
@@ -201,7 +201,7 @@ export default function NewOrderPage() {
               </Button>
             </div>
 
-            <p className="mt-3 text-[0.8125rem] text-[--color-text-subtle]">
+            <p className="mt-3 text-[0.8125rem] text-(--color-text-subtle)">
               Prices shown on a draft are indicative. The figures that count are snapshotted from
               the catalog at the moment you confirm.
             </p>

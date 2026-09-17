@@ -44,15 +44,17 @@ export function ChartFrame({
   return (
     <section
       className={cn(
-        'rounded-[--radius-md] border border-[--color-line] bg-[--color-surface]',
+        'flex min-w-0 flex-col rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
         className,
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[--color-line] px-4 py-3">
-        <div>
-          <h2 className="text-sm font-semibold text-[--color-text]">{title}</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4 pb-2">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-(--color-text)">{title}</h2>
           {description && (
-            <p className="mt-0.5 text-[0.8125rem] text-[--color-text-muted]">{description}</p>
+            <p className="tabular mt-0.5 text-[0.8125rem] text-(--color-text-muted)">
+              {description}
+            </p>
           )}
         </div>
 
@@ -66,7 +68,7 @@ export function ChartFrame({
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex-1 px-5 pt-2 pb-5">
         {loading ? (
           <div aria-busy="true" style={{ height }}>
             <Skeleton className="size-full" />
@@ -77,7 +79,14 @@ export function ChartFrame({
         ) : !hasData ? (
           <EmptyState title={emptyTitle} description={emptyDescription} />
         ) : asTable ? (
-          <DataTable caption={title} columns={columns} rows={rows} density="compact" />
+          <DataTable
+            caption={title}
+            columns={columns}
+            rows={rows}
+            density="compact"
+            bare
+            className="-mx-5 border-t border-(--color-line-subtle)"
+          />
         ) : (
           <>
             <div style={{ height }}>{children}</div>
@@ -113,7 +122,9 @@ export function ChartFrame({
         )}
 
         {footnote && !loading && (
-          <p className="mt-3 text-[0.8125rem] text-[--color-text-subtle]">{footnote}</p>
+          <p className="mt-3 border-t border-(--color-line-subtle) pt-3 text-xs text-(--color-text-muted)">
+            {footnote}
+          </p>
         )}
       </div>
     </section>

@@ -1,7 +1,14 @@
 'use client';
 
 import { cn } from '@/lib/cn';
-import { EMPTY, changeArrow, changeTone, formatPercent, formatPoints } from '@/lib/format';
+import {
+  EMPTY,
+  changeArrow,
+  changeTone,
+  figureDirection,
+  formatPercent,
+  formatPoints,
+} from '@/lib/format';
 
 /**
  * A period-over-period change.
@@ -22,9 +29,20 @@ import { EMPTY, changeArrow, changeTone, formatPercent, formatPoints } from '@/l
  */
 
 const TONE_CLASSES = {
-  positive: 'text-[--color-positive]',
-  negative: 'text-[--color-negative]',
-  neutral: 'text-[--color-text-muted]',
+  positive: 'text-(--color-positive)',
+  negative: 'text-(--color-negative)',
+  neutral: 'text-(--color-text-muted)',
+};
+
+/*
+ * The chip variant puts the change on a tinted ground so it can be found at a
+ * glance in a KPI band. The tint REPEATS the meaning of the arrow and sign; it
+ * never replaces them.
+ */
+const CHIP_CLASSES = {
+  positive: 'bg-(--color-positive-subtle) text-(--color-positive)',
+  negative: 'bg-(--color-negative-subtle) text-(--color-negative)',
+  neutral: 'bg-(--color-surface-hover) text-(--color-text-muted)',
 };
 
 export function ComparisonValue({
@@ -34,6 +52,8 @@ export function ComparisonValue({
   favourable = 'up',
   basis,
   previousLabel,
+  /** 'inline' (default) or 'chip'. */
+  variant = 'inline',
   className,
 }) {
   const tone = changeTone(change, favourable);
@@ -50,7 +70,17 @@ export function ComparisonValue({
       className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[0.8125rem]', className)}
     >
       <span
-        className={cn('tabular inline-flex items-baseline gap-1 font-medium', TONE_CLASSES[tone])}
+        // The tone as data, so a test asserts WHAT the change means rather than
+        // how a stylesheet happens to spell it. The class-based assertions this
+        // replaced kept passing through a whole release in which the class
+        // compiled to invalid CSS and no colour ever reached the screen.
+        data-tone={tone}
+        className={cn(
+          'tabular inline-flex items-baseline gap-1 font-medium',
+          variant === 'chip'
+            ? cn('rounded-(--radius-sm) px-1.5 py-px text-xs', CHIP_CLASSES[tone])
+            : TONE_CLASSES[tone],
+        )}
         title={
           unavailable
             ? 'No comparison available — the previous period had no value to compare against.'
@@ -62,13 +92,17 @@ export function ComparisonValue({
             {changeArrow(change)}
           </span>
         )}
-        {formatted}
+        <bdi dir={figureDirection(formatted)}>{formatted}</bdi>
       </span>
 
       {/* The basis is always stated in words. A bare percentage is a rumour. */}
-      {basis && <span className="text-[--color-text-subtle]">{basis}</span>}
+      {basis && <span className="text-(--color-text-subtle)">{basis}</span>}
 
-      {previousLabel && <span className="tabular text-[--color-text-subtle]">{previousLabel}</span>}
+      {previousLabel && (
+        <bdi dir={figureDirection(previousLabel)} className="tabular text-(--color-text-subtle)">
+          {previousLabel}
+        </bdi>
+      )}
     </div>
   );
 }

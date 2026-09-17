@@ -107,11 +107,11 @@ export function BreakdownChart({
               const row = payload[0].payload;
 
               return (
-                <div className="rounded-[--radius-sm] border border-[--color-line] bg-[--color-surface-raised] px-2.5 py-2 text-[0.8125rem] shadow-[--shadow-overlay]">
-                  <p className="font-medium text-[--color-text]">{row.label}</p>
-                  {row.sublabel && <p className="text-[--color-text-subtle]">{row.sublabel}</p>}
-                  <p className="tabular text-[--color-text]">{formatValue(row.value)}</p>
-                  <p className="tabular text-[--color-text-muted]">
+                <div className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-2.5 py-2 text-[0.8125rem] shadow-(--shadow-overlay)">
+                  <p className="font-medium text-(--color-text)">{row.label}</p>
+                  {row.sublabel && <p className="text-(--color-text-subtle)">{row.sublabel}</p>}
+                  <p className="tabular text-(--color-text)">{formatValue(row.value)}</p>
+                  <p className="tabular text-(--color-text-muted)">
                     {formatPercent(row.share)} of the period
                   </p>
                 </div>
