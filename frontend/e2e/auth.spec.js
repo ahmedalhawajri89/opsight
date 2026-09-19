@@ -21,7 +21,7 @@ const STAFF = { email: 'staff@opsight.test', password: 'password' };
 async function signIn(page, { email, password }) {
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
 
   const [response] = await Promise.all([
     page.waitForResponse(
@@ -69,7 +69,7 @@ test('bad credentials are rejected without revealing whether the email exists', 
 }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill('owner@opsight.test');
-  await page.getByLabel('Password').fill('wrong-password');
+  await page.getByLabel('Password', { exact: true }).fill('wrong-password');
   await page.getByRole('button', { name: 'Sign in' }).click();
 
   await expect(page.getByText(/do not match our records/i)).toBeVisible();

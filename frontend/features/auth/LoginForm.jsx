@@ -5,7 +5,12 @@ import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth } from './AuthProvider';
+import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { cn } from '@/lib/cn';
+
+const FIELD =
+  'h-11 w-full rounded-(--radius-md) border bg-(--color-surface) px-3.5 text-sm text-(--color-text) transition-colors duration-(--duration-fast) placeholder:text-(--color-text-subtle)';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -13,6 +18,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState(null);
+  const [revealed, setRevealed] = useState(false);
 
   const {
     register,
@@ -52,8 +58,9 @@ export function LoginForm() {
       {sessionExpired && (
         <p
           role="status"
-          className="rounded-(--radius-sm) border border-(--color-warning) bg-(--color-surface) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
+          className="flex items-start gap-2.5 rounded-(--radius-md) bg-(--color-warning-subtle) px-3.5 py-3 text-[0.8125rem] text-(--color-warning)"
         >
+          <Icon name="clock" size={16} className="mt-px shrink-0" />
           {t('auth.sessionExpired')}
         </p>
       )}
@@ -61,17 +68,15 @@ export function LoginForm() {
       {formError && (
         <p
           role="alert"
-          className="rounded-(--radius-sm) border border-(--color-negative) bg-(--color-surface) px-3 py-2 text-[0.8125rem] text-(--color-negative)"
+          className="flex items-start gap-2.5 rounded-(--radius-md) bg-(--color-negative-subtle) px-3.5 py-3 text-[0.8125rem] text-(--color-negative)"
         >
+          <Icon name="alert" size={16} className="mt-px shrink-0" />
           {formError}
         </p>
       )}
 
       <div className="space-y-1.5">
-        <label
-          htmlFor="email"
-          className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
-        >
+        <label htmlFor="email" className="block text-[0.8125rem] font-medium text-(--color-text)">
           {t('auth.email')}
         </label>
         <input
@@ -83,7 +88,10 @@ export function LoginForm() {
           autoComplete="username"
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-describedby={errors.email ? 'email-error' : undefined}
-          className="w-full rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) placeholder:text-(--color-text-subtle)"
+          className={cn(
+            FIELD,
+            errors.email ? 'border-(--color-negative)' : 'border-(--color-line-strong)',
+          )}
           placeholder="you@company.com"
           {...register('email', { required: t('auth.emailRequired') })}
         />
@@ -97,20 +105,45 @@ export function LoginForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="password"
-          className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
+          className="block text-[0.8125rem] font-medium text-(--color-text)"
         >
           {t('auth.password')}
         </label>
-        <input
-          id="password"
-          type="password"
-          dir="ltr"
-          autoComplete="current-password"
-          aria-invalid={errors.password ? 'true' : 'false'}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-          className="w-full rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text)"
-          {...register('password', { required: t('auth.passwordRequired') })}
-        />
+        <div className="relative">
+          <input
+            id="password"
+            type={revealed ? 'text' : 'password'}
+            dir="ltr"
+            autoComplete="current-password"
+            aria-invalid={errors.password ? 'true' : 'false'}
+            aria-describedby={errors.password ? 'password-error' : undefined}
+            className={cn(
+              FIELD,
+              'pe-11',
+              errors.password ? 'border-(--color-negative)' : 'border-(--color-line-strong)',
+            )}
+            {...register('password', { required: t('auth.passwordRequired') })}
+          />
+          {/*
+            Typing a password blind is where sign-in most often fails, and this
+            is the one screen where nobody is signed in to be shoulder-surfed
+            out of a session. The state is announced, not only drawn.
+          */}
+          <button
+            type="button"
+            onClick={() => setRevealed((value) => !value)}
+            aria-pressed={revealed}
+            aria-controls="password"
+            title={revealed ? t('auth.hidePassword') : t('auth.showPassword')}
+            className="absolute inset-y-0 end-0 inline-flex w-11 items-center justify-center rounded-(--radius-md) text-(--color-text-subtle) transition-colors duration-(--duration-fast) hover:text-(--color-text)"
+          >
+            <Icon
+              name={revealed ? 'eyeOff' : 'eye'}
+              size={17}
+              label={revealed ? t('auth.hidePassword') : t('auth.showPassword')}
+            />
+          </button>
+        </div>
         {errors.password && (
           <p id="password-error" className="text-[0.8125rem] text-(--color-negative)">
             {errors.password.message}
@@ -121,9 +154,10 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-(--radius-sm) bg-(--color-accent) px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-(--color-accent-hover) disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-md) bg-(--color-accent) px-4 text-sm font-semibold text-(--color-text-inverse) transition-colors duration-(--duration-fast) hover:bg-(--color-accent-hover) disabled:opacity-60"
       >
         {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
+        {!isSubmitting && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
       </button>
     </form>
   );
