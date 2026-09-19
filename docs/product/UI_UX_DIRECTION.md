@@ -76,44 +76,49 @@ table wastes a third of the viewport.
 ## 4. Colour
 
 A restrained neutral system with one accent and a strictly reserved semantic set.
-`app/globals.css` is the source of truth. **Revised in dashboard v3** to the palette of the
-reference layout the owner supplied (v2's petrol and sand is superseded): every value was
-sampled from the reference and moved only as far as WCAG AA required.
+`app/globals.css` is the source of truth. **Revised in the dashboard specification pass (v4)**,
+which supersedes v2 (petrol/sand) and v3: the values are the specification's own, moved only
+where WCAG AA required it — its green, red, amber and caption grey are too light for 12px text,
+so the TEXT tokens are darker while the tints keep the specification's hue.
 
-**Neutrals** — a cool white ground with a navy cast in the text.
+**Neutrals** — a light blue-grey ground, white cards, navy-cast text.
 
 ```
 Light                              Dark
 --surface        #FFFFFF           #121829
---surface-sunken #F6F8FC           #0B1020
---sidebar        #FAFBFE           #0F1526
---border         #E6EAF2           #263048
+--surface-sunken #F5F7FB           #0B1020
+--sidebar        #FFFFFF           #121829
+--border         #EDF0F6           #263048
 --border-strong  #8A93A6           #5F6A82
---text           #101A33           #E8ECF6
---text-muted     #5B6478           #A0A9BD
---text-subtle    #7C8499           #7F89A0
+--text           #0F172A           #E8ECF6
+--text-muted     #475569           #A0A9BD
+--text-subtle    #7B879C           #7F89A0
 ```
 
-**Accent** — navy carries weight (primary buttons, the selected segment, the avatar); blue
-carries what you can follow (links, the active navigation icon); lavender marks where you are.
+**Accent** — navy carries weight (primary buttons, the selected segment, the avatar); indigo
+carries what you can follow (links, the current place in the navigation); lavender marks it.
 
 ```
---accent         #1F2B5B  /  #8AA4FF   (navy)
---accent-text    #2E55D6  /  #A8BCFF   (blue)
---accent-subtle  #EEF0FD  /  #1C2547   (lavender)
+--accent         #1E2A5E  /  #A5B4FC   (navy)
+--accent-text    #4F46E5  /  #A5B4FC   (indigo)
+--accent-subtle  #EEF0FF  /  #1F2552   (lavender)
 ```
 
-**Semantic** — reserved for meaning, never for decoration. The reference's green, red and
-orange were a shade too light for 12px text and were darkened to pass.
+**Semantic** — reserved for meaning, never for decoration. Each has a ~10% tint, and violet and
+teal tints exist for icons only (never for text on their own).
 
 ```
 --positive  #15803D   favourable change
 --negative  #C81E1E   unfavourable change
---warning   #C2410C   attention, low stock, money going out
+--warning   #B45309   attention, low stock, money going out
 ```
 
-**Chart series** — blue, orange, teal, lilac, navy, slate. Sparklines use their own decorative
+**Chart series** — blue, amber, teal, violet, navy, cyan. Sparklines use their own decorative
 strokes (`--spark-*`), because a sparkline never carries a value on its own.
+
+**Radii and shadow** — 6 / 8 / 14px, a hairline card shadow (`0 1px 2px rgb(16 24 40 / .04)`)
+and a slightly deeper one on hover. Motion durations are tokens too: 150ms for controls, 200ms
+for content.
 
 **Rules.**
 

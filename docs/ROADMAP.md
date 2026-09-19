@@ -470,6 +470,43 @@ every element in it working for real.
 
 ---
 
+## Dashboard specification pass *(between Phase 07 and Phase 06)*
+
+The owner supplied a written dashboard specification (layout, spacing, hierarchy, copy,
+behaviour) naming a different stack. It was applied as a VISUAL and BEHAVIOURAL reference only:
+JavaScript, Recharts, the in-house i18n (ADR-017) and exact-decimal money (ADR-015) all stand,
+no dependency was added, and every widget still renders real API data. Work ran section by
+section on `feature/dashboard-spec`, one commit each.
+
+1. **Tokens and sidebar** — the specification's palette (blue-grey ground, navy weight, indigo
+   navigation, lavender current-page pill), 14px card radius, hairline shadow, motion tokens.
+   Reports appears in the navigation as not yet available rather than as a link to nothing.
+2. **Top bar** — the search field lives in the bar with its results beneath it (Ctrl/⌘+K
+   focuses it; below 768px it collapses to an icon opening the same field in a dialog), an
+   outlined comparison pill, and an account menu with Profile (not yet available), an
+   English / العربية switch that applies at once, digits when Arabic is chosen, and Sign out.
+3. **Header and KPI rows** — greeting and "Incomplete" notice; four primary cards with 40px
+   tinted icons and sparklines; eight compact cards. Figures shrink to fit rather than
+   truncating, so no money figure is ever cut. Delta colour stays semantic, with an
+   unfavourable move in operating expenses shown amber rather than red.
+4. **Charts** — dashed gridlines, a vertical hover guide, a 68% donut whose legend rows
+   highlight their slice, and the performance bars' legend at the header end.
+5. **Tables** — 11px muted headers, hairline row dividers, subtle hover, fully rounded status
+   pills.
+6. **Right rail** — Key Insights, Inventory Health, and the Analytics call to action.
+7. **Responsive** — rail beside the content from 1440px, a row of three from 1024px, an icon
+   rail sidebar from 768px, a drawer below that.
+
+**What the specification asks for that the data does not support yet** (left out rather than
+faked, and listed for the owner): per-insight timestamps ("2h ago"); the "top performing
+product" and "customer growth" insight types; a change figure for total inventory value and for
+active users (no historical valuation — ADR-014 — and no user-count history); entity names in
+the activity feed (the audit API exposes a subject type and id, not a label); product images;
+and the Reports and Profile screens. The specification's "AI-powered analysis" wording is not
+used, because nothing in Opsight is AI-powered.
+
+---
+
 ## Phase 08 — Post-MVP depth
 
 Ordered by likely value, not committed:
