@@ -56,7 +56,9 @@ export default function DashboardPage() {
   const { user, can } = useAuth();
   const { t } = useI18n();
   const { filters, setFilters } = useUrlFilters(PERIOD_CONFIG);
-  const wide = useMediaQuery('(min-width: 1280px)');
+  // From 1440px the rail stands beside the content and the period controls
+  // live in the top bar; below that both move into the page.
+  const wide = useMediaQuery('(min-width: 90rem)');
 
   const period = {
     preset: filters.preset,
@@ -170,16 +172,24 @@ export default function DashboardPage() {
 
   // The specification's 40 : 27 : 33 split, closing up when a panel is absent.
   const lowerSpans = {
-    3: { performance: 'xl:col-span-5', stats: 'xl:col-span-3', activity: 'xl:col-span-4' },
-    2: { performance: 'xl:col-span-7', stats: 'xl:col-span-5', activity: 'xl:col-span-7' },
-    1: { stats: 'md:col-span-2 xl:col-span-12' },
+    3: {
+      performance: 'min-[90rem]:col-span-5',
+      stats: 'min-[90rem]:col-span-3',
+      activity: 'min-[90rem]:col-span-4',
+    },
+    2: {
+      performance: 'min-[90rem]:col-span-7',
+      stats: 'min-[90rem]:col-span-5',
+      activity: 'min-[90rem]:col-span-7',
+    },
+    1: { stats: 'md:col-span-2 min-[90rem]:col-span-12' },
   }[lowerRow.length];
 
   return (
     <div className="space-y-5">
       {header}
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_17.5rem] min-[1600px]:grid-cols-[minmax(0,1fr)_19.5rem]">
+      <div className="grid items-start gap-5 min-[90rem]:grid-cols-[minmax(0,1fr)_17.5rem] min-[100rem]:grid-cols-[minmax(0,1fr)_19.5rem]">
         <div className="min-w-0 space-y-4">
           <KpiPanel
             metrics={metrics}
@@ -228,7 +238,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+          <div className="grid gap-4 md:grid-cols-2 min-[90rem]:grid-cols-12">
             {hasCost && (
               <CashFlowChart
                 data={dashboard.cash_flow}
@@ -260,7 +270,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <aside aria-label={t('dashboard.sideColumn')} className="min-w-0 space-y-5">
+        {/*
+          Beside the content on a wide screen; below it as a row of three from
+          1024px, where a 280px column would leave the charts too narrow.
+        */}
+        <aside
+          aria-label={t('dashboard.sideColumn')}
+          className="grid min-w-0 items-start gap-5 lg:grid-cols-3 min-[90rem]:grid-cols-1"
+        >
           <InsightFeed
             insights={insights.insights}
             suppressed={insights.suppressed}

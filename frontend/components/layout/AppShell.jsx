@@ -238,13 +238,17 @@ export function AppShell({ children }) {
         {t('nav.skipToContent')}
       </a>
 
-      {/* Persistent from 1024px; below that the same navigation is a drawer. */}
-      <aside className="sticky top-0 hidden h-dvh w-[216px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) lg:flex">
-        {sidebar}
+      {/*
+        Three forms of the same navigation: the full sidebar from 1024px, an
+        icon rail from 768px — where 216px of names would cost the content a
+        fifth of the screen — and a drawer below that.
+      */}
+      <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex lg:w-[216px]">
+        <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} compact />
       </aside>
 
       {drawerOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 md:hidden">
           <button
             type="button"
             aria-label={t('nav.closeNavigation')}
@@ -268,7 +272,7 @@ export function AppShell({ children }) {
               }}
               aria-expanded={drawerOpen}
               aria-label={t('nav.openNavigation')}
-              className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover) lg:hidden"
+              className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover) md:hidden"
             >
               <Icon name="menu" size={20} />
             </button>
@@ -315,18 +319,32 @@ export function AppShell({ children }) {
   );
 }
 
-function Sidebar({ groups, current, canAnalyse }) {
+function Sidebar({ groups, current, canAnalyse, compact = false }) {
   const { t } = useI18n();
 
   return (
     <>
-      <div className="flex h-16 shrink-0 items-center px-5">
+      <div
+        className={cn(
+          'flex h-16 shrink-0 items-center',
+          compact ? 'justify-center lg:justify-start lg:px-5' : 'px-5',
+        )}
+      >
         <Link href="/dashboard" className="rounded-(--radius-sm)" aria-label={t('common.appName')}>
-          <Logo />
+          {/* The wordmark needs room; the rail shows the mark alone. */}
+          <span className={compact ? 'lg:hidden' : 'hidden'}>
+            <Logo compact />
+          </span>
+          <span className={compact ? 'hidden lg:block' : 'block'}>
+            <Logo />
+          </span>
         </Link>
       </div>
 
-      <nav aria-label={t('nav.main')} className="flex-1 overflow-y-auto px-3 pt-1 pb-4">
+      <nav
+        aria-label={t('nav.main')}
+        className={cn('flex-1 overflow-y-auto pt-1 pb-4', compact ? 'px-2 lg:px-3' : 'px-3')}
+      >
         {groups.map((group, index) => {
           const id = group.label ? `nav-${group.label.replaceAll('.', '-')}` : `nav-group-${index}`;
 
@@ -339,19 +357,26 @@ function Sidebar({ groups, current, canAnalyse }) {
               {group.label && (
                 <p
                   id={id}
-                  className="px-3 pb-2 text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-subtle) uppercase"
+                  className={cn(
+                    'px-3 pb-2 text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-subtle) uppercase',
+                    // On the rail the group is shown by a rule instead of a word.
+                    compact && 'hidden lg:block',
+                  )}
                 >
                   {t(group.label)}
                 </p>
+              )}
+              {group.label && compact && (
+                <div aria-hidden="true" className="mx-2 mb-2 h-px bg-(--color-line) lg:hidden" />
               )}
 
               <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
                 {group.items.map((item) => (
                   <li key={item.href}>
                     {item.ready === false ? (
-                      <DisabledNavItem item={item} />
+                      <DisabledNavItem item={item} compact={compact} />
                     ) : (
-                      <NavLink item={item} active={current === item.href} />
+                      <NavLink item={item} active={current === item.href} compact={compact} />
                     )}
                   </li>
                 ))}
@@ -361,7 +386,8 @@ function Sidebar({ groups, current, canAnalyse }) {
         })}
       </nav>
 
-      <div className="shrink-0 px-3 pb-4">
+      {/* The promo card and version line need width; the rail omits them. */}
+      <div className={cn('shrink-0 px-3 pb-4', compact && 'hidden lg:block')}>
         <div className="rounded-(--radius-lg) bg-(--color-accent-subtle) p-4">
           <span
             aria-hidden="true"
@@ -396,15 +422,18 @@ function Sidebar({ groups, current, canAnalyse }) {
   );
 }
 
-function NavLink({ item, active }) {
+function NavLink({ item, active, compact = false }) {
   const { t } = useI18n();
+  const label = t(item.label);
 
   return (
     <Link
       href={item.href}
       aria-current={active ? 'page' : undefined}
+      title={compact ? label : undefined}
       className={cn(
-        'flex h-9 items-center gap-3 rounded-(--radius-md) px-3 text-[0.8125rem] transition-colors duration-(--duration-fast) ease-(--ease-out)',
+        'flex h-9 items-center rounded-(--radius-md) text-[0.8125rem] transition-colors duration-(--duration-fast) ease-(--ease-out)',
+        compact ? 'justify-center lg:justify-start lg:gap-3 lg:px-3' : 'gap-3 px-3',
         active
           ? 'bg-(--color-accent-subtle) font-semibold text-(--color-accent-text)'
           : 'font-medium text-(--color-text-muted) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
@@ -415,22 +444,26 @@ function NavLink({ item, active }) {
         size={18}
         className={active ? 'text-(--color-accent-text)' : 'text-(--color-text-subtle)'}
       />
-      {t(item.label)}
+      {/* On the rail the name is the tooltip and the accessible name. */}
+      <span className={compact ? 'sr-only lg:not-sr-only' : undefined}>{label}</span>
     </Link>
   );
 }
 
-function DisabledNavItem({ item }) {
+function DisabledNavItem({ item, compact = false }) {
   const { t } = useI18n();
 
   return (
     <span
       aria-disabled="true"
-      title={t('nav.comingLater')}
-      className="flex h-9 cursor-not-allowed items-center gap-3 rounded-(--radius-md) px-3 text-[0.8125rem] font-medium text-(--color-text-subtle)"
+      title={`${t(item.label)} — ${t('nav.comingLater')}`}
+      className={cn(
+        'flex h-9 cursor-not-allowed items-center rounded-(--radius-md) text-[0.8125rem] font-medium text-(--color-text-subtle)',
+        compact ? 'justify-center lg:justify-start lg:gap-3 lg:px-3' : 'gap-3 px-3',
+      )}
     >
       <Icon name={item.icon} size={18} />
-      <span className="flex-1">{t(item.label)}</span>
+      <span className={cn('flex-1', compact && 'sr-only lg:not-sr-only')}>{t(item.label)}</span>
       <span className="sr-only">{t('nav.comingLater')}</span>
     </span>
   );
