@@ -139,7 +139,7 @@ export function RevenueExpensesChart({
           {withExpenses && <LegendItem colour={EXPENSES} label={t('dashboard.trend.expenses')} />}
         </ul>
       }
-      height={230}
+      height={200}
       className={className}
       style={style}
     >
@@ -156,7 +156,8 @@ export function RevenueExpensesChart({
             </linearGradient>
           </defs>
 
-          <CartesianGrid vertical={false} stroke="var(--border-subtle)" />
+          {/* Light dashed horizontal gridlines only. */}
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
 
           <XAxis
             dataKey="label"
@@ -179,7 +180,8 @@ export function RevenueExpensesChart({
           />
 
           <Tooltip
-            cursor={{ stroke: 'var(--border-strong)', strokeDasharray: '3 3' }}
+            // A vertical guide at the hovered period.
+            cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1 }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
 
@@ -231,7 +233,7 @@ export function RevenueExpensesChart({
             stroke={REVENUE}
             strokeWidth={2.25}
             fill={`url(#${gradient}-r)`}
-            dot={rows.length <= 40 ? { r: 2.5, strokeWidth: 0, fill: REVENUE } : false}
+            dot={false}
             activeDot={{ r: 5, strokeWidth: 2.5, stroke: 'var(--surface)', fill: REVENUE }}
             isAnimationActive={!reducedMotion}
             animationDuration={800}

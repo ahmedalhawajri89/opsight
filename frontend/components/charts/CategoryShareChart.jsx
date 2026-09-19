@@ -1,6 +1,7 @@
 'use client';
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { useState } from 'react';
+import { Cell, Pie, PieChart, ResponsiveContainer, Sector, Tooltip } from 'recharts';
 
 import { ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -43,6 +44,9 @@ export function CategoryShareChart({
 }) {
   const { t, dir } = useI18n();
   const reducedMotion = useReducedMotion();
+
+  // The slice being pointed at — from the ring or from its legend row.
+  const [active, setActive] = useState(null);
 
   const data = rows.map((row, index) => ({
     ...row,
@@ -89,25 +93,34 @@ export function CategoryShareChart({
         row a wide screen gives this chart the width of a phone.
       */}
       <div dir={dir} className="@container">
-        <div className="flex flex-col items-center gap-6 @[20rem]:flex-row">
-          <div className="relative size-44 shrink-0" dir="ltr">
+        <div className="flex flex-col items-center gap-4 @[20rem]:flex-row">
+          <div className="relative size-40 shrink-0" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   dataKey="numeric"
                   nameKey="name"
-                  innerRadius="62%"
-                  outerRadius="100%"
+                  innerRadius="68%"
+                  outerRadius="94%"
                   stroke="var(--surface)"
                   strokeWidth={2}
+                  activeShape={(props) => <Sector {...props} outerRadius={props.outerRadius + 6} />}
+                  onMouseEnter={(_, index) => setActive(index)}
+                  onMouseLeave={() => setActive(null)}
                   startAngle={90}
                   endAngle={dir === 'rtl' ? 450 : -270}
                   isAnimationActive={!reducedMotion}
                   animationDuration={800}
                 >
                   {data.map((row) => (
-                    <Cell key={row.key} fill={row.colour} />
+                    <Cell
+                      key={row.key}
+                      fill={row.colour}
+                      // Everything but the pointed-at slice steps back.
+                      fillOpacity={active === null || data[active]?.key === row.key ? 1 : 0.35}
+                      style={{ transition: 'fill-opacity var(--duration-fast) var(--ease-out)' }}
+                    />
                   ))}
                 </Pie>
                 <Tooltip
@@ -152,8 +165,16 @@ export function CategoryShareChart({
           </div>
 
           <ul className="w-full min-w-0 flex-1 space-y-3">
-            {data.map((row) => (
-              <li key={row.key} className="flex items-center gap-3 text-[0.8125rem]">
+            {data.map((row, index) => (
+              <li
+                key={row.key}
+                onMouseEnter={() => setActive(index)}
+                onMouseLeave={() => setActive(null)}
+                className={cn(
+                  'flex items-center gap-3 rounded-(--radius-sm) px-1.5 py-0.5 text-[0.8125rem] transition-colors duration-(--duration-fast)',
+                  active === index && 'bg-(--color-surface-hover)',
+                )}
+              >
                 <span
                   aria-hidden="true"
                   className="size-2.5 shrink-0 rounded-full"

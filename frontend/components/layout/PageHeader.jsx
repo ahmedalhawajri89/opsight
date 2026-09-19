@@ -123,7 +123,7 @@ export function Card({
  */
 export function PanelTitle({ title, description, icon }) {
   return (
-    <div className="flex min-w-0 items-start gap-2.5">
+    <div className="flex min-w-0 flex-1 items-start gap-2.5">
       {icon && (
         <Icon
           name={icon}
@@ -134,9 +134,7 @@ export function PanelTitle({ title, description, icon }) {
       )}
       <div className="min-w-0">
         {title && (
-          <h2 className="text-[0.9375rem] leading-snug font-semibold text-(--color-text)">
-            {title}
-          </h2>
+          <h2 className="text-sm leading-snug font-semibold text-(--color-text)">{title}</h2>
         )}
         {description && <p className="mt-0.5 text-xs text-(--color-text-muted)">{description}</p>}
       </div>

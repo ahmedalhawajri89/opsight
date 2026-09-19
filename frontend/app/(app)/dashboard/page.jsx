@@ -168,9 +168,9 @@ export default function DashboardPage() {
     Boolean,
   );
 
-  // Even thirds, closing up when a panel is absent.
+  // The specification's 40 : 27 : 33 split, closing up when a panel is absent.
   const lowerSpans = {
-    3: { performance: 'xl:col-span-4', stats: 'xl:col-span-4', activity: 'xl:col-span-4' },
+    3: { performance: 'xl:col-span-5', stats: 'xl:col-span-3', activity: 'xl:col-span-4' },
     2: { performance: 'xl:col-span-7', stats: 'xl:col-span-5', activity: 'xl:col-span-7' },
     1: { stats: 'md:col-span-2 xl:col-span-12' },
   }[lowerRow.length];

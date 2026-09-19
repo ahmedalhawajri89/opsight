@@ -76,8 +76,8 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
       loading={loading}
       emptyDescription={t('charts.noData')}
       footnote={partial ? t('dashboard.cashFlow.partialFootnote') : undefined}
-      legend={<Legend />}
-      height={170}
+      actions={<Legend />}
+      height={180}
       className={className}
       style={style}
     >
@@ -88,7 +88,7 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
           barCategoryGap="22%"
           margin={{ top: 6, right: 4, bottom: 0, left: 4 }}
         >
-          <CartesianGrid vertical={false} stroke="var(--border-subtle)" />
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
 
           <XAxis
             dataKey="month"
