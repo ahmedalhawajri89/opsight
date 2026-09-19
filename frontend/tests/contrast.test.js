@@ -144,35 +144,47 @@ const MIN_SERIES_DELTA_E = 15;
 
 const themes = extractThemes(CSS);
 
-/** [foreground token, background token, minimum ratio, what it is] */
+/**
+ * [foreground token, background token, minimum ratio, what it is]
+ *
+ * All three text roles are held to 4.5:1 on every surface, including the
+ * muted one: a caption that fails contrast is not a caption, it is a
+ * decoration that happens to contain words.
+ */
 const TEXT_PAIRS = [
   ['text', 'surface', 4.5, 'body text on a card'],
-  ['text', 'surface-sunken', 4.5, 'body text on the page ground'],
-  ['text', 'surface-raised', 4.5, 'body text on a raised surface'],
+  ['text', 'ground', 4.5, 'body text on the page ground'],
+  ['text', 'surface-subtle', 4.5, 'body text on the half-step surface'],
   ['text', 'surface-hover', 4.5, 'body text on a hovered row'],
-  ['text-muted', 'surface', 4.5, 'secondary text on a card'],
-  ['text-muted', 'surface-sunken', 4.5, 'secondary text on the page ground'],
-  ['text-subtle', 'surface', 3, 'labels and captions (large/secondary)'],
-  ['text-subtle', 'surface-sunken', 3, 'metadata on the page ground'],
-  ['text-muted', 'surface-hover', 4.5, 'secondary text on a hovered row'],
-  ['accent-text', 'info-subtle', 4.5, 'context banner text'],
   ['text', 'surface-selected', 4.5, 'body text on a selected row'],
-  ['accent-text', 'surface', 4.5, 'link text'],
-  ['accent-text', 'accent-subtle', 4.5, 'active navigation item'],
-  ['positive', 'surface', 4.5, 'favourable change'],
-  ['negative', 'surface', 4.5, 'unfavourable change'],
+  ['text-2', 'surface', 4.5, 'secondary text on a card'],
+  ['text-2', 'ground', 4.5, 'secondary text on the page ground'],
+  ['text-2', 'surface-hover', 4.5, 'secondary text on a hovered row'],
+  ['muted', 'surface', 4.5, 'labels and captions on a card'],
+  ['muted', 'ground', 4.5, 'metadata on the page ground'],
+  ['muted', 'surface-subtle', 4.5, 'metadata on the half-step surface'],
+  ['brand-text', 'surface', 4.5, 'link text'],
+  ['brand-text', 'brand-soft', 4.5, 'active navigation item'],
+  ['brand-text', 'info-soft', 4.5, 'context banner text'],
+  ['accent-strong', 'surface', 4.5, 'accent text'],
+  ['accent-strong', 'accent-soft', 4.5, 'accent badge'],
+  ['success', 'surface', 4.5, 'favourable change'],
+  ['success', 'success-soft', 4.5, 'success badge'],
+  ['danger', 'surface', 4.5, 'unfavourable change'],
+  ['danger', 'danger-soft', 4.5, 'danger badge'],
   ['warning', 'surface', 4.5, 'warning text'],
-  ['positive', 'positive-subtle', 4.5, 'positive badge'],
-  ['negative', 'negative-subtle', 4.5, 'negative badge'],
-  ['warning', 'warning-subtle', 4.5, 'warning badge'],
-  ['text-inverse', 'accent', 4.5, 'primary button label'],
+  ['warning', 'warning-soft', 4.5, 'warning badge'],
+  ['info', 'surface', 4.5, 'informational text'],
+  ['info', 'info-soft', 4.5, 'informational banner'],
+  ['text-inverse', 'brand', 4.5, 'primary button label'],
 ];
 
 /** Non-text elements: 3:1 is the requirement for a meaningful boundary. */
 const GRAPHIC_PAIRS = [
   ['border-strong', 'surface', 3, 'input border'],
   ['accent', 'surface', 3, 'focus ring on a card'],
-  ['accent', 'surface-sunken', 3, 'focus ring on the page ground'],
+  ['accent', 'ground', 3, 'focus ring on the page ground'],
+  ['brand', 'surface', 3, 'primary button against a card'],
 ];
 
 for (const [themeName, tokens] of Object.entries(themes)) {
@@ -212,13 +224,13 @@ for (const [themeName, tokens] of Object.entries(themes)) {
       },
     );
 
-    it('keeps the six categorical series distinguishable from the background', () => {
+    it('keeps the six categorical chart colours distinguishable from the background', () => {
       for (let index = 1; index <= 6; index += 1) {
-        const ratio = contrastRatio(tokens[`series-${index}`], tokens.surface);
+        const ratio = contrastRatio(tokens[`chart-${index}`], tokens.surface);
 
         expect(
           Number(ratio.toFixed(2)),
-          `--series-${index} (${tokens[`series-${index}`]}) is ${ratio.toFixed(2)}:1 against the card surface`,
+          `--chart-${index} (${tokens[`chart-${index}`]}) is ${ratio.toFixed(2)}:1 against the card surface`,
         ).toBeGreaterThanOrEqual(3);
       }
     });
@@ -235,15 +247,15 @@ for (const [themeName, tokens] of Object.entries(themes)) {
     it.each(['normal', 'protanopia', 'deuteranopia'])(
       'keeps all six categorical series distinguishable under %s vision',
       (vision) => {
-        const series = Array.from({ length: 6 }, (_, i) => tokens[`series-${i + 1}`]);
+        const chart = Array.from({ length: 6 }, (_, i) => tokens[`chart-${i + 1}`]);
 
-        for (let i = 0; i < series.length; i += 1) {
-          for (let j = i + 1; j < series.length; j += 1) {
-            const distance = deltaE(simulate(series[i], vision), simulate(series[j], vision));
+        for (let i = 0; i < chart.length; i += 1) {
+          for (let j = i + 1; j < chart.length; j += 1) {
+            const distance = deltaE(simulate(chart[i], vision), simulate(chart[j], vision));
 
             expect(
               Number(distance.toFixed(1)),
-              `Under ${vision}, --series-${i + 1} (${series[i]}) and --series-${j + 1} (${series[j]}) are only ΔE ${distance.toFixed(1)} apart — a viewer cannot reliably tell them apart in a chart.`,
+              `Under ${vision}, --chart-${i + 1} (${chart[i]}) and --chart-${j + 1} (${chart[j]}) are only ΔE ${distance.toFixed(1)} apart — a viewer cannot reliably tell them apart in a chart.`,
             ).toBeGreaterThanOrEqual(MIN_SERIES_DELTA_E);
           }
         }

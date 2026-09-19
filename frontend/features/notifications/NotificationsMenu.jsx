@@ -25,11 +25,11 @@ import { cn } from '@/lib/cn';
 const DEFAULT_PERIOD = { preset: '30d', comparison: 'previous_period' };
 
 const TONES = {
-  warning: 'bg-(--color-warning-subtle) text-(--color-warning)',
-  action: 'bg-(--color-negative-subtle) text-(--color-negative)',
-  positive: 'bg-(--color-positive-subtle) text-(--color-positive)',
-  opportunity: 'bg-(--color-info-subtle) text-(--color-info)',
-  data_quality: 'bg-(--color-surface-hover) text-(--color-text-muted)',
+  warning: 'bg-(--color-warning-soft) text-(--color-warning)',
+  action: 'bg-(--color-danger-soft) text-(--color-danger)',
+  positive: 'bg-(--color-success-soft) text-(--color-success)',
+  opportunity: 'bg-(--color-info-soft) text-(--color-info)',
+  data_quality: 'bg-(--color-surface-hover) text-(--color-text-2)',
 };
 
 const ICONS = {
@@ -53,13 +53,13 @@ export function NotificationsMenu() {
           type="button"
           {...props}
           aria-label={t('notifications.label', { count })}
-          className="relative inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+          className="relative inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
         >
           <Icon name="bell" size={20} />
           {count > 0 && (
             <span
               aria-hidden="true"
-              className="absolute end-2 top-1.5 size-2 rounded-full bg-(--color-negative) ring-2 ring-(--color-surface)"
+              className="absolute end-2 top-1.5 size-2 rounded-full bg-(--color-danger) ring-2 ring-(--color-surface)"
             />
           )}
         </button>
@@ -78,14 +78,14 @@ function BellPanel({ close }) {
   return (
     <div>
       <div className="flex items-center justify-between border-b border-(--color-line-subtle) px-4 py-3">
-        <p className="text-sm font-semibold text-(--color-text)">{t('notifications.title')}</p>
-        <span className="text-xs text-(--color-text-subtle)">{t('notifications.window')}</span>
+        <p className="text-base font-semibold text-(--color-text)">{t('notifications.title')}</p>
+        <span className="text-xs text-(--color-muted)">{t('notifications.window')}</span>
       </div>
 
       {isLoading ? (
-        <p className="px-4 py-6 text-sm text-(--color-text-muted)">{t('search.searching')}</p>
+        <p className="px-4 py-6 text-base text-(--color-text-2)">{t('search.searching')}</p>
       ) : count === 0 ? (
-        <p className="px-4 py-6 text-sm text-(--color-text-muted)">{t('notifications.empty')}</p>
+        <p className="px-4 py-6 text-base text-(--color-text-2)">{t('notifications.empty')}</p>
       ) : (
         <ul className="max-h-96 divide-y divide-(--color-line-subtle) overflow-y-auto">
           {insights.map((insight) => (
@@ -100,10 +100,8 @@ function BellPanel({ close }) {
                 <Icon name={ICONS[insight.severity] ?? 'alert'} size={15} strokeWidth={2.25} />
               </span>
               <div className="min-w-0">
-                <p className="text-[0.8125rem] font-semibold text-(--color-text)">
-                  {insight.title}
-                </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-(--color-text-muted)">
+                <p className="text-sm font-semibold text-(--color-text)">{insight.title}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-(--color-text-2)">
                   {insight.message}
                 </p>
               </div>
@@ -116,7 +114,7 @@ function BellPanel({ close }) {
         <Link
           href="/dashboard"
           onClick={close}
-          className="text-[0.8125rem] font-medium text-(--color-accent-text) hover:underline"
+          className="text-sm font-medium text-(--color-brand-text) hover:underline"
         >
           {t('notifications.viewAll')}
         </Link>

@@ -70,7 +70,7 @@ export default function OrdersPage() {
       cell: (row) => (
         <Link
           href={`/orders/${row.id}`}
-          className="text-(--color-accent-text) hover:underline"
+          className="text-(--color-brand-text) hover:underline"
           onClick={(event) => event.stopPropagation()}
         >
           {row.reference}
@@ -83,9 +83,7 @@ export default function OrdersPage() {
       // A walk-in order has no customer record, and saying so is more useful
       // than an empty cell.
       cell: (row) =>
-        row.customer?.name ?? (
-          <span className="text-(--color-text-subtle)">{t('common.walkIn')}</span>
-        ),
+        row.customer?.name ?? <span className="text-(--color-muted)">{t('common.walkIn')}</span>,
     },
     {
       key: 'status',

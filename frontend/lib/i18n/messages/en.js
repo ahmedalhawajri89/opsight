@@ -103,26 +103,10 @@ const en = {
     headline:
       'Every figure here is computed from the records it came from, the moment you ask for it.',
     formSubtitle: 'Use the account your owner created for you.',
+    help: 'There is no self-registration. Ask the owner of your workspace to create your account, or to reset your password.',
+    switchLanguage: 'Switch the interface to {language}',
     lockoutNote:
-      'After five failed attempts, sign-in pauses for a minute. Every attempt is written to the activity log.',
-    points: {
-      computed: {
-        title: 'Computed, not stored',
-        body: 'Revenue, profit and stock are derived from orders, expenses and movements when you open the screen — nothing cached, nothing stale.',
-      },
-      roles: {
-        title: 'Only what your role may see',
-        body: 'Cost and profit are absent for a role without them, not hidden behind a message you cannot open.',
-      },
-      bilingual: {
-        title: 'English and العربية',
-        body: 'The whole interface in either language, laid out in either direction, with Western or Arabic-Indic digits.',
-      },
-    },
-    roles: {
-      title: 'Four roles',
-      note: 'Your role decides which figures exist for you, which screens appear, and what you may export.',
-    },
+      'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
   },
 
   dialog: {

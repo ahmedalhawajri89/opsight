@@ -45,7 +45,7 @@ export function StatTile({
     return (
       <div
         className={cn(
-          'rounded-(--radius-md) border border-(--color-line) bg-(--color-surface) p-4',
+          'rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) p-4',
           className,
         )}
         aria-busy="true"
@@ -62,12 +62,12 @@ export function StatTile({
   return (
     <div
       className={cn(
-        'rounded-(--radius-md) border border-(--color-line) bg-(--color-surface) p-4',
+        'rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) p-4',
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[0.6875rem] font-medium uppercase tracking-wide text-(--color-text-muted)">
+        <h3 className="text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
           {label}
         </h3>
 
@@ -83,7 +83,7 @@ export function StatTile({
           // six-figure BHD value ("BHD 639,615.570") ran past a quarter-width
           // tile and was clipped by its neighbour.
           'tabular mt-2 text-2xl leading-[1.2] font-semibold tracking-tight break-words',
-          isEmpty ? 'text-(--color-text-subtle)' : 'text-(--color-text)',
+          isEmpty ? 'text-(--color-muted)' : 'text-(--color-text)',
         )}
         title={isEmpty ? (emptyReason ?? t('comparison.noValue')) : undefined}
       >

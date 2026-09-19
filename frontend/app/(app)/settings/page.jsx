@@ -125,7 +125,7 @@ export default function SettingsPage() {
       {!editable && (
         <p
           role="status"
-          className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] text-(--color-text-muted)"
+          className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-2)"
         >
           {t('settings.readOnly')}
         </p>
@@ -195,12 +195,12 @@ export default function SettingsPage() {
             )}
           </Field>
 
-          <fieldset className="space-y-3 rounded-(--radius-sm) border border-(--color-line) p-3">
-            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
+          <fieldset className="space-y-3 rounded-(--radius-control) border border-(--color-line) p-3">
+            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
               {t('settings.periods.title')}
             </legend>
 
-            <p className="text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
+            <p className="text-sm leading-relaxed text-(--color-text-2)">
               {t('settings.periods.description')}
             </p>
 
@@ -233,7 +233,7 @@ export default function SettingsPage() {
             {historyChanged && (
               <p
                 role="alert"
-                className="rounded-(--radius-sm) border border-(--color-warning) bg-(--color-warning-subtle) px-3 py-2 text-[0.8125rem] text-(--color-warning)"
+                className="rounded-(--radius-control) border border-(--color-warning) bg-(--color-warning-soft) px-3 py-2 text-sm text-(--color-warning)"
               >
                 {t('settings.periods.warning')}
               </p>
@@ -247,13 +247,13 @@ export default function SettingsPage() {
               </Button>
 
               {saved && !mutation.isPending && (
-                <span role="status" className="text-[0.8125rem] text-(--color-positive)">
+                <span role="status" className="text-sm text-(--color-success)">
                   {t('settings.saved')}
                 </span>
               )}
 
               {mutation.isError && !mutation.error?.isValidation && (
-                <span role="alert" className="text-[0.8125rem] text-(--color-negative)">
+                <span role="alert" className="text-sm text-(--color-danger)">
                   {mutation.error?.message}
                 </span>
               )}

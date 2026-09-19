@@ -14,19 +14,19 @@ import { cn } from '@/lib/cn';
  */
 const VARIANTS = {
   primary:
-    'bg-(--color-accent) text-(--color-text-inverse) hover:bg-(--color-accent-hover) active:bg-(--color-accent-active) border border-transparent',
+    'bg-(--color-brand) text-(--color-text-inverse) hover:bg-(--color-brand-hover) active:bg-(--color-brand-active) border border-transparent',
   secondary:
     'bg-(--color-surface) text-(--color-text) border border-(--color-line-strong) hover:bg-(--color-surface-hover)',
   ghost:
-    'bg-transparent text-(--color-text-muted) border border-transparent hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+    'bg-transparent text-(--color-text-2) border border-transparent hover:bg-(--color-surface-hover) hover:text-(--color-text)',
   danger:
-    'bg-(--color-surface) text-(--color-negative) border border-(--color-negative) hover:bg-(--color-negative-subtle)',
+    'bg-(--color-surface) text-(--color-danger) border border-(--color-danger) hover:bg-(--color-danger-soft)',
 };
 
 const SIZES = {
-  sm: 'h-7 px-2 text-[0.8125rem] gap-1.5',
-  md: 'h-8 px-3 text-sm gap-2',
-  lg: 'h-10 px-4 text-sm gap-2',
+  sm: 'h-7 px-2 text-sm gap-1.5',
+  md: 'h-8 px-3 text-base gap-2',
+  lg: 'h-10 px-4 text-base gap-2',
 };
 
 export const Button = forwardRef(function Button(
@@ -52,7 +52,7 @@ export const Button = forwardRef(function Button(
       // Announced to assistive technology rather than only shown visually.
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex select-none items-center justify-center rounded-(--radius-sm) font-medium',
+        'inline-flex select-none items-center justify-center rounded-(--radius-control) font-medium',
         'transition-colors duration-150',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANTS[variant] ?? VARIANTS.secondary,

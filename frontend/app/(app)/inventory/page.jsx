@@ -251,7 +251,7 @@ function AdjustStockDialog({ item, onClose, onDone }) {
     >
       <div className="space-y-4">
         {failure && (
-          <p role="alert" className="text-[0.8125rem] text-(--color-negative)">
+          <p role="alert" className="text-sm text-(--color-danger)">
             {failure}
           </p>
         )}
@@ -350,7 +350,7 @@ function AdjustStockDialog({ item, onClose, onDone }) {
         </Field>
 
         {mode === 'restock' && (
-          <p className="text-[0.8125rem] text-(--color-text-subtle)">
+          <p className="text-sm text-(--color-muted)">
             <Trans
               k="inventory.dialog.noExpense"
               tags={{ strong: (text) => <strong>{text}</strong> }}

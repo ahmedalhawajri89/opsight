@@ -125,7 +125,7 @@ export default function NewOrderPage() {
       {failure && (
         <p
           role="alert"
-          className="rounded-(--radius-sm) border border-(--color-negative) bg-(--color-negative-subtle) px-3 py-2 text-[0.8125rem] text-(--color-negative)"
+          className="rounded-(--radius-control) border border-(--color-danger) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)"
         >
           {failure}
         </p>
@@ -206,9 +206,7 @@ export default function NewOrderPage() {
               </Button>
             </div>
 
-            <p className="mt-3 text-[0.8125rem] text-(--color-text-subtle)">
-              {t('newOrder.priceNote')}
-            </p>
+            <p className="mt-3 text-sm text-(--color-muted)">{t('newOrder.priceNote')}</p>
           </Card>
 
           <Card title={t('orderDetail.items')} padded={false}>

@@ -39,6 +39,15 @@ function networkMessage() {
   return (requestLanguage === 'ar' ? ar : en).states.error.network;
 }
 
+/*
+ * And when a failure arrives with no message of its own — a throttle, a
+ * gateway, anything that did not come from our own handler — the reader still
+ * gets a sentence in the language they are reading.
+ */
+function fallbackMessage() {
+  return (requestLanguage === 'ar' ? ar : en).states.error.unexpected;
+}
+
 /**
  * A single error shape for every failure — HTTP, validation, or network.
  *
@@ -47,7 +56,7 @@ function networkMessage() {
  */
 export class ApiError extends Error {
   constructor({ status, code, message, errors, reference }) {
-    super(message ?? 'Request failed');
+    super(message ?? fallbackMessage());
     this.name = 'ApiError';
     this.status = status;
     this.code = code ?? 'unknown';

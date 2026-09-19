@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn';
 export function Skeleton({ className, ...props }) {
   return (
     <div
-      className={cn('skeleton rounded-(--radius-sm)', className)}
+      className={cn('skeleton rounded-(--radius-control)', className)}
       aria-hidden="true"
       {...props}
     />
@@ -64,7 +64,7 @@ export function SkeletonTable({ columns = 4, rows = 5 }) {
 export function SkeletonStatTile() {
   return (
     <div
-      className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface) p-4"
+      className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) p-4"
       aria-hidden="true"
     >
       <Skeleton className="h-3 w-24" />

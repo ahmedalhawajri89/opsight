@@ -51,7 +51,7 @@ export function ChartFrame({
     <section
       style={style}
       className={cn(
-        'flex min-w-0 flex-col rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
+        'flex min-w-0 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
         className,
       )}
     >
@@ -72,7 +72,7 @@ export function ChartFrame({
               aria-label={asTable ? t('charts.viewAsChart') : t('charts.viewAsTable')}
               title={asTable ? t('charts.viewAsChart') : t('charts.viewAsTable')}
               aria-pressed={asTable}
-              className="inline-flex size-8 items-center justify-center rounded-(--radius-md) text-(--color-text-subtle) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+              className="inline-flex size-8 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
             >
               <Icon name={asTable ? 'analytics' : 'table'} size={16} />
             </button>
@@ -147,7 +147,7 @@ export function ChartFrame({
         )}
 
         {footnote && !loading && (
-          <p className="mt-3 border-t border-(--color-line-subtle) pt-3 text-xs text-(--color-text-muted)">
+          <p className="mt-3 border-t border-(--color-line-subtle) pt-3 text-xs text-(--color-text-2)">
             {footnote}
           </p>
         )}

@@ -83,10 +83,10 @@ export default function ActivityPage() {
         row.actor ? (
           <span>
             {row.actor.name}
-            <span className="ms-1.5 text-(--color-text-subtle)">{row.actor.role_label}</span>
+            <span className="ms-1.5 text-(--color-muted)">{row.actor.role_label}</span>
           </span>
         ) : (
-          <span className="text-(--color-text-subtle)">{t('activity.notSignedIn')}</span>
+          <span className="text-(--color-muted)">{t('activity.notSignedIn')}</span>
         ),
     },
     {
@@ -216,7 +216,7 @@ function ActionBadge({ action }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       <Badge tone={tone}>{verb ? translateOr(t, `activity.verbs.${verb}`, verb) : action}</Badge>
-      <span className="text-(--color-text-muted)">
+      <span className="text-(--color-text-2)">
         {translateOr(t, `activity.subjects.${subject}`, subject)}
       </span>
     </span>
@@ -239,25 +239,25 @@ function Detail({ changes, context }) {
   const fields = after ? Object.keys(after) : [];
 
   if (fields.length === 0 && !context) {
-    return <span className="text-(--color-text-subtle)">—</span>;
+    return <span className="text-(--color-muted)">—</span>;
   }
 
   return (
-    <div className="space-y-0.5 text-[0.8125rem]">
+    <div className="space-y-0.5 text-sm">
       {fields.slice(0, 4).map((field) => (
         <p key={field} className="truncate">
-          <span className="text-(--color-text-muted)">
+          <span className="text-(--color-text-2)">
             {translateOr(t, `activity.fields.${field}`, field)}:{' '}
           </span>
           {before?.[field] !== undefined && before?.[field] !== null && (
-            <span className="text-(--color-text-subtle) line-through">{String(before[field])}</span>
+            <span className="text-(--color-muted) line-through">{String(before[field])}</span>
           )}{' '}
           <span className="text-(--color-text)">{String(after[field])}</span>
         </p>
       ))}
 
       {fields.length > 4 && (
-        <p className="text-(--color-text-subtle)">
+        <p className="text-(--color-muted)">
           {t('activity.moreFields', { count: fields.length - 4 })}
         </p>
       )}
@@ -280,7 +280,7 @@ function ContextLine({ context }) {
 
   if (parts.length === 0) return null;
 
-  return <p className="truncate text-(--color-text-muted)">{parts.join(' · ')}</p>;
+  return <p className="truncate text-(--color-text-2)">{parts.join(' · ')}</p>;
 }
 
 function format(value) {
@@ -303,7 +303,7 @@ function CursorPager({ prevCursor, nextCursor, onMove }) {
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-(--color-line) px-3 py-2">
-      <p className="text-[0.8125rem] text-(--color-text-subtle)">{t('activity.pagerNote')}</p>
+      <p className="text-sm text-(--color-muted)">{t('activity.pagerNote')}</p>
 
       <div className="flex gap-2">
         <Button size="sm" disabled={!prevCursor} onClick={() => onMove(prevCursor)}>

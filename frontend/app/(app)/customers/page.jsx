@@ -64,7 +64,7 @@ export default function CustomersPage() {
         row.email ? (
           <bdi dir="ltr">{row.email}</bdi>
         ) : (
-          <span className="text-(--color-text-subtle)">—</span>
+          <span className="text-(--color-muted)">—</span>
         ),
     },
     { key: 'company', header: t('customers.columns.company'), cell: (row) => row.company ?? '—' },

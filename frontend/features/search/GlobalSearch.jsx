@@ -201,12 +201,12 @@ const SearchField = forwardRef(function SearchField(
       className={cn(
         'max-h-[60vh] overflow-y-auto p-2',
         variant === 'bar' &&
-          'absolute start-0 top-full z-50 mt-2 w-[min(32rem,calc(100vw-2rem))] rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface-raised) shadow-(--shadow-overlay)',
+          'absolute start-0 top-full z-50 mt-2 w-[min(32rem,calc(100vw-2rem))] rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-overlay)',
       )}
     >
       {groups.map((group) => (
         <div key={group.key} role="group" aria-label={group.label} className="mb-1 last:mb-0">
-          <p className="px-3 pt-2 pb-1 text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-subtle) uppercase">
+          <p className="px-3 pt-2 pb-1 text-xs font-semibold tracking-[0.1em] text-(--color-muted) uppercase">
             {group.label}
           </p>
           {group.items.map((item) => {
@@ -226,22 +226,22 @@ const SearchField = forwardRef(function SearchField(
                 onClick={() => go(item)}
                 onKeyDown={(event) => event.key === 'Enter' && go(item)}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-(--radius-md) px-3 py-2',
+                  'flex cursor-pointer items-center gap-3 rounded-(--radius-control) px-3 py-2',
                   selected ? 'bg-(--color-surface-selected)' : 'hover:bg-(--color-surface-hover)',
                 )}
               >
                 <span
                   aria-hidden="true"
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--color-surface-sunken) text-(--color-text-muted)"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-control) bg-(--color-ground) text-(--color-text-2)"
                 >
                   <Icon name={item.icon} size={16} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.8125rem] font-medium text-(--color-text)">
+                  <span className="block truncate text-sm font-medium text-(--color-text)">
                     {item.title}
                   </span>
                   {item.detail && (
-                    <span className="block truncate text-xs text-(--color-text-muted)">
+                    <span className="block truncate text-xs text-(--color-text-2)">
                       {item.detail}
                     </span>
                   )}
@@ -253,7 +253,7 @@ const SearchField = forwardRef(function SearchField(
       ))}
 
       {flat.length === 0 && (
-        <p className="px-3 py-6 text-center text-[0.8125rem] text-(--color-text-muted)">
+        <p className="px-3 py-6 text-center text-sm text-(--color-text-2)">
           {loading
             ? t('search.searching')
             : term
@@ -270,14 +270,14 @@ const SearchField = forwardRef(function SearchField(
         className={cn(
           'flex items-center gap-2.5',
           variant === 'bar'
-            ? 'h-9 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-sunken) px-3 transition-colors duration-(--duration-fast) focus-within:border-(--color-accent-text) focus-within:bg-(--color-surface) focus-within:ring-2 focus-within:ring-(--color-accent-subtle)'
-            : 'border-b-2 border-(--color-line-subtle) px-4 focus-within:border-(--color-accent-text)',
+            ? 'h-9 rounded-(--radius-control) border border-(--color-line) bg-(--color-ground) px-3 transition-colors duration-(--duration-fast) focus-within:border-(--color-brand-text) focus-within:bg-(--color-surface) focus-within:ring-2 focus-within:ring-(--color-brand-soft)'
+            : 'border-b-2 border-(--color-line-subtle) px-4 focus-within:border-(--color-brand-text)',
         )}
       >
         <Icon
           name="search"
           size={variant === 'bar' ? 16 : 18}
-          className="shrink-0 text-(--color-text-subtle)"
+          className="shrink-0 text-(--color-muted)"
         />
         <input
           ref={input}
@@ -303,12 +303,12 @@ const SearchField = forwardRef(function SearchField(
           onKeyDown={onKeyDown}
           // The field's border carries focus; the outline would double it.
           className={cn(
-            'focus-on-container min-w-0 flex-1 bg-transparent text-(--color-text) placeholder:text-(--color-text-subtle) [&::-webkit-search-cancel-button]:hidden',
-            variant === 'bar' ? 'text-[0.8125rem]' : 'h-14 text-[0.9375rem]',
+            'focus-on-container min-w-0 flex-1 bg-transparent text-(--color-text) placeholder:text-(--color-muted) [&::-webkit-search-cancel-button]:hidden',
+            variant === 'bar' ? 'text-sm' : 'h-14 text-lg',
           )}
         />
         {variant === 'bar' && (
-          <kbd className="shrink-0 font-sans text-xs text-(--color-text-subtle)">⌘ K</kbd>
+          <kbd className="shrink-0 font-sans text-xs text-(--color-muted)">⌘ K</kbd>
         )}
       </div>
 
@@ -356,7 +356,7 @@ export function SearchDialog({ open, onClose, pages }) {
       onClick={(event) => {
         if (event.target === dialog.current) onClose();
       }}
-      className="m-0 mx-auto mt-[10vh] w-[min(40rem,calc(100vw-2rem))] max-w-none overflow-hidden rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface-raised) p-0 shadow-(--shadow-overlay) backdrop:bg-(--color-text)/30"
+      className="m-0 mx-auto mt-[10vh] w-[min(40rem,calc(100vw-2rem))] max-w-none overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-0 shadow-(--shadow-overlay) backdrop:bg-(--color-text)/30"
     >
       {open && (
         <SearchField

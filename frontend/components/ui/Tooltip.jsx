@@ -47,9 +47,9 @@ export function Tooltip({ content, side = 'top', children, className }) {
           id={id}
           role="tooltip"
           className={cn(
-            'absolute z-50 w-max max-w-[16rem] rounded-(--radius-sm) px-2 py-1',
-            'border border-(--color-line) bg-(--color-surface-raised) text-(--color-text)',
-            'text-[0.8125rem] leading-snug shadow-(--shadow-overlay)',
+            'absolute z-50 w-max max-w-[16rem] rounded-(--radius-control) px-2 py-1',
+            'border border-(--color-line) bg-(--color-surface) text-(--color-text)',
+            'text-sm leading-snug shadow-(--shadow-overlay)',
             positions[side] ?? positions.top,
           )}
         >
@@ -76,7 +76,7 @@ export function InfoTip({ label, content }) {
       <button
         type="button"
         aria-label={t('comparison.whatIs', { label })}
-        className="rounded-full text-(--color-text-subtle) transition-colors hover:text-(--color-text-muted)"
+        className="rounded-full text-(--color-muted) transition-colors hover:text-(--color-text-2)"
       >
         <svg viewBox="0 0 16 16" className="size-3.5" fill="none" aria-hidden="true">
           <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.25" />

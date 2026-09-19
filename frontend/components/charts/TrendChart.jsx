@@ -51,7 +51,7 @@ export function TrendChart({
   loading = false,
   error = null,
   onRetry,
-  colour = 'var(--series-1)',
+  colour = 'var(--chart-1)',
   height = 260,
   icon,
   className,
@@ -158,9 +158,9 @@ export function TrendChart({
               return (
                 <div
                   dir={dir}
-                  className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-[0.8125rem] shadow-(--shadow-overlay)"
+                  className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-3 py-2 text-sm shadow-(--shadow-overlay)"
                 >
-                  <p className="text-xs text-(--color-text-muted)">{point.label}</p>
+                  <p className="text-xs text-(--color-text-2)">{point.label}</p>
                   <p className="tabular mt-0.5 font-semibold text-(--color-text)">
                     {formatValue(point.value)}
                   </p>

@@ -34,7 +34,7 @@ export function ViewAll({ href, label }) {
   return (
     <Link
       href={href}
-      className="group inline-flex shrink-0 items-center gap-1 rounded-(--radius-sm) text-xs font-medium text-(--color-accent-text) hover:underline"
+      className="group inline-flex shrink-0 items-center gap-1 rounded-(--radius-control) text-xs font-medium text-(--color-brand-text) hover:underline"
     >
       {label}
       <Icon
@@ -51,9 +51,7 @@ export function Trend({ change, favourable = 'up', className }) {
   const { t } = useI18n();
 
   if (change === null || change === undefined) {
-    return (
-      <span className={cn('tabular text-xs text-(--color-text-subtle)', className)}>{EMPTY}</span>
-    );
+    return <span className={cn('tabular text-xs text-(--color-muted)', className)}>{EMPTY}</span>;
   }
 
   const tone = changeTone(change, favourable);
@@ -65,10 +63,10 @@ export function Trend({ change, favourable = 'up', className }) {
       className={cn(
         'tabular inline-flex items-center gap-1 text-xs font-semibold whitespace-nowrap',
         tone === 'positive'
-          ? 'text-(--color-positive)'
+          ? 'text-(--color-success)'
           : tone === 'negative'
-            ? 'text-(--color-negative)'
-            : 'text-(--color-text-muted)',
+            ? 'text-(--color-danger)'
+            : 'text-(--color-text-2)',
         className,
       )}
     >
@@ -87,7 +85,7 @@ function RowsSkeleton({ rows = 4 }) {
   return (
     <div className="space-y-3 px-5 py-4" aria-busy="true">
       {Array.from({ length: rows }, (_, row) => (
-        <div key={row} className="skeleton h-4 rounded-(--radius-sm)" />
+        <div key={row} className="skeleton h-4 rounded-(--radius-control)" />
       ))}
     </div>
   );
@@ -109,11 +107,11 @@ export function PeriodStatus({ show, againstComplete = false }) {
 
   return (
     <div role="status" className="flex max-w-md items-center gap-3">
-      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-(--color-surface-hover) px-3 py-1.5 text-xs font-medium text-(--color-text-muted)">
+      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-(--color-surface-hover) px-3 py-1.5 text-xs font-medium text-(--color-text-2)">
         <Icon name="info" size={14} />
         {t('period.incomplete')}
       </span>
-      <span className="text-xs leading-relaxed text-(--color-text-muted)">
+      <span className="text-xs leading-relaxed text-(--color-text-2)">
         {againstComplete ? t('dashboard.incompleteNote') : t('period.inProgressTitle')}
       </span>
     </div>
@@ -125,11 +123,11 @@ export function PeriodStatus({ show, againstComplete = false }) {
 /* -------------------------------------------------------------------------- */
 
 const THUMB_TINTS = [
-  'bg-(--color-info-subtle) text-(--color-info)',
-  'bg-(--color-positive-subtle) text-(--color-positive)',
-  'bg-(--color-warning-subtle) text-(--color-warning)',
-  'bg-(--color-surface-selected) text-(--color-accent)',
-  'bg-(--color-negative-subtle) text-(--color-negative)',
+  'bg-(--color-info-soft) text-(--color-info)',
+  'bg-(--color-success-soft) text-(--color-success)',
+  'bg-(--color-warning-soft) text-(--color-warning)',
+  'bg-(--color-surface-selected) text-(--color-brand)',
+  'bg-(--color-danger-soft) text-(--color-danger)',
 ];
 
 /**
@@ -150,7 +148,7 @@ function ProductThumb({ name = '' }) {
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md) text-[0.6875rem] font-bold',
+        'inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-control) text-xs font-bold',
         THUMB_TINTS[hash % THUMB_TINTS.length],
       )}
     >
@@ -176,15 +174,13 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
       {loading ? (
         <RowsSkeleton />
       ) : ranked.length === 0 ? (
-        <p className="px-5 py-6 text-[0.8125rem] text-(--color-text-muted)">
-          {t('charts.rankEmpty')}
-        </p>
+        <p className="px-5 py-6 text-sm text-(--color-text-2)">{t('charts.rankEmpty')}</p>
       ) : (
         <div className="overflow-x-auto px-2 pb-2">
-          <table className="w-full text-[0.8125rem]">
+          <table className="w-full text-sm">
             <caption className="sr-only">{t('dashboard.topSelling.title')}</caption>
             <thead>
-              <tr className="border-b border-(--color-line-subtle) text-[0.6875rem] text-(--color-text-subtle)">
+              <tr className="border-b border-(--color-line-subtle) text-xs text-(--color-muted)">
                 <th scope="col" className="w-8 px-3 pb-2 text-start font-medium">
                   #
                 </th>
@@ -206,9 +202,9 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
               {ranked.map((row, index) => (
                 <tr
                   key={row.key}
-                  className="border-b border-(--color-line-subtle) transition-colors duration-(--duration-fast) last:border-0 hover:bg-(--color-surface-sunken)"
+                  className="border-b border-(--color-line-subtle) transition-colors duration-(--duration-fast) last:border-0 hover:bg-(--color-ground)"
                 >
-                  <td className="tabular px-3 py-2.5 text-(--color-text-subtle)">
+                  <td className="tabular px-3 py-2.5 text-(--color-muted)">
                     {formatNumber(index + 1)}
                   </td>
                   <td className="px-3 py-2.5">
@@ -291,14 +287,14 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
 
             return (
               <li key={stat.key} className="flex items-center gap-2.5 py-2.5">
-                <Icon name={stat.icon} size={16} className="shrink-0 text-(--color-text-muted)" />
-                <span className="min-w-0 flex-1 truncate text-xs text-(--color-text-muted)">
+                <Icon name={stat.icon} size={16} className="shrink-0 text-(--color-text-2)" />
+                <span className="min-w-0 flex-1 truncate text-xs text-(--color-text-2)">
                   {t(stat.label)}
                 </span>
                 <bdi
                   title={exact}
                   dir={figureDirection(value)}
-                  className="tabular text-[0.8125rem] font-semibold whitespace-nowrap text-(--color-text)"
+                  className="tabular text-sm font-semibold whitespace-nowrap text-(--color-text)"
                 >
                   {value}
                 </bdi>
@@ -324,18 +320,18 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
 const ACTIVITY_QUERY = { per_page: 5 };
 
 const ACTIVITY_TONES = {
-  created: { icon: 'plus', tone: 'bg-(--color-info-subtle) text-(--color-info)' },
-  confirmed: { icon: 'check', tone: 'bg-(--color-info-subtle) text-(--color-info)' },
-  fulfilled: { icon: 'check', tone: 'bg-(--color-positive-subtle) text-(--color-positive)' },
-  updated: { icon: 'repeat', tone: 'bg-(--color-surface-hover) text-(--color-text-muted)' },
-  deleted: { icon: 'ban', tone: 'bg-(--color-negative-subtle) text-(--color-negative)' },
-  cancelled: { icon: 'ban', tone: 'bg-(--color-negative-subtle) text-(--color-negative)' },
-  refunded: { icon: 'undo', tone: 'bg-(--color-warning-subtle) text-(--color-warning)' },
-  login: { icon: 'userCircle', tone: 'bg-(--color-positive-subtle) text-(--color-positive)' },
-  logout: { icon: 'signOut', tone: 'bg-(--color-surface-hover) text-(--color-text-muted)' },
-  login_failed: { icon: 'alert', tone: 'bg-(--color-negative-subtle) text-(--color-negative)' },
-  lockout: { icon: 'alert', tone: 'bg-(--color-negative-subtle) text-(--color-negative)' },
-  generated: { icon: 'table', tone: 'bg-(--color-surface-selected) text-(--color-accent)' },
+  created: { icon: 'plus', tone: 'bg-(--color-info-soft) text-(--color-info)' },
+  confirmed: { icon: 'check', tone: 'bg-(--color-info-soft) text-(--color-info)' },
+  fulfilled: { icon: 'check', tone: 'bg-(--color-success-soft) text-(--color-success)' },
+  updated: { icon: 'repeat', tone: 'bg-(--color-surface-hover) text-(--color-text-2)' },
+  deleted: { icon: 'ban', tone: 'bg-(--color-danger-soft) text-(--color-danger)' },
+  cancelled: { icon: 'ban', tone: 'bg-(--color-danger-soft) text-(--color-danger)' },
+  refunded: { icon: 'undo', tone: 'bg-(--color-warning-soft) text-(--color-warning)' },
+  login: { icon: 'userCircle', tone: 'bg-(--color-success-soft) text-(--color-success)' },
+  logout: { icon: 'signOut', tone: 'bg-(--color-surface-hover) text-(--color-text-2)' },
+  login_failed: { icon: 'alert', tone: 'bg-(--color-danger-soft) text-(--color-danger)' },
+  lockout: { icon: 'alert', tone: 'bg-(--color-danger-soft) text-(--color-danger)' },
+  generated: { icon: 'table', tone: 'bg-(--color-surface-selected) text-(--color-brand)' },
 };
 
 function describeEntry(t, entry) {
@@ -381,9 +377,7 @@ export function RecentActivityCard({ className, style }) {
       {isLoading ? (
         <RowsSkeleton rows={5} />
       ) : entries.length === 0 ? (
-        <p className="px-5 pb-5 text-[0.8125rem] text-(--color-text-muted)">
-          {t('dashboard.activity.empty')}
-        </p>
+        <p className="px-5 pb-5 text-sm text-(--color-text-2)">{t('dashboard.activity.empty')}</p>
       ) : (
         <ul className="px-5 pb-4">
           {entries.map((entry) => {
@@ -406,7 +400,7 @@ export function RecentActivityCard({ className, style }) {
                 </span>
                 <time
                   dateTime={entry.occurred_at}
-                  className="shrink-0 text-[0.6875rem] whitespace-nowrap text-(--color-text-subtle)"
+                  className="shrink-0 text-xs whitespace-nowrap text-(--color-muted)"
                 >
                   {formatRelative(entry.occurred_at)}
                 </time>
@@ -439,16 +433,16 @@ const STOCK_STATES = [
 
 const STOCK_TONES = {
   positive: {
-    chip: 'bg-(--color-positive-subtle) text-(--color-positive)',
-    bar: 'bg-(--color-positive)',
+    chip: 'bg-(--color-success-soft) text-(--color-success)',
+    bar: 'bg-(--color-success)',
   },
   warning: {
-    chip: 'bg-(--color-warning-subtle) text-(--color-warning)',
+    chip: 'bg-(--color-warning-soft) text-(--color-warning)',
     bar: 'bg-(--color-warning)',
   },
   negative: {
-    chip: 'bg-(--color-negative-subtle) text-(--color-negative)',
-    bar: 'bg-(--color-negative)',
+    chip: 'bg-(--color-danger-soft) text-(--color-danger)',
+    bar: 'bg-(--color-danger)',
   },
 };
 
@@ -490,7 +484,7 @@ export function InventoryStatusCard({ status, loading, className, style }) {
                 <div className="min-w-0 flex-1">
                   <p className="flex min-w-0 items-baseline gap-2 text-xs">
                     <span className="font-semibold text-(--color-text)">{t(state.label)}</span>
-                    <span className="truncate text-(--color-text-subtle)">
+                    <span className="truncate text-(--color-muted)">
                       {t('dashboard.inventory.products', { count })}
                     </span>
                   </p>
@@ -504,7 +498,7 @@ export function InventoryStatusCard({ status, loading, className, style }) {
                         style={{ width: `${share * 100}%` }}
                       />
                     </div>
-                    <span className="tabular w-9 shrink-0 text-end text-[0.6875rem] text-(--color-text-muted)">
+                    <span className="tabular w-9 shrink-0 text-end text-xs text-(--color-text-2)">
                       {formatPercent(share, { decimals: 0 })}
                     </span>
                   </div>
@@ -529,7 +523,7 @@ export function ExploreAnalyticsCard({ className, style }) {
     <section
       style={style}
       className={cn(
-        'relative overflow-hidden rounded-(--radius-lg) border border-(--color-line) bg-linear-to-br from-(--color-surface-selected) to-(--color-surface) p-6',
+        'relative overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-linear-to-br from-(--color-surface-selected) to-(--color-surface) p-6',
         className,
       )}
     >
@@ -544,13 +538,13 @@ export function ExploreAnalyticsCard({ className, style }) {
           fill="var(--surface)"
           stroke="var(--border)"
         />
-        <rect x="20" y="36" width="8" height="14" rx="2" fill="var(--series-1)" opacity="0.45" />
-        <rect x="34" y="28" width="8" height="22" rx="2" fill="var(--series-1)" opacity="0.7" />
-        <rect x="48" y="20" width="8" height="30" rx="2" fill="var(--series-1)" />
+        <rect x="20" y="36" width="8" height="14" rx="2" fill="var(--chart-1)" opacity="0.45" />
+        <rect x="34" y="28" width="8" height="22" rx="2" fill="var(--chart-1)" opacity="0.7" />
+        <rect x="48" y="20" width="8" height="30" rx="2" fill="var(--chart-1)" />
         <path
           d="M66 40c14-4 26-14 36-30"
           fill="none"
-          stroke="var(--series-4)"
+          stroke="var(--chart-4)"
           strokeWidth="5"
           strokeLinecap="round"
           opacity="0.55"
@@ -558,7 +552,7 @@ export function ExploreAnalyticsCard({ className, style }) {
         <path
           d="M94 8h10v10"
           fill="none"
-          stroke="var(--series-4)"
+          stroke="var(--chart-4)"
           strokeWidth="5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -566,15 +560,15 @@ export function ExploreAnalyticsCard({ className, style }) {
         />
       </svg>
 
-      <h2 className="mt-4 text-base font-semibold text-(--color-text)">
+      <h2 className="mt-4 text-lg font-semibold text-(--color-text)">
         {t('dashboard.explore.title')}
       </h2>
-      <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
+      <p className="mt-1.5 text-sm leading-relaxed text-(--color-text-2)">
         {t('dashboard.explore.body')}
       </p>
       <Link
         href="/analytics"
-        className="mt-5 inline-flex h-10 items-center gap-2 rounded-(--radius-md) bg-(--color-accent) px-5 text-[0.8125rem] font-semibold text-(--color-text-inverse) transition-colors hover:bg-(--color-accent-hover)"
+        className="mt-5 inline-flex h-10 items-center gap-2 rounded-(--radius-control) bg-(--color-brand) px-5 text-sm font-semibold text-(--color-text-inverse) transition-colors hover:bg-(--color-brand-hover)"
       >
         {t('dashboard.explore.action')}
         <Icon name="arrowRight" size={15} className="rtl:-scale-x-100" />

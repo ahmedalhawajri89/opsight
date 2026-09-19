@@ -26,8 +26,8 @@ import { formatBucketLabel, formatMonthLabel } from '@/lib/periods';
  * current month is drawn lighter and footnoted, because an unfinished month set
  * beside five finished ones reads as a collapse.
  */
-const REVENUE = 'var(--series-1)';
-const EXPENSES = 'var(--series-1)';
+const REVENUE = 'var(--chart-1)';
+const EXPENSES = 'var(--chart-1)';
 
 export function CashFlowChart({ data, currency, decimals, loading, className, style }) {
   const { t, dir } = useI18n();
@@ -119,9 +119,9 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
               return (
                 <div
                   dir={dir}
-                  className="min-w-44 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2.5 text-xs shadow-(--shadow-overlay)"
+                  className="min-w-44 rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-3 py-2.5 text-xs shadow-(--shadow-overlay)"
                 >
-                  <p className="font-medium text-(--color-text-muted)">{row.label}</p>
+                  <p className="font-medium text-(--color-text-2)">{row.label}</p>
                   <TooltipRow
                     colour={REVENUE}
                     opacity={1}
@@ -176,7 +176,7 @@ function Legend() {
   const { t } = useI18n();
 
   return (
-    <ul className="flex items-center gap-4 text-xs text-(--color-text-muted)">
+    <ul className="flex items-center gap-4 text-xs text-(--color-text-2)">
       {[
         [1, t('dashboard.trend.revenue')],
         [0.35, t('dashboard.trend.expenses')],
@@ -202,7 +202,7 @@ function TooltipRow({ colour, opacity, label, value }) {
         className="size-2 rounded-full"
         style={{ background: colour, opacity }}
       />
-      <span className="flex-1 text-(--color-text-muted)">{label}</span>
+      <span className="flex-1 text-(--color-text-2)">{label}</span>
       <span className="tabular font-semibold text-(--color-text)">{value}</span>
     </p>
   );

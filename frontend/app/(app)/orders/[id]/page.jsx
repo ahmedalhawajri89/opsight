@@ -56,7 +56,7 @@ export default function OrderDetailPage({ params }) {
         row.product_id ? (
           <Link
             href={`/products/${row.product_id}`}
-            className="text-(--color-accent-text) hover:underline"
+            className="text-(--color-brand-text) hover:underline"
           >
             {row.product_name}
           </Link>
@@ -107,7 +107,7 @@ export default function OrderDetailPage({ params }) {
           order.customer ? (
             <Link
               href={`/customers/${order.customer.id}`}
-              className="text-(--color-accent-text) hover:underline"
+              className="text-(--color-brand-text) hover:underline"
             >
               {order.customer.name}
             </Link>
@@ -120,7 +120,7 @@ export default function OrderDetailPage({ params }) {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title={t('orderDetail.timeline')} className="lg:col-span-1">
-          <dl className="space-y-2.5 text-sm">
+          <dl className="space-y-2.5 text-base">
             <Row label={t('orderDetail.placed')} value={formatDateTime(order.placed_at)} />
             <Row label={t('orderDetail.fulfilled')} value={formatDateTime(order.fulfilled_at)} />
             {order.cancelled_at && (
@@ -144,14 +144,14 @@ export default function OrderDetailPage({ params }) {
           </dl>
 
           {order.status === 'draft' && (
-            <p className="mt-4 rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-sunken) p-3 text-[0.8125rem] text-(--color-text-muted)">
+            <p className="mt-4 rounded-(--radius-control) border border-(--color-line) bg-(--color-ground) p-3 text-sm text-(--color-text-2)">
               {t('orderDetail.draftNote')}
             </p>
           )}
         </Card>
 
         <Card title={t('orderDetail.totals')} className="lg:col-span-2">
-          <dl className="space-y-2.5 text-sm">
+          <dl className="space-y-2.5 text-base">
             <Row
               label={t('orderDetail.subtotal')}
               value={formatMoney(order.subtotal_amount)}
@@ -195,9 +195,7 @@ export default function OrderDetailPage({ params }) {
             )}
           </dl>
 
-          <p className="mt-4 text-[0.8125rem] text-(--color-text-subtle)">
-            {t('orderDetail.taxNote')}
-          </p>
+          <p className="mt-4 text-sm text-(--color-muted)">{t('orderDetail.taxNote')}</p>
         </Card>
       </div>
 
@@ -218,7 +216,7 @@ export default function OrderDetailPage({ params }) {
 function Row({ label, value, numeric = false, strong = false }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-(--color-text-muted)">{label}</dt>
+      <dt className="text-(--color-text-2)">{label}</dt>
       <dd
         className={[
           numeric ? 'tabular text-end' : '',

@@ -18,11 +18,11 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * text label still carries the meaning.
  */
 const TONES = {
-  neutral: 'text-(--color-text-muted) bg-(--color-surface-hover)',
-  accent: 'text-(--color-accent-text) bg-(--color-accent-subtle)',
-  positive: 'text-(--color-positive) bg-(--color-positive-subtle)',
-  negative: 'text-(--color-negative) bg-(--color-negative-subtle)',
-  warning: 'text-(--color-warning) bg-(--color-warning-subtle)',
+  neutral: 'text-(--color-text-2) bg-(--color-surface-hover)',
+  accent: 'text-(--color-brand-text) bg-(--color-brand-soft)',
+  positive: 'text-(--color-success) bg-(--color-success-soft)',
+  negative: 'text-(--color-danger) bg-(--color-danger-soft)',
+  warning: 'text-(--color-warning) bg-(--color-warning-soft)',
 };
 
 export function Badge({
@@ -39,8 +39,8 @@ export function Badge({
         'inline-flex items-center gap-1.5',
         // No class-merging helper exists, so the two shapes are exclusive here
         // rather than overridden by the caller.
-        shape === 'tag' ? 'rounded-(--radius-sm) px-2.5 py-1' : 'rounded-full px-2.5 py-1',
-        'text-[0.6875rem] font-medium leading-4 whitespace-nowrap',
+        shape === 'tag' ? 'rounded-(--radius-control) px-2.5 py-1' : 'rounded-full px-2.5 py-1',
+        'text-xs font-medium leading-4 whitespace-nowrap',
         TONES[tone] ?? TONES.neutral,
         className,
       )}

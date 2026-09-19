@@ -6,30 +6,24 @@ import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { FocusColumn } from '@/components/layout/FocusColumn';
 import { Logo } from '@/components/layout/Logo';
 import { Icon } from '@/components/ui/Icon';
 
 /**
- * The sign-in screen.
+ * The sign-in screen: the focus template beside the one identity panel in the
+ * product.
  *
- * Two panes: what this system is, and the way in. The first exists because
- * this is an internal instrument, not a consumer app — the person in front of
- * it was given an account by someone else, and the screen should say what the
- * account is for and what their role will let them see, before they type
- * anything. The second is deliberately plain.
+ * The form is at the START edge — the right in Arabic — because a returning
+ * user comes here to type, not to read, and the task should be under the
+ * cursor before the story is. The panel is at the end edge, and it is the only
+ * place in Opsight where a full brand wash and a background pattern are
+ * allowed; application screens carry no decoration at all.
  *
- * Every claim on the left is a property the system actually has: figures
- * computed from source records on request, roles that decide which figures
- * exist at all, and both languages in both directions.
+ * Nothing on this page states a figure. Nobody is signed in, so there is no
+ * data to state, and an invented number on the door of an analytics product is
+ * a lie about the first thing it claims to do.
  */
-const POINTS = [
-  { icon: 'pulse', key: 'computed' },
-  { icon: 'userCircle', key: 'roles' },
-  { icon: 'globe', key: 'bilingual' },
-];
-
-const ROLES = ['owner', 'manager', 'analyst', 'staff'];
-
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const { t, locale, setPreferences } = useI18n();
@@ -40,27 +34,65 @@ export default function LoginPage() {
     if (isAuthenticated) router.replace('/dashboard');
   }, [isAuthenticated, router]);
 
-  /*
-   * Before sign-in there is no account to save to, so this switches the page
-   * and is remembered in a cookie; the choice saved on the account takes over
-   * once the reader signs in. Named in the OTHER language's own script, so it
-   * is recognisable to the person who needs it.
-   */
-  const languageSwitch = (
-    <button
-      type="button"
-      onClick={() => setPreferences({ locale: locale === 'ar' ? 'en' : 'ar' })}
-      lang={locale === 'ar' ? 'en' : 'ar'}
-      className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface) px-3 py-1.5 text-[0.8125rem] font-medium text-(--color-text-muted) transition-colors duration-(--duration-fast) hover:border-(--color-line-strong) hover:text-(--color-text)"
-    >
-      {locale === 'ar' ? 'English' : 'العربية'}
-    </button>
-  );
+  const other = locale === 'ar' ? 'en' : 'ar';
+  const otherName = locale === 'ar' ? 'English' : 'العربية';
 
   return (
-    <main className="grid min-h-dvh lg:grid-cols-[1.05fr_minmax(26rem,0.95fr)]">
-      {/* ---- What this is ------------------------------------------------ */}
-      <section className="relative isolate overflow-hidden bg-(--color-accent) px-6 py-8 text-(--color-text-inverse) sm:px-10 sm:py-10 lg:flex lg:flex-col lg:justify-between lg:py-14">
+    <main className="grid min-h-dvh lg:grid-cols-[42fr_58fr]">
+      {/* ---- The task ---------------------------------------------------- */}
+      <section className="order-2 flex flex-col bg-(--color-ground) px-6 py-8 sm:px-8 lg:order-1 lg:py-12">
+        {/*
+          Before sign-in there is no account to save to, so this switches the
+          page and is remembered in a cookie; the choice stored on the account
+          takes over once the reader signs in. It names the language it will
+          switch TO, in that language's own script.
+        */}
+        <FocusColumn className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setPreferences({ locale: other })}
+            aria-label={t('login.switchLanguage', { language: otherName })}
+            className="inline-flex h-11 items-center gap-2 rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-4 text-base font-medium text-(--color-text-2) transition-colors duration-(--duration-fast) hover:border-(--color-line-strong) hover:text-(--color-text)"
+          >
+            <Icon name="globe" size={16} />
+            <span lang={other}>{otherName}</span>
+          </button>
+        </FocusColumn>
+
+        <FocusColumn className="flex flex-1 flex-col justify-center py-8">
+          {/* A border, not a shadow: this card sits on the ground, it does not float. */}
+          <div className="rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-6 sm:p-8">
+            <h1 className="text-2xl font-semibold text-(--color-text)">{t('auth.signIn')}</h1>
+            <p className="measure mt-2 text-base text-(--color-text-2)">
+              {t('login.formSubtitle')}
+            </p>
+
+            <div className="mt-6">
+              {isLoading ? (
+                <div aria-busy="true" className="space-y-4">
+                  <div className="skeleton h-16 rounded-(--radius-control)" />
+                  <div className="skeleton h-16 rounded-(--radius-control)" />
+                  <div className="skeleton h-11 rounded-(--radius-control)" />
+                </div>
+              ) : (
+                <Suspense fallback={null}>
+                  <LoginForm />
+                </Suspense>
+              )}
+            </div>
+          </div>
+
+          {/*
+            There is no self-service reset in Opsight: an owner creates the
+            account and an owner restores it. A "forgot your password?" link
+            would have to lead somewhere, so the screen says who to ask instead.
+          */}
+          <p className="measure mt-4 text-sm text-(--color-muted)">{t('login.help')}</p>
+        </FocusColumn>
+      </section>
+
+      {/* ---- What it is -------------------------------------------------- */}
+      <section className="relative order-1 isolate overflow-hidden bg-(--color-brand) px-6 py-10 text-(--color-text-inverse) sm:px-12 lg:order-2 lg:flex lg:flex-col lg:justify-center lg:py-14">
         <BrandCanvas />
 
         <div className="relative">
@@ -69,97 +101,14 @@ export default function LoginPage() {
             <span className="text-xl font-bold tracking-tight">{t('common.appName')}</span>
           </span>
 
-          <h1 className="mt-8 max-w-lg text-2xl leading-snug font-semibold text-balance sm:text-[1.75rem] lg:mt-12">
+          <p className="mt-8 max-w-xl text-2xl leading-tight font-semibold text-balance lg:mt-12 lg:text-3xl">
             {t('login.headline')}
-          </h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-(--color-text-inverse)/70">
+          </p>
+          <p className="measure mt-4 hidden text-lg text-(--color-text-inverse)/70 lg:block">
             {t('common.tagline')}
           </p>
 
-          {/*
-            Stacked on a phone, this pane sits above the form, so it is kept
-            short: the titles carry the point and the sentences return as soon
-            as there is room. The sign-in fields matter more than the pitch.
-          */}
-          <ul className="mt-6 max-w-md space-y-3 sm:mt-8 sm:space-y-4 lg:mt-10">
-            {POINTS.map((point) => (
-              <li key={point.key} className="flex gap-3">
-                <span
-                  aria-hidden="true"
-                  className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-(--radius-md) bg-(--color-text-inverse)/10"
-                >
-                  <Icon name={point.icon} size={16} strokeWidth={2} />
-                </span>
-                <span>
-                  <span className="block text-[0.8125rem] font-semibold">
-                    {t(`login.points.${point.key}.title`)}
-                  </span>
-                  <span className="mt-0.5 hidden text-[0.8125rem] leading-relaxed text-(--color-text-inverse)/65 sm:block">
-                    {t(`login.points.${point.key}.body`)}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* The roles, named — an account's role decides what it can even ask for. */}
-        <div className="relative mt-10 hidden border-t border-(--color-text-inverse)/15 pt-6 lg:block">
-          <p className="text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-inverse)/60 uppercase">
-            {t('login.roles.title')}
-          </p>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {ROLES.map((role) => (
-              <li
-                key={role}
-                className="rounded-full bg-(--color-text-inverse)/10 px-3 py-1 text-xs font-medium"
-              >
-                {t(`roles.${role}`)}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 max-w-md text-xs leading-relaxed text-(--color-text-inverse)/65">
-            {t('login.roles.note')}
-          </p>
-        </div>
-      </section>
-
-      {/* ---- The way in -------------------------------------------------- */}
-      <section className="flex flex-col bg-(--color-surface) px-6 py-8 sm:px-10 lg:py-10">
-        {/* Kept in the form's own column, so it reads as part of this pane. */}
-        <div className="mx-auto flex w-full max-w-sm justify-end">{languageSwitch}</div>
-
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
-          <h2 className="text-xl font-semibold tracking-tight text-(--color-text)">
-            {t('auth.signIn')}
-          </h2>
-          <p className="mt-1.5 text-[0.8125rem] text-(--color-text-muted)">
-            {t('login.formSubtitle')}
-          </p>
-
-          <div className="mt-7">
-            {isLoading ? (
-              <div aria-busy="true" className="space-y-5">
-                <div className="skeleton h-16 rounded-(--radius-md)" />
-                <div className="skeleton h-16 rounded-(--radius-md)" />
-                <div className="skeleton h-11 rounded-(--radius-md)" />
-              </div>
-            ) : (
-              <Suspense fallback={null}>
-                <LoginForm />
-              </Suspense>
-            )}
-          </div>
-
-          <div className="mt-8 space-y-2 border-t border-(--color-line-subtle) pt-6">
-            <p className="text-xs leading-relaxed text-(--color-text-subtle)">
-              {t('auth.noSelfRegistration')}
-            </p>
-            {/* Stated before it happens, because the lockout is real. */}
-            <p className="text-xs leading-relaxed text-(--color-text-subtle)">
-              {t('login.lockoutNote')}
-            </p>
-          </div>
+          <ProductGlimpse />
         </div>
       </section>
     </main>
@@ -167,45 +116,71 @@ export default function LoginPage() {
 }
 
 /**
- * The brand pane's backdrop: a faint plotting grid and one rising series.
+ * The panel's backdrop: a plotting grid at very low contrast.
  *
- * Drawn rather than an image so it scales, themes and mirrors with the page,
- * and costs nothing to load. Decorative, and hidden from assistive technology.
+ * Drawn rather than loaded, so it scales and mirrors with the page and costs
+ * nothing. Decorative, and hidden from assistive technology.
  */
 function BrandCanvas() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <svg
-        className="absolute inset-0 size-full opacity-[0.16] rtl:-scale-x-100"
-        viewBox="0 0 600 700"
-        preserveAspectRatio="xMidYMid slice"
-        fill="none"
-      >
+      <svg className="absolute inset-0 size-full opacity-[0.07]" fill="none">
         <defs>
-          <pattern id="login-grid" width="28" height="28" patternUnits="userSpaceOnUse">
-            <path d="M28 0H0V28" stroke="currentColor" strokeWidth="0.6" />
+          <pattern id="login-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <path d="M32 0H0V32" stroke="currentColor" strokeWidth="1" />
           </pattern>
-          <linearGradient id="login-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-          </linearGradient>
         </defs>
-        {/* Drawn past the viewBox on every side: a slice never leaves an edge. */}
-        <rect x="-200" y="-200" width="1000" height="1100" fill="url(#login-grid)" />
-        <path
-          d="M-200 590 L80 520 L160 545 L240 430 L320 470 L400 330 L480 360 L800 150 L800 900 L-200 900 Z"
-          fill="url(#login-area)"
-        />
-        <path
-          d="M-200 590 L80 520 L160 545 L240 430 L320 470 L400 330 L480 360 L800 150"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
+        <rect width="100%" height="100%" fill="url(#login-grid)" />
       </svg>
 
       {/* A soft light behind the wordmark, so the navy is not flat. */}
-      <div className="absolute -top-24 start-[-6rem] size-[26rem] rounded-full bg-(--color-accent-text)/25 blur-3xl" />
+      <div className="absolute -top-24 start-[-8rem] size-104 rounded-full bg-(--color-brand-text)/25 blur-3xl" />
+    </div>
+  );
+}
+
+/**
+ * A glimpse of the product: a line that climbs, with the accent marking where
+ * it has reached.
+ *
+ * It carries no axis, no scale and no figure, because it is not showing anyone
+ * anything. It is NOT mirrored in Arabic: every real chart in Opsight draws
+ * its time axis left to right — the drawing surface is forced to `dir="ltr"`
+ * because SVG text anchoring flips with the page — so a glimpse that ran the
+ * other way would be a picture of a product that does not exist.
+ */
+function ProductGlimpse() {
+  return (
+    <div
+      aria-hidden="true"
+      className="mt-10 hidden max-w-lg rounded-(--radius-card) border border-(--color-text-inverse)/15 bg-(--color-text-inverse)/5 p-6 lg:block"
+    >
+      <div className="flex items-center gap-2">
+        <span className="size-2 rounded-(--radius-pill) bg-(--color-accent)" />
+        <span className="h-2 w-20 rounded-(--radius-pill) bg-(--color-text-inverse)/25" />
+      </div>
+
+      <svg viewBox="0 0 320 96" fill="none" dir="ltr" className="mt-5 h-24 w-full">
+        <defs>
+          <linearGradient id="glimpse-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0 78 L53 68 L107 72 L160 48 L213 54 L267 28 L320 14 L320 96 L0 96 Z"
+          fill="url(#glimpse-fill)"
+        />
+        <path
+          d="M0 78 L53 68 L107 72 L160 48 L213 54 L267 28 L320 14"
+          stroke="currentColor"
+          strokeOpacity="0.55"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="320" cy="14" r="5" className="fill-(--color-accent)" />
+      </svg>
     </div>
   );
 }

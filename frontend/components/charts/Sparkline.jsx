@@ -20,7 +20,7 @@ import { cn } from '@/lib/cn';
  * each point sits. A flat or single-point series draws a flat line rather than
  * dividing by a zero range.
  */
-export function Sparkline({ values = [], colour = 'var(--series-1)', height = 36, className }) {
+export function Sparkline({ values = [], colour = 'var(--chart-1)', height = 36, className }) {
   const gradientId = useId();
   // A bucket with no value (a ratio over nothing) is skipped, not drawn as zero.
   const numbers = values.filter((value) => value !== null && value !== undefined).map(Number);

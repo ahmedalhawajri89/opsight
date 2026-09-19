@@ -25,13 +25,13 @@ import { EMPTY, figureDirection, formatMoney, formatPercent } from '@/lib/format
  * centre says how much there was.
  */
 const COLOURS = [
-  'var(--series-1)',
-  'var(--series-3)',
-  'var(--series-2)',
-  'var(--series-4)',
-  'var(--series-6)',
+  'var(--chart-1)',
+  'var(--chart-3)',
+  'var(--chart-2)',
+  'var(--chart-4)',
+  'var(--chart-6)',
 ];
-const OTHER = 'var(--series-5)';
+const OTHER = 'var(--chart-5)';
 
 export function CategoryShareChart({
   rows = [],
@@ -132,10 +132,10 @@ export function CategoryShareChart({
                     return (
                       <div
                         dir={dir}
-                        className="rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2 text-xs shadow-(--shadow-overlay)"
+                        className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-3 py-2 text-xs shadow-(--shadow-overlay)"
                       >
                         <p className="font-semibold text-(--color-text)">{row.name}</p>
-                        <p className="tabular mt-0.5 text-(--color-text-muted)">
+                        <p className="tabular mt-0.5 text-(--color-text-2)">
                           {formatMoney(row.value, { currency, decimals })} ·{' '}
                           {row.share === null ? EMPTY : formatPercent(row.share)}
                         </p>
@@ -153,11 +153,11 @@ export function CategoryShareChart({
               >
                 <bdi
                   dir={figureDirection(centreText)}
-                  className="tabular text-[0.9375rem] leading-tight font-bold whitespace-nowrap text-(--color-text)"
+                  className="tabular text-lg leading-tight font-bold whitespace-nowrap text-(--color-text)"
                 >
                   {centreText}
                 </bdi>
-                <span className="mt-1 text-[0.6875rem] text-(--color-text-muted)">
+                <span className="mt-1 text-xs text-(--color-text-2)">
                   {t('dashboard.categories.total')}
                 </span>
               </div>
@@ -171,7 +171,7 @@ export function CategoryShareChart({
                 onMouseEnter={() => setActive(index)}
                 onMouseLeave={() => setActive(null)}
                 className={cn(
-                  'flex items-center gap-3 rounded-(--radius-sm) px-1.5 py-0.5 text-[0.8125rem] transition-colors duration-(--duration-fast)',
+                  'flex items-center gap-3 rounded-(--radius-control) px-1.5 py-0.5 text-sm transition-colors duration-(--duration-fast)',
                   active === index && 'bg-(--color-surface-hover)',
                 )}
               >
@@ -185,7 +185,7 @@ export function CategoryShareChart({
                   dir="auto"
                   className={cn(
                     'min-w-0 flex-1 truncate text-start',
-                    row.is_other ? 'text-(--color-text-muted)' : 'text-(--color-text)',
+                    row.is_other ? 'text-(--color-text-2)' : 'text-(--color-text)',
                   )}
                 >
                   {row.name}

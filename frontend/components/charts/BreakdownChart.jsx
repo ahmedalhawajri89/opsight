@@ -112,12 +112,12 @@ export function BreakdownChart({
               return (
                 <div
                   dir={dir}
-                  className="rounded-(--radius-sm) border border-(--color-line) bg-(--color-surface-raised) px-2.5 py-2 text-[0.8125rem] shadow-(--shadow-overlay)"
+                  className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-2.5 py-2 text-sm shadow-(--shadow-overlay)"
                 >
                   <p className="font-medium text-(--color-text)">{row.label}</p>
-                  {row.sublabel && <p className="text-(--color-text-subtle)">{row.sublabel}</p>}
+                  {row.sublabel && <p className="text-(--color-muted)">{row.sublabel}</p>}
                   <p className="tabular text-(--color-text)">{formatValue(row.value)}</p>
-                  <p className="tabular text-(--color-text-muted)">
+                  <p className="tabular text-(--color-text-2)">
                     {t('charts.shareOfPeriod', { share: formatPercent(row.share) })}
                   </p>
                 </div>
@@ -131,7 +131,7 @@ export function BreakdownChart({
                 key={row.key}
                 // "Other" is deliberately neutral: it is an aggregate, not a
                 // competitor in the ranking.
-                fill={row.is_other ? 'var(--series-6)' : 'var(--series-1)'}
+                fill={row.is_other ? 'var(--chart-6)' : 'var(--chart-1)'}
               />
             ))}
           </Bar>

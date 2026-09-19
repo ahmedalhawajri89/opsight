@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
       {meta?.comparison?.compares_partial_against_complete && (
         <p
           role="status"
-          className="flex flex-wrap items-center gap-2.5 rounded-(--radius-lg) border border-(--color-warning-subtle) bg-(--color-warning-subtle)/60 px-4 py-2.5 text-[0.8125rem] text-(--color-text-muted)"
+          className="flex flex-wrap items-center gap-2.5 rounded-(--radius-card) border border-(--color-warning-soft) bg-(--color-warning-soft)/60 px-4 py-2.5 text-sm text-(--color-text-2)"
         >
           <PartialBadge />
           {t('analytics.partial')}
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
+          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
             {t('analytics.metric')}
           </span>
           <Select
@@ -181,7 +181,7 @@ export default function AnalyticsPage() {
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
+          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
             {t('analytics.grain')}
           </span>
           <Select
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-muted)">
+          <span className="text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
             {t('analytics.breakDownBy')}
           </span>
           <Select
@@ -228,8 +228,8 @@ export default function AnalyticsPage() {
       />
 
       <Card>
-        <h2 className="text-sm font-semibold text-(--color-text)">{t('analytics.help.title')}</h2>
-        <ul className="mt-2 space-y-1.5 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
+        <h2 className="text-base font-semibold text-(--color-text)">{t('analytics.help.title')}</h2>
+        <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-(--color-text-2)">
           <li>{t('analytics.help.revenue')}</li>
           <li>
             <Trans k="analytics.help.cost" tags={{ strong: (text) => <strong>{text}</strong> }} />

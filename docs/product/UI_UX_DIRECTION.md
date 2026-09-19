@@ -40,85 +40,129 @@ These are common in dashboard templates and are prohibited in Opsight:
 
 Typography carries most of the hierarchy, so it is specified first.
 
-**Typefaces.** One UI sans throughout — **Inter** (or Geist), self-hosted via `next/font`.
-A monospace face (JetBrains Mono or ui-monospace) for identifiers: SKUs, order references,
-API reference ids.
+**Typefaces.** Two faces, both self-hosted by `next/font`, with **no system fallback in
+the stack**: **Inter** for Latin and **IBM Plex Sans Arabic** for Arabic, at 400/500/600/700.
+The stack lists Inter first and Plex second, so a line mixing an Arabic label with `BHD` or
+an SKU renders each script in the face designed for it, per character. A monospace face
+(JetBrains Mono) is kept for identifiers.
+
+Falling back to a system Arabic face is not an acceptable degradation: it changes the
+metrics of every line it touches, and the layout was measured against Plex.
 
 **The tabular-numerals rule.** Every number that appears in a column, a KPI tile, a chart
-axis or a comparison **must** use tabular figures (`font-variant-numeric: tabular-nums`).
-Proportional digits make columns of currency ragged and genuinely harder to scan. This is
-a hard requirement and a review checklist item, implemented as a Tailwind utility applied
-by the `numeric` column flag and the KPI component.
+axis or a comparison **must** use tabular figures (`font-variant-numeric: tabular-nums`),
+applied through the `.tabular` utility. Proportional digits make columns of currency ragged
+and genuinely harder to scan. Hard requirement, review checklist item.
 
-**Scale** (rem, 16px base):
+**Numerals.** Western digits are the project default, in both languages. Arabic-Indic
+digits are a per-account opt-in (ADR-017) rather than a second project-wide default, and
+nothing else about the interface changes with that choice.
 
-| Token | Size / line-height | Weight | Use |
+**Scale — seven sizes, and nothing between them.** Defined once in `app/globals.css` under
+`@theme`, which is also what redefines Tailwind's own `text-*` utilities, so `text-sm` IS
+the scale rather than something that happens to sit near it.
+
+| Utility | Size | Line-height | Use |
 | --- | --- | --- | --- |
-| `display` | 2.25 / 1.15 | 600 | KPI hero figure |
-| `h1` | 1.5 / 1.25 | 600 | Page title |
-| `h2` | 1.125 / 1.3 | 600 | Section heading |
-| `h3` | 1.0 / 1.4 | 600 | Card heading |
-| `body` | 0.875 / 1.5 | 400 | Default UI text |
-| `body-sm` | 0.8125 / 1.45 | 400 | Table cells, dense contexts |
-| `label` | 0.75 / 1.3 | 500, +0.02em | Field labels, table headers, metric captions |
-| `mono` | 0.8125 / 1.4 | 400 | SKUs, references |
+| `text-xs` | 12px | 1.65 | Table headers, captions, metadata |
+| `text-sm` | 13px | 1.65 | Dense body: table cells, secondary lines |
+| `text-base` | 14px | 1.65 | Default UI text |
+| `text-lg` | 16px | 1.65 | Emphasised body, lead paragraphs |
+| `text-xl` | 20px | 1.25 | Card and section headings |
+| `text-2xl` | 24px | 1.25 | Page titles |
+| `text-3xl` | 32px | 1.25 | The one display line on the sign-in panel |
 
-0.875rem body is deliberate. This is a dense information tool; 16px body text in a data
-table wastes a third of the viewport.
+14px body is deliberate: this is a dense information tool, and 16px body text in a data
+table wastes a third of the viewport. Line-height is 1.65 for body sizes in BOTH scripts —
+set by Arabic's taller ascenders and diacritics, and applied to Latin too rather than
+letting the two languages drift apart — and 1.25 for headings, where the extra leading only
+pulls a title apart.
+
+**Measure.** Anything read as prose rather than scanned is capped at 65 characters with the
+`.measure` utility.
 
 **Rules.**
 
-- Maximum three weights: 400, 500, 600. No 700+ in the interface.
-- Uppercase only for `label`, never for headings or data.
-- Numbers right-aligned in tables; text left-aligned; headers align with their column.
-- Currency symbol and magnitude are typographically de-emphasised relative to the digits.
+- Hierarchy comes from SIZE and WEIGHT. Never from colour alone — a lighter grey is not a
+  smaller heading, it is a contrast failure waiting to be filed.
+- Weights 400/500/600, and 700 only for the product wordmark.
+- Uppercase and letter-spacing only for the 12px eyebrow label, and both are reset under
+  Arabic, where tracking breaks the cursive join.
+- Numbers align with their column; the currency symbol is de-emphasised relative to the digits.
+- A size outside the table is a bug. There is one exception, documented in place: the KPI
+  figure uses `clamp()` between two scale steps so an exact money value shrinks to fit
+  instead of being rounded or truncated.
 
 ## 4. Colour
 
-A restrained neutral system with one accent and a strictly reserved semantic set.
-`app/globals.css` is the source of truth. **Revised in the dashboard specification pass (v4)**,
-which supersedes v2 (petrol/sand) and v3: the values are the specification's own, moved only
-where WCAG AA required it — its green, red, amber and caption grey are too light for 12px text,
-so the TEXT tokens are darker while the tints keep the specification's hue.
+Colour is assigned by ROLE. `app/globals.css` is the single source of truth: no component
+carries a hex value, and every role below is a token with a name that says what it is for
+rather than what it looks like. **Revised in the design-system pass (v5)**, which replaced
+the single-accent palette with the role set below.
 
-**Neutrals** — a light blue-grey ground, white cards, navy-cast text.
-
-```
-Light                              Dark
---surface        #FFFFFF           #121829
---surface-sunken #F5F7FB           #0B1020
---sidebar        #FFFFFF           #121829
---border         #EDF0F6           #263048
---border-strong  #8A93A6           #5F6A82
---text           #0F172A           #E8ECF6
---text-muted     #475569           #A0A9BD
---text-subtle    #7B879C           #7F89A0
-```
-
-**Accent** — navy carries weight (primary buttons, the selected segment, the avatar); indigo
-carries what you can follow (links, the current place in the navigation); lavender marks it.
+**Surfaces** — the page ground, what sits on it, and the half-step between.
 
 ```
---accent         #1E2A5E  /  #A5B4FC   (navy)
---accent-text    #4F46E5  /  #A5B4FC   (indigo)
---accent-subtle  #EEF0FF  /  #1F2552   (lavender)
+--ground         #F5F7FB   the page
+--surface        #FFFFFF   cards, panels, fields
+--surface-subtle #FAFBFD   table heads, inset strips
+--surface-hover  #F2F4F9   a row under the cursor
+--surface-selected #EEF0FF the current row
 ```
 
-**Semantic** — reserved for meaning, never for decoration. Each has a ~10% tint, and violet and
-teal tints exist for icons only (never for text on their own).
+**Lines** — three weights: `--border-subtle` inside a panel, `--border` at a card's edge,
+`--border-strong` for the boundary of a control (WCAG 1.4.11 holds that one to 3:1).
+
+**Text** — three roles, and **all three clear 4.5:1 on every surface**, including the muted
+one. The muted tone marks metadata; it does not mark unimportant text.
 
 ```
---positive  #15803D   favourable change
---negative  #C81E1E   unfavourable change
---warning   #B45309   attention, low stock, money going out
+--text    #0F172A   17.9:1 on surface
+--text-2  #475569    7.6:1
+--muted   #5C6880    5.6:1   (was #7B879C — 3.9:1, a failure that shipped)
 ```
 
-**Chart series** — blue, amber, teal, violet, navy, cyan. Sparklines use their own decorative
-strokes (`--spark-*`), because a sparkline never carries a value on its own.
+**Brand** — the navy identity, reserved for the mark, the primary button and a page header.
+A page-sized navy wash belongs to the sign-in screen and nowhere else. `--brand-text` is the
+indigo that carries what you can follow (links, the current place in the navigation) and
+`--brand-soft` marks that place.
 
-**Radii and shadow** — 6 / 8 / 14px, a hairline card shadow (`0 1px 2px rgb(16 24 40 / .04)`)
-and a slightly deeper one on hover. Motion durations are tokens too: 150ms for controls, 200ms
-for content.
+```
+--brand #1E2A5E   --brand-text #4F46E5   --brand-soft #EEF0FF
+```
+
+**Accent** — ONE warm tone, the only warm tone in the interface chrome, for a live figure, a
+state, and the focus ring. Never a surface, a border, or body text.
+
+```
+--accent #A16207 (4.9:1)   --accent-strong #854D0E   --accent-soft #FDF3E0
+```
+
+**Semantic** — meaning only, never decoration, each with a soft tint for badges and inline
+messages: `--success #15803D`, `--warning #B45309`, `--danger #C81E1E`, `--info #1D4ED8`.
+
+> The accent and the warning share a hue family, and to a viewer with deuteranopia they are
+> the same colour (ΔE 0.6; ΔE 16.3 to normal vision). That is accepted rather than unnoticed:
+> a warning in this interface always carries its icon and its sentence, so colour is never
+> the only signal (WCAG 1.4.1). A warm accent that survives red-green colour blindness while
+> staying dark enough for a 4.5:1 focus ring does not exist.
+
+**Charts** — a categorical palette that shares nothing with the interface: no chart colour
+means "brand", "warning" or "selected", and no interface state is painted in one of them.
+Blue, amber, teal, violet, magenta, cyan. (`--chart-5` was the navy brand until this pass —
+the one place the two vocabularies had leaked into each other.)
+
+**Radii, by role rather than size**: `--radius-control` 8px, `--radius-panel` 12px,
+`--radius-card` 16px, `--radius-pill` 999px.
+
+**Space** is Tailwind's 4px step used at 4 / 8 / 12 / 16 / 24 / 32 / 48. Half-steps exist in
+the framework and are not part of this system. Interactive targets are 44px (`h-11`).
+
+**Shadow**: a hairline card lift, a hover lift, an overlay shadow. No third step, and no card
+carries both a shadow and a visible border.
+
+Every pair above is held to WCAG AA by `tests/contrast.test.js`, and the six chart colours to
+a minimum perceptual distance under simulated protanopia and deuteranopia.
 
 **Rules.**
 
@@ -150,6 +194,25 @@ an error — which is how no token in this document reached the screen between P
 the redesign, while every test passed. `tests/tokens.test.js` refuses the old form.
 
 ## 5. Layout and density
+
+**Three templates, and no fourth.**
+
+1. **Focus page** — one column, 420–560px, centred, for a screen with a single task and
+   nothing to navigate: sign-in, a settings form, a wizard step. `components/layout/FocusColumn.jsx`.
+2. **Application shell** — sidebar, page header (title, one line of description, actions),
+   content on 12 columns with 24px gutters. `components/layout/AppShell.jsx`.
+3. **List / detail** — the list or table at the start edge, the record at the end edge.
+
+**Variety comes from the hero, not the chrome.** Each screen has exactly ONE element that
+differs from every other screen — a table, a chart, a form, a KPI row — and everything else
+on it is quiet. A page that is interesting twice is interesting nowhere.
+
+**Tables are not put inside cards.** A card is for content that was gathered together; a
+table already has its own edges, and wrapping it adds a border that means nothing.
+
+**Decoration is allowed on one surface.** Background grids and gradients belong to the
+sign-in screen. Application screens carry none: no pattern, no wash, no gradient.
+
 
 **Shell.**
 

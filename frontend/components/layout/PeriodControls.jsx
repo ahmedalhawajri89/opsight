@@ -55,11 +55,11 @@ export function PeriodControls({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Face>
-        <Icon name="calendar" size={16} className="shrink-0 text-(--color-text-muted)" />
+        <Icon name="calendar" size={16} className="shrink-0 text-(--color-text-2)" />
         <bdi dir={figureDirection(range)} className="tabular truncate">
           {range}
         </bdi>
-        <Icon name="chevronDown" size={14} className="shrink-0 text-(--color-text-subtle)" />
+        <Icon name="chevronDown" size={14} className="shrink-0 text-(--color-muted)" />
         <select
           aria-label={t('period.selector.period')}
           value={preset}
@@ -85,7 +85,7 @@ export function PeriodControls({
             }
             className="h-9 w-auto"
           />
-          <span aria-hidden="true" className="text-(--color-text-subtle)">
+          <span aria-hidden="true" className="text-(--color-muted)">
             –
           </span>
           <DateInput
@@ -128,8 +128,8 @@ function Face({ subtle = false, children }) {
         // focus-within draws the ring the invisible select cannot show itself.
         'relative flex h-9 min-w-0 items-center gap-2 border bg-(--color-surface) px-3 whitespace-nowrap transition-colors duration-(--duration-fast) has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-(--focus-ring)',
         subtle
-          ? 'rounded-full border-(--color-line) text-xs text-(--color-text-muted) hover:border-(--color-line-strong)'
-          : 'rounded-(--radius-md) border-(--color-line) text-[0.8125rem] font-medium text-(--color-text) hover:border-(--color-line-strong)',
+          ? 'rounded-full border-(--color-line) text-xs text-(--color-text-2) hover:border-(--color-line-strong)'
+          : 'rounded-(--radius-control) border-(--color-line) text-sm font-medium text-(--color-text) hover:border-(--color-line-strong)',
       )}
     >
       {children}

@@ -126,7 +126,7 @@ export default function DashboardPage() {
             for assistive technology, so a screen reader announces "Dashboard"
             first.
           */}
-          <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-(--color-text)">
+          <h1 className="text-2xl leading-tight font-semibold tracking-tight text-(--color-text)">
             <span className="sr-only">{t('nav.items.dashboard')} — </span>
             {greeting(t, user?.name)}{' '}
             <span
@@ -136,7 +136,7 @@ export default function DashboardPage() {
               👋
             </span>
           </h1>
-          <p className="mt-1 text-sm text-(--color-text-muted)">{t('dashboard.subtitle')}</p>
+          <p className="mt-1 text-base text-(--color-text-2)">{t('dashboard.subtitle')}</p>
         </div>
 
         {/*

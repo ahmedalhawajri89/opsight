@@ -38,11 +38,7 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
       )}
     >
       {/* Announced politely so a screen-reader user hears the page change. */}
-      <p
-        role="status"
-        aria-live="polite"
-        className="tabular text-[0.8125rem] text-(--color-text-muted)"
-      >
+      <p role="status" aria-live="polite" className="tabular text-sm text-(--color-text-2)">
         {total === 0
           ? t('pagination.none')
           : t('pagination.range', {
@@ -54,12 +50,12 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
 
       <div className="flex items-center gap-3">
         {onPerPageChange && (
-          <label className="flex items-center gap-1.5 text-[0.8125rem] text-(--color-text-muted)">
+          <label className="flex items-center gap-1.5 text-sm text-(--color-text-2)">
             {t('pagination.rows')}
             <select
               value={perPage}
               onChange={(event) => onPerPageChange(Number(event.target.value))}
-              className="h-7 rounded-(--radius-sm) border border-(--color-line-strong) bg-(--color-surface) px-1.5 text-[0.8125rem] text-(--color-text)"
+              className="h-7 rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-1.5 text-sm text-(--color-text)"
             >
               {[25, 50, 100].map((size) => (
                 <option key={size} value={size}>
@@ -81,7 +77,7 @@ export function Pagination({ meta, onPageChange, onPerPageChange, className }) {
             {t('pagination.previous')}
           </Button>
 
-          <span className="tabular px-2 text-[0.8125rem] text-(--color-text-muted)">
+          <span className="tabular px-2 text-sm text-(--color-text-2)">
             {t('pagination.page', { page: formatNumber(page), pages: formatNumber(lastPage) })}
           </span>
 

@@ -30,9 +30,9 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  */
 
 const TONE_CLASSES = {
-  positive: 'text-(--color-positive)',
-  negative: 'text-(--color-negative)',
-  neutral: 'text-(--color-text-muted)',
+  positive: 'text-(--color-success)',
+  negative: 'text-(--color-danger)',
+  neutral: 'text-(--color-text-2)',
 };
 
 /*
@@ -41,9 +41,9 @@ const TONE_CLASSES = {
  * never replaces them.
  */
 const CHIP_CLASSES = {
-  positive: 'bg-(--color-positive-subtle) text-(--color-positive)',
-  negative: 'bg-(--color-negative-subtle) text-(--color-negative)',
-  neutral: 'bg-(--color-surface-hover) text-(--color-text-muted)',
+  positive: 'bg-(--color-success-soft) text-(--color-success)',
+  negative: 'bg-(--color-danger-soft) text-(--color-danger)',
+  neutral: 'bg-(--color-surface-hover) text-(--color-text-2)',
 };
 
 export function ComparisonValue({
@@ -68,9 +68,7 @@ export function ComparisonValue({
       : formatPercent(change, { sign: true });
 
   return (
-    <div
-      className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[0.8125rem]', className)}
-    >
+    <div className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm', className)}>
       <span
         // The tone as data, so a test asserts WHAT the change means rather than
         // how a stylesheet happens to spell it. The class-based assertions this
@@ -80,13 +78,13 @@ export function ComparisonValue({
         className={cn(
           'tabular inline-flex items-baseline gap-1 font-medium',
           variant === 'chip'
-            ? cn('rounded-(--radius-sm) px-1.5 py-px text-xs', CHIP_CLASSES[tone])
+            ? cn('rounded-(--radius-control) px-1.5 py-px text-xs', CHIP_CLASSES[tone])
             : TONE_CLASSES[tone],
         )}
         title={unavailable ? t('comparison.unavailable') : undefined}
       >
         {!unavailable && (
-          <span aria-hidden="true" className="text-[0.625rem]">
+          <span aria-hidden="true" className="text-xs">
             {changeArrow(change)}
           </span>
         )}
@@ -94,10 +92,10 @@ export function ComparisonValue({
       </span>
 
       {/* The basis is always stated in words. A bare percentage is a rumour. */}
-      {basis && <span className="text-(--color-text-subtle)">{basis}</span>}
+      {basis && <span className="text-(--color-muted)">{basis}</span>}
 
       {previousLabel && (
-        <bdi dir={figureDirection(previousLabel)} className="tabular text-(--color-text-subtle)">
+        <bdi dir={figureDirection(previousLabel)} className="tabular text-(--color-muted)">
           {previousLabel}
         </bdi>
       )}

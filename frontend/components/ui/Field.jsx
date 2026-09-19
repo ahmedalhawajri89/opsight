@@ -14,10 +14,10 @@ import { cn } from '@/lib/cn';
  */
 
 const CONTROL_BASE =
-  'rounded-(--radius-sm) border bg-(--color-surface) text-sm text-(--color-text) ' +
-  'placeholder:text-(--color-text-subtle) transition-colors duration-150 ' +
-  'hover:border-(--color-text-subtle) ' +
-  'disabled:cursor-not-allowed disabled:bg-(--color-surface-sunken) disabled:text-(--color-text-subtle)';
+  'rounded-(--radius-control) border bg-(--color-surface) text-base text-(--color-text) ' +
+  'placeholder:text-(--color-muted) transition-colors duration-150 ' +
+  'hover:border-(--color-muted) ' +
+  'disabled:cursor-not-allowed disabled:bg-(--color-ground) disabled:text-(--color-muted)';
 
 /**
  * Full width unless the caller sizes the control.
@@ -34,7 +34,7 @@ function controlClasses(invalid, extra) {
   return cn(
     CONTROL_BASE,
     !sized && 'w-full',
-    invalid ? 'border-(--color-negative)' : 'border-(--color-line-strong)',
+    invalid ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
     extra,
   );
 }
@@ -55,11 +55,11 @@ export function Field({ label, hint, error, required = false, className, childre
     <div className={cn('space-y-1.5', className)}>
       <label
         htmlFor={id}
-        className="block text-xs font-medium uppercase tracking-wide text-(--color-text-muted)"
+        className="block text-xs font-medium uppercase tracking-wide text-(--color-text-2)"
       >
         {label}
         {required && (
-          <span className="ms-1 text-(--color-negative)" aria-hidden="true">
+          <span className="ms-1 text-(--color-danger)" aria-hidden="true">
             *
           </span>
         )}
@@ -73,13 +73,13 @@ export function Field({ label, hint, error, required = false, className, childre
       })}
 
       {hint && !error && (
-        <p id={`${id}-hint`} className="text-[0.8125rem] text-(--color-text-subtle)">
+        <p id={`${id}-hint`} className="text-sm text-(--color-muted)">
           {hint}
         </p>
       )}
 
       {error && (
-        <p id={`${id}-error`} className="text-[0.8125rem] text-(--color-negative)">
+        <p id={`${id}-error`} className="text-sm text-(--color-danger)">
           {error}
         </p>
       )}
@@ -185,11 +185,11 @@ export const Checkbox = forwardRef(function Checkbox({ label, className, id, ...
         ref={ref}
         id={inputId}
         type="checkbox"
-        className="size-3.5 rounded-[2px] border-(--color-line-strong) accent-(--color-accent)"
+        className="size-3.5 rounded-[2px] border-(--color-line-strong) accent-(--color-brand)"
         {...props}
       />
       {label && (
-        <label htmlFor={inputId} className="select-none text-sm text-(--color-text)">
+        <label htmlFor={inputId} className="select-none text-base text-(--color-text)">
           {label}
         </label>
       )}
@@ -207,11 +207,11 @@ export const Radio = forwardRef(function Radio({ label, className, id, ...props 
         ref={ref}
         id={inputId}
         type="radio"
-        className="size-3.5 border-(--color-line-strong) accent-(--color-accent)"
+        className="size-3.5 border-(--color-line-strong) accent-(--color-brand)"
         {...props}
       />
       {label && (
-        <label htmlFor={inputId} className="select-none text-sm text-(--color-text)">
+        <label htmlFor={inputId} className="select-none text-base text-(--color-text)">
           {label}
         </label>
       )}

@@ -30,8 +30,8 @@ import { formatBucketLabel } from '@/lib/periods';
  * this chart: a chart on a different window from the cards above it would
  * contradict them.
  */
-const REVENUE = 'var(--series-1)';
-const EXPENSES = 'var(--series-2)';
+const REVENUE = 'var(--chart-1)';
+const EXPENSES = 'var(--chart-2)';
 
 export const QUICK_RANGES = [
   { preset: '7d', count: 7, unit: 'days' },
@@ -109,7 +109,7 @@ export function RevenueExpensesChart({
           <div
             role="group"
             aria-label={t('dashboard.trend.rangeLabel')}
-            className="flex items-center gap-1 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface) p-0.5"
+            className="flex items-center gap-1 rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) p-0.5"
           >
             {QUICK_RANGES.map((range) => (
               <button
@@ -121,10 +121,10 @@ export function RevenueExpensesChart({
                 })}
                 onClick={() => onPresetChange(range.preset)}
                 className={cn(
-                  'tabular h-7 min-w-10 rounded-(--radius-sm) px-2.5 text-xs font-semibold transition-colors',
+                  'tabular h-7 min-w-10 rounded-(--radius-control) px-2.5 text-xs font-semibold transition-colors',
                   preset === range.preset
-                    ? 'bg-(--color-accent) text-(--color-text-inverse)'
-                    : 'text-(--color-text-muted) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+                    ? 'bg-(--color-brand) text-(--color-text-inverse)'
+                    : 'text-(--color-text-2) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
                 )}
               >
                 {t(`dashboard.trend.range.${range.unit}`, { count: range.count })}
@@ -134,7 +134,7 @@ export function RevenueExpensesChart({
         )
       }
       legend={
-        <ul className="flex items-center gap-5 text-xs text-(--color-text-muted)">
+        <ul className="flex items-center gap-5 text-xs text-(--color-text-2)">
           <LegendItem colour={REVENUE} label={t('dashboard.trend.revenue')} />
           {withExpenses && <LegendItem colour={EXPENSES} label={t('dashboard.trend.expenses')} />}
         </ul>
@@ -190,9 +190,9 @@ export function RevenueExpensesChart({
               return (
                 <div
                   dir={dir}
-                  className="min-w-44 rounded-(--radius-md) border border-(--color-line) bg-(--color-surface-raised) px-3 py-2.5 text-xs shadow-(--shadow-overlay)"
+                  className="min-w-44 rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-3 py-2.5 text-xs shadow-(--shadow-overlay)"
                 >
-                  <p className="font-medium text-(--color-text-muted)">{row.label}</p>
+                  <p className="font-medium text-(--color-text-2)">{row.label}</p>
                   <TooltipRow
                     colour={REVENUE}
                     label={t('dashboard.trend.revenue')}
@@ -257,7 +257,7 @@ function TooltipRow({ colour, label, value }) {
   return (
     <p className="mt-1.5 flex items-center gap-2">
       <span aria-hidden="true" className="size-2 rounded-full" style={{ background: colour }} />
-      <span className="flex-1 text-(--color-text-muted)">{label}</span>
+      <span className="flex-1 text-(--color-text-2)">{label}</span>
       <span className="tabular font-semibold text-(--color-text)">{value}</span>
     </p>
   );

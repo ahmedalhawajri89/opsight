@@ -32,14 +32,12 @@ export function EmptyState({ title, description, action, icon, className }) {
 
   return (
     <Frame className={className}>
-      {icon && <div className="text-(--color-text-subtle)">{icon}</div>}
+      {icon && <div className="text-(--color-muted)">{icon}</div>}
 
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-text)">{title ?? t('states.empty')}</p>
+        <p className="text-base font-medium text-(--color-text)">{title ?? t('states.empty')}</p>
         {description && (
-          <p className="mx-auto max-w-sm text-[0.8125rem] text-(--color-text-muted)">
-            {description}
-          </p>
+          <p className="mx-auto max-w-sm text-sm text-(--color-text-2)">{description}</p>
         )}
       </div>
 
@@ -60,8 +58,8 @@ export function NoResultsState({ activeFilters = [], onClear, className }) {
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-text)">{t('states.noResults.title')}</p>
-        <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">
+        <p className="text-base font-medium text-(--color-text)">{t('states.noResults.title')}</p>
+        <p className="mx-auto max-w-md text-sm text-(--color-text-2)">
           {activeFilters.length > 0 ? (
             <>
               {t('states.noResults.matching')}{' '}
@@ -120,12 +118,12 @@ export function ErrorState({ title, error, onRetry, className }) {
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-negative)">
+        <p className="text-base font-medium text-(--color-danger)">
           {title ?? t('states.error.title')}
         </p>
-        <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">{message}</p>
+        <p className="mx-auto max-w-md text-sm text-(--color-text-2)">{message}</p>
         {reference && (
-          <p className="font-mono text-[0.6875rem] text-(--color-text-subtle)">
+          <p className="font-mono text-xs text-(--color-muted)">
             {t('states.error.reference', { reference })}
           </p>
         )}
@@ -152,8 +150,8 @@ export function ForbiddenState({ className }) {
   return (
     <Frame className={className}>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-(--color-text)">{t('states.forbidden.title')}</p>
-        <p className="mx-auto max-w-md text-[0.8125rem] text-(--color-text-muted)">
+        <p className="text-base font-medium text-(--color-text)">{t('states.forbidden.title')}</p>
+        <p className="mx-auto max-w-md text-sm text-(--color-text-2)">
           {t('states.forbidden.description')}
         </p>
       </div>

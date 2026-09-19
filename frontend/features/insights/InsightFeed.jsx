@@ -27,32 +27,32 @@ const SEVERITY = {
   warning: {
     label: 'insights.severity.warning',
     icon: 'alert',
-    tile: 'bg-(--color-warning-subtle) text-(--color-warning)',
+    tile: 'bg-(--color-warning-soft) text-(--color-warning)',
     text: 'text-(--color-warning)',
   },
   action: {
     label: 'insights.severity.action',
     icon: 'arrowDown',
-    tile: 'bg-(--color-negative-subtle) text-(--color-negative)',
-    text: 'text-(--color-accent-text)',
+    tile: 'bg-(--color-danger-soft) text-(--color-danger)',
+    text: 'text-(--color-brand-text)',
   },
   positive: {
     label: 'insights.severity.positive',
     icon: 'arrowUp',
-    tile: 'bg-(--color-positive-subtle) text-(--color-positive)',
-    text: 'text-(--color-positive)',
+    tile: 'bg-(--color-success-soft) text-(--color-success)',
+    text: 'text-(--color-success)',
   },
   opportunity: {
     label: 'insights.severity.opportunity',
     icon: 'star',
-    tile: 'bg-(--color-info-subtle) text-(--color-info)',
-    text: 'text-(--color-accent-text)',
+    tile: 'bg-(--color-info-soft) text-(--color-info)',
+    text: 'text-(--color-brand-text)',
   },
   data_quality: {
     label: 'insights.severity.data_quality',
     icon: 'database',
-    tile: 'bg-(--color-surface-hover) text-(--color-text-muted)',
-    text: 'text-(--color-text-muted)',
+    tile: 'bg-(--color-surface-hover) text-(--color-text-2)',
+    text: 'text-(--color-text-2)',
   },
 };
 
@@ -77,7 +77,7 @@ export function InsightFeed({
         viewAllHref && (
           <Link
             href={viewAllHref}
-            className="group inline-flex items-center gap-1 text-xs font-medium text-(--color-accent-text) hover:underline"
+            className="group inline-flex items-center gap-1 text-xs font-medium text-(--color-brand-text) hover:underline"
           >
             {t('common.viewAll')}
             <Icon name="arrowRight" size={13} className="rtl:-scale-x-100" />
@@ -92,10 +92,10 @@ export function InsightFeed({
         <ul className="space-y-3" aria-busy="true">
           {[0, 1, 2].map((row) => (
             <li key={row} className="flex gap-3">
-              <div className="skeleton size-8 shrink-0 rounded-(--radius-md)" />
+              <div className="skeleton size-8 shrink-0 rounded-(--radius-control)" />
               <div className="flex-1 space-y-2">
-                <div className="skeleton h-3.5 w-2/3 rounded-(--radius-sm)" />
-                <div className="skeleton h-3 w-full rounded-(--radius-sm)" />
+                <div className="skeleton h-3.5 w-2/3 rounded-(--radius-control)" />
+                <div className="skeleton h-3 w-full rounded-(--radius-control)" />
               </div>
             </li>
           ))}
@@ -119,7 +119,7 @@ function InsightRow({ insight }) {
   const target = linkFor(insight.link);
 
   return (
-    <li className="flex gap-3 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) p-4 transition-colors duration-150 hover:bg-(--color-surface-sunken)">
+    <li className="flex gap-3 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-4 transition-colors duration-150 hover:bg-(--color-ground)">
       <span
         aria-hidden="true"
         className={cn(
@@ -137,13 +137,13 @@ function InsightRow({ insight }) {
           never the only signal.
         */}
         <p className="sr-only">{t(severity.label)}</p>
-        <p className="text-[0.8125rem] font-semibold text-(--color-text)">{insight.title}</p>
-        <p className="mt-1 text-xs leading-relaxed text-(--color-text-muted)">{insight.message}</p>
+        <p className="text-sm font-semibold text-(--color-text)">{insight.title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-(--color-text-2)">{insight.message}</p>
 
         {target && (
           <Link
             href={target.href}
-            className="group mt-1.5 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-(--color-accent-text) hover:underline"
+            className="group mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-(--color-brand-text) hover:underline"
           >
             {/*
               The link carries the period the insight was computed for, so the
@@ -178,26 +178,24 @@ function EmptyFeed({ suppressed }) {
 
   if (suppressed?.message) {
     return (
-      <div className="flex gap-3 rounded-(--radius-md) bg-(--color-surface-sunken) p-3.5">
-        <Icon name="clock" className="mt-0.5 shrink-0 text-(--color-text-subtle)" />
+      <div className="flex gap-3 rounded-(--radius-control) bg-(--color-ground) p-3.5">
+        <Icon name="clock" className="mt-0.5 shrink-0 text-(--color-muted)" />
         <div>
-          <p className="text-[0.8125rem] font-medium text-(--color-text)">
+          <p className="text-sm font-medium text-(--color-text)">
             {suppressed.reason === 'partial_period'
               ? t('insights.heldBackPartial')
               : t('insights.heldBack')}
           </p>
-          <p className="mt-1 text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
-            {suppressed.message}
-          </p>
+          <p className="mt-1 text-sm leading-relaxed text-(--color-text-2)">{suppressed.message}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3 rounded-(--radius-md) bg-(--color-surface-sunken) p-3.5">
-      <Icon name="check" className="mt-0.5 shrink-0 text-(--color-positive)" />
-      <p className="text-[0.8125rem] text-(--color-text-muted)">{t('insights.nothingCrossed')}</p>
+    <div className="flex gap-3 rounded-(--radius-control) bg-(--color-ground) p-3.5">
+      <Icon name="check" className="mt-0.5 shrink-0 text-(--color-success)" />
+      <p className="text-sm text-(--color-text-2)">{t('insights.nothingCrossed')}</p>
     </div>
   );
 }

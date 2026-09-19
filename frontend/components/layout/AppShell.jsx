@@ -233,7 +233,7 @@ export function AppShell({ children }) {
       */}
       <a
         href="#main-content"
-        className="sr-only z-50 rounded-(--radius-sm) bg-(--color-surface) px-3 py-2 text-sm font-medium text-(--color-accent-text) shadow-(--shadow-overlay) focus:not-sr-only focus:fixed focus:start-3 focus:top-3"
+        className="sr-only z-50 rounded-(--radius-control) bg-(--color-surface) px-3 py-2 text-base font-medium text-(--color-brand-text) shadow-(--shadow-overlay) focus:not-sr-only focus:fixed focus:start-3 focus:top-3"
       >
         {t('nav.skipToContent')}
       </a>
@@ -272,7 +272,7 @@ export function AppShell({ children }) {
               }}
               aria-expanded={drawerOpen}
               aria-label={t('nav.openNavigation')}
-              className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover) md:hidden"
+              className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) md:hidden"
             >
               <Icon name="menu" size={20} />
             </button>
@@ -284,7 +284,7 @@ export function AppShell({ children }) {
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 aria-label={t('search.label')}
-                className="inline-flex size-9 items-center justify-center rounded-(--radius-md) text-(--color-text-muted) hover:bg-(--color-surface-hover)"
+                className="inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover)"
               >
                 <Icon name="search" size={19} />
               </button>
@@ -330,7 +330,11 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
           compact ? 'justify-center lg:justify-start lg:px-5' : 'px-5',
         )}
       >
-        <Link href="/dashboard" className="rounded-(--radius-sm)" aria-label={t('common.appName')}>
+        <Link
+          href="/dashboard"
+          className="rounded-(--radius-control)"
+          aria-label={t('common.appName')}
+        >
           {/* The wordmark needs room; the rail shows the mark alone. */}
           <span className={compact ? 'lg:hidden' : 'hidden'}>
             <Logo compact />
@@ -358,7 +362,7 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
                 <p
                   id={id}
                   className={cn(
-                    'px-3 pb-2 text-[0.625rem] font-semibold tracking-[0.1em] text-(--color-text-subtle) uppercase',
+                    'px-3 pb-2 text-xs font-semibold tracking-[0.1em] text-(--color-muted) uppercase',
                     // On the rail the group is shown by a rule instead of a word.
                     compact && 'hidden lg:block',
                   )}
@@ -388,25 +392,23 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
 
       {/* The promo card and version line need width; the rail omits them. */}
       <div className={cn('shrink-0 px-3 pb-4', compact && 'hidden lg:block')}>
-        <div className="rounded-(--radius-lg) bg-(--color-accent-subtle) p-4">
+        <div className="rounded-(--radius-card) bg-(--color-brand-soft) p-4">
           <span
             aria-hidden="true"
-            className="inline-flex size-8 items-center justify-center rounded-(--radius-md) bg-(--color-accent-text) text-(--color-text-inverse)"
+            className="inline-flex size-8 items-center justify-center rounded-(--radius-control) bg-(--color-brand-text) text-(--color-text-inverse)"
           >
             <Icon name="chart" size={16} strokeWidth={2} />
           </span>
-          <p className="mt-3 text-[0.8125rem] leading-snug font-semibold text-(--color-text)">
+          <p className="mt-3 text-sm leading-snug font-semibold text-(--color-text)">
             {t('shell.promo.title')}
           </p>
           <div className="mt-1.5 flex items-end justify-between gap-2">
-            <p className="text-[0.6875rem] leading-relaxed text-(--color-text-muted)">
-              {t('shell.promo.body')}
-            </p>
+            <p className="text-xs leading-relaxed text-(--color-text-2)">{t('shell.promo.body')}</p>
             {canAnalyse && (
               <Link
                 href="/analytics"
                 aria-label={t('nav.items.analytics')}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--color-surface) text-(--color-accent-text) shadow-(--shadow-card) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover)"
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--color-surface) text-(--color-brand-text) shadow-(--shadow-card) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover)"
               >
                 <Icon name="arrowRight" size={14} className="rtl:-scale-x-100" />
               </Link>
@@ -414,9 +416,7 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
           </div>
         </div>
 
-        <p className="mt-4 px-2 text-[0.6875rem] text-(--color-text-subtle)">
-          v{packageInfo.version}
-        </p>
+        <p className="mt-4 px-2 text-xs text-(--color-muted)">v{packageInfo.version}</p>
       </div>
     </>
   );
@@ -432,17 +432,17 @@ function NavLink({ item, active, compact = false }) {
       aria-current={active ? 'page' : undefined}
       title={compact ? label : undefined}
       className={cn(
-        'flex h-9 items-center rounded-(--radius-md) text-[0.8125rem] transition-colors duration-(--duration-fast) ease-(--ease-out)',
+        'flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out)',
         compact ? 'justify-center lg:justify-start lg:gap-3 lg:px-3' : 'gap-3 px-3',
         active
-          ? 'bg-(--color-accent-subtle) font-semibold text-(--color-accent-text)'
-          : 'font-medium text-(--color-text-muted) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+          ? 'bg-(--color-brand-soft) font-semibold text-(--color-brand-text)'
+          : 'font-medium text-(--color-text-2) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
       )}
     >
       <Icon
         name={item.icon}
         size={18}
-        className={active ? 'text-(--color-accent-text)' : 'text-(--color-text-subtle)'}
+        className={active ? 'text-(--color-brand-text)' : 'text-(--color-muted)'}
       />
       {/* On the rail the name is the tooltip and the accessible name. */}
       <span className={compact ? 'sr-only lg:not-sr-only' : undefined}>{label}</span>
@@ -458,7 +458,7 @@ function DisabledNavItem({ item, compact = false }) {
       aria-disabled="true"
       title={`${t(item.label)} — ${t('nav.comingLater')}`}
       className={cn(
-        'flex h-9 cursor-not-allowed items-center rounded-(--radius-md) text-[0.8125rem] font-medium text-(--color-text-subtle)',
+        'flex h-9 cursor-not-allowed items-center rounded-(--radius-control) text-sm font-medium text-(--color-muted)',
         compact ? 'justify-center lg:justify-start lg:gap-3 lg:px-3' : 'gap-3 px-3',
       )}
     >
@@ -472,7 +472,7 @@ function DisabledNavItem({ item, compact = false }) {
 /** A two-option switch whose options apply immediately. */
 function Choice({ options, value, onChange }) {
   return (
-    <span className="flex rounded-(--radius-md) border border-(--color-line) p-0.5">
+    <span className="flex rounded-(--radius-control) border border-(--color-line) p-0.5">
       {options.map((option) => (
         <button
           key={option.value}
@@ -482,10 +482,10 @@ function Choice({ options, value, onChange }) {
           aria-label={option.ariaLabel}
           onClick={() => value !== option.value && onChange(option.value)}
           className={cn(
-            'rounded-(--radius-sm) px-2 py-0.5 text-xs transition-colors duration-(--duration-fast)',
+            'rounded-(--radius-control) px-2 py-0.5 text-xs transition-colors duration-(--duration-fast)',
             value === option.value
-              ? 'bg-(--color-accent) font-semibold text-(--color-text-inverse)'
-              : 'text-(--color-text-muted) hover:bg-(--color-surface-hover)',
+              ? 'bg-(--color-brand) font-semibold text-(--color-text-inverse)'
+              : 'text-(--color-text-2) hover:bg-(--color-surface-hover)',
           )}
         >
           {option.label}
@@ -506,35 +506,29 @@ function UserMenu({ user, onSignOut }) {
           type="button"
           {...props}
           aria-label={t('shell.account', { name: user.name })}
-          className="flex items-center gap-2.5 rounded-(--radius-md) py-1 ps-1 pe-1.5 transition-colors hover:bg-(--color-surface-hover)"
+          className="flex items-center gap-2.5 rounded-(--radius-control) py-1 ps-1 pe-1.5 transition-colors hover:bg-(--color-surface-hover)"
         >
           <span
             aria-hidden="true"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--color-accent) text-xs font-semibold text-(--color-text-inverse)"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--color-brand) text-xs font-semibold text-(--color-text-inverse)"
           >
             {initials(user.name)}
           </span>
           <span className="hidden min-w-0 text-start sm:block">
-            <span className="block max-w-36 truncate text-[0.8125rem] font-semibold text-(--color-text)">
+            <span className="block max-w-36 truncate text-sm font-semibold text-(--color-text)">
               {user.name}
             </span>
-            <span className="block text-[0.6875rem] text-(--color-text-muted)">
-              {user.role_label}
-            </span>
+            <span className="block text-xs text-(--color-text-2)">{user.role_label}</span>
           </span>
-          <Icon
-            name="chevronDown"
-            size={14}
-            className="hidden text-(--color-text-subtle) sm:block"
-          />
+          <Icon name="chevronDown" size={14} className="hidden text-(--color-muted) sm:block" />
         </button>
       )}
     >
       {() => (
         <div className="p-1.5">
           <div className="px-3 py-2.5">
-            <p className="truncate text-sm font-semibold text-(--color-text)">{user.name}</p>
-            <p className="truncate text-xs text-(--color-text-muted)">{user.email}</p>
+            <p className="truncate text-base font-semibold text-(--color-text)">{user.name}</p>
+            <p className="truncate text-xs text-(--color-text-2)">{user.email}</p>
           </div>
           <div className="my-1 h-px bg-(--color-line-subtle)" />
 
@@ -542,7 +536,7 @@ function UserMenu({ user, onSignOut }) {
           <span
             aria-disabled="true"
             title={t('nav.comingLater')}
-            className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] text-(--color-text-subtle)"
+            className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm text-(--color-muted)"
           >
             <Icon name="userCircle" />
             <span className="flex-1">{t('shell.profile')}</span>
@@ -558,9 +552,9 @@ function UserMenu({ user, onSignOut }) {
           <div
             role="group"
             aria-label={t('preferences.language')}
-            className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-(--color-text)"
+            className="flex items-center gap-2.5 px-3 py-2 text-sm text-(--color-text)"
           >
-            <Icon name="globe" className="text-(--color-text-muted)" />
+            <Icon name="globe" className="text-(--color-text-2)" />
             <span className="flex-1">{t('preferences.language')}</span>
             <Choice
               options={[
@@ -576,9 +570,9 @@ function UserMenu({ user, onSignOut }) {
             <div
               role="group"
               aria-label={t('preferences.numerals')}
-              className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] text-(--color-text)"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-(--color-text)"
             >
-              <span aria-hidden="true" className="w-4 text-center text-(--color-text-muted)">
+              <span aria-hidden="true" className="w-4 text-center text-(--color-text-2)">
                 #
               </span>
               <span className="flex-1">{t('preferences.numerals')}</span>
@@ -597,9 +591,9 @@ function UserMenu({ user, onSignOut }) {
           <button
             type="button"
             onClick={onSignOut}
-            className="flex w-full items-center gap-2.5 rounded-(--radius-md) px-3 py-2 text-[0.8125rem] text-(--color-text) hover:bg-(--color-surface-hover)"
+            className="flex w-full items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-surface-hover)"
           >
-            <Icon name="signOut" className="text-(--color-text-muted)" />
+            <Icon name="signOut" className="text-(--color-text-2)" />
             {t('nav.signOut')}
           </button>
         </div>

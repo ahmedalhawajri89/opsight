@@ -87,7 +87,7 @@ export function PeriodSelector({
             }
             className="h-9 w-auto"
           />
-          <span className="text-(--color-text-subtle)" aria-hidden="true">
+          <span className="text-(--color-muted)" aria-hidden="true">
             –
           </span>
           <DateInput
@@ -115,7 +115,7 @@ export function PeriodSelector({
 
       {/* The resolved range is shown, so the preset is never ambiguous. */}
       {showRange && (
-        <span className="tabular hidden text-[0.8125rem] text-(--color-text-muted) lg:inline">
+        <span className="tabular hidden text-sm text-(--color-text-2) lg:inline">
           {describePeriod(resolved.from, resolved.to)}
         </span>
       )}

@@ -41,7 +41,7 @@ export function ExportButton({ onExport, filters, label, disabled = false, class
       </Button>
 
       {state.error && (
-        <p role="alert" className="mt-1.5 max-w-xs text-[0.8125rem] text-(--color-negative)">
+        <p role="alert" className="mt-1.5 max-w-xs text-sm text-(--color-danger)">
           {/*
             The row-cap refusal names the count and the limit and tells the
             reader to narrow the filters, so showing the server's message is

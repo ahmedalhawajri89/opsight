@@ -63,7 +63,7 @@ export function Popover({ trigger, children, align = 'end', className, panelClas
         <div
           id={id}
           className={cn(
-            'absolute top-full z-50 mt-2 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface-raised) shadow-(--shadow-overlay)',
+            'absolute top-full z-50 mt-2 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-overlay)',
             align === 'end' ? 'end-0' : 'start-0',
             panelClassName,
           )}

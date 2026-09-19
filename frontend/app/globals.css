@@ -5,8 +5,9 @@
  * Opsight token layer
  * ---------------------------------------------------------------------------
  *
- * Every colour, radius and shadow in the application is defined here. No
- * component may use a raw hex value — that is what makes a theme a property of
+ * Every colour, type size, radius and shadow in the application is defined
+ * here, by ROLE rather than by appearance. No component may use a raw hex
+ * value, a font size outside the scale, or a radius of its own — that is what makes a theme a property of
  * the system rather than a per-component retrofit
  * (docs/product/UI_UX_DIRECTION.md §11).
  *
@@ -25,97 +26,121 @@
 
 :root {
   /*
-   * PALETTE — v4, from the dashboard specification.
-   *
-   * A light blue-grey ground, white cards, deep navy for weight (primary
-   * buttons, the selected segment, the avatar) and indigo for what you can
-   * follow (links, the current place in the navigation). Values are the
-   * specification's own, moved only where WCAG AA required it: the spec's
-   * green, red, amber and muted grey are too light for 12px text, so the TEXT
-   * tokens are darker while the tints keep the spec's hue.
-   *
-   * Every pair below is held to WCAG AA by tests/contrast.test.js, and the six
-   * chart series to a minimum perceptual distance under simulated protanopia
-   * and deuteranopia.
+   * SURFACES — four steps, from the page ground up to a selected row.
+   * `ground` is the page, `surface` is anything that sits on it, `subtle` is
+   * the half-step used for table heads and inset strips.
    */
-
-  /* Surfaces. */
+  --ground: #f5f7fb;
   --surface: #ffffff;
-  --surface-sunken: #f5f7fb;
-  --surface-raised: #ffffff;
+  --surface-subtle: #fafbfd;
   --surface-hover: #f2f4f9;
   --surface-selected: #eef0ff;
   --sidebar: #ffffff;
 
   /*
-   * Lines. Three weights, each with a job:
-   *   subtle — separators inside a panel (table rows)
-   *   border — the edge of a card
-   *   strong — the boundary of a CONTROL, which WCAG 1.4.11 holds to 3:1
+   * LINES — three weights, each with a job:
+   *   subtle  separators inside a panel (table rows)
+   *   border  the edge of a card
+   *   strong  the boundary of a CONTROL, which WCAG 1.4.11 holds to 3:1
    */
   --border-subtle: #f1f3f8;
   --border: #edf0f6;
   --border-strong: #8a93a6;
 
-  /* Text: headings, body, captions. */
+  /*
+   * TEXT — three roles, and all three clear 4.5:1 on every surface above,
+   * including the muted one. Hierarchy comes from size and weight; the muted
+   * tone marks metadata, it does not mark unimportant text.
+   */
   --text: #0f172a;
-  --text-muted: #475569;
-  --text-subtle: #7b879c;
+  --text-2: #475569;
+  --muted: #5c6880;
   --text-inverse: #ffffff;
 
-  /* Accent: navy carries weight, indigo carries navigation and links. */
-  --accent: #1e2a5e;
-  --accent-hover: #172150;
-  --accent-active: #111936;
-  --accent-subtle: #eef0ff;
-  --accent-text: #4f46e5;
-
-  /* Semantic — meaning only, never decoration. Each has a ~10% tint. */
-  --positive: #15803d;
-  --positive-subtle: #ebf7ef;
-  --negative: #c81e1e;
-  --negative-subtle: #fdecec;
-  --warning: #b45309;
-  --warning-subtle: #fef5e7;
-  --info: #2563eb;
-  --info-subtle: #e9effd;
-
-  /* Two more tints for icons (never text on their own). */
-  --purple: #7c3aed;
-  --purple-subtle: #f2ebfd;
-  --teal: #0f766e;
-  --teal-subtle: #e6f6f4;
-
   /*
-   * Categorical series: blue, amber, teal, violet, navy, cyan. Separated by
-   * lightness as much as by hue, because the red-green axis collapses under
-   * the two common forms of colour blindness.
+   * BRAND — the navy identity. Reserved for the mark, the primary button and
+   * a page header. It is deliberately NOT available as a page-sized wash
+   * inside the application: a full navy panel belongs to the sign-in screen
+   * and nowhere else.
+   *
+   * `brand-text` is the indigo that carries what you can follow — links and
+   * the current place in the navigation — and `brand-soft` marks that place.
    */
-  --series-1: #2563eb;
-  --series-2: #d97706;
-  --series-3: #0f9a8d;
-  --series-4: #a275f0;
-  --series-5: #1e2a5e;
-  --series-6: #0e7490;
-
-  /* Sparkline strokes: decorative marks beneath a stated figure. */
-  --spark-green: #16a34a;
-  --spark-blue: #2563eb;
-  --spark-purple: #7c3aed;
-  --spark-teal: #14b8a6;
-
-  /* The product mark. */
+  --brand: #1e2a5e;
+  --brand-hover: #172150;
+  --brand-active: #111936;
+  --brand-text: #4f46e5;
+  --brand-soft: #eef0ff;
   --brand-from: #6366f1;
   --brand-to: #4f46e5;
 
-  /* Focus */
-  --focus-ring: #4f46e5;
+  /*
+   * ACCENT — one warm tone, and the only warm tone in the interface chrome.
+   * It draws the eye to a live figure, a state, and the focus ring. It is
+   * never used for a surface, a border or body text.
+   *
+   * `accent` is the mark (4.92:1 on white, so it may carry text as well as a
+   * ring); `accent-strong` is the same hue for text on the soft tint.
+   */
+  --accent: #a16207;
+  --accent-strong: #854d0e;
+  --accent-soft: #fdf3e0;
+
+  /*
+   * SEMANTIC — meaning only, never decoration. Each has a soft tint for the
+   * background of a badge or an inline message.
+   */
+  --success: #15803d;
+  --success-soft: #ebf7ef;
+  --warning: #b45309;
+  --warning-soft: #fef5e7;
+  --danger: #c81e1e;
+  --danger-soft: #fdecec;
+  --info: #1d4ed8;
+  --info-soft: #e9effd;
+
+  /* Two icon tints. Never text on their own. */
+  --violet: #7c3aed;
+  --violet-soft: #f2ebfd;
+  --teal: #0f766e;
+  --teal-soft: #e6f6f4;
+
+  /*
+   * CHARTS — a categorical palette that shares nothing with the interface.
+   * A chart colour never means "brand", "warning" or "selected", and no
+   * interface state is ever painted in one of these.
+   *
+   * Separated by lightness as much as by hue, because the red-green axis
+   * collapses under the two common forms of colour blindness; the worst pair
+   * measures ΔE 17.3 under simulated protanopia.
+   */
+  --chart-1: #2563eb;
+  --chart-2: #d97706;
+  --chart-3: #0f9a8d;
+  --chart-4: #a275f0;
+  --chart-5: #be185d;
+  --chart-6: #0e7490;
+
+  /* Sparkline strokes: decorative marks beneath a figure that is already stated. */
+  --spark-green: #16a34a;
+  --spark-blue: #2563eb;
+  --spark-violet: #7c3aed;
+  --spark-teal: #14b8a6;
+
+  /* Focus is the accent's job, everywhere, without exception. */
+  --focus-ring: #a16207;
 }
 
+/*
+ * The dark set is legacy: it predates this system and applies only when a
+ * reader has explicitly chosen it (`data-theme="dark"`). Light is the product,
+ * and it is the only ground this system is designed against. The set is kept
+ * complete and contrast-tested so that choice keeps working.
+ */
 :root[data-theme='dark'] {
+  --ground: #0b1020;
   --surface: #121829;
-  --surface-sunken: #0b1020;
-  --surface-raised: #1a2236;
+  --surface-subtle: #161d31;
   --surface-hover: #1a2236;
   --surface-selected: #1f2552;
   --sidebar: #121829;
@@ -125,52 +150,55 @@
   --border-strong: #5f6a82;
 
   --text: #e8ecf6;
-  --text-muted: #a0a9bd;
-  --text-subtle: #7f89a0;
+  --text-2: #a0a9bd;
+  --muted: #98a2b6;
   --text-inverse: #0b1020;
 
-  --accent: #a5b4fc;
-  --accent-hover: #c7d2fe;
-  --accent-active: #e0e7ff;
-  --accent-subtle: #1f2552;
-  --accent-text: #a5b4fc;
-
-  --positive: #4ade80;
-  --positive-subtle: #10281a;
-  --negative: #f87171;
-  --negative-subtle: #2e1618;
-  --warning: #fbbf24;
-  --warning-subtle: #2d220e;
-  --info: #93b4fd;
-  --info-subtle: #1c2547;
-
-  --purple: #c4b5fd;
-  --purple-subtle: #241c42;
-  --teal: #5eead4;
-  --teal-subtle: #10302c;
-
-  --series-1: #6b8cff;
-  --series-2: #fbbf24;
-  --series-3: #2dd4bf;
-  --series-4: #c4b5fd;
-  --series-5: #e2e8f0;
-  --series-6: #0e9fbf;
-
-  --spark-green: #4ade80;
-  --spark-blue: #6b8cff;
-  --spark-purple: #c4b5fd;
-  --spark-teal: #2dd4bf;
-
+  --brand: #a5b4fc;
+  --brand-hover: #c7d2fe;
+  --brand-active: #e0e7ff;
+  --brand-text: #a5b4fc;
+  --brand-soft: #1f2552;
   --brand-from: #818cf8;
   --brand-to: #6366f1;
 
-  --focus-ring: #a5b4fc;
+  --accent: #e0b155;
+  --accent-strong: #f0c877;
+  --accent-soft: #2a2113;
+
+  --success: #4ade80;
+  --success-soft: #10281a;
+  --warning: #fbbf24;
+  --warning-soft: #2d220e;
+  --danger: #f87171;
+  --danger-soft: #2e1618;
+  --info: #93b4fd;
+  --info-soft: #1c2547;
+
+  --violet: #c4b5fd;
+  --violet-soft: #241c42;
+  --teal: #5eead4;
+  --teal-soft: #10302c;
+
+  --chart-1: #6b8cff;
+  --chart-2: #fbbf24;
+  --chart-3: #2dd4bf;
+  --chart-4: #c4b5fd;
+  --chart-5: #f5d0fe;
+  --chart-6: #0e9fbf;
+
+  --spark-green: #4ade80;
+  --spark-blue: #6b8cff;
+  --spark-violet: #c4b5fd;
+  --spark-teal: #2dd4bf;
+
+  --focus-ring: #e0b155;
 }
 
 @theme inline {
+  --color-ground: var(--ground);
   --color-surface: var(--surface);
-  --color-surface-sunken: var(--surface-sunken);
-  --color-surface-raised: var(--surface-raised);
+  --color-surface-subtle: var(--surface-subtle);
   --color-surface-hover: var(--surface-hover);
   --color-surface-selected: var(--surface-selected);
   --color-sidebar: var(--sidebar);
@@ -180,56 +208,96 @@
   --color-line-strong: var(--border-strong);
 
   --color-text: var(--text);
-  --color-text-muted: var(--text-muted);
-  --color-text-subtle: var(--text-subtle);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--muted);
   --color-text-inverse: var(--text-inverse);
 
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-text: var(--brand-text);
+  --color-brand-soft: var(--brand-soft);
+
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-active: var(--accent-active);
-  --color-accent-subtle: var(--accent-subtle);
-  --color-accent-text: var(--accent-text);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
 
-  --color-positive: var(--positive);
-  --color-positive-subtle: var(--positive-subtle);
-  --color-negative: var(--negative);
-  --color-negative-subtle: var(--negative-subtle);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
-  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-info: var(--info);
-  --color-info-subtle: var(--info-subtle);
-  --color-purple: var(--purple);
-  --color-purple-subtle: var(--purple-subtle);
+  --color-info-soft: var(--info-soft);
+
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
   --color-teal: var(--teal);
-  --color-teal-subtle: var(--teal-subtle);
+  --color-teal-soft: var(--teal-soft);
 
-  --color-series-1: var(--series-1);
-  --color-series-2: var(--series-2);
-  --color-series-3: var(--series-3);
-  --color-series-4: var(--series-4);
-  --color-series-5: var(--series-5);
-  --color-series-6: var(--series-6);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
 
-  /* Inter for Latin glyphs, IBM Plex Sans Arabic for Arabic ones — chosen per
-     character, so a line mixing an Arabic label with "BHD" or an SKU renders
-     each script in the face designed for it. */
-  --font-sans: var(--font-inter), var(--font-arabic), system-ui, sans-serif;
+  /*
+   * TYPE.
+   *
+   * Inter for Latin glyphs, IBM Plex Sans Arabic for Arabic ones — chosen per
+   * character, so a line mixing an Arabic label with "BHD" or an SKU renders
+   * each script in the face designed for it. Both are self-hosted by
+   * next/font; there is no system fallback in the stack, because a system
+   * Arabic face would change the metrics of every line it touched.
+   */
+  --font-sans: var(--font-inter), var(--font-arabic);
   --font-mono: var(--font-mono-ui);
 
   /*
-   * Radii. A scale of three: controls, panels, and nothing larger. Softer than
-   * the first design system, which read as severe beside the charts — but a
-   * panel is still a rectangle, and nothing approaches a pill except a status
-   * badge, where the shape itself is the signal.
+   * Seven sizes: 12 / 13 / 14 / 16 / 20 / 24 / 32. Nothing between them.
+   * Body sizes are set at 1.65 for Arabic's taller ascenders and diacritics;
+   * headings tighten to 1.25, where the extra leading only pulls a title
+   * apart. Hierarchy is carried by size and weight — never by colour alone.
    */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.65;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.65;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.65;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.65;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.25;
 
   /*
-   * Shadow. A panel gets a soft two-layer lift so white separates from the
-   * off-white ground without a heavier border. Genuinely floating layers get
-   * the overlay shadow. There is no third step.
+   * SPACE is Tailwind's 4px step, used at 4 / 8 / 12 / 16 / 24 / 32 / 48 —
+   * that is `1 2 3 4 6 8 12`. Half-steps exist in the framework and are not
+   * part of this system.
+   *
+   * Interactive targets are 44px (`h-11`), which is the reason 11 appears in
+   * layout code that otherwise keeps to the scale.
+   */
+
+  /*
+   * RADII by role, not by size: a control, a panel, a card, a badge.
+   */
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  /*
+   * SHADOW. A panel gets a hairline lift so white separates from the off-white
+   * ground without a heavier border. Genuinely floating layers get the overlay
+   * shadow. There is no third step, and no card carries both a shadow and a
+   * visible border.
    */
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04);
   --shadow-card-hover: 0 4px 14px -4px rgb(16 24 40 / 0.1);
@@ -256,10 +324,10 @@ html[data-theme='dark'] {
 }
 
 body {
-  background: var(--surface-sunken);
+  background: var(--ground);
   color: var(--text);
-  font-size: 0.875rem; /* 14px — this is a dense information tool */
-  line-height: 1.5;
+  font-size: var(--text-base); /* 14px — this is a dense information tool */
+  line-height: 1.65;
 }
 
 /*
@@ -273,6 +341,15 @@ body {
 }
 
 /*
+ * Prose stops at 65 characters. Past that the eye loses the start of the next
+ * line, and every descriptive paragraph in this interface is optional reading
+ * that has to stay easy to abandon and resume.
+ */
+.measure {
+  max-width: 65ch;
+}
+
+/*
  * ---------------------------------------------------------------------------
  * Arabic
  * ---------------------------------------------------------------------------
@@ -283,15 +360,11 @@ body {
  * headers) is therefore reset under Arabic rather than trusting each component
  * to remember. Uppercase has no effect on Arabic and needs no reset.
  *
- * Arabic also carries taller ascenders and descenders and more diacritic room
- * than Latin at the same size, so body line-height is opened slightly.
+ * Arabic's taller ascenders and diacritics are why the system's body
+ * line-height is 1.65 for both scripts, rather than opened only here.
  */
 html[lang='ar'] [class*='tracking-'] {
   letter-spacing: 0 !important;
-}
-
-html[lang='ar'] body {
-  line-height: 1.65;
 }
 
 /* Focus is always visible. `outline: none` is prohibited project-wide. */

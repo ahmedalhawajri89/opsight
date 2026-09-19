@@ -58,7 +58,7 @@ export function OrderActions({ order, onDone }) {
       {failure && (
         <p
           role="alert"
-          className="rounded-(--radius-sm) border border-(--color-negative) bg-(--color-negative-subtle) px-3 py-2 text-[0.8125rem] text-(--color-negative)"
+          className="rounded-(--radius-control) border border-(--color-danger) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)"
         >
           {failure}
         </p>
@@ -156,22 +156,22 @@ export function OrderActions({ order, onDone }) {
             )}
           </Field>
 
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex items-start gap-2 text-base">
             <input
               type="checkbox"
               checked={returnStock}
               onChange={(event) => setReturnStock(event.target.checked)}
-              className="mt-0.5 size-3.5 accent-(--color-accent)"
+              className="mt-0.5 size-3.5 accent-(--color-brand)"
             />
             <span>
               {t('orderActions.returnStock')}
-              <span className="mt-0.5 block text-[0.8125rem] text-(--color-text-subtle)">
+              <span className="mt-0.5 block text-sm text-(--color-muted)">
                 {t('orderActions.returnStockHint')}
               </span>
             </span>
           </label>
 
-          <p className="text-[0.8125rem] text-(--color-text-subtle)">
+          <p className="text-sm text-(--color-muted)">
             <Trans
               k="orderActions.refundPeriodNote"
               tags={{ strong: (text) => <strong>{text}</strong> }}

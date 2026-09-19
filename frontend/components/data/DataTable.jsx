@@ -90,11 +90,11 @@ export function DataTable({
     <Shell className={className} bare={bare}>
       {/* Only the table scrolls horizontally; the page body never does. */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-collapse text-base">
           {caption && <caption className="sr-only">{caption}</caption>}
 
           <thead>
-            <tr className="border-b border-(--color-line) bg-(--color-surface-sunken)/70">
+            <tr className="border-b border-(--color-line) bg-(--color-ground)/70">
               {columns.map((column) => (
                 <HeaderCell
                   key={column.key}
@@ -132,7 +132,7 @@ export function DataTable({
                       // lines cannot be read down a column. A narrow screen
                       // scrolls the table sideways instead.
                       column.numeric && 'tabular text-end whitespace-nowrap',
-                      column.mono && 'font-mono text-[0.8125rem]',
+                      column.mono && 'font-mono text-sm',
                       column.className,
                     )}
                   >
@@ -153,7 +153,7 @@ function Shell({ bare, className, children }) {
     <div
       className={cn(
         'overflow-hidden bg-(--color-surface)',
-        !bare && 'rounded-(--radius-lg) border border-(--color-line) shadow-(--shadow-card)',
+        !bare && 'rounded-(--radius-card) border border-(--color-line) shadow-(--shadow-card)',
         className,
       )}
     >
@@ -186,8 +186,8 @@ function HeaderCell({ column, sort, onSortChange }) {
       style={column.width ? { width: column.width } : undefined}
       aria-sort={column.sortable ? ariaSort : undefined}
       className={cn(
-        'px-3 py-2.5 text-[0.6875rem] font-medium tracking-[0.05em] whitespace-nowrap uppercase first:ps-5 last:pe-5',
-        'text-(--color-text-muted)',
+        'px-3 py-2.5 text-xs font-medium tracking-[0.05em] whitespace-nowrap uppercase first:ps-5 last:pe-5',
+        'text-(--color-text-2)',
         // Header alignment follows its column so the label sits over its data.
         column.numeric ? 'text-end' : 'text-start',
       )}

@@ -47,11 +47,11 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
       {isLoading ? (
         <div className="space-y-3 px-5 py-4" aria-busy="true">
           {[0, 1, 2, 3, 4].map((row) => (
-            <div key={row} className="skeleton h-4 rounded-(--radius-sm)" />
+            <div key={row} className="skeleton h-4 rounded-(--radius-control)" />
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <p className="px-5 pb-5 text-[0.8125rem] text-(--color-text-muted)">
+        <p className="px-5 pb-5 text-sm text-(--color-text-2)">
           {t('dashboard.recentOrders.empty')}
         </p>
       ) : (
@@ -59,7 +59,7 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
           <table className="w-full text-xs">
             <caption className="sr-only">{t('dashboard.recentOrders.title')}</caption>
             <thead>
-              <tr className="border-b border-(--color-line-subtle) text-[0.6875rem] text-(--color-text-subtle)">
+              <tr className="border-b border-(--color-line-subtle) text-xs text-(--color-muted)">
                 <th scope="col" className="px-2 pb-2 text-start font-medium">
                   #
                 </th>
@@ -81,14 +81,14 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
               {orders.map((order) => (
                 <tr
                   key={order.id}
-                  className="border-b border-(--color-line-subtle) transition-colors duration-(--duration-fast) last:border-0 hover:bg-(--color-surface-sunken)"
+                  className="border-b border-(--color-line-subtle) transition-colors duration-(--duration-fast) last:border-0 hover:bg-(--color-ground)"
                 >
                   <td className="px-2 py-2.5">
                     <Link
                       href={`/orders/${order.id}`}
                       aria-label={order.reference}
                       title={order.reference}
-                      className="tabular font-medium whitespace-nowrap text-(--color-text) hover:text-(--color-accent-text) hover:underline"
+                      className="tabular font-medium whitespace-nowrap text-(--color-text) hover:text-(--color-brand-text) hover:underline"
                     >
                       {shortReference(order.reference)}
                     </Link>
@@ -100,11 +100,11 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
                       className="block max-w-[6.5rem] truncate text-start text-(--color-text)"
                     >
                       {order.customer?.name ?? (
-                        <span className="text-(--color-text-muted)">{t('common.walkIn')}</span>
+                        <span className="text-(--color-text-2)">{t('common.walkIn')}</span>
                       )}
                     </span>
                   </td>
-                  <td className="tabular px-2 py-2.5 whitespace-nowrap text-(--color-text-muted)">
+                  <td className="tabular px-2 py-2.5 whitespace-nowrap text-(--color-text-2)">
                     {order.placed_at ? formatShortDate(order.placed_at) : '—'}
                   </td>
                   <td className="px-2 py-2.5">

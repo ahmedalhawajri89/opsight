@@ -70,20 +70,20 @@ const VISUALS = {
 };
 
 const TINTS = {
-  green: 'bg-(--color-positive-subtle) text-(--color-positive)',
-  blue: 'bg-(--color-info-subtle) text-(--color-info)',
-  purple: 'bg-(--color-purple-subtle) text-(--color-purple)',
-  teal: 'bg-(--color-teal-subtle) text-(--color-teal)',
-  amber: 'bg-(--color-warning-subtle) text-(--color-warning)',
-  red: 'bg-(--color-negative-subtle) text-(--color-negative)',
+  green: 'bg-(--color-success-soft) text-(--color-success)',
+  blue: 'bg-(--color-info-soft) text-(--color-info)',
+  purple: 'bg-(--color-violet-soft) text-(--color-violet)',
+  teal: 'bg-(--color-teal-soft) text-(--color-teal)',
+  amber: 'bg-(--color-warning-soft) text-(--color-warning)',
+  red: 'bg-(--color-danger-soft) text-(--color-danger)',
 };
 
 const SPARKS = {
   green: 'var(--spark-green)',
   blue: 'var(--spark-blue)',
-  purple: 'var(--spark-purple)',
+  purple: 'var(--spark-violet)',
   teal: 'var(--spark-teal)',
-  amber: 'var(--series-2)',
+  amber: 'var(--chart-2)',
   red: 'var(--negative)',
 };
 
@@ -96,7 +96,7 @@ export function tierMetrics(metrics = {}) {
 }
 
 const CARD =
-  'min-w-0 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
+  'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
 
 export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
   const { t } = useI18n();
@@ -108,7 +108,7 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className={cn(CARD, 'p-5')}>
               <div className="flex items-center gap-3">
-                <Skeleton className="size-10 rounded-(--radius-md)" />
+                <Skeleton className="size-10 rounded-(--radius-control)" />
                 <Skeleton className="h-3.5 w-24" />
               </div>
               <Skeleton className="mt-5 h-7 w-40" />
@@ -197,15 +197,13 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         <span
           aria-hidden="true"
           className={cn(
-            'inline-flex size-10 shrink-0 items-center justify-center rounded-(--radius-md)',
+            'inline-flex size-10 shrink-0 items-center justify-center rounded-(--radius-control)',
             TINTS[visual.accent],
           )}
         >
           <Icon name={visual.icon} size={20} strokeWidth={1.75} />
         </span>
-        <h3 className="min-w-0 truncate text-[0.8125rem] font-semibold text-(--color-text)">
-          {label}
-        </h3>
+        <h3 className="min-w-0 truncate text-sm font-semibold text-(--color-text)">{label}</h3>
         {definition && (
           <span className="ms-auto">
             <InfoTip label={label} content={definition} />
@@ -222,7 +220,7 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         title={shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined}
       >
         {shown.value === null ? (
-          <span className="text-(--color-text-subtle)">{EMPTY}</span>
+          <span className="text-(--color-muted)">{EMPTY}</span>
         ) : (
           <bdi dir={figureDirection(shown.value)}>{shown.value}</bdi>
         )}
@@ -231,7 +229,7 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
       <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         <Change metric={metric} shown={shown} costly={visual.costly} size="md" />
         {comparisonLabel && (
-          <span className="truncate text-xs text-(--color-text-subtle)">{comparisonLabel}</span>
+          <span className="truncate text-xs text-(--color-muted)">{comparisonLabel}</span>
         )}
       </div>
 
@@ -264,11 +262,11 @@ function CompactKpi({ index, metricKey, metric, currency, decimals }) {
         full card width on its second line. Up to two lines, never an ellipsis:
         "Averag…" names no metric. The reserved height keeps a row aligned.
       */}
-      <h3 className="line-clamp-2 min-h-[2.5em] text-[0.6875rem] leading-[1.25] font-medium hyphens-auto text-(--color-text-muted)">
+      <h3 className="line-clamp-2 min-h-[2.5em] text-xs leading-[1.25] font-medium hyphens-auto text-(--color-text-2)">
         <span
           aria-hidden="true"
           className={cn(
-            'me-1.5 inline-flex size-4 translate-y-[-1px] items-center justify-center rounded-(--radius-sm) align-middle',
+            'me-1.5 inline-flex size-4 translate-y-[-1px] items-center justify-center rounded-(--radius-control) align-middle',
             TINTS[visual.accent],
           )}
         >
@@ -283,7 +281,7 @@ function CompactKpi({ index, metricKey, metric, currency, decimals }) {
       */}
       <p className="tabular mt-2 text-[clamp(0.6875rem,11cqi,0.9375rem)] leading-tight font-bold whitespace-nowrap text-(--color-text)">
         {shown.value === null ? (
-          <span className="text-(--color-text-subtle)">{EMPTY}</span>
+          <span className="text-(--color-muted)">{EMPTY}</span>
         ) : (
           <bdi dir={figureDirection(shown.value)}>{shown.value}</bdi>
         )}
@@ -309,10 +307,7 @@ function Change({ metric, shown, costly = false, size }) {
 
   if (change === null || change === undefined) {
     return (
-      <span
-        className="tabular text-xs text-(--color-text-subtle)"
-        title={t('comparison.unavailable')}
-      >
+      <span className="tabular text-xs text-(--color-muted)" title={t('comparison.unavailable')}>
         {EMPTY}
       </span>
     );
@@ -326,19 +321,19 @@ function Change({ metric, shown, costly = false, size }) {
 
   const colour =
     tone === 'positive'
-      ? 'text-(--color-positive)'
+      ? 'text-(--color-success)'
       : tone === 'negative'
         ? costly
           ? 'text-(--color-warning)'
-          : 'text-(--color-negative)'
-        : 'text-(--color-text-muted)';
+          : 'text-(--color-danger)'
+        : 'text-(--color-text-2)';
 
   return (
     <span
       data-tone={tone}
       className={cn(
         'tabular inline-flex items-center gap-1 font-semibold whitespace-nowrap',
-        size === 'md' ? 'text-[0.8125rem]' : 'text-xs',
+        size === 'md' ? 'text-sm' : 'text-xs',
         colour,
       )}
     >

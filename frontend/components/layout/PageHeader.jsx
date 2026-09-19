@@ -19,7 +19,7 @@ export function PageHeader({ title, description, actions, className, children })
             {title}
           </h1>
           {description && (
-            <p className="mt-1.5 max-w-3xl text-[0.8125rem] leading-relaxed text-(--color-text-muted)">
+            <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-(--color-text-2)">
               {description}
             </p>
           )}
@@ -46,7 +46,7 @@ export function FilterBar({ onClear, activeCount = 0, className, children }) {
     <div
       className={cn(
         'sticky top-13 z-20 -mx-4 mb-4 flex flex-wrap items-end gap-2 border-b border-(--color-line) lg:top-0',
-        'bg-(--color-surface-sunken)/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
+        'bg-(--color-ground)/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
         className,
       )}
     >
@@ -56,7 +56,7 @@ export function FilterBar({ onClear, activeCount = 0, className, children }) {
         <button
           type="button"
           onClick={onClear}
-          className="ms-auto self-center text-[0.8125rem] text-(--color-accent-text) underline-offset-2 hover:underline"
+          className="ms-auto self-center text-sm text-(--color-brand-text) underline-offset-2 hover:underline"
         >
           Clear {activeCount} filter{activeCount === 1 ? '' : 's'}
         </button>
@@ -90,7 +90,7 @@ export function Card({
         // min-w-0: as a grid or flex child a panel would otherwise grow to fit
         // its widest content, so one unwrappable table widened the whole page
         // on a phone. The table scrolls inside its panel instead.
-        'min-w-0 rounded-(--radius-lg) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
+        'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
         className,
       )}
     >
@@ -129,14 +129,14 @@ export function PanelTitle({ title, description, icon }) {
           name={icon}
           size={18}
           strokeWidth={2}
-          className="mt-px shrink-0 text-(--color-accent)"
+          className="mt-px shrink-0 text-(--color-brand)"
         />
       )}
       <div className="min-w-0">
         {title && (
-          <h2 className="text-sm leading-snug font-semibold text-(--color-text)">{title}</h2>
+          <h2 className="text-base leading-snug font-semibold text-(--color-text)">{title}</h2>
         )}
-        {description && <p className="mt-0.5 text-xs text-(--color-text-muted)">{description}</p>}
+        {description && <p className="mt-0.5 text-xs text-(--color-text-2)">{description}</p>}
       </div>
     </div>
   );
