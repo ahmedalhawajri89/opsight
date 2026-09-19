@@ -59,20 +59,20 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
           <table className="w-full text-xs">
             <caption className="sr-only">{t('dashboard.recentOrders.title')}</caption>
             <thead>
-              <tr className="border-b border-(--color-line-subtle) text-[0.6875rem] text-(--color-text-muted)">
-                <th scope="col" className="px-2 py-2 text-start font-medium">
+              <tr className="border-b border-(--color-line-subtle) text-[0.6875rem] text-(--color-text-subtle)">
+                <th scope="col" className="px-2 pb-2 text-start font-medium">
                   #
                 </th>
-                <th scope="col" className="px-2 py-2 text-start font-medium">
+                <th scope="col" className="px-2 pb-2 text-start font-medium">
                   {t('dashboard.recentOrders.customer')}
                 </th>
-                <th scope="col" className="px-2 py-2 text-start font-medium">
+                <th scope="col" className="px-2 pb-2 text-start font-medium">
                   {t('dashboard.recentOrders.date')}
                 </th>
-                <th scope="col" className="px-2 py-2 text-start font-medium">
+                <th scope="col" className="px-2 pb-2 text-start font-medium">
                   {t('dashboard.recentOrders.status')}
                 </th>
-                <th scope="col" className="px-2 py-2 text-end font-medium">
+                <th scope="col" className="px-2 pb-2 text-end font-medium">
                   {t('dashboard.recentOrders.total')}
                 </th>
               </tr>
@@ -81,9 +81,9 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
               {orders.map((order) => (
                 <tr
                   key={order.id}
-                  className="transition-colors duration-150 hover:bg-(--color-surface-sunken)"
+                  className="border-b border-(--color-line-subtle) transition-colors duration-(--duration-fast) last:border-0 hover:bg-(--color-surface-sunken)"
                 >
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2.5">
                     <Link
                       href={`/orders/${order.id}`}
                       aria-label={order.reference}
@@ -93,20 +93,24 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
                       {shortReference(order.reference)}
                     </Link>
                   </td>
-                  <td className="px-2 py-2">
-                    <span className="block max-w-[6.5rem] truncate text-(--color-text)">
+                  <td className="px-2 py-2.5">
+                    {/* dir="auto": a Latin name in an Arabic page truncates at its own end. */}
+                    <span
+                      dir="auto"
+                      className="block max-w-[6.5rem] truncate text-start text-(--color-text)"
+                    >
                       {order.customer?.name ?? (
                         <span className="text-(--color-text-muted)">{t('common.walkIn')}</span>
                       )}
                     </span>
                   </td>
-                  <td className="tabular px-2 py-2 whitespace-nowrap text-(--color-text-muted)">
+                  <td className="tabular px-2 py-2.5 whitespace-nowrap text-(--color-text-muted)">
                     {order.placed_at ? formatShortDate(order.placed_at) : '—'}
                   </td>
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2.5">
                     <OrderStatusBadge status={order.status} />
                   </td>
-                  <td className="tabular px-2 py-2 text-end whitespace-nowrap text-(--color-text)">
+                  <td className="tabular px-2 py-2.5 text-end font-medium whitespace-nowrap text-(--color-text)">
                     {formatMoney(order.total_amount, { currency, decimals })}
                   </td>
                 </tr>

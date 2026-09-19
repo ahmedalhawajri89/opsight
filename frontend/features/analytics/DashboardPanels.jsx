@@ -184,20 +184,20 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
           <table className="w-full text-[0.8125rem]">
             <caption className="sr-only">{t('dashboard.topSelling.title')}</caption>
             <thead>
-              <tr className="border-b border-(--color-line-subtle) text-[0.6875rem] text-(--color-text-muted)">
-                <th scope="col" className="w-8 px-3 py-2 text-start font-medium">
+              <tr className="border-b border-(--color-line-subtle) text-[0.6875rem] text-(--color-text-subtle)">
+                <th scope="col" className="w-8 px-3 pb-2 text-start font-medium">
                   #
                 </th>
-                <th scope="col" className="px-3 py-2 text-start font-medium">
+                <th scope="col" className="px-3 pb-2 text-start font-medium">
                   {t('dashboard.topSelling.product')}
                 </th>
-                <th scope="col" className="px-3 py-2 text-end font-medium whitespace-nowrap">
+                <th scope="col" className="px-3 pb-2 text-end font-medium whitespace-nowrap">
                   {t('dashboard.topSelling.units')}
                 </th>
-                <th scope="col" className="px-3 py-2 text-end font-medium whitespace-nowrap">
+                <th scope="col" className="px-3 pb-2 text-end font-medium whitespace-nowrap">
                   {t('dashboard.topSelling.revenue')}
                 </th>
-                <th scope="col" className="px-3 py-2 text-end font-medium whitespace-nowrap">
+                <th scope="col" className="px-3 pb-2 text-end font-medium whitespace-nowrap">
                   {t('dashboard.topSelling.trend')}
                 </th>
               </tr>
@@ -206,12 +206,12 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
               {ranked.map((row, index) => (
                 <tr
                   key={row.key}
-                  className="transition-colors duration-150 hover:bg-(--color-surface-sunken)"
+                  className="border-b border-(--color-line-subtle) transition-colors duration-(--duration-fast) last:border-0 hover:bg-(--color-surface-sunken)"
                 >
-                  <td className="tabular px-3 py-2 text-(--color-text-muted)">
+                  <td className="tabular px-3 py-2.5 text-(--color-text-subtle)">
                     {formatNumber(index + 1)}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2.5">
                     <span className="flex min-w-0 items-center gap-2.5">
                       <ProductThumb name={row.label} />
                       <span dir="auto" className="max-w-48 truncate text-(--color-text)">
@@ -219,13 +219,13 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
                       </span>
                     </span>
                   </td>
-                  <td className="tabular px-3 py-2 text-end text-(--color-text)">
+                  <td className="tabular px-3 py-2.5 text-end text-(--color-text)">
                     {formatNumber(row.units ?? 0)}
                   </td>
-                  <td className="tabular px-3 py-2 text-end whitespace-nowrap text-(--color-text)">
+                  <td className="tabular px-3 py-2.5 text-end font-medium whitespace-nowrap text-(--color-text)">
                     {formatMoney(row.value, { currency, decimals })}
                   </td>
-                  <td className="px-3 py-2 text-end">
+                  <td className="px-3 py-2.5 text-end">
                     <Trend change={row.change_pct} />
                   </td>
                 </tr>

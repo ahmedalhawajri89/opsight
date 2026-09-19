@@ -39,7 +39,7 @@ export function Badge({
         'inline-flex items-center gap-1.5',
         // No class-merging helper exists, so the two shapes are exclusive here
         // rather than overridden by the caller.
-        shape === 'tag' ? 'rounded-(--radius-sm) px-2.5 py-1' : 'rounded-full px-2 py-0.5',
+        shape === 'tag' ? 'rounded-(--radius-sm) px-2.5 py-1' : 'rounded-full px-2.5 py-1',
         'text-[0.6875rem] font-medium leading-4 whitespace-nowrap',
         TONES[tone] ?? TONES.neutral,
         className,
@@ -73,7 +73,7 @@ export function OrderStatusBadge({ status, className }) {
   const known = Object.hasOwn(ORDER_STATUS_TONE, status);
 
   return (
-    <Badge tone={known ? ORDER_STATUS_TONE[status] : 'neutral'} shape="tag" className={className}>
+    <Badge tone={known ? ORDER_STATUS_TONE[status] : 'neutral'} shape="pill" className={className}>
       {known ? t(`orderStatus.${status}`) : (status ?? t('common.unknown'))}
     </Badge>
   );
