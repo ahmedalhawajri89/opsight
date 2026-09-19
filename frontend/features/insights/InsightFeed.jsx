@@ -69,7 +69,7 @@ export function InsightFeed({
   return (
     <Card
       title={t('insights.title')}
-      icon="diamond"
+      icon="spark"
       className={cn('flex flex-col', className)}
       bodyClassName="flex-1"
       style={style}

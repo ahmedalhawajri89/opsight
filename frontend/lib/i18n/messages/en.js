@@ -363,7 +363,7 @@ const en = {
       partialFootnote: 'The lighter bars are the current month, which is still in progress.',
     },
     inventory: {
-      title: 'Inventory Status',
+      title: 'Inventory Health',
       inStock: 'In Stock',
       low: 'Low Stock',
       out: 'Out of Stock',

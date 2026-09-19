@@ -95,7 +95,7 @@ test.describe('dashboard, as an owner', () => {
     await page.goto('/dashboard');
 
     const panel = page
-      .getByRole('heading', { name: 'Inventory Status' })
+      .getByRole('heading', { name: 'Inventory Health' })
       .locator('xpath=ancestor::section[1]');
     await expect(panel).toBeVisible();
     await expect(panel.getByText('Low Stock', { exact: true })).toBeVisible();
