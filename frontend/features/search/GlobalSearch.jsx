@@ -206,7 +206,7 @@ const SearchField = forwardRef(function SearchField(
     >
       {groups.map((group) => (
         <div key={group.key} role="group" aria-label={group.label} className="mb-1 last:mb-0">
-          <p className="px-3 pt-2 pb-1 text-xs font-semibold tracking-[0.1em] text-(--color-muted) uppercase">
+          <p className="px-3 pt-2 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-muted) uppercase">
             {group.label}
           </p>
           {group.items.map((item) => {

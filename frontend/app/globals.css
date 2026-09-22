@@ -246,13 +246,17 @@
   /*
    * TYPE.
    *
-   * Inter for Latin glyphs, IBM Plex Sans Arabic for Arabic ones — chosen per
+   * Inter for Latin glyphs, DIN Next LT Arabic for Arabic ones — chosen per
    * character, so a line mixing an Arabic label with "BHD" or an SKU renders
-   * each script in the face designed for it. Both are self-hosted by
-   * next/font; there is no system fallback in the stack, because a system
-   * Arabic face would change the metrics of every line it touched.
+   * each script in the face designed for it. Both are self-hosted.
+   *
+   * `--font-stack` is assembled in app/layout.jsx, NOT here, because its order
+   * is the whole point: both real faces first, then their metric-matched
+   * fallbacks. Written as `var(--font-inter), var(--font-arabic)` it put
+   * Inter's Arial fallback ahead of the Arabic face, and Arial drew every
+   * Arabic character in the product. See the comment on FONT_STACK.
    */
-  --font-sans: var(--font-inter), var(--font-arabic);
+  --font-sans: var(--font-stack);
   --font-mono: var(--font-mono-ui);
 
   /*
@@ -328,6 +332,25 @@ body {
   color: var(--text);
   font-size: var(--text-base); /* 14px — this is a dense information tool */
   line-height: 1.65;
+}
+
+/*
+ * WEIGHT, by role. Four values and no others:
+ *
+ *   400  body, data, table cells, descriptions, placeholders
+ *   500  labels, table headers, navigation, buttons, badges — anything a
+ *        reader scans for rather than reads
+ *   600  headings and figures: the thing a panel is about
+ *   700  the wordmark, and nothing else
+ *
+ * Never synthesised. DIN Next LT Arabic has no SemiBold, so a 600 heading
+ * resolves to its Bold; without this line the browser would be free to smear a
+ * fake 600 out of Regular instead, which pulls apart the joins that make
+ * Arabic legible. Italics are synthesised in neither script — Arabic has no
+ * italic form, and a slanted Latin run inside an Arabic line reads as damage.
+ */
+html {
+  font-synthesis: none;
 }
 
 /*

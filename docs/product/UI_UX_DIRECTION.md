@@ -40,14 +40,21 @@ These are common in dashboard templates and are prohibited in Opsight:
 
 Typography carries most of the hierarchy, so it is specified first.
 
-**Typefaces.** Two faces, both self-hosted by `next/font`, with **no system fallback in
-the stack**: **Inter** for Latin and **IBM Plex Sans Arabic** for Arabic, at 400/500/600/700.
-The stack lists Inter first and Plex second, so a line mixing an Arabic label with `BHD` or
-an SKU renders each script in the face designed for it, per character. A monospace face
-(JetBrains Mono) is kept for identifiers.
+**Typefaces.** **Inter** for Latin and **DIN Next LT Arabic** for Arabic, both self-hosted.
+DIN Next is loaded from `frontend/app/fonts` as woff2 at Regular, Medium and Bold (about 50KB
+each); the family's UltraLight, Light, Heavy and Black are not shipped, because nothing uses
+them. Each character is drawn by the face designed for its script, so a line mixing an Arabic
+label with `BHD` or an SKU needs no special handling. JetBrains Mono is kept for identifiers.
 
-Falling back to a system Arabic face is not an acceptable degradation: it changes the
-metrics of every line it touches, and the layout was measured against Plex.
+**The order of the stack matters more than its contents.** It is
+`Inter, DIN Next, Inter Fallback, DIN Next Fallback` — both real faces, then both
+metric-matched fallbacks — and it is assembled in `app/layout.jsx` from next/font's own
+values. Written the obvious way, as Inter's pair followed by the Arabic pair, it put Inter's
+fallback (`local("Arial")`, which has Arabic glyphs) ahead of the Arabic face, and **Arial
+drew every Arabic character in the product** — first over IBM Plex, then over DIN Next —
+while the Arabic font downloaded on every page. The computed `font-family` looked correct
+throughout; only Chrome's platform-font report showed it. `e2e/i18n.spec.js` now asks Chrome
+which font drew an Arabic heading, and fails on Arial.
 
 **The tabular-numerals rule.** Every number that appears in a column, a KPI tile, a chart
 axis or a comparison **must** use tabular figures (`font-variant-numeric: tabular-nums`),
@@ -85,7 +92,21 @@ pulls a title apart.
 
 - Hierarchy comes from SIZE and WEIGHT. Never from colour alone — a lighter grey is not a
   smaller heading, it is a contrast failure waiting to be filed.
-- Weights 400/500/600, and 700 only for the product wordmark.
+- Weight, by role:
+
+  | Weight | Role | Inter | DIN Next LT Arabic |
+  | --- | --- | --- | --- |
+  | 400 | Body, data, table cells, descriptions | Regular | Regular |
+  | 500 | Labels, table headers, eyebrows, navigation, buttons, badges | Medium | Medium |
+  | 600 | Headings and figures | SemiBold | **Bold** |
+  | 700 | The wordmark only | Bold | Bold |
+
+  DIN Next LT Arabic has no SemiBold, so 600 resolves to its Bold. That is the intended
+  result, not a fallback: Arabic needs about one step more weight than Latin to look equally
+  present at the same size. `font-synthesis: none` stops the browser from faking a 600 out
+  of Regular, which breaks the joins in a cursive script. Eyebrow labels are 500, not 600 —
+  in Latin their uppercase and tracking set them apart, and Arabic has neither, so at 600
+  they came out Bold and louder than the items they label.
 - Uppercase and letter-spacing only for the 12px eyebrow label, and both are reset under
   Arabic, where tracking breaks the cursive join.
 - Numbers align with their column; the currency symbol is de-emphasised relative to the digits.

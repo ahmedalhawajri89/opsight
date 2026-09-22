@@ -133,4 +133,41 @@ test.describe('a visitor on the sign-in page', () => {
     await page.getByRole('button', { name: 'English' }).click();
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
   });
+
+  /*
+   * Asks Chrome which font actually DREW the Arabic heading — not which font
+   * the CSS names, which is a different question.
+   *
+   * For the whole life of the project until this test existed, the Arabic face
+   * downloaded on every page and drew nothing: Inter's metric fallback,
+   * `local("Arial")`, sat ahead of it in the stack, and Arial has Arabic
+   * glyphs. Computed `font-family` looked right the entire time; only the
+   * platform-font report told the truth.
+   */
+  test('draws Arabic in DIN Next LT Arabic, not a system fallback', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await context.addCookies([{ name: 'opsight_locale', value: 'ar', url: baseURL }]);
+    await page.goto('/login');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('DOM.enable');
+    await cdp.send('CSS.enable');
+    const { root } = await cdp.send('DOM.getDocument');
+    const { nodeId } = await cdp.send('DOM.querySelector', {
+      nodeId: root.nodeId,
+      selector: 'h1',
+    });
+    const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+
+    const drawn = fonts.map((font) => font.familyName);
+    expect(drawn, `the Arabic heading was drawn with: ${drawn.join(', ')}`).toContain(
+      'DIN Next LT Arabic',
+    );
+    expect(drawn).not.toContain('Arial');
+  });
 });

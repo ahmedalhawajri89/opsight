@@ -362,7 +362,7 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
                 <p
                   id={id}
                   className={cn(
-                    'px-3 pb-2 text-xs font-semibold tracking-[0.1em] text-(--color-muted) uppercase',
+                    'px-3 pb-2 text-xs font-medium tracking-[0.1em] text-(--color-muted) uppercase',
                     // On the rail the group is shown by a rule instead of a word.
                     compact && 'hidden lg:block',
                   )}
