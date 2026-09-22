@@ -24,7 +24,6 @@ class Category extends Model
     use HasFactory;
 
     use RecordsActivity;
-
     use SoftDeletes;
 
     /** @var list<string> */

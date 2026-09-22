@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\CurrencyAmount;
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
 use Database\Factories\ExpenseFactory;
@@ -32,7 +33,6 @@ class Expense extends Model
     use HasFactory;
 
     use RecordsActivity;
-
     use SoftDeletes;
 
     /** @var list<string> */
@@ -50,7 +50,7 @@ class Expense extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'decimal:2',
+            'amount' => CurrencyAmount::class,
             // A date, not a datetime. Expense periods compare against local
             // calendar dates with no timezone conversion (METRICS.md §2.9).
             'incurred_on' => 'date',

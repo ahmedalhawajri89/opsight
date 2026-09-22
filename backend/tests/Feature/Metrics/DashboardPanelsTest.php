@@ -9,6 +9,7 @@ use App\Models\BusinessSetting;
 use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\MetricFixture;
@@ -53,11 +54,11 @@ it('buckets operating expenses so they sum to the period total', function (): vo
         ->json('data');
 
     // August's two expenses, and not July's.
-    $total = array_reduce($series, fn (string $sum, array $bucket) => bcadd($sum, (string) $bucket['value'], 2), '0');
+    $total = array_reduce($series, fn (string $sum, array $bucket) => bcadd($sum, (string) $bucket['value'], Money::scale()), '0');
 
     expect($total)->toBe(MetricFixture::EXPECTED['operating_expenses'])
-        ->and(collect($series)->firstWhere('bucket', '2026-08-05')['value'])->toBe('90.00')
-        ->and(collect($series)->firstWhere('bucket', '2026-08-06')['value'])->toBe('0.00');
+        ->and(collect($series)->firstWhere('bucket', '2026-08-05')['value'])->toBe('90.000')
+        ->and(collect($series)->firstWhere('bucket', '2026-08-06')['value'])->toBe('0.000');
 });
 
 it('refuses expenses over time to a role that cannot see cost', function (): void {
@@ -120,7 +121,7 @@ it('breaks the period sales down by category, summing to the whole', function ()
         ->assertOk()
         ->json('data.category_breakdown');
 
-    $total = array_reduce($rows, fn (string $sum, array $row) => bcadd($sum, (string) $row['value'], 2), '0');
+    $total = array_reduce($rows, fn (string $sum, array $row) => bcadd($sum, (string) $row['value'], Money::scale()), '0');
 
     /*
      * The breakdown ranks by LINE totals, like the product ranking beside it:
@@ -130,7 +131,7 @@ it('breaks the period sales down by category, summing to the whole', function ()
      * not to the net revenue headline (540) — which is why the chart shows
      * shares rather than presenting its total as net revenue.
      */
-    expect($total)->toBe('600.00')
+    expect($total)->toBe('600.000')
         ->and(round(collect($rows)->sum('share'), 4))->toBe(1.0);
 });
 
@@ -223,7 +224,7 @@ it('gives each top product its units and its trend against the comparison period
 
     // WIDGET: 2 + 1 + 1 units at 100 = 400; nothing sold in July, so no trend.
     expect($widget['units'])->toBe(4)
-        ->and($widget['value'])->toBe('400.00')
+        ->and($widget['value'])->toBe('400.000')
         ->and($widget['previous_value'])->toBeNull()
         ->and($widget['change_pct'])->toBeNull();
 });

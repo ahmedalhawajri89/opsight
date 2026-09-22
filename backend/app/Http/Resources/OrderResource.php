@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
 use App\Models\Order;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -68,9 +69,9 @@ class OrderResource extends JsonResource
             $this->mergeWhen($canSeeMargin, fn (): array => [
                 'cogs_amount' => (string) $this->cogs_amount,
                 'gross_profit' => bcsub(
-                    bcsub((string) $this->subtotal_amount, (string) $this->discount_amount, 2),
+                    bcsub((string) $this->subtotal_amount, (string) $this->discount_amount, Money::scale()),
                     (string) $this->cogs_amount,
-                    2,
+                    Money::scale(),
                 ),
             ]),
 

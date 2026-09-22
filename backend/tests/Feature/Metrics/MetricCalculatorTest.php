@@ -15,6 +15,7 @@ use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Carbon;
 use Tests\Support\MetricFixture;
 
@@ -80,13 +81,13 @@ it('does not move a past figure when the catalog price and cost change', functio
     // The fixture already reprices WIDGET from 100/40 to 150/60 AFTER every
     // order is committed. If any metric read products.cost, these numbers would
     // differ — and by a lot.
-    expect($this->metrics->cogs($this->period))->toBe('240.00')
-        ->and($this->metrics->netRevenue($this->period))->toBe('540.00');
+    expect($this->metrics->cogs($this->period))->toBe('240.000')
+        ->and($this->metrics->netRevenue($this->period))->toBe('540.000');
 
     // And again after a second change, to be certain nothing is cached.
     Product::where('sku', 'GADGET')->update(['price' => 99, 'cost' => 88]);
 
-    expect($this->metrics->cogs($this->period))->toBe('240.00')
+    expect($this->metrics->cogs($this->period))->toBe('240.000')
         ->and(round($this->metrics->grossMargin($this->period), 6))->toBe(
             round(300 / 540, 6),
             'Margin moved when the catalog changed — COGS is reading products.cost, not the snapshot.',
@@ -101,7 +102,7 @@ it('agrees with the line-level sum, so the frozen total cannot drift', function 
         ->whereIn('orders.status', OrderStatus::qualifying())
         ->where('orders.placed_at', '>=', $from)
         ->where('orders.placed_at', '<', $to)
-        ->selectRaw('SUM(ROUND(order_items.unit_cost * order_items.quantity, 2)) AS total')
+        ->selectRaw('SUM(ROUND(order_items.unit_cost * order_items.quantity, '.Money::scale().')) AS total')
         ->value('total');
 
     // Two routes to the same number: the frozen orders.cogs_amount and the raw
@@ -120,7 +121,7 @@ it('returns zero revenue but a null average for a period with no orders', functi
 
     // Zero revenue is a fact.
     expect($empty->from)->toBe('2020-01-01')
-        ->and(app(MetricCalculator::class)->grossRevenue($empty))->toBe('0.00')
+        ->and(app(MetricCalculator::class)->grossRevenue($empty))->toBe('0.000')
         ->and(app(MetricCalculator::class)->ordersCount($empty))->toBe(0);
 
     // "The average order was worth nothing" is not.
@@ -157,7 +158,7 @@ it('includes cancelled orders in the cancellation denominator and excludes draft
 it('excludes cancelled orders from revenue entirely', function (): void {
     // Order 4 was 3 x GADGET = 75.00. If cancellations leaked into revenue,
     // gross would be 675.00.
-    expect($this->metrics->grossRevenue($this->period))->toBe('600.00');
+    expect($this->metrics->grossRevenue($this->period))->toBe('600.000');
 });
 
 it('excludes drafts from every metric', function (): void {
@@ -220,7 +221,7 @@ it('does not count a pre-existing customer as new', function (): void {
 it('excludes walk-in orders from customer metrics but not from revenue', function (): void {
     // Order 5 is a walk-in worth 100.00, and it has no customer to attribute.
     expect($this->metrics->activeCustomers($this->period))->toBe(2)
-        ->and($this->metrics->grossRevenue($this->period))->toBe('600.00');
+        ->and($this->metrics->grossRevenue($this->period))->toBe('600.000');
 });
 
 it('does not make a cancelled order a first sale', function (): void {
@@ -291,10 +292,10 @@ it('includes an order at 23:30 local on the last day and excludes 00:30 the next
 
 it('ranges expenses on incurred_on and excludes those outside the period', function (): void {
     // The fixture includes a 500.00 July expense that must not appear.
-    expect($this->metrics->operatingExpenses($this->period))->toBe('150.00');
+    expect($this->metrics->operatingExpenses($this->period))->toBe('150.000');
 
     $july = Period::between('2026-07-01', '2026-07-31');
-    expect($this->metrics->operatingExpenses($july))->toBe('500.00');
+    expect($this->metrics->operatingExpenses($july))->toBe('500.000');
 });
 
 it('lets a backdated expense change a closed period, which is correct', function (): void {
@@ -307,7 +308,7 @@ it('lets a backdated expense change a closed period, which is correct', function
 
     // An invoice dated last month IS last month's expense, whenever it was
     // entered. The figure moving is the system being right, not wrong.
-    expect($this->metrics->operatingExpenses($this->period))->toBe('175.00');
+    expect($this->metrics->operatingExpenses($this->period))->toBe('175.000');
 });
 
 /*
@@ -335,7 +336,7 @@ it('sums its time series buckets to the period total', function (): void {
 
     $summed = array_reduce(
         $series,
-        fn (string $carry, array $bucket): string => bcadd($carry, (string) $bucket['value'], 2),
+        fn (string $carry, array $bucket): string => bcadd($carry, (string) $bucket['value'], Money::scale()),
         '0.00',
     );
 
@@ -356,7 +357,7 @@ it('sums its breakdown rows to the period total', function (): void {
 
     $summed = array_reduce(
         $result['rows'],
-        fn (string $carry, array $row): string => bcadd($carry, (string) $row['value'], 2),
+        fn (string $carry, array $row): string => bcadd($carry, (string) $row['value'], Money::scale()),
         '0.00',
     );
 
@@ -368,9 +369,9 @@ it('sums its breakdown rows to the period total', function (): void {
      * documents the difference rather than leaving a reader to wonder why 600
      * is not 540.
      */
-    $orderLevelAdjustments = bcadd('10.00', '50.00', 2);   // discount + refund
+    $orderLevelAdjustments = bcadd('10.00', '50.00', Money::scale());   // discount + refund
 
-    expect(bcsub($summed, $orderLevelAdjustments, 2))->toBe(
+    expect(bcsub($summed, $orderLevelAdjustments, Money::scale()))->toBe(
         $this->metrics->netRevenue($this->period),
         'The product breakdown no longer reconciles to net revenue once order-level discounts and refunds are removed.',
     );

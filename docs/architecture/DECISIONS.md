@@ -436,8 +436,16 @@ for a future valuation is already being captured.
 **Status:** Accepted
 **Affects:** Every money column, every aggregate
 
-**Decision.** `DECIMAL(15,4)` for unit amounts, `DECIMAL(15,2)` for totals. Money crosses
-the API as a string.
+**Decision.** `DECIMAL(15,4)` for unit amounts, `DECIMAL(15,3)` for totals, rounded to the
+currency's own decimal places. Money crosses the API as a string, at those places.
+
+> **Amended 2026-09.** Totals were `DECIMAL(15,2)` and every calculation used two places,
+> while `currency_decimals` reached only the display. That silently dropped the third decimal
+> of BHD — the product's default — and of KWD, OMR and JOD. Totals are now `DECIMAL(15,3)`,
+> enough for any accepted currency (0–3 places). Every rounding, sum and comparison takes its
+> scale from `App\Support\Money::scale()`, and `App\Casts\CurrencyAmount` replaces the
+> fixed `decimal:2` cast. `tests/Feature/Orders/CurrencyPrecisionTest.php` fails if any of
+> this regresses.
 
 **Alternatives.**
 
@@ -454,8 +462,8 @@ values are readable in the database during verification. Opsight's primary opera
 aggregation, so keeping aggregation exact and legible in SQL is worth more than integer
 arithmetic's safety in application code.
 
-**Cost accepted.** PHP and JavaScript must not cast these to floats. Controlled by: Eloquent
-`decimal:` casts, money serialised as strings, `Intl.NumberFormat` for display, no
+**Cost accepted.** PHP and JavaScript must not cast these to floats. Controlled by: the
+`CurrencyAmount` cast and `decimal:4` for unit amounts, money serialised as strings, `Intl.NumberFormat` for display, no
 arithmetic on money in JavaScript, and a unit test for the whole path.
 
 ---

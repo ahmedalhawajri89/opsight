@@ -8,6 +8,7 @@ use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
 use App\Models\User;
 use App\Support\Localization\Localizer;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -67,8 +68,8 @@ final class Breakdown
         if ($remainder !== []) {
             $otherValue = array_reduce(
                 $remainder,
-                fn (string $carry, array $row): string => bcadd($carry, (string) $row['value'], 2),
-                '0.00',
+                fn (string $carry, array $row): string => bcadd($carry, (string) $row['value'], Money::scale()),
+                Money::zero(),
             );
 
             $result[] = [
@@ -104,8 +105,8 @@ final class Breakdown
         $value = match ($metric) {
             'net_revenue' => 'COALESCE(SUM(order_items.line_total), 0)',
             'units_sold' => 'COALESCE(SUM(order_items.quantity), 0)',
-            'cogs' => 'COALESCE(SUM(ROUND(order_items.unit_cost * order_items.quantity, 2)), 0)',
-            'gross_profit' => 'COALESCE(SUM(order_items.line_total - ROUND(order_items.unit_cost * order_items.quantity, 2)), 0)',
+            'cogs' => 'COALESCE(SUM(ROUND(order_items.unit_cost * order_items.quantity, '.Money::scale().')), 0)',
+            'gross_profit' => 'COALESCE(SUM(order_items.line_total - ROUND(order_items.unit_cost * order_items.quantity, '.Money::scale().')), 0)',
             default => throw new InvalidArgumentException("Unknown breakdown metric: {$metric}."),
         };
 
@@ -154,8 +155,8 @@ final class Breakdown
     {
         return array_reduce(
             $rows,
-            fn (string $carry, array $row): string => bcadd($carry, (string) $row['value'], 2),
-            '0.00',
+            fn (string $carry, array $row): string => bcadd($carry, (string) $row['value'], Money::scale()),
+            Money::zero(),
         );
     }
 
@@ -177,7 +178,7 @@ final class Breakdown
     /** Null on a zero total — a share of nothing is not zero, it is undefined. */
     private function share(string $value, string $total): ?float
     {
-        if (bccomp($total, '0', 2) === 0) {
+        if (bccomp($total, '0', Money::scale()) === 0) {
             return null;
         }
 

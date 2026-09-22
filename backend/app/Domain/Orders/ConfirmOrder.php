@@ -8,6 +8,7 @@ use App\Domain\Inventory\StockLedger;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -54,8 +55,10 @@ final class ConfirmOrder
                 throw OrderTransitionException::emptyOrder();
             }
 
-            $subtotal = '0.00';
-            $cogs = '0.00';
+            // The currency's own places: 2 for SAR, 3 for BHD (App\Support\Money).
+            $scale = Money::scale();
+            $subtotal = '0';
+            $cogs = '0';
 
             foreach ($items as $item) {
                 /** @var Product|null $product */
@@ -92,8 +95,8 @@ final class ConfirmOrder
                     'line_total' => $lineTotal,
                 ])->save();
 
-                $subtotal = bcadd($subtotal, $lineTotal, 2);
-                $cogs = bcadd($cogs, $lineCogs, 2);
+                $subtotal = bcadd($subtotal, $lineTotal, $scale);
+                $cogs = bcadd($cogs, $lineCogs, $scale);
 
                 // Decrements under a row lock; throws if stock is insufficient,
                 // which rolls the entire confirm back.
@@ -108,9 +111,9 @@ final class ConfirmOrder
             }
 
             $total = bcadd(
-                bcsub($subtotal, (string) $order->discount_amount, 2),
-                bcadd((string) $order->tax_amount, (string) $order->shipping_amount, 2),
-                2,
+                bcsub($subtotal, (string) $order->discount_amount, $scale),
+                bcadd((string) $order->tax_amount, (string) $order->shipping_amount, $scale),
+                $scale,
             );
 
             /*
@@ -134,11 +137,9 @@ final class ConfirmOrder
         });
     }
 
-    /** Half-up to two places, on strings. Money never touches a PHP float. */
+    /** Half-up to the currency's places, on strings. Money never touches a PHP float. */
     private function round(string $value): string
     {
-        $offset = bccomp($value, '0', 6) >= 0 ? '0.005' : '-0.005';
-
-        return bcadd($value, $offset, 2);
+        return Money::round($value);
     }
 }

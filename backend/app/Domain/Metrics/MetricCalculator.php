@@ -6,6 +6,7 @@ namespace App\Domain\Metrics;
 
 use App\Domain\Inventory\StockLevel;
 use App\Domain\Orders\OrderStatus;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +73,9 @@ final class MetricCalculator
     {
         $totals = $this->aggregate($period);
 
-        return bcsub(bcsub($totals->gross, $totals->discounts, 2), $totals->refunds, 2);
+        $scale = Money::scale();
+
+        return bcsub(bcsub($totals->gross, $totals->discounts, $scale), $totals->refunds, $scale);
     }
 
     public function ordersCount(Period $period): int
@@ -113,7 +116,7 @@ final class MetricCalculator
             return null;
         }
 
-        return bcdiv($this->netRevenue($period), (string) $count, 2);
+        return Money::round(bcdiv($this->netRevenue($period), (string) $count, 10));
     }
 
     /* ---------------------------------------------------------------------- */
@@ -133,7 +136,7 @@ final class MetricCalculator
 
     public function grossProfit(Period $period): string
     {
-        return bcsub($this->netRevenue($period), $this->cogs($period), 2);
+        return bcsub($this->netRevenue($period), $this->cogs($period), Money::scale());
     }
 
     /**
@@ -147,7 +150,7 @@ final class MetricCalculator
     {
         $revenue = $this->netRevenue($period);
 
-        if (bccomp($revenue, '0', 2) <= 0) {
+        if (bccomp($revenue, '0', Money::scale()) <= 0) {
             return null;
         }
 
@@ -173,19 +176,19 @@ final class MetricCalculator
             ->selectRaw('COALESCE(SUM(amount), 0) AS total')
             ->value('total');
 
-        return (string) ($total ?? '0.00');
+        return (string) ($total ?? Money::zero());
     }
 
     public function netProfit(Period $period): string
     {
-        return bcsub($this->grossProfit($period), $this->operatingExpenses($period), 2);
+        return bcsub($this->grossProfit($period), $this->operatingExpenses($period), Money::scale());
     }
 
     public function netMargin(Period $period): ?float
     {
         $revenue = $this->netRevenue($period);
 
-        if (bccomp($revenue, '0', 2) <= 0) {
+        if (bccomp($revenue, '0', Money::scale()) <= 0) {
             return null;
         }
 
@@ -229,7 +232,7 @@ final class MetricCalculator
     {
         $gross = $this->grossRevenue($period);
 
-        if (bccomp($gross, '0', 2) === 0) {
+        if (bccomp($gross, '0', Money::scale()) === 0) {
             return null;
         }
 
@@ -609,10 +612,10 @@ final class MetricCalculator
 
         // Money stays a string throughout; only the count becomes an int.
         return $this->aggregates[$key] = (object) [
-            'gross' => (string) ($row->gross ?? '0.00'),
-            'discounts' => (string) ($row->discounts ?? '0.00'),
-            'refunds' => (string) ($row->refunds ?? '0.00'),
-            'cogs' => (string) ($row->cogs ?? '0.00'),
+            'gross' => (string) ($row->gross ?? Money::zero()),
+            'discounts' => (string) ($row->discounts ?? Money::zero()),
+            'refunds' => (string) ($row->refunds ?? Money::zero()),
+            'cogs' => (string) ($row->cogs ?? Money::zero()),
             'orders' => (int) ($row->orders ?? 0),
         ];
     }

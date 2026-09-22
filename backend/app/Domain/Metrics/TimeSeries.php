@@ -8,6 +8,7 @@ use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
 use App\Models\BusinessSetting;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -197,7 +198,7 @@ final class TimeSeries
                 .'THEN SUM(subtotal_amount - discount_amount - refunded_amount - cogs_amount) '
                 .'/ SUM(subtotal_amount - discount_amount - refunded_amount) ELSE NULL END',
             'average_order_value' => 'CASE WHEN COUNT(*) > 0 '
-                .'THEN ROUND(SUM(subtotal_amount - discount_amount - refunded_amount) / COUNT(*), 2) ELSE NULL END',
+                .'THEN ROUND(SUM(subtotal_amount - discount_amount - refunded_amount) / COUNT(*), '.Money::scale().') ELSE NULL END',
             default => throw new InvalidArgumentException("Unknown time series metric: {$metric}."),
         };
 
@@ -268,7 +269,7 @@ final class TimeSeries
             return null;
         }
 
-        return $metric === 'orders_count' ? 0 : '0.00';
+        return $metric === 'orders_count' ? 0 : Money::zero();
     }
 
     private function label(Carbon $date, string $grain): string

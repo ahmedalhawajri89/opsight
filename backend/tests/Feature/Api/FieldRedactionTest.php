@@ -107,8 +107,8 @@ it('includes cogs and gross profit for a manager', function (): void {
 
     $this->getJson("/api/v1/orders/{$order->id}")
         ->assertOk()
-        ->assertJsonPath('data.cogs_amount', '180.00')     // 90.00 x 2
-        ->assertJsonPath('data.gross_profit', '320.00');   // 500.00 - 180.00
+        ->assertJsonPath('data.cogs_amount', '180.000')     // 90.00 x 2
+        ->assertJsonPath('data.gross_profit', '320.000');   // 500.00 - 180.00
 });
 
 it('omits the unit cost snapshot from order lines for staff', function (): void {
@@ -130,8 +130,8 @@ it('still shows staff the revenue side of an order', function (): void {
     // Withholding cost must not withhold what the job requires.
     $this->getJson("/api/v1/orders/{$order->id}")
         ->assertOk()
-        ->assertJsonPath('data.subtotal_amount', '500.00')
-        ->assertJsonPath('data.total_amount', '500.00');
+        ->assertJsonPath('data.subtotal_amount', '500.000')
+        ->assertJsonPath('data.total_amount', '500.000');
 });
 
 /*

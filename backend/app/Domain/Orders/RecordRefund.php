@@ -7,6 +7,7 @@ namespace App\Domain\Orders;
 use App\Domain\Inventory\StockLedger;
 use App\Models\InventoryMovement;
 use App\Models\Order;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -39,7 +40,7 @@ final class RecordRefund
                 throw OrderTransitionException::illegal($order->status, OrderStatus::Refunded);
             }
 
-            if (bccomp($amount, (string) $order->total_amount, 2) > 0) {
+            if (bccomp($amount, (string) $order->total_amount, Money::scale()) > 0) {
                 throw OrderTransitionException::refundExceedsTotal();
             }
 
