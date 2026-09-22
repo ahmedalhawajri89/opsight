@@ -75,7 +75,12 @@ export function useOrderActions(orderId) {
     onSuccess: invalidateAll,
   });
 
-  return { confirm, fulfil, cancel, refund };
+  const pay = useMutation({
+    mutationFn: (payload) => ordersService.recordPayment(orderId, payload),
+    onSuccess: invalidateAll,
+  });
+
+  return { confirm, fulfil, cancel, refund, pay };
 }
 
 export function useOrderDraft() {

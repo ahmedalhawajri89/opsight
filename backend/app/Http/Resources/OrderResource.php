@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
+use App\Domain\Payments\PaymentStatus;
 use App\Models\Order;
 use App\Support\Localization\LocalizedName;
 use App\Support\Money;
@@ -27,6 +28,7 @@ class OrderResource extends JsonResource
     {
         $user = $request->user();
         $canSeeMargin = $user?->can(Ability::OrdersViewMargin->value) ?? false;
+        $paymentStatus = PaymentStatus::for($this->resource);
 
         return [
             'id' => $this->id,
@@ -59,6 +61,15 @@ class OrderResource extends JsonResource
             'shipping_amount' => (string) $this->shipping_amount,
             'total_amount' => (string) $this->total_amount,
 
+            // Payment is derived from the ledgers, never stored (ADR-022).
+            // Null status for a draft or a cancelled order: it owes nothing.
+            'amount_paid' => (string) $this->amount_paid,
+            'outstanding_amount' => PaymentStatus::outstanding($this->resource),
+            'payment_status' => $paymentStatus?->value,
+            'payment_status_label' => $paymentStatus?->label(),
+            'refundable_amount' => $this->refundableAmount(),
+            'stock_returned' => $this->stock_returned_at !== null,
+
             'notes' => $this->notes,
             'is_editable' => $this->isEditable(),
 
@@ -77,6 +88,26 @@ class OrderResource extends JsonResource
             ] : null),
 
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
+
+            'payments' => $this->whenLoaded('payments', fn (): array => $this->payments->map(fn ($payment): array => [
+                'id' => $payment->id,
+                'amount' => (string) $payment->amount,
+                'method' => $payment->method->value,
+                'method_label' => $payment->method->label(),
+                'paid_at' => $payment->paid_at->toIso8601String(),
+                'reference' => $payment->reference,
+                'is_backfill' => (bool) $payment->is_backfill,
+            ])->all()),
+
+            'refunds' => $this->whenLoaded('refunds', fn (): array => $this->refunds->map(fn ($refund): array => [
+                'id' => $refund->id,
+                'amount' => (string) $refund->amount,
+                'vat_amount' => (string) $refund->vat_amount,
+                'total' => (string) $refund->total,
+                'returned_stock' => (bool) $refund->returned_stock,
+                'reason' => $refund->reason,
+                'refunded_at' => $refund->refunded_at->toIso8601String(),
+            ])->all()),
 
             // COGS and every margin figure are withheld as a set.
             $this->mergeWhen($canSeeMargin, fn (): array => [
@@ -120,6 +151,31 @@ class OrderResource extends JsonResource
             }
         }
 
+        // A refunded order can take another refund while money is left to
+        // return (ADR-022).
+        $scale = Money::scale();
+
+        if ($this->status === OrderStatus::Refunded
+            && $user->can(Ability::OrdersRefund->value)
+            && bccomp($this->refundableAmount(), '0', $scale) > 0) {
+            $actions[] = 'refund';
+        }
+
+        if ($user->can(Ability::OrdersRecordPayment->value)
+            && PaymentStatus::for($this->resource) !== null
+            && bccomp(PaymentStatus::outstanding($this->resource), '0', $scale) > 0) {
+            $actions[] = 'record_payment';
+        }
+
         return $actions;
+    }
+
+    /** What is left to give back: the total, less every refund so far. */
+    private function refundableAmount(): string
+    {
+        $scale = Money::scale();
+        $refunded = bcadd((string) $this->refunded_amount, (string) $this->refunded_vat_amount, $scale);
+
+        return bcsub((string) $this->total_amount, $refunded, $scale);
     }
 }

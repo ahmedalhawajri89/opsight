@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('orders/{order}/fulfil', [OrderController::class, 'fulfil']);
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
         Route::post('orders/{order}/refund', [OrderController::class, 'refund']);
+        Route::post('orders/{order}/payments', [OrderController::class, 'recordPayment']);
 
         /* ---- Customers --------------------------------------------------- */
         Route::get('customers', [CustomerController::class, 'index']);

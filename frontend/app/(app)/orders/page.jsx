@@ -7,7 +7,7 @@ import { useOrders } from '@/features/orders/useOrders';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Can } from '@/features/auth/Can';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { OrderStatusBadge } from '@/components/ui/Badge';
+import { OrderStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DateInput, Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
@@ -28,11 +28,21 @@ import { exportOrders } from '@/services/orders';
  */
 const FILTER_CONFIG = {
   defaults: { sort: '-created_at', page: 1, per_page: 25 },
-  allowed: ['search', 'status', 'placed_from', 'placed_to', 'sort', 'page', 'per_page'],
+  allowed: [
+    'search',
+    'status',
+    'payment_status',
+    'placed_from',
+    'placed_to',
+    'sort',
+    'page',
+    'per_page',
+  ],
   sortable: ['reference', 'placed_at', 'total_amount', 'status', 'created_at'],
 };
 
 const STATUSES = ['draft', 'confirmed', 'fulfilled', 'cancelled', 'refunded'];
+const PAYMENT_STATUSES = ['unpaid', 'partially_paid', 'settled'];
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -53,6 +63,7 @@ export default function OrdersPage() {
     filter: {
       search: filters.search,
       status: filters.status,
+      payment_status: filters.payment_status,
       placed_from: filters.placed_from,
       placed_to: filters.placed_to,
     },
@@ -90,6 +101,13 @@ export default function OrdersPage() {
       header: t('orders.columns.status'),
       width: '9rem',
       cell: (row) => <OrderStatusBadge status={row.status} />,
+    },
+    {
+      key: 'payment_status',
+      header: t('orders.columns.payment'),
+      width: '9rem',
+      // Blank for a draft or cancelled order: it owes nothing.
+      cell: (row) => <PaymentStatusBadge status={row.payment_status} />,
     },
     {
       key: 'placed_at',
@@ -156,6 +174,14 @@ export default function OrdersPage() {
           options={STATUSES.map((value) => ({ value, label: t(`orderStatus.${value}`) }))}
           value={filters.status ?? ''}
           onChange={(event) => setFilters({ status: event.target.value })}
+          className="w-40"
+        />
+        <Select
+          aria-label={t('filters.payment_status')}
+          placeholder={t('orders.anyPayment')}
+          options={PAYMENT_STATUSES.map((value) => ({ value, label: t(`paymentStatus.${value}`) }))}
+          value={filters.payment_status ?? ''}
+          onChange={(event) => setFilters({ payment_status: event.target.value })}
           className="w-40"
         />
         <DateInput

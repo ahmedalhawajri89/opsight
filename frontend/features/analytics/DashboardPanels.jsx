@@ -253,6 +253,12 @@ const QUICK_STATS = [
     format: 'money',
   },
   {
+    key: 'receivables',
+    label: 'dashboard.quickStats.receivables',
+    icon: 'coins',
+    format: 'money',
+  },
+  {
     key: 'active_users',
     label: 'dashboard.quickStats.activeUsers',
     icon: 'userCircle',

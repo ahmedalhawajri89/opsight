@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
-import { Field, NumberInput, Textarea } from '@/components/ui/Field';
+import { Field, Input, NumberInput, Select, Textarea } from '@/components/ui/Field';
 import { Trans, useI18n } from '@/features/i18n/I18nProvider';
 import { useOrderActions } from './useOrders';
 import { formatMoney } from '@/lib/format';
@@ -17,17 +17,45 @@ import { formatMoney } from '@/lib/format';
  * transition legal?" — asking twice is how the two answers drift apart and a
  * user gets a button that 403s (OrderResource::availableActionsFor).
  */
+
+/** Card first: the most common way a Gulf customer pays. */
+const PAYMENT_METHODS = ['card', 'cash', 'cash_on_delivery', 'wallet', 'bank_transfer', 'other'];
+
 export function OrderActions({ order, onDone }) {
   const { t } = useI18n();
   const actions = order.available_actions ?? [];
-  const { confirm, fulfil, cancel, refund } = useOrderActions(order.id);
+  const { confirm, fulfil, cancel, refund, pay } = useOrderActions(order.id);
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [refundAmount, setRefundAmount] = useState(String(order.total_amount ?? ''));
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
   const [returnStock, setReturnStock] = useState(true);
+  const [payAmount, setPayAmount] = useState('');
+  const [payMethod, setPayMethod] = useState(PAYMENT_METHODS[0]);
+  const [payReference, setPayReference] = useState('');
   const [failure, setFailure] = useState(null);
+
+  // What is left to give back, and whether the goods already went back: a
+  // second refund can never return stock twice (ADR-022).
+  const refundable = order.refundable_amount ?? order.total_amount;
+  const stockReturned = Boolean(order.stock_returned);
+
+  function openRefund() {
+    setRefundAmount(String(refundable ?? ''));
+    setRefundReason('');
+    setReturnStock(!stockReturned);
+    setRefundOpen(true);
+  }
+
+  function openPayment() {
+    setPayAmount(String(order.outstanding_amount ?? ''));
+    setPayMethod(PAYMENT_METHODS[0]);
+    setPayReference('');
+    setPayOpen(true);
+  }
 
   const unitCount = (order.items ?? []).reduce((total, item) => total + item.quantity, 0);
 
@@ -83,8 +111,14 @@ export function OrderActions({ order, onDone }) {
           </Button>
         )}
 
+        {actions.includes('record_payment') && (
+          <Button variant="secondary" onClick={openPayment}>
+            {t('orderActions.recordPayment')}
+          </Button>
+        )}
+
         {actions.includes('refund') && (
-          <Button variant="danger" onClick={() => setRefundOpen(true)}>
+          <Button variant="danger" onClick={openRefund}>
             {t('orderActions.refund')}
           </Button>
         )}
@@ -125,7 +159,10 @@ export function OrderActions({ order, onDone }) {
         open={refundOpen}
         onClose={() => setRefundOpen(false)}
         title={t('orderActions.refundTitle', { reference: order.reference })}
-        description={t('orderActions.refundTotal', { amount: formatMoney(order.total_amount) })}
+        description={t('orderActions.refundRemaining', {
+          amount: formatMoney(refundable),
+          total: formatMoney(order.total_amount),
+        })}
         size="sm"
         footer={
           <>
@@ -136,7 +173,11 @@ export function OrderActions({ order, onDone }) {
               variant="danger"
               loading={refund.isPending}
               onClick={async () => {
-                const ok = await run(refund, { amount: refundAmount, returnStock });
+                const ok = await run(refund, {
+                  amount: refundAmount,
+                  returnStock,
+                  reason: refundReason.trim(),
+                });
                 if (ok) setRefundOpen(false);
               }}
             >
@@ -156,17 +197,32 @@ export function OrderActions({ order, onDone }) {
             )}
           </Field>
 
+          <Field label={t('orderActions.refundReason')}>
+            {(props) => (
+              <Input
+                maxLength={255}
+                placeholder={t('orderActions.refundReasonPlaceholder')}
+                value={refundReason}
+                onChange={(event) => setRefundReason(event.target.value)}
+                {...props}
+              />
+            )}
+          </Field>
+
           <label className="flex items-start gap-2 text-base">
             <input
               type="checkbox"
               checked={returnStock}
+              disabled={stockReturned}
               onChange={(event) => setReturnStock(event.target.checked)}
               className="mt-0.5 size-3.5 accent-(--color-brand)"
             />
-            <span>
+            <span className={stockReturned ? 'text-(--color-muted)' : undefined}>
               {t('orderActions.returnStock')}
               <span className="mt-0.5 block text-sm text-(--color-muted)">
-                {t('orderActions.returnStockHint')}
+                {stockReturned
+                  ? t('orderActions.stockAlreadyReturned')
+                  : t('orderActions.returnStockHint')}
               </span>
             </span>
           </label>
@@ -177,6 +233,79 @@ export function OrderActions({ order, onDone }) {
               tags={{ strong: (text) => <strong>{text}</strong> }}
             />
           </p>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        title={t('orderActions.paymentTitle', { reference: order.reference })}
+        description={t('orderActions.paymentOutstanding', {
+          amount: formatMoney(order.outstanding_amount),
+        })}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPayOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              loading={pay.isPending}
+              onClick={async () => {
+                const ok = await run(pay, {
+                  amount: payAmount,
+                  method: payMethod,
+                  reference: payReference.trim(),
+                });
+                if (ok) setPayOpen(false);
+              }}
+            >
+              {t('orderActions.recordPayment')}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label={t('orderActions.paymentAmount')} required>
+            {(props) => (
+              <NumberInput
+                value={payAmount}
+                onChange={(event) => setPayAmount(event.target.value)}
+                {...props}
+              />
+            )}
+          </Field>
+
+          <Field label={t('orderActions.paymentMethod')} required>
+            {(props) => (
+              <Select
+                options={PAYMENT_METHODS.map((value) => ({
+                  value,
+                  label: t(`paymentMethod.${value}`),
+                }))}
+                value={payMethod}
+                onChange={(event) => setPayMethod(event.target.value)}
+                className="w-full"
+                {...props}
+              />
+            )}
+          </Field>
+
+          <Field
+            label={t('orderActions.paymentReference')}
+            hint={t('orderActions.paymentReferenceHint')}
+          >
+            {(props) => (
+              <Input
+                maxLength={80}
+                dir="ltr"
+                value={payReference}
+                onChange={(event) => setPayReference(event.target.value)}
+                {...props}
+              />
+            )}
+          </Field>
         </div>
       </Dialog>
     </div>

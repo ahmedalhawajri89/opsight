@@ -11,6 +11,8 @@ use App\Domain\Orders\ConfirmOrder;
 use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderStatus;
 use App\Domain\Orders\RecordRefund;
+use App\Domain\Payments\PaymentMethod;
+use App\Domain\Payments\RecordPayment;
 use App\Models\BusinessSetting;
 use App\Models\Category;
 use App\Models\Customer;
@@ -184,6 +186,7 @@ class DemoDataSeeder extends Seeder
         $fulfil = app(FulfilOrder::class);
         $cancel = app(CancelOrder::class);
         $refund = app(RecordRefund::class);
+        $pay = app(RecordPayment::class);
         $adjust = app(AdjustStock::class);
 
         $staff = User::whereIn('role', ['staff', 'manager'])->get();
@@ -292,17 +295,56 @@ class DemoDataSeeder extends Seeder
                     continue;
                 }
 
+                $method = $this->paymentMethod();
+
                 if ($roll <= 90) {
                     $fulfil($order);
 
-                    // A small share of fulfilled orders are refunded.
-                    if (mt_rand(1, 100) <= 4) {
-                        $refund($order, (string) $order->total_amount);
+                    // Most fulfilled orders are paid in full; a few are still
+                    // being collected, so receivables are never empty.
+                    if (mt_rand(1, 100) <= 95) {
+                        $pay($order, (string) $order->total_amount, $method, $placedAt->copy()->addHours(mt_rand(0, 72))->min(now()));
+                    } elseif (mt_rand(1, 2) === 1) {
+                        $pay($order, bcdiv((string) $order->total_amount, '2', 3), $method, $placedAt->copy()->addDay()->min(now()));
                     }
+
+                    // A small share of fulfilled orders are refunded, some in
+                    // part and some in two steps (ADR-022).
+                    if (mt_rand(1, 100) <= 4) {
+                        $order->refresh();
+
+                        if (mt_rand(1, 3) === 1) {
+                            $refund($order, bcdiv((string) $order->total_amount, '2', 3), reason: 'Damaged item');
+                            $refund($order->refresh(), bcdiv((string) $order->total_amount, '4', 3), false, reason: 'Goodwill');
+                        } else {
+                            $refund($order, (string) $order->total_amount, reason: 'Returned');
+                        }
+                    }
+
+                    continue;
                 }
-                // The remainder stay confirmed but not yet fulfilled.
+
+                // The remainder stay confirmed but not yet fulfilled: paid up
+                // front by card or wallet, or awaiting cash on delivery.
+                if ($method !== PaymentMethod::CashOnDelivery && mt_rand(1, 2) === 1) {
+                    $pay($order, (string) $order->total_amount, $method, $placedAt);
+                }
             }
         }
+    }
+
+    /** A Gulf-shaped mix: card first, then cash on delivery, cash and wallets. */
+    private function paymentMethod(): PaymentMethod
+    {
+        $roll = mt_rand(1, 100);
+
+        return match (true) {
+            $roll <= 40 => PaymentMethod::Card,
+            $roll <= 65 => PaymentMethod::CashOnDelivery,
+            $roll <= 80 => PaymentMethod::Cash,
+            $roll <= 92 => PaymentMethod::Wallet,
+            default => PaymentMethod::BankTransfer,
+        };
     }
 
     /** A weekday-weighted instant within the month, at a plausible hour. */

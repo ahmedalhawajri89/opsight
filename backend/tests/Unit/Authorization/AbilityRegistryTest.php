@@ -88,6 +88,11 @@ it('lets staff confirm an order but not cancel or refund one', function (): void
     expect(AbilityRegistry::grants(Role::Staff, Ability::OrdersRefund))->toBeFalse();
 });
 
+it('lets staff take a payment but keeps refunds supervisory', function (): void {
+    expect(AbilityRegistry::grants(Role::Staff, Ability::OrdersRecordPayment))->toBeTrue();
+    expect(AbilityRegistry::grants(Role::Analyst, Ability::OrdersRecordPayment))->toBeFalse();
+});
+
 /*
 |--------------------------------------------------------------------------
 | Analyst — reads everything, writes nothing

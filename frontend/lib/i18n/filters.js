@@ -14,6 +14,7 @@ export function describeFilters(activeKeys, filters, t) {
 
 function describeValue(key, value, t) {
   if (key === 'status') return t(`orderStatus.${value}`);
+  if (key === 'payment_status') return t(`paymentStatus.${value}`);
   if (key === 'role') return t(`roles.${value}`);
 
   if (key === 'is_active' || key === 'low_stock') {

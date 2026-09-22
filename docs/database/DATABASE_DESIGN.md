@@ -221,6 +221,8 @@ ADR-009's rebuildable rollup, not a denormalised column nobody recomputes.
 | `cogs_amount` | DECIMAL(15,3) | Sum of line cost snapshots, frozen at confirm; **restricted field** |
 | `prices_include_vat` | BOOLEAN | Snapshot at confirm: whether the shelf prices included VAT (ADR-018) |
 | `refunded_vat_amount` | DECIMAL(15,3) | The VAT part of a refund; never subtracted from revenue |
+| `amount_paid` | DECIMAL(15,3) | Running total of `order_payments`; `CHECK (amount_paid >= 0)` (ADR-022) |
+| `stock_returned_at` | TIMESTAMP NULL | Set by the refund that returned stock; stock goes back once per order |
 | `notes` | TEXT NULL | |
 | `created_by` | BIGINT UNSIGNED NULL | FK → `users.id` `ON DELETE SET NULL` |
 | `created_at`, `updated_at` | TIMESTAMP | |
@@ -252,6 +254,39 @@ unstored. The safeguard: a test asserts that for every confirmed order,
 | `fulfilled` | Yes | Already decremented |
 | `cancelled` | Counted only in Cancellation Rate | Returned |
 | `refunded` | Yes, reduced by `refunded_amount` | Returned |
+
+**Payment status** is derived, never stored (ADR-022): outstanding = max(0,
+`total_amount` − `refunded_amount` − `refunded_vat_amount` − `amount_paid`), for committed
+orders only.
+
+### 3.6a `order_payments` and `order_refunds`
+
+Append-only ledgers (ADR-022). Each is written only by its domain action, in the same
+transaction that moves the matching running total on `orders`. A test holds each total to
+the sum of its ledger.
+
+| `order_payments` | Type | Notes |
+| --- | --- | --- |
+| `order_id` | BIGINT UNSIGNED | FK → `orders.id` `ON DELETE RESTRICT` |
+| `amount` | DECIMAL(15,3) | `CHECK (amount > 0)` |
+| `method` | VARCHAR(24) | cash, card, bank_transfer, cash_on_delivery, wallet, other |
+| `paid_at` | TIMESTAMP | |
+| `reference` | VARCHAR(80) NULL | Card slip, transfer or driver reference |
+| `is_backfill` | BOOLEAN | True for sales completed before payment tracking |
+| `recorded_by` | BIGINT UNSIGNED NULL | FK → `users.id` `ON DELETE SET NULL` |
+
+| `order_refunds` | Type | Notes |
+| --- | --- | --- |
+| `order_id` | BIGINT UNSIGNED | FK → `orders.id` `ON DELETE RESTRICT` |
+| `amount` | DECIMAL(15,3) | Revenue returned, excluding VAT |
+| `vat_amount` | DECIMAL(15,3) | VAT returned with it (ADR-018) |
+| `total` | DECIMAL(15,3) | What the customer got back; `CHECK (total > 0)` |
+| `returned_stock` | BOOLEAN | Whether this refund put the goods back |
+| `reason` | VARCHAR(255) NULL | |
+| `refunded_at` | TIMESTAMP | |
+| `recorded_by` | BIGINT UNSIGNED NULL | FK → `users.id` `ON DELETE SET NULL` |
+
+Both are indexed on `(order_id, <date>)`.
 
 ### 3.7 `order_items`
 

@@ -7,7 +7,7 @@ import { useOrder } from '@/features/orders/useOrders';
 import { OrderActions } from '@/features/orders/OrderActions';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { OrderStatusBadge } from '@/components/ui/Badge';
+import { OrderStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
 import { SkeletonTable, SkeletonText } from '@/components/ui/Skeleton';
 import { DataTable } from '@/components/data/DataTable';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
@@ -214,6 +214,11 @@ export default function OrderDetailPage({ params }) {
         </Card>
       </div>
 
+      {/* A draft or cancelled order owes nothing, so has no payment section. */}
+      {order.payment_status && <PaymentsCard order={order} />}
+
+      {(order.refunds ?? []).length > 0 && <RefundsCard order={order} />}
+
       <Card title={t('orderDetail.items')} padded={false}>
         <DataTable
           caption={t('orderDetail.itemsCaption', { reference: order.reference })}
@@ -225,6 +230,131 @@ export default function OrderDetailPage({ params }) {
 
       <OrderActions order={order} onDone={refetch} />
     </div>
+  );
+}
+
+/**
+ * Money received against the order, and where that leaves it (ADR-022). The
+ * status and the outstanding figure come from the server, derived from the
+ * ledgers; nothing here re-computes them.
+ */
+function PaymentsCard({ order }) {
+  const { t } = useI18n();
+  const payments = order.payments ?? [];
+
+  const columns = [
+    {
+      key: 'paid_at',
+      header: t('orderDetail.columns.date'),
+      width: '12rem',
+      cell: (row) => formatDateTime(row.paid_at),
+    },
+    {
+      key: 'method',
+      header: t('orderDetail.columns.method'),
+      cell: (row) =>
+        row.is_backfill ? (
+          <span className="text-(--color-muted)">{t('orderDetail.backfilledPayment')}</span>
+        ) : (
+          t(`paymentMethod.${row.method}`)
+        ),
+    },
+    {
+      key: 'reference',
+      header: t('orderDetail.columns.reference'),
+      mono: true,
+      cell: (row) => row.reference ?? '—',
+    },
+    {
+      key: 'amount',
+      header: t('orderDetail.columns.amount'),
+      numeric: true,
+      width: '10rem',
+      cell: (row) => formatMoney(row.amount),
+    },
+  ];
+
+  return (
+    <Card
+      title={t('orderDetail.payment')}
+      actions={<PaymentStatusBadge status={order.payment_status} />}
+      padded={false}
+    >
+      <dl className="grid gap-x-8 gap-y-2.5 px-5 pb-4 text-base sm:grid-cols-2">
+        <Row label={t('orderDetail.paid')} value={formatMoney(order.amount_paid)} numeric />
+        <Row
+          label={t('orderDetail.outstanding')}
+          value={formatMoney(order.outstanding_amount)}
+          numeric
+          strong
+        />
+      </dl>
+
+      {payments.length > 0 ? (
+        <DataTable
+          caption={t('orderDetail.paymentsCaption', { reference: order.reference })}
+          columns={columns}
+          rows={payments}
+          density="compact"
+        />
+      ) : (
+        <p className="px-5 pb-4 text-sm text-(--color-muted)">{t('orderDetail.noPayments')}</p>
+      )}
+    </Card>
+  );
+}
+
+/** Every refund, in order: an order may be refunded more than once (ADR-022). */
+function RefundsCard({ order }) {
+  const { t } = useI18n();
+
+  const columns = [
+    {
+      key: 'refunded_at',
+      header: t('orderDetail.columns.date'),
+      width: '12rem',
+      cell: (row) => formatDateTime(row.refunded_at),
+    },
+    {
+      key: 'reason',
+      header: t('orderDetail.columns.reason'),
+      cell: (row) => row.reason ?? <span className="text-(--color-muted)">—</span>,
+    },
+    {
+      key: 'returned_stock',
+      header: t('orderDetail.columns.restocked'),
+      width: '8rem',
+      cell: (row) => (row.returned_stock ? t('common.yes') : t('common.no')),
+    },
+    ...(order.vat_applied
+      ? [
+          {
+            key: 'vat_amount',
+            header: t('orderDetail.columns.vatReturned'),
+            numeric: true,
+            width: '9rem',
+            cell: (row) => formatMoney(row.vat_amount),
+          },
+        ]
+      : []),
+    {
+      key: 'total',
+      header: t('orderDetail.columns.amount'),
+      numeric: true,
+      width: '10rem',
+      cell: (row) => formatMoney(row.total),
+    },
+  ];
+
+  return (
+    <Card title={t('orderDetail.refunds')} padded={false}>
+      <DataTable
+        caption={t('orderDetail.refundsCaption', { reference: order.reference })}
+        columns={columns}
+        rows={order.refunds}
+        density="compact"
+      />
+    </Card>
   );
 }
 

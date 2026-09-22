@@ -51,6 +51,19 @@ export function cancelOrder(id, reason) {
   return api.post(`/orders/${id}/cancel`, { reason });
 }
 
-export function refundOrder(id, { amount, returnStock = true }) {
-  return api.post(`/orders/${id}/refund`, { amount, return_stock: returnStock });
+export function refundOrder(id, { amount, returnStock, reason }) {
+  return api.post(`/orders/${id}/refund`, {
+    amount,
+    return_stock: returnStock,
+    reason: reason || undefined,
+  });
+}
+
+/** Money received against a committed order (ADR-022). */
+export function recordPayment(id, { amount, method, reference }) {
+  return api.post(`/orders/${id}/payments`, {
+    amount,
+    method,
+    reference: reference || undefined,
+  });
 }
