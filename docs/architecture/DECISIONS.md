@@ -674,6 +674,37 @@ Saturday and Sunday.
    neighbour (`weekendRuns`). The same bug had kept the "incomplete period" band invisible
    since it was written, and it is fixed the same way.
 
+## ADR-021 — Names in Arabic beside the name as entered; phones in E.164
+
+**Status:** Accepted (2026-09)
+**Affects:** `products`, `categories`, `customers`, `order_items`, their resources, the
+analytics breakdowns, customer validation
+
+**Context.** Every name was a single field. A Gulf business commonly names its products and
+customers in both languages, because its staff and its customers read different ones. A
+phone number was free text, so the same customer's number never matched itself, and
+nothing downstream (a WhatsApp message, a duplicate check) could use it.
+
+**Decision.**
+
+1. **`name` stays canonical** — whatever language it was typed in — and **`name_ar` is
+   optional**, on products, categories and customers. Nothing existing changes, and an edit
+   round-trip through the API cannot overwrite one name with the other.
+2. **The server decides what the reader sees** (`App\Support\Localization\LocalizedName`).
+   An Arabic reader gets `name_ar` when there is one, and `name` otherwise. Resources send
+   `display_name`. The breakdowns, top-selling products and low-stock lists select the same
+   choice in SQL, so a product cannot be called one thing in a table and another in the
+   chart beside it.
+3. **The Arabic name is snapshotted** at confirm, beside `product_name`. Renaming a product
+   later does not rewrite what an old order sold.
+4. **Phones are stored in E.164** (`App\Support\PhoneNumber`), normalised on the way in:
+   punctuation dropped, `00` read as `+`, a local number given the customer's country code
+   with its trunk zero removed. A number that cannot be placed is refused, with a message in
+   the reader's language, and never stored as typed.
+
+**Not done here.** The frontend has no product or customer edit form yet, so Arabic names and
+phones are entered through the API until those screens exist.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

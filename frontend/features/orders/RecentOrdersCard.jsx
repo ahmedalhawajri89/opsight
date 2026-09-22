@@ -99,7 +99,7 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
                       dir="auto"
                       className="block max-w-[6.5rem] truncate text-start text-(--color-text)"
                     >
-                      {order.customer?.name ?? (
+                      {order.customer?.display_name ?? order.customer?.name ?? (
                         <span className="text-(--color-text-2)">{t('common.walkIn')}</span>
                       )}
                     </span>

@@ -7,6 +7,7 @@ namespace App\Domain\Metrics;
 use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
 use App\Models\User;
+use App\Support\Localization\LocalizedName;
 use App\Support\Localization\Localizer;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
@@ -120,20 +121,20 @@ final class Breakdown
             'product' => $query
                 // Grouped by the SNAPSHOT sku, not by product_id: a product
                 // deleted or renamed since still reports under what was sold.
-                ->selectRaw("order_items.product_sku AS `key`, MAX(order_items.product_name) AS label, {$value} AS value")
+                ->selectRaw('order_items.product_sku AS `key`, MAX('.LocalizedName::sql('order_items.product_name', 'order_items.product_name_ar').") AS label, {$value} AS value")
                 ->groupBy('order_items.product_sku'),
 
             'category' => $query
                 ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
                 ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
-                ->selectRaw("COALESCE(categories.slug, 'uncategorised') AS `key`, COALESCE(MAX(categories.name), 'Uncategorised') AS label, {$value} AS value")
+                ->selectRaw("COALESCE(categories.slug, 'uncategorised') AS `key`, COALESCE(MAX(".LocalizedName::sql('categories.name', 'categories.name_ar')."), 'Uncategorised') AS label, {$value} AS value")
                 ->groupBy('key'),
 
             default => $query
                 ->leftJoin('customers', 'customers.id', '=', 'orders.customer_id')
                 // Walk-in trade has no customer row; it is grouped as itself
                 // rather than dropped, because the revenue is real.
-                ->selectRaw("COALESCE(CAST(customers.id AS CHAR), 'walk-in') AS `key`, COALESCE(MAX(customers.name), 'Walk-in') AS label, {$value} AS value")
+                ->selectRaw("COALESCE(CAST(customers.id AS CHAR), 'walk-in') AS `key`, COALESCE(MAX(".LocalizedName::sql('customers.name', 'customers.name_ar')."), 'Walk-in') AS label, {$value} AS value")
                 ->groupBy('key'),
         };
 

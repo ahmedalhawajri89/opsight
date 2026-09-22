@@ -61,7 +61,7 @@ export default function InventoryPage() {
       header: t('orderDetail.columns.product'),
       cell: (row) => (
         <span className="flex items-center gap-2">
-          {row.product?.name ?? '—'}
+          {row.product?.display_name ?? row.product?.name ?? '—'}
           {row.is_low && <Badge tone="warning">{t('dashboard.lowStock.title')}</Badge>}
         </span>
       ),

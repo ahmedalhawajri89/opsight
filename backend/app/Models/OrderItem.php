@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * An order line, carrying the snapshots that preserve historical truth.
  *
  * @property string $product_name
+ * @property string|null $product_name_ar
  * @property string $product_sku
  * @property string $unit_price
  * @property string $unit_cost
@@ -36,6 +37,7 @@ class OrderItem extends Model
     protected $fillable = [
         'product_id',
         'product_name',
+        'product_name_ar',
         'product_sku',
         'unit_price',
         'unit_cost',

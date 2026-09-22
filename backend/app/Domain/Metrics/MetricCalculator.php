@@ -6,6 +6,7 @@ namespace App\Domain\Metrics;
 
 use App\Domain\Inventory\StockLevel;
 use App\Domain\Orders\OrderStatus;
+use App\Support\Localization\LocalizedName;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -422,10 +423,10 @@ final class MetricCalculator
             ->where('orders.placed_at', '<', $to)
             ->whereNull('products.deleted_at')
             ->where('products.is_active', true)
-            ->groupBy('products.id', 'products.name', 'products.sku', 'inventory_items.stock_on_hand')
+            ->groupBy('products.id', 'products.name', 'products.name_ar', 'products.sku', 'inventory_items.stock_on_hand')
             ->havingRaw('SUM(order_items.quantity) > 0')
             ->selectRaw(
-                'products.id AS product_id, products.name AS name, products.sku AS sku, '
+                'products.id AS product_id, '.LocalizedName::sql('products.name', 'products.name_ar').' AS name, products.sku AS sku, '
                 .'inventory_items.stock_on_hand AS stock, '
                 .'SUM(order_items.quantity) AS units'
             )

@@ -24,6 +24,8 @@ class StoreProductRequest extends FormRequest
         $rules = [
             'sku' => ['required', 'string', 'max:64', Rule::unique('products', 'sku')],
             'name' => ['required', 'string', 'max:180'],
+            // The Arabic name, shown to Arabic readers when present (ADR-021).
+            'name_ar' => ['nullable', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:5000'],
             'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->whereNull('deleted_at')],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999999'],

@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Authorization\Ability;
 use App\Models\OrderItem;
+use App\Support\Localization\LocalizedName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -33,6 +34,9 @@ class OrderItemResource extends JsonResource
 
             // Snapshots, as recorded at confirm time.
             'product_name' => $this->product_name,
+            'product_name_ar' => $this->product_name_ar,
+            // From the snapshot pair, never the live catalog (ADR-021).
+            'display_name' => LocalizedName::pick($this->product_name, $this->product_name_ar),
             'product_sku' => $this->product_sku,
             'unit_price' => (string) $this->unit_price,
 

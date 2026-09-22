@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Customer;
+use App\Support\Localization\LocalizedName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,6 +20,8 @@ class CustomerResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'name_ar' => $this->name_ar,
+            'display_name' => LocalizedName::pick($this->name, $this->name_ar),
             'email' => $this->email,
             'phone' => $this->phone,
             'company' => $this->company,

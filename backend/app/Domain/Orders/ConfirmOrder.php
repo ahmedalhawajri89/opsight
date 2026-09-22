@@ -98,6 +98,7 @@ final class ConfirmOrder
                  */
                 $item->forceFill([
                     'product_name' => $product->name,
+                    'product_name_ar' => $product->name_ar,
                     'product_sku' => $product->sku,
                     'unit_price' => $unitPrice,
                     'unit_cost' => $unitCost,

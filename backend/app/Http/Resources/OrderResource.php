@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Authorization\Ability;
 use App\Domain\Orders\OrderStatus;
 use App\Models\Order;
+use App\Support\Localization\LocalizedName;
 use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -71,6 +72,7 @@ class OrderResource extends JsonResource
             'customer' => $this->whenLoaded('customer', fn (): ?array => $this->customer ? [
                 'id' => $this->customer->id,
                 'name' => $this->customer->name,
+                'display_name' => LocalizedName::pick($this->customer->name, $this->customer->name_ar),
                 'email' => $this->customer->email,
             ] : null),
 
