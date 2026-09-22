@@ -15,7 +15,7 @@ import { authFile } from './support/authState';
  * rest of the suite reading a page in a language it does not expect.
  */
 
-const API = process.env.E2E_API_URL ?? 'http://localhost:8000';
+const API = process.env.E2E_API_URL ?? 'http://localhost:8010';
 
 /** Saves preferences through the API with the page's own session and CSRF token. */
 async function savePreferences(page, preferences) {

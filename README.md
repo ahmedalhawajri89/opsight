@@ -39,7 +39,7 @@ Full instructions in [docs/SETUP.md](docs/SETUP.md).
 ```bash
 # Backend
 cd backend && composer install && cp .env.example .env
-php artisan key:generate && php artisan migrate --seed && php artisan serve --port=8000
+php artisan key:generate && php artisan migrate --seed && php artisan serve --port=8010
 
 # Frontend (second terminal)
 cd frontend && npm install && cp .env.example .env.local && npm run dev

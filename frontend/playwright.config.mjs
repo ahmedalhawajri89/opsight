@@ -8,7 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
  * typically something that spans both stacks
  * (docs/architecture/TESTING_STRATEGY.md §5).
  *
- * The Laravel API must be running on :8000 with the database seeded:
+ * The Laravel API must be running on :8010 with the database seeded:
  *   cd backend && php artisan migrate:fresh --seed && php artisan serve
  *   cd backend && php artisan db:seed --class=DemoDataSeeder
  */

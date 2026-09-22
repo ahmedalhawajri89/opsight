@@ -138,7 +138,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_API_URL: http://localhost:8010
 
   # E2E is slow, so it runs on main and nightly rather than on every push
   # (TESTING_STRATEGY.md §5).
@@ -182,13 +182,13 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan migrate:fresh --seed --force
-          php artisan serve --port=8000 &
-          npx --yes wait-on http://localhost:8000/api/v1/health
+          php artisan serve --port=8010 &
+          npx --yes wait-on http://localhost:8010/api/v1/health
 
       - name: Run Playwright
         working-directory: frontend
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_API_URL: http://localhost:8010
         run: |
           npm ci
           npx playwright install --with-deps chromium

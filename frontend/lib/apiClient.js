@@ -10,7 +10,7 @@
 import en from '@/lib/i18n/messages/en';
 import ar from '@/lib/i18n/messages/ar';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8010';
 
 /** Fired once, globally, when the session is gone. */
 export const SESSION_EXPIRED_EVENT = 'opsight:session-expired';

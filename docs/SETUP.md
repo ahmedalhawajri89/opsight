@@ -43,13 +43,13 @@ composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
-php artisan serve --port=8000
+php artisan serve --port=8010
 ```
 
-The API is now on `http://localhost:8000`. Check it:
+The API is now on `http://localhost:8010`. Check it:
 
 ```bash
-curl http://localhost:8000/api/v1/health
+curl http://localhost:8010/api/v1/health
 ```
 
 Adjust `DB_USERNAME` / `DB_PASSWORD` in `.env` if your MySQL root user has a password.
@@ -84,7 +84,7 @@ difference is produced entirely server-side, not hidden in the browser.
 ## No hosts-file entries needed
 
 Sanctum's SPA cookie mode needs the frontend and API to share a cookie domain.
-**Cookies ignore port numbers**, so `localhost:8000` and `localhost:3000` already
+**Cookies ignore port numbers**, so `localhost:8010` and `localhost:3000` already
 share one and no `hosts` entry is required.
 
 This supersedes the note in ADR-002, which assumed `app.opsight.test` /
@@ -165,7 +165,7 @@ npm run build
 **End to end** — needs the API running with seeded data:
 
 ```bash
-cd backend && php artisan migrate:fresh --seed && php artisan serve --port=8000
+cd backend && php artisan migrate:fresh --seed && php artisan serve --port=8010
 cd frontend && npx playwright install chromium && npm run e2e
 ```
 
