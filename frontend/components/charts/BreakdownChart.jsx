@@ -87,7 +87,7 @@ export function BreakdownChart({
             tickFormatter={(value) =>
               format === 'money' ? formatMoneyCompact(value, { currency }) : formatNumber(value)
             }
-            tick={{ fill: 'var(--text-subtle)', fontSize: 11 }}
+            tick={{ fill: 'var(--muted)', fontSize: 11 }}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
           />
@@ -96,7 +96,7 @@ export function BreakdownChart({
             type="category"
             orientation={rtl ? 'right' : 'left'}
             dataKey="label"
-            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             width={140}

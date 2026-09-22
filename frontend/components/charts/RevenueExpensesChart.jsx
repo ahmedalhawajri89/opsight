@@ -5,6 +5,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceArea,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,7 +17,7 @@ import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatMoneyCompact } from '@/lib/format';
-import { formatBucketLabel } from '@/lib/periods';
+import { formatBucketLabel, weekendRuns } from '@/lib/periods';
 
 /**
  * Net revenue and operating expenses over the selected period, as two lines.
@@ -50,6 +51,7 @@ export function RevenueExpensesChart({
   loading,
   className,
   style,
+  weekendDays = [],
 }) {
   const { t, dir } = useI18n();
   const rtl = dir === 'rtl';
@@ -159,10 +161,22 @@ export function RevenueExpensesChart({
           {/* Light dashed horizontal gridlines only. */}
           <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
 
+          {/* The business's days off, so a quiet Friday reads as a weekend. */}
+          {weekendRuns(revenue, weekendDays).map(([from, to]) => (
+            <ReferenceArea
+              key={`weekend-${rows[from].key}`}
+              x1={rows[from].label}
+              x2={rows[to].label}
+              fill="var(--text-2)"
+              fillOpacity={0.07}
+              ifOverflow="extendDomain"
+            />
+          ))}
+
           <XAxis
             dataKey="label"
             reversed={rtl}
-            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             tickMargin={10}
@@ -172,7 +186,7 @@ export function RevenueExpensesChart({
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={(value) => formatMoneyCompact(value, { currency })}
-            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             width={68}

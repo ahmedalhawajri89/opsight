@@ -37,6 +37,22 @@ function monthOptions() {
 }
 
 /*
+ * Weekday names from Intl, ISO-numbered (1 = Monday … 7 = Sunday) to match
+ * the server. 1 January 2024 was a Monday, so day N of that week is ISO day N.
+ */
+function weekdayOptions() {
+  const formatter = new Intl.DateTimeFormat(getFormatLocale(), {
+    weekday: 'long',
+    timeZone: 'UTC',
+  });
+
+  return Array.from({ length: 7 }, (_, index) => ({
+    value: String(index + 1),
+    label: formatter.format(new Date(Date.UTC(2024, 0, index + 1))),
+  }));
+}
+
+/*
  * A short list rather than the full IANA set.
  *
  * The server validates against the complete list, so a business elsewhere is
@@ -235,6 +251,51 @@ export default function SettingsPage() {
                   />
                 )}
               </Field>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label={t('settings.weekStartsOn')} error={fieldErrors.week_starts_on}>
+                {(props) => (
+                  <Select
+                    value={String(form?.week_starts_on ?? '')}
+                    onChange={(event) => set('week_starts_on', Number(event.target.value))}
+                    options={weekdayOptions()}
+                    disabled={!editable || isLoading}
+                    {...props}
+                  />
+                )}
+              </Field>
+
+              {/* Days off: they move no figure, only how a daily chart reads. */}
+              <fieldset>
+                <legend className="text-sm font-medium text-(--color-text)">
+                  {t('settings.weekend')}
+                </legend>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                  {weekdayOptions().map((day) => {
+                    const value = Number(day.value);
+                    const weekend = form?.weekend_days ?? [];
+
+                    return (
+                      <Checkbox
+                        key={day.value}
+                        label={day.label}
+                        checked={weekend.includes(value)}
+                        onChange={(event) =>
+                          set(
+                            'weekend_days',
+                            event.target.checked
+                              ? [...weekend, value].sort((a, b) => a - b)
+                              : weekend.filter((item) => item !== value),
+                          )
+                        }
+                        disabled={!editable || isLoading}
+                      />
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-sm text-(--color-muted)">{t('settings.weekendHint')}</p>
+              </fieldset>
             </div>
 
             {historyChanged && (

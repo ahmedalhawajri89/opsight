@@ -124,10 +124,13 @@ final class TimeSeries
          * below uses WEEKDAY(), which is always Monday-based, so under an
          * Arabic request the bucket keys stopped matching the grouped rows and
          * every weekly value came back as zero. A metric must not change with
-         * the reader's language.
+         * the reader's language — it changes with the BUSINESS's week, which
+         * the SQL below is given the same day as (ADR-020).
          */
+        $settings = BusinessSetting::current();
+
         $cursor = match ($grain) {
-            'week' => $cursor->startOfWeek(Carbon::MONDAY),
+            'week' => $cursor->startOfWeek($settings->weekStartCarbonDay()),
             'month' => $cursor->startOfMonth(),
             default => $cursor,
         };
@@ -136,7 +139,7 @@ final class TimeSeries
 
         while ($cursor <= $end) {
             $bucketEnd = match ($grain) {
-                'week' => $cursor->clone()->endOfWeek(Carbon::SUNDAY),
+                'week' => $cursor->clone()->endOfWeek($settings->weekEndCarbonDay()),
                 'month' => $cursor->clone()->endOfMonth(),
                 default => $cursor->clone(),
             };
@@ -181,7 +184,7 @@ final class TimeSeries
         $offset = $this->utcOffset($timezone);
 
         $bucketExpression = match ($grain) {
-            'week' => "DATE(DATE_SUB({$local}, INTERVAL WEEKDAY({$local}) DAY))",
+            'week' => "DATE(DATE_SUB({$local}, INTERVAL ".self::weekOffsetSql($local).' DAY))',
             'month' => "DATE_FORMAT({$local}, '%Y-%m-01')",
             default => "DATE({$local})",
         };
@@ -233,7 +236,7 @@ final class TimeSeries
     private function expenseQuery(Period $period, string $grain): array
     {
         $bucketExpression = match ($grain) {
-            'week' => 'DATE(DATE_SUB(incurred_on, INTERVAL WEEKDAY(incurred_on) DAY))',
+            'week' => 'DATE(DATE_SUB(incurred_on, INTERVAL '.self::weekOffsetSql('incurred_on').' DAY))',
             'month' => "DATE_FORMAT(incurred_on, '%Y-%m-01')",
             default => 'DATE(incurred_on)',
         };
@@ -302,5 +305,20 @@ final class TimeSeries
         if (! ($user?->can(Ability::MetricsViewCost->value) ?? false)) {
             abort(403, __('errors.http.metric_not_permitted'));
         }
+    }
+
+    /**
+     * Days from a date back to the start of its business week, in SQL.
+     *
+     * WEEKDAY() is 0 for Monday … 6 for Sunday; the business week starts on
+     * ISO day `week_starts_on` (1 = Monday … 7 = Sunday). The offset is an
+     * integer from settings, validated 1–7, never user text — so it is safe to
+     * write into the expression, and it must match the PHP bucket keys above.
+     */
+    private static function weekOffsetSql(string $dateExpression): string
+    {
+        $start = (int) BusinessSetting::current()->week_starts_on - 1;
+
+        return "MOD(WEEKDAY({$dateExpression}) - {$start} + 7, 7)";
     }
 }

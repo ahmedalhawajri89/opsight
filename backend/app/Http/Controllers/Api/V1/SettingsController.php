@@ -68,6 +68,9 @@ class SettingsController extends Controller
                 'prices_include_vat' => (bool) $settings->prices_include_vat,
                 'vat_number' => $settings->vat_number,
                 'commercial_registration' => $settings->commercial_registration,
+                // The business week (ADR-020), ISO days: 1 = Monday … 7 = Sunday.
+                'week_starts_on' => (int) $settings->week_starts_on,
+                'weekend_days' => $settings->weekend_days ?? [],
             ],
             'meta' => [
                 // Non-null: the guard above returned already if it were not.
@@ -77,7 +80,7 @@ class SettingsController extends Controller
                  * a field that becomes history-affecting later is warned about
                  * by changing one list on the server.
                  */
-                'affects_history' => ['timezone', 'fiscal_year_start_month'],
+                'affects_history' => ['timezone', 'fiscal_year_start_month', 'week_starts_on'],
                 /*
                  * VAT settings apply to orders confirmed AFTER the change; every
                  * confirmed order keeps the VAT it was snapshotted with. Named so
@@ -113,9 +116,21 @@ class SettingsController extends Controller
             'prices_include_vat' => ['sometimes', 'boolean'],
             'vat_number' => ['sometimes', 'nullable', 'string', 'max:32'],
             'commercial_registration' => ['sometimes', 'nullable', 'string', 'max:32'],
+            // ISO days, 1 = Monday … 7 = Sunday. At least one working day must remain.
+            'week_starts_on' => ['sometimes', 'integer', 'between:1,7'],
+            'weekend_days' => ['sometimes', 'array', 'max:6'],
+            'weekend_days.*' => ['integer', 'between:1,7', 'distinct'],
         ]);
 
         $settings = BusinessSetting::current();
+
+        // Stored as sorted integers, whatever form they arrived in, so a
+        // strict comparison anywhere downstream cannot miss "5" against 5.
+        if (array_key_exists('weekend_days', $validated)) {
+            $days = array_map('intval', $validated['weekend_days']);
+            sort($days);
+            $validated['weekend_days'] = array_values(array_unique($days));
+        }
 
         $settings->fill($validated);
         $settings->save();

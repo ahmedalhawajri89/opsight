@@ -93,7 +93,7 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
           <XAxis
             dataKey="month"
             reversed={rtl}
-            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             tickMargin={8}
@@ -102,7 +102,7 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={(value) => formatMoneyCompact(value, { currency })}
-            tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 10 }}
             tickLine={false}
             axisLine={false}
             width={62}

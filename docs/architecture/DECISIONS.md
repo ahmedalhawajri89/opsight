@@ -646,6 +646,34 @@ three-day threshold absorbs it.
 **Not done here.** Hijri dates are not shown beside Gregorian ones on screen. `Intl` can
 render them (`-u-ca-islamic-umalqura`), and it is a presentation choice to make separately.
 
+## ADR-020 — The business week: a configurable start, and a Gulf weekend
+
+**Status:** Accepted (2026-09)
+**Affects:** `business_settings`, `TimeSeries` weekly buckets, the daily charts, the settings
+screen, the demo data
+
+**Context.** Weekly buckets always started on Monday, hard-coded in both the PHP bucket keys
+and the SQL `WEEKDAY()` grouping, and nothing knew the business's days off. Across most of
+the Gulf the week starts on Sunday or Saturday, and Friday and Saturday are the weekend. A
+quiet Friday on a daily chart read as a drop, and the demo data put its quiet days on
+Saturday and Sunday.
+
+**Decision.**
+
+1. **`week_starts_on`** (ISO 1–7). Every weekly bucket begins on it: the PHP keys through
+   Carbon, and the SQL through `MOD(WEEKDAY(x) − (start − 1) + 7, 7)`. Both read the same
+   setting, so they cannot disagree. That disagreement is the class of bug that once zeroed
+   every weekly figure under Arabic. It **defaults to Monday**, so no existing weekly figure
+   moves until an Owner chooses. It is listed in `affects_history`, so the settings screen
+   warns before a change that moves past weeks.
+2. **`weekend_days`** (ISO days, default Friday and Saturday). They change no figure. They
+   shade the daily charts, so a day off reads as a day off, and the demo data places its
+   quiet days on them.
+3. **Shading has width.** On a chart drawn as connected points, a band from a day to itself
+   draws nothing. Consecutive days off become one band, and a lone day is widened to its
+   neighbour (`weekendRuns`). The same bug had kept the "incomplete period" band invisible
+   since it was written, and it is fixed the same way.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

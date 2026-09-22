@@ -54,7 +54,7 @@ it('names the fields that move historical figures', function (): void {
     $owner = User::factory()->role(Role::Owner)->create();
 
     $this->actingAs($owner)->getJson('/api/v1/settings')
-        ->assertJsonPath('meta.affects_history', ['timezone', 'fiscal_year_start_month']);
+        ->assertJsonPath('meta.affects_history', ['timezone', 'fiscal_year_start_month', 'week_starts_on']);
 });
 
 it('refuses a write from every role but Owner', function (string $role): void {

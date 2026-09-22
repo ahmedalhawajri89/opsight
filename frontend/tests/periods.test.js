@@ -12,6 +12,7 @@ import {
   periodLengthInDays,
   resolveComparison,
   resolvePreset,
+  weekendRuns,
 } from '@/lib/periods';
 
 // Local-calendar dates throughout: these are calendar dates, not instants.
@@ -219,5 +220,35 @@ describe('formatBucketLabel', () => {
 
     expect(label).toContain('٧');
     expect(label).not.toMatch(/[0-9]/);
+  });
+});
+
+describe('weekendRuns', () => {
+  const day = (date) => ({ bucket: date, bucket_end: date });
+  // 6–12 Aug 2026: Thu, Fri, Sat, Sun, Mon, Tue, Wed.
+  const week = [
+    '2026-08-06',
+    '2026-08-07',
+    '2026-08-08',
+    '2026-08-09',
+    '2026-08-10',
+    '2026-08-11',
+    '2026-08-12',
+  ].map(day);
+
+  it('joins a Friday–Saturday weekend into one band', () => {
+    expect(weekendRuns(week, [5, 6])).toEqual([[1, 2]]);
+  });
+
+  it('widens a lone day off to the next day, so the band has width', () => {
+    expect(weekendRuns(week, [5])).toEqual([[1, 2]]);
+  });
+
+  it('widens backwards when the lone day off ends the series', () => {
+    expect(weekendRuns(week.slice(0, 2), [5])).toEqual([[0, 1]]);
+  });
+
+  it('never marks a weekly bucket', () => {
+    expect(weekendRuns([{ bucket: '2026-08-07', bucket_end: '2026-08-13' }], [5, 6])).toEqual([]);
   });
 });

@@ -164,6 +164,7 @@ export default function AnalyticsPage() {
             : undefined
         }
         series={trend.series}
+        weekendDays={trend.meta?.weekend_days}
         format={filters.metric === 'orders_count' ? 'count' : 'money'}
         currency={currency}
         decimals={decimals}

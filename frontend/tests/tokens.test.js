@@ -55,3 +55,36 @@ describe('token class syntax', () => {
     ).toEqual([]);
   });
 });
+
+/*
+ * Every raw `var(--x)` must name a token that exists.
+ *
+ * Charts pass colours to SVG as `var(--text-2)` rather than as utility classes,
+ * which the check above cannot see. When the design system renamed its tokens,
+ * ten of those survived under their old names — `var(--text-muted)`,
+ * `var(--negative)` — and pointed at nothing, so the browser quietly used its
+ * default instead. This fails on the first one.
+ */
+describe('raw CSS variable references', () => {
+  // Set at runtime, not in globals.css: next/font's families, the assembled
+  // font stack on <html>, and per-element animation indices.
+  const RUNTIME = new Set(['font-inter', 'font-arabic', 'font-mono-ui', 'font-stack', 'i', 'd']);
+
+  it('never references a token globals.css does not define', () => {
+    const css = readFileSync(join(ROOT, 'app', 'globals.css'), 'utf8');
+    const defined = new Set([...css.matchAll(/^\s*--([a-z0-9-]+)\s*:/gm)].map((match) => match[1]));
+    const offenders = [];
+
+    for (const dir of SCANNED) {
+      for (const file of sourceFiles(join(ROOT, dir))) {
+        for (const match of readFileSync(file, 'utf8').matchAll(/var\(--([a-z0-9-]+)\)/g)) {
+          if (!defined.has(match[1]) && !RUNTIME.has(match[1])) {
+            offenders.push(`${file.slice(ROOT.length + 1)}  var(--${match[1]})`);
+          }
+        }
+      }
+    }
+
+    expect(offenders, `Undefined tokens:\n${offenders.join('\n')}`).toEqual([]);
+  });
+});
