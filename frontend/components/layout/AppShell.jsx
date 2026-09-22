@@ -243,7 +243,7 @@ export function AppShell({ children }) {
         icon rail from 768px — where 216px of names would cost the content a
         fifth of the screen — and a drawer below that.
       */}
-      <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex lg:w-[216px]">
+      <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex lg:w-[216px] [view-transition-name:app-sidebar]">
         <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} compact />
       </aside>
 
@@ -263,7 +263,7 @@ export function AppShell({ children }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBarContext.Provider value={slot}>
-          <header className="sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 px-4 backdrop-blur-sm sm:px-6">
+          <header className="sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 px-4 backdrop-blur-sm sm:px-6 [view-transition-name:app-topbar]">
             <button
               type="button"
               onClick={() => {

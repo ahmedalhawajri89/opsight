@@ -119,7 +119,9 @@ pulls a title apart.
 Colour is assigned by ROLE. `app/globals.css` is the single source of truth: no component
 carries a hex value, and every role below is a token with a name that says what it is for
 rather than what it looks like. **Revised in the design-system pass (v5)**, which replaced
-the single-accent palette with the role set below.
+the single-accent palette with the role set below, and again in **v6**, which removed every
+indigo and violet from the interface. The old navy leaned violet and its link colour was the
+indigo every product template ships with; together they read as a theme, not an identity.
 
 **Surfaces** — the page ground, what sits on it, and the half-step between.
 
@@ -128,7 +130,7 @@ the single-accent palette with the role set below.
 --surface        #FFFFFF   cards, panels, fields
 --surface-subtle #FAFBFD   table heads, inset strips
 --surface-hover  #F2F4F9   a row under the cursor
---surface-selected #EEF0FF the current row
+--surface-selected #EAF1FB the current row
 ```
 
 **Lines** — three weights: `--border-subtle` inside a panel, `--border` at a card's edge,
@@ -143,14 +145,17 @@ one. The muted tone marks metadata; it does not mark unimportant text.
 --muted   #5C6880    5.6:1   (was #7B879C — 3.9:1, a failure that shipped)
 ```
 
-**Brand** — the navy identity, reserved for the mark, the primary button and a page header.
-A page-sized navy wash belongs to the sign-in screen and nowhere else. `--brand-text` is the
-indigo that carries what you can follow (links, the current place in the navigation) and
-`--brand-soft` marks that place.
+**Brand** — ink blue, reserved for the mark, the primary button and a page header, and never
+a page-sized wash (the sign-in page is light too). `--brand-text` carries what you can follow
+(links, the current place in the navigation) and `--brand-soft` marks that place. The logo
+gradient runs `--brand-from #2F7DE1` to `--brand-to #0F2A47`.
 
 ```
---brand #1E2A5E   --brand-text #4F46E5   --brand-soft #EEF0FF
+--brand #0F2A47 (14.6:1 under white)   --brand-text #1D5FC7 (6.0:1)   --brand-soft #E9F1FC
 ```
+
+There is no violet anywhere in the interface chrome. KPI icon tints are green, blue, cyan and
+teal.
 
 **Accent** — ONE warm tone, the only warm tone in the interface chrome, for a live figure, a
 state, and the focus ring. Never a surface, a border, or body text.
@@ -170,8 +175,14 @@ messages: `--success #15803D`, `--warning #B45309`, `--danger #C81E1E`, `--info 
 
 **Charts** — a categorical palette that shares nothing with the interface: no chart colour
 means "brand", "warning" or "selected", and no interface state is painted in one of them.
-Blue, amber, teal, violet, magenta, cyan. (`--chart-5` was the navy brand until this pass —
+Blue, amber, teal, **brick red**, magenta, cyan. (`--chart-5` was the navy brand until v5 —
 the one place the two vocabularies had leaked into each other.)
+
+> `--chart-4` was violet until v6. With violet removed, a search of the whole hue range found
+> only two colours that stay ΔE ≥ 15 from the other five under simulated protanopia and
+> deuteranopia: a near-navy that would collide with the brand, and deep brick red `#991A00`
+> (ΔE 33.6). Red can read as "loss", so it is only ever a labelled series inside a chart,
+> never decoration or interface state, and it is darker than `--danger`.
 
 **Radii, by role rather than size**: `--radius-control` 8px, `--radius-panel` 12px,
 `--radius-card` 16px, `--radius-pill` 999px.
@@ -359,6 +370,20 @@ refunded   warning
   animates on a refetch (a changed figure must not be disguised by an arriving one), no
   number counting, and no hover lift on panels that are not clickable. `prefers-reduced-motion`
   removes all of it — CSS through a media query, Recharts through `useReducedMotion()`.
+- **The sign-in scene** (`features/auth/LedgerScene.jsx`) is the product's thesis drawn in
+  three beats, about 2.6 s, played once. Ledger rows arrive, each marked by its kind. They fold
+  away as a single figure rises in their place, and a line traces the figure to a bronze
+  point that marks "now". It carries no number, axis or label, because nobody is signed in to
+  have data. The point's slow ring is the product's only loop, and it exists only on that
+  page. Under reduced motion every animation runs instantly to its end, so the scene is simply
+  the finished figure.
+- **Changing language mirrors the page instead of jumping it.** The switch runs inside a
+  native View Transition (`runLanguageTransition` in `I18nProvider.jsx`):
+  - the named panes (the sign-in form and scene, the app's sidebar and top bar) glide 450 ms
+    to their mirrored sides while the text crossfades behind a 4px blur
+  - `<html dir>` is written in a layout effect, so the "after" snapshot already has the new
+    direction
+  - without the API, or under reduced motion, the switch is instant
 
 ## 8. Accessibility
 

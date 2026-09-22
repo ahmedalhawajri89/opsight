@@ -5,10 +5,11 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
+import { flushSync } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { AUTH_QUERY_KEY, useAuth } from '@/features/auth/AuthProvider';
@@ -30,6 +31,57 @@ import * as authService from '@/services/auth';
 const DICTIONARIES = { en, ar };
 
 const I18nContext = createContext(null);
+
+/*
+ * Resolves once <html lang> reads the new language — that is, once React has
+ * committed it and the layout effect below has written it. Polled on a timer,
+ * not requestAnimationFrame: while a view transition's update callback is
+ * pending the browser suppresses rendering, and animation frames with it.
+ * Capped, so a failure can never leave the page frozen mid-transition.
+ */
+function whenLanguageApplied(locale, timeout = 800) {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const check = () => {
+      if (document.documentElement.lang === locale || Date.now() - started > timeout) resolve();
+      else setTimeout(check, 16);
+    };
+    check();
+  });
+}
+
+/**
+ * Switches language inside a native View Transition, so the page MIRRORS
+ * rather than jumps: the named panes glide to their opposite sides and the
+ * text crossfades (globals.css, "Language transition").
+ *
+ * The browser snapshots the page, runs `apply`, waits for the returned promise,
+ * snapshots again and animates between the two. So the promise must not settle
+ * until the new direction is really in the DOM — for a guest `flushSync` gets
+ * it there at once, but a signed-in user's language arrives through React
+ * Query, which notifies its subscribers asynchronously.
+ *
+ * Without the API, under reduced motion, or when nothing would change, the
+ * switch is simply applied — the behaviour before this existed.
+ */
+function runLanguageTransition(nextLocale, apply) {
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  if (
+    typeof document.startViewTransition !== 'function' ||
+    reduced ||
+    document.documentElement.lang === nextLocale
+  ) {
+    apply();
+
+    return;
+  }
+
+  document.startViewTransition(async () => {
+    flushSync(apply);
+    await whenLanguageApplied(nextLocale);
+  });
+}
 
 /**
  * The active language, for every component and every formatter.
@@ -77,7 +129,12 @@ export function I18nProvider({ initialLocale, initialNumerals, children }) {
   setFormatLocale(tag, { points: messages.format.pointsUnit });
   setRequestLanguage(locale);
 
-  useEffect(() => {
+  /*
+   * A layout effect, not a passive one: it runs inside the commit, so when a
+   * language transition takes its "after" snapshot the direction is already
+   * the new one, and the panes glide instead of arriving on the wrong side.
+   */
+  useLayoutEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = dir;
 
@@ -110,17 +167,22 @@ export function I18nProvider({ initialLocale, initialNumerals, children }) {
       const nextNumerals = normaliseNumerals(nextLocale, next.numerals ?? numerals);
 
       if (!user) {
-        setGuest({ locale: nextLocale, numerals: nextNumerals });
+        runLanguageTransition(nextLocale, () =>
+          setGuest({ locale: nextLocale, numerals: nextNumerals }),
+        );
 
         return;
       }
 
+      // Saved first: the page only turns around once the account agrees.
       const response = await authService.updatePreferences({
         locale: nextLocale,
         numerals: nextNumerals,
       });
 
-      queryClient.setQueryData(AUTH_QUERY_KEY, response.data);
+      runLanguageTransition(nextLocale, () =>
+        queryClient.setQueryData(AUTH_QUERY_KEY, response.data),
+      );
 
       /*
        * Everything else was fetched in the previous language: insight

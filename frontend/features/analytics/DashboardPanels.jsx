@@ -523,7 +523,7 @@ export function ExploreAnalyticsCard({ className, style }) {
     <section
       style={style}
       className={cn(
-        'relative overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-linear-to-br from-(--color-surface-selected) to-(--color-surface) p-6',
+        'relative overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-6',
         className,
       )}
     >
@@ -544,7 +544,7 @@ export function ExploreAnalyticsCard({ className, style }) {
         <path
           d="M66 40c14-4 26-14 36-30"
           fill="none"
-          stroke="var(--chart-4)"
+          stroke="var(--brand-text)"
           strokeWidth="5"
           strokeLinecap="round"
           opacity="0.55"
@@ -552,7 +552,7 @@ export function ExploreAnalyticsCard({ className, style }) {
         <path
           d="M94 8h10v10"
           fill="none"
-          stroke="var(--chart-4)"
+          stroke="var(--brand-text)"
           strokeWidth="5"
           strokeLinecap="round"
           strokeLinejoin="round"

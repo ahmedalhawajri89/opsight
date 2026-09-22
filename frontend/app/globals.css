@@ -7,8 +7,8 @@
  *
  * Every colour, type size, radius and shadow in the application is defined
  * here, by ROLE rather than by appearance. No component may use a raw hex
- * value, a font size outside the scale, or a radius of its own — that is what makes a theme a property of
- * the system rather than a per-component retrofit
+ * value, a font size outside the scale, or a radius of its own — that is what
+ * makes a theme a property of the system rather than a per-component retrofit
  * (docs/product/UI_UX_DIRECTION.md §11).
  *
  * REFERENCING A TOKEN FROM MARKUP: Tailwind v4 spells it `bg-(--color-surface)`.
@@ -34,7 +34,7 @@
   --surface: #ffffff;
   --surface-subtle: #fafbfd;
   --surface-hover: #f2f4f9;
-  --surface-selected: #eef0ff;
+  --surface-selected: #eaf1fb;
   --sidebar: #ffffff;
 
   /*
@@ -58,21 +58,25 @@
   --text-inverse: #ffffff;
 
   /*
-   * BRAND — the navy identity. Reserved for the mark, the primary button and
-   * a page header. It is deliberately NOT available as a page-sized wash
-   * inside the application: a full navy panel belongs to the sign-in screen
-   * and nowhere else.
+   * BRAND — ink blue. Reserved for the mark, the primary button and a page
+   * header, and never used as a page-sized wash.
    *
-   * `brand-text` is the indigo that carries what you can follow — links and
-   * the current place in the navigation — and `brand-soft` marks that place.
+   * Palette v6 removed every indigo and violet from the interface. The old
+   * navy leaned violet (#1E2A5E), its link colour was the indigo every
+   * product template ships with, and together they read as a theme rather
+   * than an identity. Ink is a working colour: the blue of a ledger's ruled
+   * line, not of a launch page.
+   *
+   * `brand-text` carries what you can follow — links and the current place in
+   * the navigation — and `brand-soft` marks that place.
    */
-  --brand: #1e2a5e;
-  --brand-hover: #172150;
-  --brand-active: #111936;
-  --brand-text: #4f46e5;
-  --brand-soft: #eef0ff;
-  --brand-from: #6366f1;
-  --brand-to: #4f46e5;
+  --brand: #0f2a47;
+  --brand-hover: #0b213a;
+  --brand-active: #081a2e;
+  --brand-text: #1d5fc7;
+  --brand-soft: #e9f1fc;
+  --brand-from: #2f7de1;
+  --brand-to: #0f2a47;
 
   /*
    * ACCENT — one warm tone, and the only warm tone in the interface chrome.
@@ -100,8 +104,8 @@
   --info-soft: #e9effd;
 
   /* Two icon tints. Never text on their own. */
-  --violet: #7c3aed;
-  --violet-soft: #f2ebfd;
+  --cyan: #0e7490;
+  --cyan-soft: #e6f4f8;
   --teal: #0f766e;
   --teal-soft: #e6f6f4;
 
@@ -111,20 +115,26 @@
    * interface state is ever painted in one of these.
    *
    * Separated by lightness as much as by hue, because the red-green axis
-   * collapses under the two common forms of colour blindness; the worst pair
-   * measures ΔE 17.3 under simulated protanopia.
+   * collapses under the two common forms of colour blindness.
+   *
+   * chart-4 is a deep brick red, not violet. With violet gone, a search of
+   * the whole hue range found only two colours that stay ΔE ≥ 15 from the
+   * other five under simulated protanopia and deuteranopia: this red and a
+   * near-navy that would collide with the brand. Red can read as "loss", so
+   * it is only ever a labelled series inside a chart — never decoration and
+   * never interface state — and it is darker than --danger.
    */
   --chart-1: #2563eb;
   --chart-2: #d97706;
   --chart-3: #0f9a8d;
-  --chart-4: #a275f0;
+  --chart-4: #991a00;
   --chart-5: #be185d;
   --chart-6: #0e7490;
 
   /* Sparkline strokes: decorative marks beneath a figure that is already stated. */
   --spark-green: #16a34a;
   --spark-blue: #2563eb;
-  --spark-violet: #7c3aed;
+  --spark-cyan: #0891b2;
   --spark-teal: #14b8a6;
 
   /* Focus is the accent's job, everywhere, without exception. */
@@ -142,7 +152,7 @@
   --surface: #121829;
   --surface-subtle: #161d31;
   --surface-hover: #1a2236;
-  --surface-selected: #1f2552;
+  --surface-selected: #16284a;
   --sidebar: #121829;
 
   --border-subtle: #1c2436;
@@ -154,13 +164,13 @@
   --muted: #98a2b6;
   --text-inverse: #0b1020;
 
-  --brand: #a5b4fc;
-  --brand-hover: #c7d2fe;
-  --brand-active: #e0e7ff;
-  --brand-text: #a5b4fc;
-  --brand-soft: #1f2552;
-  --brand-from: #818cf8;
-  --brand-to: #6366f1;
+  --brand: #8fb8f0;
+  --brand-hover: #b3cff5;
+  --brand-active: #d3e3fa;
+  --brand-text: #8fb8f0;
+  --brand-soft: #16284a;
+  --brand-from: #5b9cf0;
+  --brand-to: #2f7de1;
 
   --accent: #e0b155;
   --accent-strong: #f0c877;
@@ -175,21 +185,21 @@
   --info: #93b4fd;
   --info-soft: #1c2547;
 
-  --violet: #c4b5fd;
-  --violet-soft: #241c42;
+  --cyan: #5fd0e6;
+  --cyan-soft: #0f2c33;
   --teal: #5eead4;
   --teal-soft: #10302c;
 
   --chart-1: #6b8cff;
   --chart-2: #fbbf24;
   --chart-3: #2dd4bf;
-  --chart-4: #c4b5fd;
+  --chart-4: #c32230;
   --chart-5: #f5d0fe;
   --chart-6: #0e9fbf;
 
   --spark-green: #4ade80;
   --spark-blue: #6b8cff;
-  --spark-violet: #c4b5fd;
+  --spark-cyan: #5fd0e6;
   --spark-teal: #2dd4bf;
 
   --focus-ring: #e0b155;
@@ -231,8 +241,8 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
 
-  --color-violet: var(--violet);
-  --color-violet-soft: var(--violet-soft);
+  --color-cyan: var(--cyan);
+  --color-cyan-soft: var(--cyan-soft);
   --color-teal: var(--teal);
   --color-teal-soft: var(--teal-soft);
 
@@ -523,4 +533,189 @@ html[lang='ar'] [class*='tracking-'] {
 .skeleton {
   background: var(--surface-hover);
   animation: opsight-pulse 1.6s ease-in-out infinite;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Sign-in scene: records become a figure (features/auth/LedgerScene.jsx)
+ * ---------------------------------------------------------------------------
+ *
+ * Three beats, about 2.6 seconds, played once:
+ *   0.0s  six ledger rows slide in, staggered
+ *   0.9s  they fold away as the figure's columns rise from the baseline
+ *   1.7s  a line traces the columns, and the bronze point lands on "now"
+ *
+ * The point's ring is the ONE loop in the product — a slow pulse that says
+ * the figure is live — and it exists only on this page. Everything else here
+ * obeys "nothing loops". Under reduced motion the global rule above runs each
+ * animation once, instantly, to its end: the finished figure, ring at rest.
+ */
+@keyframes ledger-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ledger-row-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scaleX(0.15);
+  }
+}
+
+@keyframes ledger-col-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ledger-line-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ledger-dot-land {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ledger-ring-pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes ledger-step-lit {
+  to {
+    color: var(--text);
+  }
+}
+
+@keyframes ledger-step-dot-lit {
+  to {
+    background: var(--accent);
+  }
+}
+
+.ledger-row {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation:
+    ledger-row-in 420ms var(--ease-out) both,
+    ledger-row-out 380ms var(--ease-out) forwards;
+  animation-delay: calc(var(--i) * 80ms), calc(900ms + var(--i) * 40ms);
+}
+
+.ledger-col {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: ledger-col-grow 560ms var(--ease-out) both;
+  animation-delay: calc(1000ms + var(--i) * 70ms);
+}
+
+.ledger-line {
+  stroke-dasharray: 1;
+  animation: ledger-line-draw 800ms var(--ease-out) 1.7s both;
+}
+
+.ledger-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ledger-dot-land 360ms var(--ease-out) 2.4s both;
+}
+
+.ledger-ring {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ledger-ring-pulse 2.6s var(--ease-out) 2.7s infinite;
+}
+
+.ledger-step {
+  color: var(--muted);
+  animation: ledger-step-lit 300ms var(--ease-out) var(--d) forwards;
+}
+
+.ledger-step-dot {
+  background: var(--border-strong);
+  animation: ledger-step-dot-lit 300ms var(--ease-out) var(--d) forwards;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Language transition: the layout mirrors, it does not jump
+ * ---------------------------------------------------------------------------
+ *
+ * Switching between Arabic and English flips the page's direction, so every
+ * pane changes sides. Run through the browser's native View Transitions
+ * (I18nProvider.runLanguageTransition), each named pane GLIDES to its
+ * mirrored place while the text crossfades behind a brief blur — the reader
+ * watches the page turn around instead of losing their place.
+ *
+ * Only a few large panes are named, and each name is unique on its page.
+ * Browsers without the API switch instantly; under reduced motion the switch
+ * is instant too (the JavaScript skips the transition, and these rules stand
+ * down in case it did not).
+ */
+::view-transition-group(*) {
+  animation-duration: 450ms;
+  animation-timing-function: var(--ease-out);
+}
+
+@keyframes language-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes language-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+::view-transition-old(*) {
+  animation: language-out 220ms var(--ease-out) both;
+}
+
+::view-transition-new(*) {
+  animation: language-in 320ms var(--ease-out) 120ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }

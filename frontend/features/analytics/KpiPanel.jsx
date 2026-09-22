@@ -57,7 +57,7 @@ const PRIMARY_COUNT = 4;
 const VISUALS = {
   net_revenue: { icon: 'coins', accent: 'green' },
   orders_count: { icon: 'receipt', accent: 'blue' },
-  gross_profit: { icon: 'wallet', accent: 'purple' },
+  gross_profit: { icon: 'wallet', accent: 'cyan' },
   gross_margin: { icon: 'percent', accent: 'teal' },
   average_order_value: { icon: 'percent', accent: 'blue' },
   new_customers: { icon: 'userPlus', accent: 'blue' },
@@ -72,7 +72,7 @@ const VISUALS = {
 const TINTS = {
   green: 'bg-(--color-success-soft) text-(--color-success)',
   blue: 'bg-(--color-info-soft) text-(--color-info)',
-  purple: 'bg-(--color-violet-soft) text-(--color-violet)',
+  cyan: 'bg-(--color-cyan-soft) text-(--color-cyan)',
   teal: 'bg-(--color-teal-soft) text-(--color-teal)',
   amber: 'bg-(--color-warning-soft) text-(--color-warning)',
   red: 'bg-(--color-danger-soft) text-(--color-danger)',
@@ -81,7 +81,7 @@ const TINTS = {
 const SPARKS = {
   green: 'var(--spark-green)',
   blue: 'var(--spark-blue)',
-  purple: 'var(--spark-violet)',
+  cyan: 'var(--spark-cyan)',
   teal: 'var(--spark-teal)',
   amber: 'var(--chart-2)',
   red: 'var(--negative)',

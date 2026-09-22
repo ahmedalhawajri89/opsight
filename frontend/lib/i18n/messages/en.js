@@ -107,6 +107,13 @@ const en = {
     switchLanguage: 'Switch the interface to {language}',
     lockoutNote:
       'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
+    scene: {
+      label:
+        'An illustration: individual records arriving and folding into a single rising figure.',
+      records: 'Records',
+      computed: 'Computed on request',
+      figure: 'The figure',
+    },
   },
 
   dialog: {
