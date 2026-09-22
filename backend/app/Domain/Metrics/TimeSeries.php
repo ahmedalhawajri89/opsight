@@ -9,8 +9,8 @@ use App\Domain\Orders\OrderStatus;
 use App\Models\BusinessSetting;
 use App\Models\User;
 use App\Support\Money;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
@@ -208,7 +208,7 @@ final class TimeSeries
         // The bucket expression repeats the offset binding once per use.
         $bindings = array_fill(0, substr_count($bucketExpression, '?'), $offset);
 
-        $rows = DB::table('orders')
+        $rows = TenantQuery::table('orders')
             ->whereIn('status', OrderStatus::qualifying())
             ->where('placed_at', '>=', $from)
             ->where('placed_at', '<', $to)
@@ -241,7 +241,7 @@ final class TimeSeries
             default => 'DATE(incurred_on)',
         };
 
-        return DB::table('expenses')
+        return TenantQuery::table('expenses')
             ->whereNull('deleted_at')
             ->whereBetween('incurred_on', [$period->from, $period->to])
             ->selectRaw("{$bucketExpression} AS bucket, COALESCE(SUM(amount), 0) AS value")

@@ -65,6 +65,27 @@ export function getFormatLocale() {
   return activeLocale;
 }
 
+/*
+ * The business's currency and its places, the default for every amount.
+ *
+ * Set by the AuthProvider from the signed-in user's business (ADR-023). Before
+ * this, every screen that did not pass a currency showed BHD — right for the
+ * demo business, and wrong for a Kuwaiti or Saudi one. Callers that know the
+ * currency from a response's meta still pass it explicitly.
+ */
+let moneyDefaults = { currency: 'BHD', decimals: 3 };
+
+export function setMoneyDefaults({ currency, decimals } = {}) {
+  moneyDefaults = {
+    currency: currency || 'BHD',
+    decimals: Number.isInteger(decimals) ? decimals : 3,
+  };
+}
+
+export function getMoneyDefaults() {
+  return moneyDefaults;
+}
+
 function isBlank(value) {
   return value === null || value === undefined || value === '';
 }
@@ -77,7 +98,12 @@ function isBlank(value) {
  */
 export function formatMoney(
   value,
-  { currency = 'BHD', decimals = 3, locale = activeLocale, sign = false } = {},
+  {
+    currency = moneyDefaults.currency,
+    decimals = moneyDefaults.decimals,
+    locale = activeLocale,
+    sign = false,
+  } = {},
 ) {
   if (isBlank(value)) return EMPTY;
 
@@ -112,7 +138,11 @@ export function formatMoney(
  */
 export function formatMoneyParts(
   value,
-  { currency = 'BHD', decimals = 3, locale = activeLocale } = {},
+  {
+    currency = moneyDefaults.currency,
+    decimals = moneyDefaults.decimals,
+    locale = activeLocale,
+  } = {},
 ) {
   if (isBlank(value)) return null;
 
@@ -144,7 +174,10 @@ export function formatMoneyParts(
  * Money with the magnitude shortened — for chart axes and tight tiles only,
  * never for a figure someone might reconcile against an invoice.
  */
-export function formatMoneyCompact(value, { currency = 'BHD', locale = activeLocale } = {}) {
+export function formatMoneyCompact(
+  value,
+  { currency = moneyDefaults.currency, locale = activeLocale } = {},
+) {
   if (isBlank(value)) return EMPTY;
 
   const numeric = Number(value);

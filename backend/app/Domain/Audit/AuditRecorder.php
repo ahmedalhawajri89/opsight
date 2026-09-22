@@ -6,6 +6,7 @@ namespace App\Domain\Audit;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Support\Tenancy\BusinessScope;
 use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -120,7 +121,7 @@ final class AuditRecorder
         $business = CurrentBusiness::get()->idOrNull() ?? $subject?->getAttribute('business_id');
 
         if ($business === null && $actorId !== null) {
-            $business = User::query()->whereKey($actorId)->value('business_id');
+            $business = User::query()->withoutGlobalScope(BusinessScope::class)->whereKey($actorId)->value('business_id');
         }
 
         return $business === null ? null : (int) $business;

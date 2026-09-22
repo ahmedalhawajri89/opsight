@@ -9,11 +9,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
 use App\Support\QueryFilter;
+use App\Support\Tenancy\TenantRule;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExpenseController extends Controller
@@ -124,7 +124,7 @@ class ExpenseController extends Controller
         return $request->validate([
             'expense_category_id' => [
                 $required, 'integer',
-                Rule::exists('expense_categories', 'id')->whereNull('deleted_at'),
+                TenantRule::exists('expense_categories')->whereNull('deleted_at'),
             ],
             'description' => [$required, 'string', 'max:255'],
             'amount' => [$required, 'numeric', 'min:0.01'],

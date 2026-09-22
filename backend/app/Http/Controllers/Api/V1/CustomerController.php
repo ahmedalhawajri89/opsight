@@ -11,12 +11,12 @@ use App\Http\Resources\OrderResource;
 use App\Models\Customer;
 use App\Support\PhoneNumber;
 use App\Support\QueryFilter;
+use App\Support\Tenancy\TenantRule;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerController extends Controller
@@ -168,7 +168,7 @@ class CustomerController extends Controller
             // Unique among non-deleted rows, and nullable for walk-in trade.
             'email' => [
                 'nullable', 'email', 'max:190',
-                Rule::unique('customers', 'email')
+                TenantRule::unique('customers', 'email')
                     ->whereNull('deleted_at')
                     ->ignore($customer?->id),
             ],

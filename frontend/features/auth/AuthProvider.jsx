@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { SESSION_EXPIRED_EVENT } from '@/lib/apiClient';
+import { setMoneyDefaults } from '@/lib/format';
 import { can as canAbility } from '@/lib/permissions';
 import * as authService from '@/services/auth';
 
@@ -104,6 +105,19 @@ export function AuthProvider({ children }) {
   }, [queryClient]);
 
   const isAuthenticated = isSuccess && Boolean(user);
+
+  /*
+   * Money defaults from the business, set during render — as the I18nProvider
+   * sets the locale — so the first amount on the first screen is already in
+   * the business's currency. A different business means a different sign-in,
+   * and signing in replaces this user object.
+   */
+  if (user?.business) {
+    setMoneyDefaults({
+      currency: user.business.currency,
+      decimals: user.business.currency_decimals,
+    });
+  }
 
   const value = useMemo(
     () => ({

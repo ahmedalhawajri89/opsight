@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Orders;
 
+use App\Support\Tenancy\TenantRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 /**
  * Adding a line to a draft order.
@@ -30,7 +30,7 @@ class AddOrderItemRequest extends FormRequest
                 'integer',
                 // An inactive product cannot be added to a new order, though it
                 // stays fully visible in analytics (MVP_SCOPE.md §6.5).
-                Rule::exists('products', 'id')->whereNull('deleted_at')->where('is_active', true),
+                TenantRule::exists('products')->whereNull('deleted_at')->where('is_active', true),
             ],
             'quantity' => ['required', 'integer', 'min:1', 'max:100000'],
             'line_discount' => ['nullable', 'numeric', 'min:0'],

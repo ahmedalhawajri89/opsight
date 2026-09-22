@@ -122,6 +122,24 @@ it('files a failed sign-in under the attacked account\'s business, or none', fun
         ->and($rows->firstWhere('context.email', 'nobody@nowhere.test')?->business_id)->toBeNull();
 });
 
+it('tells the signed-in user which business, and which currency, they act for', function (): void {
+    $kuwait = secondBusiness('KWD', 3);
+    $owner = CurrentBusiness::get()->run($kuwait->id, fn () => User::factory()->role(Role::Owner)->create());
+
+    $this->actingAs($owner)->getJson('/api/v1/me')
+        ->assertOk()
+        ->assertJsonPath('data.business.id', $kuwait->id)
+        ->assertJsonPath('data.business.name', $kuwait->name)
+        ->assertJsonPath('data.business.currency', 'KWD')
+        ->assertJsonPath('data.business.currency_decimals', 3);
+
+    // A list of colleagues does not repeat the business on every row.
+    $colleague = CurrentBusiness::get()->run($kuwait->id, fn () => User::factory()->create());
+    $row = collect($this->getJson('/api/v1/users')->assertOk()->json('data'))->firstWhere('id', $colleague->id);
+
+    expect($row)->toBeArray()->not->toHaveKey('business');
+});
+
 it('starts every request and job with no business in context', function (): void {
     expect(CurrentBusiness::get()->idOrNull())->not->toBeNull();
 

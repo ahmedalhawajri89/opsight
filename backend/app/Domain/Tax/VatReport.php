@@ -8,7 +8,7 @@ use App\Domain\Metrics\Period;
 use App\Domain\Orders\OrderStatus;
 use App\Models\BusinessSetting;
 use App\Support\Money;
-use Illuminate\Support\Facades\DB;
+use App\Support\Tenancy\TenantQuery;
 
 /**
  * VAT for a period: what was charged, what was handed back, what is due.
@@ -46,7 +46,7 @@ final class VatReport
         $scale = Money::scale();
         [$from, $to] = $period->utcBounds();
 
-        $byRate = DB::table('order_items')
+        $byRate = TenantQuery::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('orders.status', OrderStatus::qualifying())
             ->where('orders.placed_at', '>=', $from)
@@ -67,7 +67,7 @@ final class VatReport
 
         $output = array_reduce($byRate, fn (string $sum, array $row): string => bcadd($sum, $row['vat'], $scale), Money::zero());
 
-        $refunded = Money::round((string) (DB::table('orders')
+        $refunded = Money::round((string) (TenantQuery::table('orders')
             ->whereIn('status', OrderStatus::qualifying())
             ->where('placed_at', '>=', $from)
             ->where('placed_at', '<', $to)

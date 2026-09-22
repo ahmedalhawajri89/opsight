@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\BusinessSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -36,6 +37,18 @@ class UserResource extends JsonResource
             // second copy of the role → ability table in JavaScript
             // (ROLES_AND_PERMISSIONS.md §5.8).
             'abilities' => $this->abilities(),
+
+            /*
+             * The business the signed-in user acts for: its name, and the
+             * currency every amount on every screen is in (ADR-023). Only on
+             * the user's own record — a list of colleagues does not repeat it.
+             */
+            'business' => $this->when($request->user()?->getAuthIdentifier() === $this->id, fn (): array => [
+                'id' => $this->business_id,
+                'name' => BusinessSetting::current()->company_name,
+                'currency' => BusinessSetting::current()->currency,
+                'currency_decimals' => (int) BusinessSetting::current()->currency_decimals,
+            ]),
         ];
     }
 }

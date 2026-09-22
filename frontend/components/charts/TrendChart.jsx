@@ -17,7 +17,7 @@ import { useI18n } from '@/features/i18n/I18nProvider';
 import { useId } from 'react';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { formatCompact, formatMoney, formatNumber } from '@/lib/format';
+import { formatCompact, formatMoney, formatNumber, getMoneyDefaults } from '@/lib/format';
 import { formatBucketLabel, weekendRuns } from '@/lib/periods';
 
 /**
@@ -46,7 +46,7 @@ export function TrendChart({
   description,
   series: rawSeries = [],
   format = 'money',
-  currency = 'BHD',
+  currency = getMoneyDefaults().currency,
   decimals = 3,
   loading = false,
   error = null,

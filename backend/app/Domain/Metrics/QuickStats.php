@@ -9,7 +9,7 @@ use App\Domain\Orders\OrderStatus;
 use App\Domain\Payments\PaymentStatus;
 use App\Models\User;
 use App\Support\Money;
-use Illuminate\Support\Facades\DB;
+use App\Support\Tenancy\TenantQuery;
 
 /**
  * The dashboard's "quick stats": the size of the business right now.
@@ -46,7 +46,7 @@ final class QuickStats
             $stats['inventory_value'] = [
                 // Today's stock at catalogue cost. There is no history of
                 // valuation (ADR-014), so there is no honest change to report.
-                'value' => (string) (DB::table('inventory_items')
+                'value' => (string) (TenantQuery::table('inventory_items')
                     ->join('products', 'products.id', '=', 'inventory_items.product_id')
                     ->whereNull('products.deleted_at')
                     ->selectRaw('COALESCE(SUM(ROUND(inventory_items.stock_on_hand * products.cost, '.Money::scale().')), 0) AS total')
@@ -59,7 +59,7 @@ final class QuickStats
             $stats['receivables'] = [
                 // Owed today by committed orders, on PaymentStatus's formula
                 // (ADR-022). Like inventory value, a position with no history.
-                'value' => Money::round((string) (DB::table('orders')
+                'value' => Money::round((string) (TenantQuery::table('orders')
                     ->whereIn('status', OrderStatus::qualifying())
                     ->selectRaw('COALESCE(SUM('.PaymentStatus::outstandingSql().'), 0) AS total')
                     ->value('total') ?? Money::zero())),
@@ -69,7 +69,7 @@ final class QuickStats
 
         if ($user?->can(Ability::UsersView->value) ?? false) {
             $stats['active_users'] = [
-                'value' => (int) DB::table('users')->where('is_active', true)->count(),
+                'value' => (int) TenantQuery::table('users')->where('is_active', true)->count(),
                 'change' => null,
             ];
         }
@@ -97,7 +97,7 @@ final class QuickStats
     /** Rows that existed at an instant: created before it, not yet deleted. */
     private function countAt(string $table, string $instant): int
     {
-        return (int) DB::table($table)
+        return (int) TenantQuery::table($table)
             ->where('created_at', '<', $instant)
             ->where(fn ($query) => $query->whereNull('deleted_at')->orWhere('deleted_at', '>=', $instant))
             ->count();

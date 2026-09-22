@@ -17,4 +17,6 @@ export const ACCOUNTS = [
   ['owner', 'owner@opsight.test'],
   ['manager', 'manager@opsight.test'],
   ['staff', 'staff@opsight.test'],
+  // The owner of the second business on the installation (ADR-023).
+  ['otherOwner', 'owner@alnoor.test'],
 ];

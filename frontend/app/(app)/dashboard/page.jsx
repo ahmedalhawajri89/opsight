@@ -1,5 +1,6 @@
 'use client';
 
+import { getMoneyDefaults } from '@/lib/format';
 import { useDashboard } from '@/features/analytics/useAnalytics';
 import { KpiPanel } from '@/features/analytics/KpiPanel';
 import {
@@ -78,8 +79,8 @@ export default function DashboardPage() {
 
   const metrics = dashboard?.metrics ?? {};
   const comparisonLabel = meta?.comparison?.label ?? '';
-  const currency = meta?.currency ?? 'BHD';
-  const decimals = meta?.currency_decimals ?? 3;
+  const currency = meta?.currency ?? getMoneyDefaults().currency;
+  const decimals = meta?.currency_decimals ?? getMoneyDefaults().decimals;
   const money = { currency, decimals };
   const firstLoad = isLoading && !dashboard;
 

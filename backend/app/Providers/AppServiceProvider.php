@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Listeners\RecordAuthActivity;
 use App\Models\User;
 use App\Support\Localization\Localizer;
+use App\Support\Tenancy\BusinessAgnosticUserProvider;
 use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Failed;
@@ -15,6 +16,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -63,6 +65,8 @@ class AppServiceProvider extends ServiceProvider
          * test. That is before route model binding, so {order} is looked up
          * inside the right business from the start (ADR-023).
          */
+        Auth::provider('business-agnostic', static fn ($app, array $config): BusinessAgnosticUserProvider => new BusinessAgnosticUserProvider($app['hash'], $config['model']));
+
         Event::listen(Authenticated::class, static function (Authenticated $event): void {
             if ($event->user instanceof User) {
                 CurrentBusiness::get()->set($event->user->business_id);

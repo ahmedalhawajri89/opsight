@@ -8,6 +8,8 @@ use App\Domain\Inventory\StockLevel;
 use App\Domain\Orders\OrderStatus;
 use App\Support\Localization\LocalizedName;
 use App\Support\Money;
+use App\Support\Tenancy\CurrentBusiness;
+use App\Support\Tenancy\TenantQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -95,7 +97,7 @@ final class MetricCalculator
     {
         [$from, $to] = $period->utcBounds();
 
-        return (int) DB::table('order_items')
+        return (int) TenantQuery::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('orders.status', OrderStatus::qualifying())
             ->where('orders.placed_at', '>=', $from)
@@ -171,7 +173,7 @@ final class MetricCalculator
      */
     public function operatingExpenses(Period $period): string
     {
-        $total = DB::table('expenses')
+        $total = TenantQuery::table('expenses')
             ->whereNull('deleted_at')
             ->whereBetween('incurred_on', [$period->from, $period->to])
             ->selectRaw('COALESCE(SUM(amount), 0) AS total')
@@ -213,7 +215,7 @@ final class MetricCalculator
     {
         [$from, $to] = $period->utcBounds();
 
-        $row = DB::table('orders')
+        $row = TenantQuery::table('orders')
             ->whereIn('status', OrderStatus::placed())
             ->where('placed_at', '>=', $from)
             ->where('placed_at', '<', $to)
@@ -259,7 +261,7 @@ final class MetricCalculator
     {
         [$from, $to] = $period->utcBounds();
 
-        $firsts = DB::table('orders')
+        $firsts = TenantQuery::table('orders')
             ->selectRaw('customer_id, MIN(placed_at) AS first_order_at')
             ->whereIn('status', OrderStatus::qualifying())
             ->whereNotNull('customer_id')
@@ -282,7 +284,7 @@ final class MetricCalculator
     {
         [$from, $to] = $period->utcBounds();
 
-        return (int) DB::table('orders')
+        return (int) TenantQuery::table('orders')
             ->whereIn('status', OrderStatus::qualifying())
             ->whereNotNull('customer_id')
             ->where('placed_at', '>=', $from)
@@ -319,7 +321,7 @@ final class MetricCalculator
      */
     public function operatingExpensesByCategory(Period $period): array
     {
-        $rows = DB::table('expenses')
+        $rows = TenantQuery::table('expenses')
             ->join('expense_categories', 'expense_categories.id', '=', 'expenses.expense_category_id')
             ->whereNull('expenses.deleted_at')
             ->whereBetween('expenses.incurred_on', [$period->from, $period->to])
@@ -353,7 +355,7 @@ final class MetricCalculator
     {
         [$from, $to] = $period->utcBounds();
 
-        return (int) DB::table('order_items')
+        return (int) TenantQuery::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('orders.status', OrderStatus::qualifying())
             ->where('orders.placed_at', '>=', $from)
@@ -378,7 +380,7 @@ final class MetricCalculator
     {
         $cutoff = CarbonImmutable::now()->subDays($days);
 
-        return (int) DB::table('customers')
+        return (int) TenantQuery::table('customers')
             ->whereNull('customers.deleted_at')
             ->whereExists(function ($query): void {
                 $query->selectRaw('1')
@@ -414,7 +416,7 @@ final class MetricCalculator
          * anyway — a product with no recent demand has no stockout risk,
          * however little of it is on the shelf.
          */
-        $candidates = DB::table('order_items')
+        $candidates = TenantQuery::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->join('products', 'products.id', '=', 'order_items.product_id')
             ->join('inventory_items', 'inventory_items.product_id', '=', 'products.id')
@@ -521,7 +523,7 @@ final class MetricCalculator
     /** inventory_items for products that are live in the catalogue. */
     private function activeInventory(): Builder
     {
-        return DB::table('inventory_items')
+        return TenantQuery::table('inventory_items')
             ->join('products', 'products.id', '=', 'inventory_items.product_id')
             ->whereNull('products.deleted_at')
             ->where('products.is_active', true);
@@ -546,7 +548,7 @@ final class MetricCalculator
         $trailing ??= Period::preset('30d');
         [$from, $to] = $trailing->utcBounds();
 
-        $units = (int) DB::table('order_items')
+        $units = (int) TenantQuery::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.product_id', $productId)
             ->whereIn('orders.status', OrderStatus::qualifying())
@@ -558,7 +560,7 @@ final class MetricCalculator
             return null;
         }
 
-        $onHand = (int) DB::table('inventory_items')
+        $onHand = (int) TenantQuery::table('inventory_items')
             ->where('product_id', $productId)
             ->value('stock_on_hand');
 
@@ -583,14 +585,16 @@ final class MetricCalculator
      * second definition of any metric, which is what a rollup would have cost
      * (ADR-009).
      *
-     * Memoised per period for the life of the request. Safe because no request
-     * both writes an order and then reports on it.
+     * Memoised per period, and per business, for the life of the request. Safe
+     * because no request both writes an order and then reports on it; keyed by
+     * business so an instance that outlives a switch of business (a test, a
+     * job) cannot answer for the wrong one (ADR-023).
      *
      * @return object{gross: string, discounts: string, refunds: string, cogs: string, orders: int}
      */
     private function aggregate(Period $period): object
     {
-        $key = $period->from.'|'.$period->to.'|'.$period->timezone;
+        $key = CurrentBusiness::get()->id().'|'.$period->from.'|'.$period->to.'|'.$period->timezone;
 
         if (isset($this->aggregates[$key])) {
             return $this->aggregates[$key];
@@ -598,7 +602,7 @@ final class MetricCalculator
 
         [$from, $to] = $period->utcBounds();
 
-        $row = DB::table('orders')
+        $row = TenantQuery::table('orders')
             ->whereIn('status', OrderStatus::qualifying())
             ->where('placed_at', '>=', $from)
             ->where('placed_at', '<', $to)

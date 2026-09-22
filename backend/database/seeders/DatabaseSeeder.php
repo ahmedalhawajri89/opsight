@@ -60,6 +60,13 @@ class DatabaseSeeder extends Seeder
 
         $this->seedAccounts($accounts);
 
+        // A second business beside the first, so isolation can be seen and
+        // tested in a browser (ADR-023). Never in production.
+        if (app()->environment('local', 'testing')) {
+            $this->call(SecondBusinessSeeder::class);
+            CurrentBusiness::get()->set($business->id);
+        }
+
         /*
          * Demo data is opt-in: `php artisan db:seed` gives a clean install with
          * only the accounts and settings, and `--class=DemoDataSeeder` adds
