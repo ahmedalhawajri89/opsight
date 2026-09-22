@@ -4,8 +4,8 @@
 
 import { api, request } from '@/lib/apiClient';
 
-export function login({ email, password }) {
-  return api.post('/auth/login', { email, password });
+export function login({ email, password, remember = false }) {
+  return api.post('/auth/login', { email, password, remember });
 }
 
 export function logout() {

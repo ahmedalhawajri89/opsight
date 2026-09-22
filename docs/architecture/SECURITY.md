@@ -80,9 +80,21 @@ bytes, and no truncation surprises.
 - Concurrent sessions are permitted in the MVP. Session listing and remote revocation are
   Post-MVP.
 
+**Remember me** — opt-in per sign-in and off by default. Ticked, Laravel's recaller cookie
+keeps that device signed in for **30 days** (`LoginRequest::REMEMBER_MINUTES`, not
+Laravel's default of five years). Unticked, the session lasts `SESSION_LIFETIME`, eight idle
+hours, as before. The checkbox says for how long and to leave it unticked on a shared
+computer. Every remembered device ends when:
+- the user signs out (Laravel rotates the token)
+- the user is deactivated (`EnsureUserIsActive` logs the recalled session out on its next
+  request)
+- an Owner changes the user's password (`UserController::update` rotates the token, because
+  a password is usually changed when the old one, or a device, is no longer trusted)
+
 **Not in the MVP:** two-factor authentication, SSO/OAuth, password reset by email
-(Owner-set temporary passwords instead), remember-me. Each is deferred deliberately, not
-overlooked. 2FA is the first to add when the system holds real data.
+(Owner-set temporary passwords instead). Each is deferred deliberately, not overlooked. 2FA
+is the first to add when the system holds real data, and it matters more once remember-me
+exists.
 
 ## 4. Authorization
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Authorization\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Testing\TestResponse;
 
 it('logs a user in and returns their abilities', function (): void {
     $user = User::factory()->manager()->create([
@@ -252,3 +254,65 @@ it('resolves each seeded role to its documented ability count', function (Role $
     'analyst' => [Role::Analyst, 'analytics.export', 'orders.create'],
     'staff' => [Role::Staff, 'orders.create', 'metrics.view_cost'],
 ]);
+
+/*
+|--------------------------------------------------------------------------
+| Remember me
+|--------------------------------------------------------------------------
+|
+| Opt-in per sign-in, 30 days, and a sign-in without it behaves exactly as
+| before: a session that lasts SESSION_LIFETIME and nothing more. Requests
+| carry the SPA's Origin so Sanctum treats them as the browser does, with
+| cookies queued onto the response.
+|
+*/
+
+function spaLogin(array $body): TestResponse
+{
+    return test()->withHeader('Origin', 'http://localhost:3000')
+        ->postJson('/api/v1/auth/login', $body);
+}
+
+it('sets a 30-day remember cookie when asked to remember the device', function (): void {
+    $user = User::factory()->create(['remember_token' => null]);
+
+    $response = spaLogin([
+        'email' => $user->email,
+        'password' => 'password',
+        'remember' => true,
+    ])->assertOk();
+
+    $cookie = $response->getCookie(Auth::guard('web')->getRecallerName(), false);
+
+    expect($cookie)->not->toBeNull()
+        ->and($user->fresh()->remember_token)->not->toBeNull();
+
+    // 30 days, not Laravel's default of five years. A minute of slack either side.
+    $days = ($cookie->getExpiresTime() - time()) / 86400;
+    expect($days)->toBeGreaterThan(29.99)->toBeLessThan(30.01);
+});
+
+it('sets no remember cookie when the box is left unticked', function (?bool $remember): void {
+    $user = User::factory()->create(['remember_token' => null]);
+
+    $body = ['email' => $user->email, 'password' => 'password'];
+    if ($remember !== null) {
+        $body['remember'] = $remember;
+    }
+
+    $response = spaLogin($body)->assertOk();
+
+    expect($response->getCookie(Auth::guard('web')->getRecallerName(), false))
+        ->toBeNull()
+        ->and($user->fresh()->remember_token)->toBeNull();
+})->with(['explicitly false' => [false], 'omitted' => [null]]);
+
+it('rejects a remember value that is not a boolean', function (): void {
+    $user = User::factory()->create();
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => $user->email,
+        'password' => 'password',
+        'remember' => 'forever',
+    ])->assertStatus(422)->assertJsonValidationErrors('remember');
+});

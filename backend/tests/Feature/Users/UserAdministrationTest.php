@@ -250,3 +250,29 @@ it('cuts off a live session the moment an Owner deactivates the account', functi
         ->assertUnauthorized()
         ->assertJsonPath('code', 'auth.account_deactivated');
 });
+
+it('ends every remembered device when an owner changes a password', function (): void {
+    $owner = User::factory()->role(Role::Owner)->create();
+    $staff = User::factory()->role(Role::Staff)->create(['remember_token' => 'remembered-device-token']);
+
+    $this->actingAs($owner)->patchJson("/api/v1/users/{$staff->id}", [
+        'password' => 'a-long-enough-password',
+        'password_confirmation' => 'a-long-enough-password',
+    ])->assertOk();
+
+    // The token the remembered device holds no longer matches anything.
+    expect($staff->fresh()->remember_token)
+        ->not->toBe('remembered-device-token')
+        ->not->toBeNull();
+});
+
+it('leaves remembered devices alone when only the name changes', function (): void {
+    $owner = User::factory()->role(Role::Owner)->create();
+    $staff = User::factory()->role(Role::Staff)->create(['remember_token' => 'remembered-device-token']);
+
+    $this->actingAs($owner)->patchJson("/api/v1/users/{$staff->id}", [
+        'name' => 'Renamed',
+    ])->assertOk();
+
+    expect($staff->fresh()->remember_token)->toBe('remembered-device-token');
+});

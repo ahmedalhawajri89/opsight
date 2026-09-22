@@ -15,6 +15,7 @@ use App\Support\QueryFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -110,6 +111,14 @@ class UserController extends Controller
              * (SECURITY.md §10).
              */
             $user->auditAs('user.password_changed');
+
+            /*
+             * A new password ends every "remember me". A password is changed
+             * by an Owner — often because a device or the old password is no
+             * longer trusted — and a remembered device would otherwise stay
+             * signed in for up to 30 days on the strength of the old one.
+             */
+            $user->setRememberToken(Str::random(60));
         }
 
         $user->fill($validated);

@@ -13,6 +13,9 @@ const FIELD =
   'h-11 w-full rounded-(--radius-control) border bg-(--color-surface) px-4 text-base text-(--color-text) transition-colors duration-(--duration-fast) placeholder:text-(--color-muted)';
 
 const LABEL = 'block text-sm font-medium text-(--color-text)';
+
+// Mirrors LoginRequest::REMEMBER_MINUTES on the server; stated, not enforced, here.
+const REMEMBER_DAYS = 30;
 const MESSAGE = 'mt-2 text-sm text-(--color-danger)';
 
 export function LoginForm() {
@@ -29,7 +32,7 @@ export function LoginForm() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({ defaultValues: { email: '', password: '' } });
+  } = useForm({ defaultValues: { email: '', password: '', remember: false } });
 
   const sessionExpired = searchParams.get('expired') === '1';
 
@@ -162,6 +165,28 @@ export function LoginForm() {
           </p>
         )}
       </div>
+
+      {/*
+        Off by default, and it says for how long and where not to use it —
+        the two things a person needs to decide, stated at the moment they
+        decide. The whole row is the target, well past 44px wide.
+      */}
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          className="mt-1 size-4 shrink-0 cursor-pointer accent-(--color-brand)"
+          aria-describedby="remember-hint"
+          {...register('remember')}
+        />
+        <span>
+          <span className="block text-sm font-medium text-(--color-text)">
+            {t('auth.remember')}
+          </span>
+          <span id="remember-hint" className="block text-sm text-(--color-muted)">
+            {t('auth.rememberHint', { days: REMEMBER_DAYS })}
+          </span>
+        </span>
+      </label>
 
       <button
         type="submit"

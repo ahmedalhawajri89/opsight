@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 
 class LoginRequest extends FormRequest
 {
@@ -21,6 +23,15 @@ class LoginRequest extends FormRequest
     private const MAX_ATTEMPTS = 5;
 
     private const DECAY_SECONDS = 60;
+
+    /**
+     * How long "remember me" keeps a device signed in: 30 days.
+     *
+     * Laravel's own default is five years, which is not a remembered device,
+     * it is a device nobody remembers is signed in. Without the box ticked the
+     * session lasts SESSION_LIFETIME (eight hours of inactivity) as before.
+     */
+    private const REMEMBER_MINUTES = 60 * 24 * 30;
 
     public function authorize(): bool
     {
@@ -35,6 +46,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email', 'max:190'],
             'password' => ['required', 'string'],
+            'remember' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -59,7 +71,18 @@ class LoginRequest extends FormRequest
             'is_active' => true,
         ];
 
-        if (! Auth::attempt($credentials, remember: false)) {
+        $guard = Auth::guard('web');
+
+        // Only the session guard has a recaller to size. Anything else here is
+        // a configuration change that would silently restore Laravel's
+        // five-year default, so it stops sign-in rather than slipping through.
+        if (! $guard instanceof SessionGuard) {
+            throw new LogicException('The web guard must be a SessionGuard for remember-me to be bounded.');
+        }
+
+        $guard->setRememberDuration(self::REMEMBER_MINUTES);
+
+        if (! $guard->attempt($credentials, remember: $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey(), self::DECAY_SECONDS);
 
             throw ValidationException::withMessages([

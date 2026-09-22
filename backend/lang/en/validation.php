@@ -200,6 +200,7 @@ return [
     'attributes' => [
         'email' => 'email',
         'password' => 'password',
+        'remember' => 'remember me',
         'name' => 'name',
         'role' => 'role',
         'locale' => 'language',

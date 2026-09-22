@@ -199,6 +199,7 @@ return [
     'attributes' => [
         'email' => 'البريد الإلكتروني',
         'password' => 'كلمة المرور',
+        'remember' => 'تذكّرني',
         'name' => 'الاسم',
         'role' => 'الدور',
         'locale' => 'اللغة',

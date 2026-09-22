@@ -112,6 +112,8 @@ const ar = {
     noSelfRegistration: 'ينشئ المالك الحسابات. التسجيل الذاتي غير متاح.',
     showPassword: 'إظهار كلمة المرور',
     hidePassword: 'إخفاء كلمة المرور',
+    remember: 'إبقائي مسجّلًا على هذا الجهاز',
+    rememberHint: 'لمدة {days} يومًا. اتركه دون تحديد على جهاز مشترك.',
   },
 
   login: {
