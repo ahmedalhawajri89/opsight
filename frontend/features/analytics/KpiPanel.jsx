@@ -84,7 +84,7 @@ const SPARKS = {
   cyan: 'var(--spark-cyan)',
   teal: 'var(--spark-teal)',
   amber: 'var(--chart-2)',
-  red: 'var(--negative)',
+  red: 'var(--danger)',
 };
 
 /** Splits the metrics that arrived into the two rows, with no key in both. */

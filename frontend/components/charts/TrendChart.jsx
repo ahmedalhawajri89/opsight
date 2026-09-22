@@ -18,7 +18,7 @@ import { useId } from 'react';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { formatCompact, formatMoney, formatNumber } from '@/lib/format';
-import { formatBucketLabel } from '@/lib/periods';
+import { formatBucketLabel, weekendRuns } from '@/lib/periods';
 
 /**
  * A metric over time.
@@ -53,6 +53,7 @@ export function TrendChart({
   onRetry,
   colour = 'var(--chart-1)',
   height = 260,
+  weekendDays = [],
   icon,
   className,
   style,
@@ -74,6 +75,10 @@ export function TrendChart({
   }));
 
   const partial = series.find((bucket) => bucket.is_partial);
+
+  // Daily series only: the business's days off, shaded so a quiet Friday
+  // reads as a weekend rather than as a drop (ADR-020).
+  const weekends = weekendRuns(series, weekendDays);
 
   const columns = [
     { key: 'label', header: t('charts.period') },
@@ -104,7 +109,11 @@ export function TrendChart({
       className={className}
       style={style}
       emptyDescription={t('charts.trendEmpty')}
-      footnote={partial ? t('charts.partialFootnote') : undefined}
+      footnote={
+        [partial && t('charts.partialFootnote'), weekends.length > 0 && t('charts.weekendFootnote')]
+          .filter(Boolean)
+          .join(' ') || undefined
+      }
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
@@ -126,7 +135,7 @@ export function TrendChart({
           <XAxis
             dataKey="label"
             reversed={rtl}
-            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
             tickMargin={8}
@@ -140,7 +149,7 @@ export function TrendChart({
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={formatAxis}
-            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             tickMargin={4}
@@ -172,10 +181,23 @@ export function TrendChart({
             }}
           />
 
+          {weekends.map(([from, to]) => (
+            <ReferenceArea
+              key={`weekend-${series[from].bucket}`}
+              x1={series[from].label}
+              x2={series[to].label}
+              fill="var(--text-2)"
+              fillOpacity={0.07}
+              ifOverflow="extendDomain"
+            />
+          ))}
+
           {/* The partial bucket, shaded rather than silently drawn as a cliff. */}
           {partial && (
             <ReferenceArea
-              x1={partial.label}
+              // From the bucket before it: a band from one point to itself has
+              // no width, and the partial bucket never showed at all.
+              x1={series[Math.max(0, series.indexOf(partial) - 1)].label}
               x2={partial.label}
               fill="var(--warning)"
               fillOpacity={0.12}
@@ -207,7 +229,7 @@ export function ComparisonLine({ dataKey = 'previous' }) {
     <Line
       type="monotone"
       dataKey={dataKey}
-      stroke="var(--text-subtle)"
+      stroke="var(--muted)"
       strokeWidth={1.5}
       strokeDasharray="4 3"
       dot={false}

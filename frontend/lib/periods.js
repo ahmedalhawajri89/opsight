@@ -247,3 +247,52 @@ export function formatMonthLabel(bucket, { locale = getFormatLocale() } = {}) {
     new Date(`${bucket}T00:00:00Z`),
   );
 }
+
+/**
+ * Whether a DAILY bucket falls on one of the business's days off.
+ *
+ * `weekendDays` are ISO days (1 = Monday … 7 = Sunday), from the server's
+ * settings — Friday and Saturday across most of the Gulf, not the Saturday
+ * and Sunday a Western default would assume (ADR-020). A weekly or monthly
+ * bucket is never a weekend: only a single day can be.
+ */
+export function isWeekendBucket(bucket, bucketEnd, weekendDays = []) {
+  if (!bucket || (bucketEnd && bucketEnd !== bucket) || weekendDays.length === 0) return false;
+
+  const day = new Date(`${bucket}T00:00:00Z`).getUTCDay();
+
+  return weekendDays.includes(day === 0 ? 7 : day);
+}
+
+/**
+ * Consecutive weekend days in a DAILY series, as bands a chart can shade.
+ *
+ * A chart drawn as connected points places each day on a single x position, so
+ * a band from a day to itself has no width and draws nothing. Runs of adjacent
+ * weekend days become one band from the first to the last; a lone day off is
+ * widened to the day after it (or before it, at the end of the series) so the
+ * band is visible. Returns indices into `series`.
+ */
+export function weekendRuns(series, weekendDays = []) {
+  const runs = [];
+  let start = null;
+
+  series.forEach((bucket, index) => {
+    const off = isWeekendBucket(bucket.bucket, bucket.bucket_end, weekendDays);
+
+    if (off && start === null) start = index;
+
+    if (!off && start !== null) {
+      runs.push([start, index - 1]);
+      start = null;
+    }
+  });
+
+  if (start !== null) runs.push([start, series.length - 1]);
+
+  return runs.map(([from, to]) => {
+    if (from !== to) return [from, to];
+
+    return to + 1 < series.length ? [from, to + 1] : [Math.max(0, from - 1), to];
+  });
+}

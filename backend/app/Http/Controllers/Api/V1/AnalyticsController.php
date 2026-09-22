@@ -356,6 +356,9 @@ class AnalyticsController extends Controller
             ],
             'currency' => $settings->currency,
             'currency_decimals' => $settings->currency_decimals,
+            // So a daily chart can mark the business's days off (ADR-020).
+            'weekend_days' => $settings->weekend_days ?? [],
+            'week_starts_on' => (int) $settings->week_starts_on,
         ];
     }
 

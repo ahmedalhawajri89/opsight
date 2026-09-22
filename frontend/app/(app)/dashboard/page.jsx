@@ -214,6 +214,7 @@ export default function DashboardPage() {
                 changePeriod({ preset, ...resolvePreset(preset), comparison: filters.comparison })
               }
               loading={isLoading}
+              weekendDays={meta?.weekend_days}
               className="rise lg:col-span-7"
               style={{ '--rise-index': 12 }}
             />

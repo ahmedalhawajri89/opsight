@@ -24,6 +24,13 @@ use Illuminate\Support\Carbon;
  * @property string $timezone
  * @property int $fiscal_year_start_month
  * @property int $default_low_stock_threshold
+ * @property bool $vat_enabled
+ * @property string $vat_rate
+ * @property bool $prices_include_vat
+ * @property string|null $vat_number
+ * @property string|null $commercial_registration
+ * @property int $week_starts_on
+ * @property list<int>|null $weekend_days
  * @property Carbon|null $created_at
  */
 #[ObservedBy(AuditObserver::class)]
@@ -62,6 +69,8 @@ class BusinessSetting extends Model
         'prices_include_vat',
         'vat_number',
         'commercial_registration',
+        'week_starts_on',
+        'weekend_days',
     ];
 
     /** @return array<string, string> */
@@ -74,7 +83,25 @@ class BusinessSetting extends Model
             'vat_enabled' => 'boolean',
             'vat_rate' => 'decimal:2',
             'prices_include_vat' => 'boolean',
+            'week_starts_on' => 'integer',
+            'weekend_days' => 'array',
         ];
+    }
+
+    /**
+     * The Carbon day constant the business week starts on.
+     *
+     * Stored ISO-numbered (1 = Monday … 7 = Sunday); Carbon numbers Sunday 0.
+     */
+    public function weekStartCarbonDay(): int
+    {
+        return ((int) $this->week_starts_on) % 7;
+    }
+
+    /** The Carbon day constant the business week ends on: the day before it starts. */
+    public function weekEndCarbonDay(): int
+    {
+        return ($this->weekStartCarbonDay() + 6) % 7;
     }
 
     public static function current(): self
@@ -109,6 +136,7 @@ class BusinessSetting extends Model
             'timezone' => 'Asia/Bahrain',
             'fiscal_year_start_month' => 1,
             'default_low_stock_threshold' => 10,
+            'weekend_days' => [5, 6],
         ], $attributes));
     }
 

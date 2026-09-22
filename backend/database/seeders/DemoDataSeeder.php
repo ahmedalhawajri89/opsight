@@ -11,6 +11,7 @@ use App\Domain\Orders\ConfirmOrder;
 use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderStatus;
 use App\Domain\Orders\RecordRefund;
+use App\Models\BusinessSetting;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Expense;
@@ -309,9 +310,15 @@ class DemoDataSeeder extends Seeder
     {
         $day = $monthStart->copy()->addDays(mt_rand(0, $monthStart->daysInMonth - 1));
 
-        // Weekends are quieter, so shift most weekend orders onto a weekday.
-        if ($day->isWeekend() && mt_rand(1, 100) <= 70) {
-            $day->addDays(2);
+        // The business's weekend is quieter — Friday and Saturday by default,
+        // not the Saturday and Sunday Carbon assumes — so most orders that land
+        // on it move to the next working day.
+        $weekend = BusinessSetting::current()->weekend_days ?? [5, 6];
+
+        if (in_array($day->isoWeekday(), $weekend, true) && mt_rand(1, 100) <= 70) {
+            while (in_array($day->isoWeekday(), $weekend, true)) {
+                $day->addDay();
+            }
         }
 
         return $day->setTime(mt_rand(8, 19), mt_rand(0, 59));
