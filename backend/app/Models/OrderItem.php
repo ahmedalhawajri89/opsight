@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\CurrencyAmount;
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -49,8 +50,8 @@ class OrderItem extends Model
         return [
             'unit_price' => 'decimal:4',
             'unit_cost' => 'decimal:4',
-            'line_discount' => 'decimal:2',
-            'line_total' => 'decimal:2',
+            'line_discount' => CurrencyAmount::class,
+            'line_total' => CurrencyAmount::class,
             'quantity' => 'integer',
         ];
     }

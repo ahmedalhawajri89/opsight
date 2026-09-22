@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\CurrencyAmount;
 use App\Domain\Audit\RecordsActivity;
 use App\Domain\Orders\OrderStatus;
 use App\Observers\AuditObserver;
@@ -62,13 +63,13 @@ class Order extends Model
             'fulfilled_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'refunded_at' => 'datetime',
-            'refunded_amount' => 'decimal:2',
-            'subtotal_amount' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
-            'tax_amount' => 'decimal:2',
-            'shipping_amount' => 'decimal:2',
-            'total_amount' => 'decimal:2',
-            'cogs_amount' => 'decimal:2',
+            'refunded_amount' => CurrencyAmount::class,
+            'subtotal_amount' => CurrencyAmount::class,
+            'discount_amount' => CurrencyAmount::class,
+            'tax_amount' => CurrencyAmount::class,
+            'shipping_amount' => CurrencyAmount::class,
+            'total_amount' => CurrencyAmount::class,
+            'cogs_amount' => CurrencyAmount::class,
         ];
     }
 

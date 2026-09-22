@@ -48,8 +48,13 @@ cost index locality for no threat-model benefit here. Human-facing identifiers
   are `DECIMAL(15,4)`. Four decimal places because unit costs genuinely land below one
   cent per item.
 - Computed and stored totals — line totals, order totals, expense amounts — are
-  `DECIMAL(15,2)`, rounded half-up at the **line** level, then summed. Rounding at the
+  `DECIMAL(15,3)`, rounded half-up at the **line** level to the currency's own places
+  (`business_settings.currency_decimals`: 2 for SAR, 3 for BHD), then summed. Rounding at the
   line is what an invoice does, and matching that avoids a totals-drift bug class.
+  `App\Support\Money` is the single source of that precision; `App\Casts\CurrencyAmount`
+  applies it on every write and read.
+  *Until 2026-09 these columns were `DECIMAL(15,2)` and every calculation used two places,
+  so BHD, KWD, OMR and JOD — including the product's own default — lost their third decimal.*
 - `DECIMAL` is chosen over integer minor units because `SUM()` and `AVG()` in SQL stay
   exact and readable, which matters for a system whose entire purpose is aggregation.
 - **Never cast money to a PHP or JavaScript float.** Eloquent uses `decimal:2` / `decimal:4`
@@ -207,13 +212,13 @@ ADR-009's rebuildable rollup, not a denormalised column nobody recomputes.
 | `cancelled_at` | TIMESTAMP NULL | |
 | `cancellation_reason` | VARCHAR(255) NULL | Required when cancelling |
 | `refunded_at` | TIMESTAMP NULL | |
-| `refunded_amount` | DECIMAL(15,2) | Default 0; `CHECK (refunded_amount >= 0)` |
-| `subtotal_amount` | DECIMAL(15,2) | Sum of line totals |
-| `discount_amount` | DECIMAL(15,2) | Default 0, order level |
-| `tax_amount` | DECIMAL(15,2) | Default 0; **not revenue** |
-| `shipping_amount` | DECIMAL(15,2) | Default 0; **not revenue** (ADR-013) |
-| `total_amount` | DECIMAL(15,2) | subtotal − discount + tax + shipping; what the customer pays |
-| `cogs_amount` | DECIMAL(15,2) | Sum of line cost snapshots, frozen at confirm; **restricted field** |
+| `refunded_amount` | DECIMAL(15,3) | Default 0; `CHECK (refunded_amount >= 0)` |
+| `subtotal_amount` | DECIMAL(15,3) | Sum of line totals |
+| `discount_amount` | DECIMAL(15,3) | Default 0, order level |
+| `tax_amount` | DECIMAL(15,3) | Default 0; **not revenue** |
+| `shipping_amount` | DECIMAL(15,3) | Default 0; **not revenue** (ADR-013) |
+| `total_amount` | DECIMAL(15,3) | subtotal − discount + tax + shipping; what the customer pays |
+| `cogs_amount` | DECIMAL(15,3) | Sum of line cost snapshots, frozen at confirm; **restricted field** |
 | `notes` | TEXT NULL | |
 | `created_by` | BIGINT UNSIGNED NULL | FK → `users.id` `ON DELETE SET NULL` |
 | `created_at`, `updated_at` | TIMESTAMP | |
@@ -258,8 +263,8 @@ unstored. The safeguard: a test asserts that for every confirmed order,
 | `quantity` | INT UNSIGNED | `CHECK (quantity >= 1)` |
 | `unit_price` | DECIMAL(15,4) | **Snapshot** at confirm |
 | `unit_cost` | DECIMAL(15,4) | **Snapshot** at confirm; **restricted field** |
-| `line_discount` | DECIMAL(15,2) | Default 0 |
-| `line_total` | DECIMAL(15,2) | `ROUND(unit_price × quantity, 2) − line_discount` |
+| `line_discount` | DECIMAL(15,3) | Default 0 |
+| `line_total` | DECIMAL(15,3) | `ROUND(unit_price × quantity, currency_decimals) − line_discount` |
 | `created_at`, `updated_at` | TIMESTAMP | |
 
 Indexes: `INDEX(order_id)`, `INDEX(product_id)`, `INDEX(product_id, order_id)` for
@@ -348,7 +353,7 @@ Seeded with: Rent, Payroll, Utilities, Marketing, Logistics, Software, Maintenan
 | `id` | BIGINT UNSIGNED PK | |
 | `expense_category_id` | BIGINT UNSIGNED | FK → `expense_categories.id` `ON DELETE RESTRICT` |
 | `description` | VARCHAR(255) | |
-| `amount` | DECIMAL(15,2) | `CHECK (amount > 0)` |
+| `amount` | DECIMAL(15,3) | `CHECK (amount > 0)` |
 | `incurred_on` | DATE | **Business date**; may be backdated |
 | `vendor` | VARCHAR(180) NULL | |
 | `reference` | VARCHAR(80) NULL | Invoice or receipt number |

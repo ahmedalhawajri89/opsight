@@ -40,7 +40,6 @@ class Product extends Model
     use HasFactory;
 
     use RecordsActivity;
-
     use SoftDeletes;
 
     /**

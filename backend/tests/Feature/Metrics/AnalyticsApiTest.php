@@ -65,7 +65,7 @@ it('returns a null change against a period with no prior activity', function ():
     // July has no orders, so August has nothing to compare against.
     $response = $this->getJson("/api/v1/analytics/summary{$this->range}")->assertOk();
 
-    expect($response->json('data.net_revenue.previous'))->toBe('0.00')
+    expect($response->json('data.net_revenue.previous'))->toBe('0.000')
         // Growth from zero is not a percentage.
         ->and($response->json('data.net_revenue.change_pct'))->toBeNull();
 });
@@ -211,8 +211,8 @@ it('breaks revenue down by product and reports each share', function (): void {
     $rows = collect($response->json('data'));
 
     // WIDGET: 2 + 1 + 1 = 4 units at 100 = 400. GADGET: 4 + 2 + 2 = 8 at 25 = 200.
-    expect($rows->firstWhere('label', 'Widget')['value'])->toBe('400.00')
-        ->and($rows->firstWhere('label', 'Gadget')['value'])->toBe('200.00');
+    expect($rows->firstWhere('label', 'Widget')['value'])->toBe('400.000')
+        ->and($rows->firstWhere('label', 'Gadget')['value'])->toBe('200.000');
 
     // Shares sum to 1 across the whole breakdown.
     expect(round($rows->sum('share'), 4))->toBe(1.0);
@@ -232,7 +232,7 @@ it('adds an Other row when a ranking is truncated, so the shares still sum to th
 
     // Without this row, a chart of the top one implies it IS the business.
     expect($other)->not->toBeNull()
-        ->and($other['value'])->toBe('200.00')
+        ->and($other['value'])->toBe('200.000')
         ->and(round($rows->sum('share'), 4))->toBe(1.0);
 });
 
@@ -245,7 +245,7 @@ it('groups walk-in trade as itself rather than dropping the revenue', function (
     $walkIn = collect($response->json('data'))->firstWhere('label', 'Walk-in');
 
     expect($walkIn)->not->toBeNull()
-        ->and($walkIn['value'])->toBe('100.00');
+        ->and($walkIn['value'])->toBe('100.000');
 });
 
 it('refuses a cost-bearing breakdown for a role without cost visibility', function (): void {

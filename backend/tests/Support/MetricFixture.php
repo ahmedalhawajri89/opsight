@@ -94,18 +94,24 @@ final class MetricFixture
 
     public const TO = '2026-08-31';
 
-    /** Hand-calculated, transcribed from the table above. */
+    /**
+     * Hand-calculated, transcribed from the table above.
+     *
+     * Money is written to THREE places because the fixture runs under the
+     * product's default currency, BHD, and amounts now come back at their
+     * currency's own precision. The values are the same as they always were.
+     */
     public const EXPECTED = [
-        'gross_revenue' => '600.00',
-        'net_revenue' => '540.00',
+        'gross_revenue' => '600.000',
+        'net_revenue' => '540.000',
         'orders_count' => 5,
         'units_sold' => 12,
-        'average_order_value' => '108.00',
-        'cogs' => '240.00',
-        'gross_profit' => '300.00',
+        'average_order_value' => '108.000',
+        'cogs' => '240.000',
+        'gross_profit' => '300.000',
         'gross_margin' => 0.555556,
-        'operating_expenses' => '150.00',
-        'net_profit' => '150.00',
+        'operating_expenses' => '150.000',
+        'net_profit' => '150.000',
         'net_margin' => 0.277778,
         'cancellation_rate' => 0.166667,
         'refund_rate' => 0.083333,

@@ -18,6 +18,7 @@ use App\Http\Resources\InventoryItemResource;
 use App\Models\BusinessSetting;
 use App\Models\InventoryItem;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -229,8 +230,8 @@ class AnalyticsController extends Controller
             return $row + [
                 'units' => (int) ($units[$row['key']] ?? 0),
                 'previous_value' => $before,
-                'change_pct' => $before !== null && bccomp((string) $before, '0', 2) > 0
-                    ? round((float) bcdiv(bcsub((string) $row['value'], (string) $before, 2), (string) $before, 10), 6)
+                'change_pct' => $before !== null && bccomp((string) $before, '0', Money::scale()) > 0
+                    ? round((float) bcdiv(bcsub((string) $row['value'], (string) $before, Money::scale()), (string) $before, 10), 6)
                     : null,
             ];
         }, $rows);

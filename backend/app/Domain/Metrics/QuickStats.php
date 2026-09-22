@@ -6,6 +6,7 @@ namespace App\Domain\Metrics;
 
 use App\Authorization\Ability;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -46,8 +47,8 @@ final class QuickStats
                 'value' => (string) (DB::table('inventory_items')
                     ->join('products', 'products.id', '=', 'inventory_items.product_id')
                     ->whereNull('products.deleted_at')
-                    ->selectRaw('COALESCE(SUM(ROUND(inventory_items.stock_on_hand * products.cost, 2)), 0) AS total')
-                    ->value('total') ?? '0.00'),
+                    ->selectRaw('COALESCE(SUM(ROUND(inventory_items.stock_on_hand * products.cost, '.Money::scale().')), 0) AS total')
+                    ->value('total') ?? Money::zero()),
                 'change' => null,
             ];
         }

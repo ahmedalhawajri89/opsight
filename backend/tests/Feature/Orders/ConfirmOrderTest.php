@@ -11,6 +11,7 @@ use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Support\Money;
 
 function addItem(Order $order, Product $product, int $quantity = 1): OrderItem
 {
@@ -112,12 +113,13 @@ it('keeps stored totals equal to the sum of their lines', function (): void {
     $order->refresh();
 
     $lineSum = $order->items->sum(fn ($item): float => (float) $item->line_total);
+    $scale = Money::scale();
     $cogsSum = $order->items->sum(
-        fn ($item): float => round((float) $item->unit_cost * $item->quantity, 2),
+        fn ($item): float => round((float) $item->unit_cost * $item->quantity, $scale),
     );
 
-    expect((float) $order->subtotal_amount)->toBe(round($lineSum, 2))
-        ->and((float) $order->cogs_amount)->toBe(round($cogsSum, 2));
+    expect((float) $order->subtotal_amount)->toBe(round($lineSum, $scale))
+        ->and((float) $order->cogs_amount)->toBe(round($cogsSum, $scale));
 });
 
 /*
