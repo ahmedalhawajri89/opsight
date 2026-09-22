@@ -810,9 +810,43 @@ money sums (order totals, payments, refunds, line totals, expenses, stock) were 
 The rollback refuses to run when more than one business exists, because it would merge
 their data.
 
-**Not in this step.** The raw aggregate queries (`DB::table`, 25 of them) and the `exists:`
-validation rules bypass a model scope. With one business they behave as before; making them
-business-aware, and proving it endpoint by endpoint, is the next step (P2 phase 2).
+**The doors a model scope does not cover (P2 phase 2).**
+
+- **Raw aggregates.** The metric, tax and inventory queries use the query builder for speed,
+  and the query builder knows nothing of global scopes. All 25 now start at
+  `TenantQuery::table()`, which adds the business filter. That includes the two subqueries
+  that grouped across the whole table: first orders per customer, and the stock ledger
+  totals.
+- **Validation.** `TenantRule::exists()` and `TenantRule::unique()` look only inside the
+  business. Another business's customer or product id is refused with a 422, where it would
+  otherwise pass validation and be written onto this business's order.
+- **Users.** Users are scoped like every other model. The sign-in provider
+  (`BusinessAgnosticUserProvider`) is the single exemption, because it must find a user by
+  email before any business is known. With the scope, the last-owner guard counts owners in
+  one business, and `/users/{id}` for another business's user is a 404.
+- **Per-business sequences and caches.** Order numbers restart per business. The
+  calculator's per-request aggregate cache is keyed by business.
+- **The currency on screen.** `/me` now carries the business's name and currency, and the
+  frontend takes its money defaults from it. Until then, every screen that did not pass a
+  currency showed BHD. The two-business browser test found this, and it predates tenancy: a
+  single Kuwaiti business would have seen BHD too.
+
+**Proof** (`tests/Feature/Tenancy/TenantIsolationTest.php`). Each test was run against the
+code before this step and failed, then passed after it:
+
+- **Every route with a record in its URL** is read from the route table. As another
+  business's owner it answers 404, and the target is untouched afterwards. A new kind of
+  route parameter fails the test until it is mapped.
+- **Every list, export and analytics endpoint** is checked the same way. The other
+  business's names carry a marker, and no response may contain it.
+- **The first business's figures** — summary, series, breakdowns, VAT, dashboard and
+  insights — are compared before and after a second business is filled with the same
+  fixture on the same dates. They must be identical.
+- **A source scan** fails on any `DB::table()` in `app/` outside the tenancy layer.
+- **In the browser**, `e2e/tenancy.spec.js` runs against the seeded second business (Al Noor
+  Trading, KWD, `owner@alnoor.test`):
+  - each owner sees only their own business, in their own currency;
+  - a link to the other business's order reads "Resource not found".
 
 **Cost accepted.** Every new business-owned table needs the column and the trait, and every
 new raw query needs the business filter. The phase 2 tests exist to make forgetting either

@@ -22,6 +22,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Support\QueryFilter;
+use App\Support\Tenancy\TenantRule;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -167,7 +168,7 @@ class OrderController extends Controller
         $this->authorize('update', $order);
 
         $validated = $request->validate([
-            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
+            'customer_id' => ['nullable', 'integer', TenantRule::exists('customers')->whereNull('deleted_at')],
             'notes' => ['nullable', 'string', 'max:5000'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],

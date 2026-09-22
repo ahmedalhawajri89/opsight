@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Orders;
 
 use App\Models\Order;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
@@ -29,7 +29,7 @@ final class OrderReference
         $year = now()->year;
         $prefix = self::PREFIX.'-'.$year.'-';
 
-        $highest = DB::table('orders')
+        $highest = TenantQuery::table('orders')
             ->where('reference', 'like', $prefix.'%')
             ->orderByDesc('reference')
             ->value('reference');

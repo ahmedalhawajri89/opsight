@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\Products;
 
 use App\Authorization\Ability;
+use App\Support\Tenancy\TenantRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -25,7 +25,7 @@ class UpdateProductRequest extends FormRequest
             // The Arabic name, shown to Arabic readers when present (ADR-021).
             'name_ar' => ['nullable', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->whereNull('deleted_at')],
+            'category_id' => ['nullable', 'integer', TenantRule::exists('categories')->whereNull('deleted_at')],
             'price' => ['sometimes', 'numeric', 'min:0', 'max:99999999999'],
             // A percentage; NULL follows the business rate, 0 is zero-rated (ADR-018).
             'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],

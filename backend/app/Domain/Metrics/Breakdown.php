@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Support\Localization\LocalizedName;
 use App\Support\Localization\Localizer;
 use App\Support\Money;
-use Illuminate\Support\Facades\DB;
+use App\Support\Tenancy\TenantQuery;
 use InvalidArgumentException;
 
 /**
@@ -111,7 +111,7 @@ final class Breakdown
             default => throw new InvalidArgumentException("Unknown breakdown metric: {$metric}."),
         };
 
-        $query = DB::table('order_items')
+        $query = TenantQuery::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('orders.status', OrderStatus::qualifying())
             ->where('orders.placed_at', '>=', $from)

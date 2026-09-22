@@ -8,10 +8,12 @@ import {
   formatDate,
   formatDateTime,
   formatMoney,
+  formatMoneyCompact,
   formatNumber,
   formatPercent,
   formatPoints,
   formatRelative,
+  setMoneyDefaults,
   toIsoDate,
 } from '@/lib/format';
 
@@ -97,6 +99,33 @@ describe('formatMoney', () => {
 | Percentages vs percentage points
 |--------------------------------------------------------------------------
 */
+
+describe('the business currency (ADR-023)', () => {
+  it('formats every amount in the business currency and places once it is set', () => {
+    try {
+      setMoneyDefaults({ currency: 'KWD', decimals: 3 });
+      expect(formatMoney('12.5', { locale: 'en-GB' })).toContain('KWD');
+      expect(formatMoney('12.5', { locale: 'en-GB' })).toContain('12.500');
+      expect(formatMoneyCompact('12500', { locale: 'en-GB' })).toContain('KWD');
+
+      setMoneyDefaults({ currency: 'SAR', decimals: 2 });
+      expect(formatMoney('12.5', { locale: 'en-GB' })).toContain('SAR');
+      expect(formatMoney('12.5', { locale: 'en-GB' })).toContain('12.50');
+      expect(formatMoney('12.5', { locale: 'en-GB' })).not.toContain('12.500');
+    } finally {
+      setMoneyDefaults({ currency: 'BHD', decimals: 3 });
+    }
+  });
+
+  it('still lets a caller name the currency explicitly', () => {
+    try {
+      setMoneyDefaults({ currency: 'KWD', decimals: 3 });
+      expect(formatMoney('1', { currency: 'AED', decimals: 2, locale: 'en-GB' })).toContain('AED');
+    } finally {
+      setMoneyDefaults({ currency: 'BHD', decimals: 3 });
+    }
+  });
+});
 
 describe('formatPercent and formatPoints', () => {
   it('formats a raw ratio as a percentage', () => {

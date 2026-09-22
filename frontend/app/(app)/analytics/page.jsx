@@ -1,5 +1,6 @@
 'use client';
 
+import { getMoneyDefaults } from '@/lib/format';
 import { useBreakdown, useSummary, useTimeseries, useVat } from '@/features/analytics/useAnalytics';
 import { VatCard } from '@/features/analytics/VatCard';
 import { SeasonNotice } from '@/features/analytics/SeasonNotice';
@@ -74,8 +75,8 @@ export default function AnalyticsPage() {
 
   const meta = summary.meta;
   const metrics = summary.metrics ?? {};
-  const currency = meta?.currency ?? 'BHD';
-  const decimals = meta?.currency_decimals ?? 3;
+  const currency = meta?.currency ?? getMoneyDefaults().currency;
+  const decimals = meta?.currency_decimals ?? getMoneyDefaults().decimals;
   const visibleTiles = TILE_ORDER.filter((key) => key in metrics);
 
   // Cost-bearing series are refused by the API rather than returned as zeros,

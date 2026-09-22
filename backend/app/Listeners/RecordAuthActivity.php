@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Models\User;
+use App\Support\Tenancy\BusinessScope;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
@@ -96,7 +97,7 @@ class RecordAuthActivity
             return null;
         }
 
-        $business = User::query()->where('email', $email)->value('business_id');
+        $business = User::query()->withoutGlobalScope(BusinessScope::class)->where('email', $email)->value('business_id');
 
         return $business === null ? null : (int) $business;
     }

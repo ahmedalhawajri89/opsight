@@ -64,8 +64,10 @@ return [
     */
 
     'providers' => [
+        // Sign-in looks a user up across businesses, then takes the business
+        // from them (ADR-023). Every other User query is scoped.
         'users' => [
-            'driver' => 'eloquent',
+            'driver' => 'business-agnostic',
             'model' => env('AUTH_MODEL', User::class),
         ],
 

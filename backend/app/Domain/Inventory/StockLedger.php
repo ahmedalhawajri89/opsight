@@ -7,6 +7,7 @@ namespace App\Domain\Inventory;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Support\Tenancy\TenantQuery;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
@@ -137,13 +138,12 @@ final class StockLedger
      */
     public function findDrift(): array
     {
-        $rows = DB::table('inventory_items as ii')
-            ->leftJoin(
-                DB::raw('(SELECT product_id, SUM(quantity_delta) AS ledger_total FROM inventory_movements GROUP BY product_id) as m'),
-                'm.product_id',
-                '=',
-                'ii.product_id',
-            )
+        $ledger = TenantQuery::table('inventory_movements')
+            ->selectRaw('product_id, SUM(quantity_delta) AS ledger_total')
+            ->groupBy('product_id');
+
+        $rows = TenantQuery::table('inventory_items', 'ii')
+            ->leftJoinSub($ledger, 'm', 'm.product_id', '=', 'ii.product_id')
             ->select([
                 'ii.product_id',
                 'ii.stock_on_hand as cached',

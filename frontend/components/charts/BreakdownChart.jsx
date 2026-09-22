@@ -13,7 +13,13 @@ import {
 
 import { ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { formatMoney, formatMoneyCompact, formatNumber, formatPercent } from '@/lib/format';
+import {
+  formatMoney,
+  formatMoneyCompact,
+  formatNumber,
+  formatPercent,
+  getMoneyDefaults,
+} from '@/lib/format';
 
 /**
  * A metric grouped by a dimension, drawn as a horizontal bar ranking.
@@ -32,7 +38,7 @@ export function BreakdownChart({
   description,
   rows = [],
   format = 'money',
-  currency = 'BHD',
+  currency = getMoneyDefaults().currency,
   decimals = 3,
   loading = false,
   error = null,
