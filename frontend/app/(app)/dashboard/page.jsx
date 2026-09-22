@@ -24,6 +24,7 @@ import { Card } from '@/components/layout/PageHeader';
 import { PeriodControls } from '@/components/layout/PeriodControls';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
+import { SeasonNotice } from '@/features/analytics/SeasonNotice';
 import { cn } from '@/lib/cn';
 import { resolvePreset } from '@/lib/periods';
 
@@ -148,6 +149,9 @@ export default function DashboardPage() {
           show={meta?.period?.is_partial}
           againstComplete={meta?.comparison?.compares_partial_against_complete}
         />
+
+        {/* Ramadan or Eid on one side of the comparison and not the other. */}
+        <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
       </header>
 
       {!wide && <div className="rise">{controls}</div>}

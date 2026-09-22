@@ -2,6 +2,7 @@
 
 import { useBreakdown, useSummary, useTimeseries, useVat } from '@/features/analytics/useAnalytics';
 import { VatCard } from '@/features/analytics/VatCard';
+import { SeasonNotice } from '@/features/analytics/SeasonNotice';
 import { MetricTile } from '@/features/analytics/MetricTile';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Trans, useI18n } from '@/features/i18n/I18nProvider';
@@ -118,6 +119,9 @@ export default function AnalyticsPage() {
           {t('analytics.partial')}
         </p>
       )}
+
+      {/* Ramadan or Eid on one side of the comparison and not the other. */}
+      <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
 
       {summary.isError ? (
         <Card padded={false}>

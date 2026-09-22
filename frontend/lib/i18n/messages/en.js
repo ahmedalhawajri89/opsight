@@ -175,6 +175,7 @@ const en = {
     comparisons: {
       previous_period: 'Previous period',
       previous_year: 'Same period last year',
+      previous_hijri_year: 'Same Hijri dates last year',
       none: 'No comparison',
     },
     selector: {
@@ -185,6 +186,18 @@ const en = {
     },
     status:
       'This period is still in progress, so it is being compared against a complete one. Expect figures to read low until it finishes.',
+  },
+
+  season: {
+    names: {
+      ramadan: 'Ramadan',
+      eid_al_fitr: 'Eid al-Fitr',
+      eid_al_adha: 'Eid al-Adha',
+    },
+    none: 'neither',
+    mismatch:
+      'This period holds {current}; the period it is compared with holds {previous}, in a different amount. Part of the change is the calendar, not the business.',
+    useHijri: 'Compare with the same Hijri dates',
   },
 
   charts: {

@@ -26,6 +26,7 @@ return [
     'comparison' => [
         'previous_period' => 'Previous period',
         'previous_year' => 'Same period last year',
+        'previous_hijri_year' => 'Same Hijri dates last year',
         'none' => 'No comparison',
     ],
 
@@ -37,12 +38,14 @@ return [
     'versus' => [
         'previous_days' => '{1} vs previous day|[2,*] vs previous :days days',
         'previous_year' => 'vs same period last year',
+        'previous_hijri_year' => 'vs the same Hijri dates last year',
     ],
 
     /* "…against the previous period." inside a sentence. */
     'against' => [
         'previous_period' => 'the previous period',
         'previous_year' => 'the same period last year',
+        'previous_hijri_year' => 'the same Hijri dates last year',
         'none' => 'no comparison',
     ],
 
