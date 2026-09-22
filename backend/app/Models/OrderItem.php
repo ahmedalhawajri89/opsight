@@ -52,6 +52,9 @@ class OrderItem extends Model
             'unit_cost' => 'decimal:4',
             'line_discount' => CurrencyAmount::class,
             'line_total' => CurrencyAmount::class,
+            'vat_rate' => 'decimal:2',
+            'vat_taxable_amount' => CurrencyAmount::class,
+            'vat_amount' => CurrencyAmount::class,
             'quantity' => 'integer',
         ];
     }

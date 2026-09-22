@@ -599,6 +599,19 @@ const en = {
   },
 
   analytics: {
+    vat: {
+      title: 'Value-added tax',
+      description:
+        'VAT charged on sales in this period, what was handed back on refunds, and what is due.',
+      output: 'VAT charged',
+      refunded: 'VAT refunded',
+      due: 'VAT due',
+      byRate: 'VAT by rate',
+      rate: 'Rate',
+      taxable: 'Taxable amount',
+      amount: 'VAT',
+      note: 'An operational figure, not your filed return: it counts VAT on sales only, and Opsight does not record the VAT you paid on purchases.',
+    },
     description:
       'Every figure is computed from source records at the moment you ask. Nothing here is stored.',
     partial: 'This period is still in progress and is being compared against a complete one.',
@@ -812,6 +825,21 @@ const en = {
       warning:
         'You have changed a field that moves historical figures. Saving will change the totals reported for periods that have already closed. The underlying orders and expenses are not modified.',
     },
+    vat: {
+      title: 'Value-added tax',
+      description:
+        'When VAT is on, every order confirmed from now on has VAT worked out per line and kept apart from revenue. Orders already confirmed keep the VAT they were confirmed with.',
+      enabled: 'This business charges VAT',
+      rate: 'Standard VAT rate (%)',
+      rateHint: 'Applies to every product that does not set its own rate.',
+      pricing: 'Shelf prices',
+      inclusive: 'Include VAT',
+      exclusive: 'Exclude VAT (VAT added at sale)',
+      number: 'VAT registration number',
+      registration: 'Commercial registration',
+      appliesFromNow:
+        'This change applies to orders confirmed after you save. No order already confirmed is recalculated.',
+    },
     timezone: 'Business timezone',
     fiscalYear: 'Fiscal year starts',
     save: 'Save settings',
@@ -827,16 +855,22 @@ const en = {
     reason: 'Reason',
     refunded: 'Refunded',
     refundAmount: 'Refund amount',
+    refundVat: 'of which VAT returned',
     draftNote:
       'This is a draft. It appears in no metric until it is confirmed, and prices are snapshotted at that moment — not now.',
     totals: 'Totals',
     subtotal: 'Subtotal',
     discount: 'Discount',
     tax: 'Tax',
+    vat: 'VAT',
     shipping: 'Shipping',
     total: 'Total',
     taxNote:
       'Tax and shipping are excluded from revenue. Tax is collected for a tax authority, and shipping is treated as cost recovery.',
+    vatNote:
+      'Amounts above exclude VAT, which was added at sale. VAT and shipping are not revenue.',
+    vatNoteInclusive:
+      'This order was sold at prices that include VAT. Amounts above are shown without it, so they match revenue; the total is what the customer paid.',
     items: 'Items',
     itemsCaption: 'Items on {reference}',
     columns: {

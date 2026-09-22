@@ -40,6 +40,7 @@ class Customer extends Model
         'email',
         'phone',
         'company',
+        'vat_number',
         'address_line',
         'city',
         'country',

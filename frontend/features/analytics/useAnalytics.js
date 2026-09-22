@@ -53,3 +53,13 @@ export function useBreakdown(period, dimension, metric, limit = 10) {
 
   return { rows: query.data?.data ?? [], meta: query.data?.meta, ...query };
 }
+
+export function useVat(period) {
+  const query = useQuery({
+    queryKey: [...queryKeys.analytics.all, 'vat', period],
+    queryFn: () => analytics.getVat(period),
+    placeholderData: (previous) => previous,
+  });
+
+  return { vat: query.data?.data, meta: query.data?.meta, ...query };
+}

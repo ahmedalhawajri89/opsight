@@ -39,11 +39,22 @@ class OrderResource extends JsonResource
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),
             'cancellation_reason' => $this->cancellation_reason,
             'refunded_at' => $this->refunded_at?->toIso8601String(),
+            // The revenue part of the refund, and the tax part returned with it
+            // (ADR-018). What the customer got back is their sum.
             'refunded_amount' => (string) $this->refunded_amount,
+            'refunded_vat_amount' => (string) $this->refunded_vat_amount,
+            'refunded_total' => bcadd((string) $this->refunded_amount, (string) $this->refunded_vat_amount, Money::scale()),
 
             'subtotal_amount' => (string) $this->subtotal_amount,
             'discount_amount' => (string) $this->discount_amount,
             'tax_amount' => (string) $this->tax_amount,
+            // True when the shelf prices this order was sold at included VAT.
+            'prices_include_vat' => (bool) $this->prices_include_vat,
+            // Whether tax_amount is rate-backed VAT from the confirm snapshot,
+            // or a figure typed in before VAT was switched on. Only with items.
+            'vat_applied' => $this->whenLoaded('items', fn (): bool => $this->items->contains(
+                fn ($item): bool => bccomp((string) $item->vat_taxable_amount, '0', Money::MAX_SCALE) !== 0,
+            )),
             'shipping_amount' => (string) $this->shipping_amount,
             'total_amount' => (string) $this->total_amount,
 

@@ -62,6 +62,12 @@ class SettingsController extends Controller
                 'timezone' => $settings->timezone,
                 'fiscal_year_start_month' => $settings->fiscal_year_start_month,
                 'default_low_stock_threshold' => $settings->default_low_stock_threshold,
+                // Value-added tax (ADR-018).
+                'vat_enabled' => (bool) $settings->vat_enabled,
+                'vat_rate' => (string) $settings->vat_rate,
+                'prices_include_vat' => (bool) $settings->prices_include_vat,
+                'vat_number' => $settings->vat_number,
+                'commercial_registration' => $settings->commercial_registration,
             ],
             'meta' => [
                 // Non-null: the guard above returned already if it were not.
@@ -72,6 +78,12 @@ class SettingsController extends Controller
                  * by changing one list on the server.
                  */
                 'affects_history' => ['timezone', 'fiscal_year_start_month'],
+                /*
+                 * VAT settings apply to orders confirmed AFTER the change; every
+                 * confirmed order keeps the VAT it was snapshotted with. Named so
+                 * the screen can say that, rather than implying a restatement.
+                 */
+                'applies_from_now' => ['vat_enabled', 'vat_rate', 'prices_include_vat'],
             ],
         ]);
     }
@@ -94,6 +106,13 @@ class SettingsController extends Controller
             'timezone' => ['sometimes', 'string', 'max:64', Rule::in(timezone_identifiers_list())],
             'fiscal_year_start_month' => ['sometimes', 'integer', 'between:1,12'],
             'default_low_stock_threshold' => ['sometimes', 'integer', 'min:0'],
+            // Value-added tax (ADR-018). The rate is a percentage: 10 for
+            // Bahrain, 15 for Saudi Arabia, 5 for the UAE.
+            'vat_enabled' => ['sometimes', 'boolean'],
+            'vat_rate' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'prices_include_vat' => ['sometimes', 'boolean'],
+            'vat_number' => ['sometimes', 'nullable', 'string', 'max:32'],
+            'commercial_registration' => ['sometimes', 'nullable', 'string', 'max:32'],
         ]);
 
         $settings = BusinessSetting::current();

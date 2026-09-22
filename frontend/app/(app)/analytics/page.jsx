@@ -1,6 +1,7 @@
 'use client';
 
-import { useBreakdown, useSummary, useTimeseries } from '@/features/analytics/useAnalytics';
+import { useBreakdown, useSummary, useTimeseries, useVat } from '@/features/analytics/useAnalytics';
+import { VatCard } from '@/features/analytics/VatCard';
 import { MetricTile } from '@/features/analytics/MetricTile';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Trans, useI18n } from '@/features/i18n/I18nProvider';
@@ -62,6 +63,7 @@ export default function AnalyticsPage() {
   const summary = useSummary(period);
   const trend = useTimeseries(period, filters.metric, filters.grain || undefined);
   const breakdown = useBreakdown(period, filters.dimension, 'net_revenue', 10);
+  const vat = useVat(period);
 
   // A direct URL hit by a role without the ability. Navigation hides the link,
   // but a bookmark still has to be refused.
@@ -225,6 +227,16 @@ export default function AnalyticsPage() {
         error={breakdown.isError ? breakdown.error : null}
         onRetry={breakdown.refetch}
         height={380}
+      />
+
+      {/* Only while VAT is switched on for the business (ADR-018). */}
+      <VatCard
+        vat={vat.vat}
+        loading={vat.isLoading}
+        error={vat.isError ? vat.error : null}
+        onRetry={vat.refetch}
+        currency={currency}
+        decimals={decimals}
       />
 
       <Card>

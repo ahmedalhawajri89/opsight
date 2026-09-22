@@ -118,6 +118,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('analytics/summary', [AnalyticsController::class, 'summary']);
             Route::get('analytics/timeseries', [AnalyticsController::class, 'timeseries']);
             Route::get('analytics/breakdown', [AnalyticsController::class, 'breakdown']);
+            Route::get('analytics/vat', [AnalyticsController::class, 'vat']);
         });
 
         /* ---- Expenses ---------------------------------------------------- */

@@ -66,12 +66,30 @@ final class RecordRefund
                 }
             }
 
+            /*
+             * `$amount` is what the customer gets back. When the order carried
+             * tax, part of that is tax being returned, not revenue being lost:
+             * it is split off in the order's own proportion of tax to total and
+             * kept in refunded_vat_amount, so net revenue — which subtracts
+             * refunded_amount — only falls by what the business had earned
+             * (ADR-013, ADR-018). An order with no tax refunds exactly as before.
+             */
+            $scale = Money::scale();
+            $refundedVat = Money::zero();
+
+            if (bccomp((string) $order->tax_amount, '0', $scale) > 0 && bccomp((string) $order->total_amount, '0', $scale) > 0) {
+                $refundedVat = Money::round(
+                    bcdiv(bcmul($amount, (string) $order->tax_amount, 10), (string) $order->total_amount, 10),
+                );
+            }
+
             $order->auditAs('order.refunded', ['amount' => $amount]);
 
             $order->forceFill([
                 'status' => OrderStatus::Refunded,
                 'refunded_at' => now(),
-                'refunded_amount' => $amount,
+                'refunded_amount' => bcsub($amount, $refundedVat, $scale),
+                'refunded_vat_amount' => $refundedVat,
             ])->save();
 
             return $order->refresh();

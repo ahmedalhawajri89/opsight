@@ -57,6 +57,11 @@ class BusinessSetting extends Model
         'timezone',
         'fiscal_year_start_month',
         'default_low_stock_threshold',
+        'vat_enabled',
+        'vat_rate',
+        'prices_include_vat',
+        'vat_number',
+        'commercial_registration',
     ];
 
     /** @return array<string, string> */
@@ -66,6 +71,9 @@ class BusinessSetting extends Model
             'currency_decimals' => 'integer',
             'fiscal_year_start_month' => 'integer',
             'default_low_stock_threshold' => 'integer',
+            'vat_enabled' => 'boolean',
+            'vat_rate' => 'decimal:2',
+            'prices_include_vat' => 'boolean',
         ];
     }
 
