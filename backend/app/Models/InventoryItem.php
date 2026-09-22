@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\Tenancy\ScopedToBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -20,6 +21,8 @@ use Illuminate\Support\Carbon;
  */
 class InventoryItem extends Model
 {
+    use ScopedToBusiness;
+
     /** @var list<string> */
     protected $fillable = ['product_id', 'reorder_point'];
 

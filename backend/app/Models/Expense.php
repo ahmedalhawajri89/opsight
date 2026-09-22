@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Casts\CurrencyAmount;
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\ScopedToBusiness;
 use Database\Factories\ExpenseFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,6 +34,7 @@ class Expense extends Model
     use HasFactory;
 
     use RecordsActivity;
+    use ScopedToBusiness;
     use SoftDeletes;
 
     /** @var list<string> */

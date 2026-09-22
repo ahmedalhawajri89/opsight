@@ -6,8 +6,10 @@ namespace Database\Seeders;
 
 use App\Authorization\Role;
 use App\Domain\Audit\AuditRecorder;
+use App\Models\Business;
 use App\Models\BusinessSetting;
 use App\Models\User;
+use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Database\Seeder;
 
 /**
@@ -42,6 +44,11 @@ class DatabaseSeeder extends Seeder
 
     private function seed(): void
     {
+        // An existing installation's business was created by the migration
+        // under the slug `default`; a fresh one gets it here.
+        $business = Business::query()->firstOrCreate(['slug' => 'default'], ['name' => 'Opsight Demo Trading']);
+        CurrentBusiness::get()->set($business->id);
+
         BusinessSetting::ensureExists(['company_name' => 'Opsight Demo Trading']);
 
         $accounts = [

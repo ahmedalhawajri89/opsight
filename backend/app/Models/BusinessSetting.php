@@ -6,12 +6,14 @@ namespace App\Models;
 
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\CurrentBusiness;
+use App\Support\Tenancy\ScopedToBusiness;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- * Singleton configuration row.
+ * One business's configuration: one row per business (ADR-023).
  *
  * `timezone` matters more than it looks: every metric period boundary is
  * resolved in it before being converted to UTC for querying, so it is read on
@@ -37,16 +39,15 @@ use Illuminate\Support\Carbon;
 class BusinessSetting extends Model
 {
     use RecordsActivity;
+    use ScopedToBusiness;
 
     public function auditSubject(): string
     {
         return 'settings';
     }
 
-    public const SINGLETON_ID = 1;
-
     /**
-     * Memoised for the request.
+     * Memoised for the request, per business.
      *
      * Deliberately NOT `once()`: in a web request that is per-request and fine,
      * but in a test process it is effectively global, so changing the timezone
@@ -54,7 +55,8 @@ class BusinessSetting extends Model
      * value — and a timezone bug is exactly what these tests exist to catch.
      * An explicit cache with an explicit flush is honest about its lifetime.
      */
-    private static ?self $cached = null;
+    /** @var array<int, self> */
+    private static array $cached = [];
 
     /** @var list<string> */
     protected $fillable = [
@@ -104,23 +106,23 @@ class BusinessSetting extends Model
         return ($this->weekStartCarbonDay() + 6) % 7;
     }
 
+    /** The settings of the business in context. */
     public static function current(): self
     {
-        return self::$cached ??= self::findOrFail(self::SINGLETON_ID);
+        $business = CurrentBusiness::get()->id();
+
+        return self::$cached[$business] ??= self::query()->firstOrFail();
     }
 
     /**
-     * Create the singleton if it is missing, and return it.
-     *
-     * `id` is deliberately not fillable — it is a fixed 1 enforced by a CHECK
-     * constraint — so the row is force-created rather than widening $fillable
-     * and letting a request payload reach it.
+     * Create the settings of the business in context if they are missing, and
+     * return them.
      *
      * @param  array<string, mixed>  $attributes
      */
     public static function ensureExists(array $attributes = []): self
     {
-        $existing = self::find(self::SINGLETON_ID);
+        $existing = self::query()->first();
 
         if ($existing !== null) {
             return $existing;
@@ -128,8 +130,7 @@ class BusinessSetting extends Model
 
         self::flushCache();
 
-        return self::forceCreate(array_merge([
-            'id' => self::SINGLETON_ID,
+        return self::create(array_merge([
             'company_name' => 'Opsight',
             'currency' => 'BHD',
             'currency_decimals' => 3,
@@ -143,7 +144,7 @@ class BusinessSetting extends Model
     /** Called after any settings change, and between tests. */
     public static function flushCache(): void
     {
-        self::$cached = null;
+        self::$cached = [];
     }
 
     protected static function booted(): void

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\RecordAuthActivity;
+use App\Models\User;
 use App\Support\Localization\Localizer;
+use App\Support\Tenancy\CurrentBusiness;
+use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
@@ -30,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
          * queue daemon); scoped instances are flushed between them.
          */
         $this->app->scoped(Localizer::class);
+
+        // Scoped for the same reason: a worker must never start a request or
+        // a job still acting for the previous one's business (ADR-023).
+        $this->app->scoped(CurrentBusiness::class);
     }
 
     /**
@@ -49,6 +56,18 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Logout::class, [RecordAuthActivity::class, 'handleLogout']);
         Event::listen(Failed::class, [RecordAuthActivity::class, 'handleFailed']);
         Event::listen(Lockout::class, [RecordAuthActivity::class, 'handleLockout']);
+
+        /*
+         * The business comes from the signed-in user, set the moment the guard
+         * resolves them: from the session, at sign-in, or by actingAs() in a
+         * test. That is before route model binding, so {order} is looked up
+         * inside the right business from the start (ADR-023).
+         */
+        Event::listen(Authenticated::class, static function (Authenticated $event): void {
+            if ($event->user instanceof User) {
+                CurrentBusiness::get()->set($event->user->business_id);
+            }
+        });
 
         $this->definePasswordPolicy();
         $this->defineRateLimits();

@@ -8,6 +8,7 @@ use App\Casts\CurrencyAmount;
 use App\Domain\Audit\RecordsActivity;
 use App\Domain\Orders\OrderStatus;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\ScopedToBusiness;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,6 +46,7 @@ class Order extends Model
     use HasFactory;
 
     use RecordsActivity;
+    use ScopedToBusiness;
 
     /**
      * Note what is ABSENT: status, placed_at, subtotal_amount, total_amount and
