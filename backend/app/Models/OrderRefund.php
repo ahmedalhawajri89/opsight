@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Casts\CurrencyAmount;
+use App\Support\Tenancy\ScopedToBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -30,6 +31,8 @@ use Illuminate\Support\Carbon;
  */
 class OrderRefund extends Model
 {
+    use ScopedToBusiness;
+
     /** @var list<string> */
     protected $fillable = ['amount', 'vat_amount', 'total', 'returned_stock', 'reason', 'refunded_at', 'recorded_by'];
 

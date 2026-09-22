@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Audit;
 
 use App\Models\ActivityLog;
+use App\Models\User;
+use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -76,6 +78,7 @@ final class AuditRecorder
         ?array $changes = null,
         ?array $context = null,
         ?int $actorId = null,
+        ?int $businessId = null,
     ): ?ActivityLog {
         if (self::$paused) {
             return null;
@@ -83,8 +86,11 @@ final class AuditRecorder
 
         $request = $this->request();
 
+        $actorId ??= Auth::id();
+
         return ActivityLog::query()->create([
-            'user_id' => $actorId ?? Auth::id(),
+            'business_id' => $businessId ?? $this->businessFor($subject, $actorId),
+            'user_id' => $actorId,
             'action' => $action,
 
             // The class basename, not the FQCN: a namespace reorganisation must
@@ -99,6 +105,25 @@ final class AuditRecorder
             'ip_address' => $this->packedIp($request?->ip()),
             'user_agent' => $this->truncate($request?->userAgent()),
         ]);
+    }
+
+    /**
+     * Whose audit log a row belongs in (ADR-023).
+     *
+     * The business in context, when there is one. A sign-in is recorded before
+     * the guard has set one, so it falls back to the business of the row
+     * itself, then of the person acting. Null only when none of those is
+     * known — a failed sign-in for an address that matches no account.
+     */
+    private function businessFor(?Model $subject, ?int $actorId): ?int
+    {
+        $business = CurrentBusiness::get()->idOrNull() ?? $subject?->getAttribute('business_id');
+
+        if ($business === null && $actorId !== null) {
+            $business = User::query()->whereKey($actorId)->value('business_id');
+        }
+
+        return $business === null ? null : (int) $business;
     }
 
     /**

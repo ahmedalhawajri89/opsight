@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Models\Business;
 use App\Models\BusinessSetting;
+use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -31,6 +33,14 @@ abstract class TestCase extends BaseTestCase
          * changes the fiscal year would otherwise poison every later one.
          */
         BusinessSetting::flushCache();
+
+        /*
+         * Every test runs as a business, as every signed-in request does. A
+         * test about isolation creates a second one and switches with
+         * CurrentBusiness::run() (ADR-023).
+         */
+        $business = Business::query()->firstOrCreate(['slug' => 'opsight-test'], ['name' => 'Opsight Test']);
+        CurrentBusiness::get()->set($business->id);
 
         BusinessSetting::ensureExists(['company_name' => 'Opsight Test']);
     }

@@ -9,6 +9,7 @@ use App\Authorization\AbilityRegistry;
 use App\Authorization\Role;
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\BelongsToBusiness;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,6 +29,7 @@ use Illuminate\Support\Carbon;
 #[ObservedBy(AuditObserver::class)]
 class User extends Authenticatable
 {
+    use BelongsToBusiness;
     use RecordsActivity;
 
     /**

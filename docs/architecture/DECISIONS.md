@@ -10,7 +10,8 @@ owner. **Open** decisions need an answer before the phase that depends on them.
 
 ## ADR-001 — Single-business, not multi-tenant
 
-**Status:** Accepted (revisit before any external sale)
+**Status:** Superseded by ADR-023 (2026-09): the external sale this was waiting for is now
+the plan.
 **Affects:** Every table, every query, every test
 
 **Decision.** Opsight serves one business per installation. There is no `businesses` table
@@ -762,6 +763,60 @@ refunds become the first row of the new ledger, with their stock taken as return
 
 **Revisit when:** line-level returns are needed, or a payment gateway starts reporting
 payments on its own (they would be written through `RecordPayment`, not beside it).
+
+## ADR-023 — Many businesses in one database, isolated by `business_id`
+
+**Status:** Accepted (2026-09), superseding ADR-001
+**Affects:** every business-owned table, the models, authentication, audit, tests
+
+**Context.** Selling Opsight to more than one company needs one deployment to serve many
+businesses, with no way for one to see another's data. It is the first item of P2 in the
+market study, and the integrations after it (Salla, WhatsApp) must be built per business
+from the start.
+
+**Decision.**
+
+1. **One database, a `business_id` column.** Database-per-business would give stronger
+   isolation, but it means running migrations across N databases and switching
+   connections. That is unjustified at this scale.
+2. **Every owned table carries the column, NOT NULL with a foreign key.** That includes the
+   children of an order (`order_items`, payments, refunds). The metric queries read those
+   tables directly, and a filter that needs a join to apply is one that a query will
+   eventually forget.
+3. **Uniqueness becomes per business:** SKU, customer email, order reference, category slug,
+   and expense category name and slug. A user's email stays globally unique, because
+   sign-in is by email and must name exactly one account.
+4. **The business comes from the signed-in user.** It is set by the `Authenticated` event,
+   when the guard resolves the user from the session. That happens before route model
+   binding, so `{order}` is looked up inside the right business from the start.
+   `CurrentBusiness` is a scoped instance, so a worker starts every request and job with no
+   business.
+5. **Reads are scoped by a global scope (`ScopedToBusiness`), and it fails closed.** A query
+   on owned data with no business in context throws `MissingBusinessContext`. It never
+   returns an empty list, and never every business's rows. Another business's record is a
+   404, not a 403 that would confirm it exists.
+6. **Users carry the column but not the scope.** The guard must find a user by email before
+   any business is known. User management is scoped explicitly.
+7. **The audit log may hold a row with no business.** A failed sign-in for an address that
+   matches no account belongs to nobody. An attack on a real account is filed under that
+   account's business, where its owner can see it.
+8. **Settings are one row per business.** `CHECK (id = 1)` becomes UNIQUE(business_id), and
+   `BusinessSetting::current()` is cached per business.
+
+**Migration.** An existing installation is moved into one business named after its settings.
+A fresh database invents none. The migration was gated on a copy of the development
+database: migrate, roll back, migrate. At every step the row counts of all 14 tables and the
+money sums (order totals, payments, refunds, line totals, expenses, stock) were identical.
+The rollback refuses to run when more than one business exists, because it would merge
+their data.
+
+**Not in this step.** The raw aggregate queries (`DB::table`, 25 of them) and the `exists:`
+validation rules bypass a model scope. With one business they behave as before; making them
+business-aware, and proving it endpoint by endpoint, is the next step (P2 phase 2).
+
+**Cost accepted.** Every new business-owned table needs the column and the trait, and every
+new raw query needs the business filter. The phase 2 tests exist to make forgetting either
+fail loudly.
 
 ## Open decisions
 

@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Casts\CurrencyAmount;
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\ScopedToBusiness;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderItem extends Model
 {
     use RecordsActivity;
+    use ScopedToBusiness;
 
     /**
      * The snapshot columns are fillable because the service writes them

@@ -63,20 +63,42 @@ class RecordAuthActivity
      */
     public function handleFailed(Failed $event): void
     {
+        $email = $this->email($event->credentials);
+
         $this->recorder->record(
             action: 'auth.login_failed',
-            context: ['email' => $this->email($event->credentials)],
+            context: ['email' => $email],
             actorId: null,
+            businessId: $this->businessOf($email),
         );
     }
 
     public function handleLockout(Lockout $event): void
     {
+        $email = $this->email($event->request->only('email'));
+
         $this->recorder->record(
             action: 'auth.lockout',
-            context: ['email' => $this->email($event->request->only('email'))],
+            context: ['email' => $email],
             actorId: null,
+            businessId: $this->businessOf($email),
         );
+    }
+
+    /**
+     * An attack on an account belongs in that account's business's log, where
+     * its owner can see it (ADR-023). An address that matches no account names
+     * no business, and the row is kept with none.
+     */
+    private function businessOf(?string $email): ?int
+    {
+        if ($email === null) {
+            return null;
+        }
+
+        $business = User::query()->where('email', $email)->value('business_id');
+
+        return $business === null ? null : (int) $business;
     }
 
     /**

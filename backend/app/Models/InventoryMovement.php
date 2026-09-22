@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\ScopedToBusiness;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
 class InventoryMovement extends Model
 {
     use RecordsActivity;
+    use ScopedToBusiness;
 
     /**
      * Movements caused by an order are NOT audited here.

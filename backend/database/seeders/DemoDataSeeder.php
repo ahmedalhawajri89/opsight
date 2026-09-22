@@ -13,6 +13,7 @@ use App\Domain\Orders\OrderStatus;
 use App\Domain\Orders\RecordRefund;
 use App\Domain\Payments\PaymentMethod;
 use App\Domain\Payments\RecordPayment;
+use App\Models\Business;
 use App\Models\BusinessSetting;
 use App\Models\Category;
 use App\Models\Customer;
@@ -21,6 +22,7 @@ use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -59,6 +61,12 @@ class DemoDataSeeder extends Seeder
 
     public function run(): void
     {
+        // Run on its own (`--class=DemoDataSeeder`), it seeds the default
+        // business; called from DatabaseSeeder, whichever is in context.
+        if (CurrentBusiness::get()->idOrNull() === null) {
+            CurrentBusiness::get()->set(Business::query()->where('slug', 'default')->valueOrFail('id'));
+        }
+
         mt_srand(self::RANDOM_SEED);
         fake()->seed(self::RANDOM_SEED);
 

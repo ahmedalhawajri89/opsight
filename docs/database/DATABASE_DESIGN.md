@@ -37,6 +37,17 @@ The brief listed candidate tables. Each was evaluated rather than accepted.
 
 ## 2. Cross-cutting conventions
 
+**Businesses (ADR-023).** Every business-owned table carries `business_id` BIGINT UNSIGNED
+NOT NULL, a foreign key to `businesses.id` `ON DELETE RESTRICT`. Uniques that meant "in
+this business" are composite with it: `products(business_id, sku)`,
+`customers(business_id, email)`, `orders(business_id, reference)`,
+`categories(business_id, slug)`, and `expense_categories(business_id, name)` and
+`(business_id, slug)`. `users.email` stays globally unique. `business_settings` has one row
+per business, UNIQUE(business_id). `activity_logs.business_id` is nullable, for a failed
+sign-in that matches no account. `businesses` is id, name, slug (unique), status and
+timestamps.
+
+
 **Keys.** `BIGINT UNSIGNED AUTO_INCREMENT` primary keys. Sequential integers are fine
 for an internal single-tenant system where ids are not public identifiers; UUIDs would
 cost index locality for no threat-model benefit here. Human-facing identifiers

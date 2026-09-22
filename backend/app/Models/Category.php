@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Domain\Audit\RecordsActivity;
 use App\Observers\AuditObserver;
+use App\Support\Tenancy\ScopedToBusiness;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,6 +27,7 @@ class Category extends Model
     use HasFactory;
 
     use RecordsActivity;
+    use ScopedToBusiness;
     use SoftDeletes;
 
     /** @var list<string> */
