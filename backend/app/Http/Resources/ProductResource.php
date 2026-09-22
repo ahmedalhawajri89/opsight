@@ -41,6 +41,8 @@ class ProductResource extends JsonResource
             // Money crosses the API as a STRING. The client formats it with
             // Intl and never does arithmetic on it (ADR-015).
             'price' => (string) $this->price,
+            // NULL: this product follows the business VAT rate (ADR-018).
+            'vat_rate' => $this->vat_rate === null ? null : (string) $this->vat_rate,
 
             'category' => $this->whenLoaded('category', fn (): ?array => $this->category ? [
                 'id' => $this->category->id,

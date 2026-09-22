@@ -27,6 +27,8 @@ class StoreProductRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:5000'],
             'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->whereNull('deleted_at')],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999999'],
+            // A percentage; NULL follows the business rate, 0 is zero-rated (ADR-018).
+            'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'unit' => ['nullable', 'string', 'max:24'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'opening_stock' => ['nullable', 'integer', 'min:0'],

@@ -219,6 +219,8 @@ ADR-009's rebuildable rollup, not a denormalised column nobody recomputes.
 | `shipping_amount` | DECIMAL(15,3) | Default 0; **not revenue** (ADR-013) |
 | `total_amount` | DECIMAL(15,3) | subtotal − discount + tax + shipping; what the customer pays |
 | `cogs_amount` | DECIMAL(15,3) | Sum of line cost snapshots, frozen at confirm; **restricted field** |
+| `prices_include_vat` | BOOLEAN | Snapshot at confirm: whether the shelf prices included VAT (ADR-018) |
+| `refunded_vat_amount` | DECIMAL(15,3) | The VAT part of a refund; never subtracted from revenue |
 | `notes` | TEXT NULL | |
 | `created_by` | BIGINT UNSIGNED NULL | FK → `users.id` `ON DELETE SET NULL` |
 | `created_at`, `updated_at` | TIMESTAMP | |
@@ -264,7 +266,10 @@ unstored. The safeguard: a test asserts that for every confirmed order,
 | `unit_price` | DECIMAL(15,4) | **Snapshot** at confirm |
 | `unit_cost` | DECIMAL(15,4) | **Snapshot** at confirm; **restricted field** |
 | `line_discount` | DECIMAL(15,3) | Default 0 |
-| `line_total` | DECIMAL(15,3) | `ROUND(unit_price × quantity, currency_decimals) − line_discount` |
+| `line_total` | DECIMAL(15,3) | `ROUND(unit_price × quantity, currency_decimals) − line_discount`, **excluding VAT** when VAT is on (ADR-018) |
+| `vat_rate` | DECIMAL(5,2) | **Snapshot** at confirm, a percentage; 0 when VAT was off |
+| `vat_taxable_amount` | DECIMAL(15,3) | Net amount VAT was charged on, after its share of the order discount |
+| `vat_amount` | DECIMAL(15,3) | **Snapshot** VAT for the line |
 | `created_at`, `updated_at` | TIMESTAMP | |
 
 Indexes: `INDEX(order_id)`, `INDEX(product_id)`, `INDEX(product_id, order_id)` for

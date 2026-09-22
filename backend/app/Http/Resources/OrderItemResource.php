@@ -39,6 +39,9 @@ class OrderItemResource extends JsonResource
             'quantity' => $this->quantity,
             'line_discount' => (string) $this->line_discount,
             'line_total' => (string) $this->line_total,
+            // VAT snapshots (ADR-018): zero on an order confirmed with VAT off.
+            'vat_rate' => (string) $this->vat_rate,
+            'vat_amount' => (string) $this->vat_amount,
 
             $this->mergeWhen(
                 $user?->can(Ability::ProductsViewCost->value) ?? false,

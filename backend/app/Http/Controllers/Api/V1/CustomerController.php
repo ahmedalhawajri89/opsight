@@ -154,6 +154,8 @@ class CustomerController extends Controller
             ],
             'phone' => ['nullable', 'string', 'max:40'],
             'company' => ['nullable', 'string', 'max:180'],
+            // A business customer's VAT registration number, printed on its invoices.
+            'vat_number' => ['nullable', 'string', 'max:32'],
             'address_line' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
             'country' => ['nullable', 'string', 'size:2'],

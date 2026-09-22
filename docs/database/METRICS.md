@@ -144,7 +144,9 @@ Net Revenue = SUM(orders.subtotal_amount)
 **What is excluded, and why.**
 
 - **Tax** — collected on behalf of a tax authority. It is a liability, not earnings.
-  Including it inflates revenue and destroys margin comparability.
+  Including it inflates revenue and destroys margin comparability. With VAT switched on
+  (ADR-018), every term in the formula is stored **excluding VAT**, and the VAT part of a
+  refund is kept in `refunded_vat_amount`, so the formula needs no change to stay correct.
 - **Shipping** — treated as a pass-through cost recovery in the MVP, not revenue
   (ADR-013). Businesses that profit on shipping will want this changed; the ADR records
   the trigger and the one-line change.

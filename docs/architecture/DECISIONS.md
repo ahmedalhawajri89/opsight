@@ -560,6 +560,55 @@ JSON losslessly.
 
 ---
 
+## ADR-018 — Value-added tax: amounts stored excluding VAT, VAT snapshotted per line
+
+**Status:** Accepted (2026-09)
+**Affects:** `business_settings`, `products`, `order_items`, `orders`, `customers`,
+`ConfirmOrder`, `RecordRefund`, `GET /analytics/vat`
+
+**Context.** Until this change, tax was one number typed onto an order. No rate, nothing
+per line, no VAT number anywhere. A Gulf business charging VAT (Saudi Arabia 15%, Bahrain
+10%, UAE and Oman 5%) had no way to know how much of what it took belonged to the tax
+authority, and had to trust whatever figure someone typed.
+
+**Decision.**
+
+1. **Every stored amount is EXCLUDING VAT.** Line totals, the subtotal and the order
+   discount are all net of VAT, whichever way prices are written. VAT lives in its own
+   columns: per line `vat_rate`, `vat_taxable_amount` and `vat_amount`, and per order
+   `tax_amount` as their sum. Net Revenue has always excluded tax (ADR-013), so **no metric
+   changed**. Revenue, profit, margin, AOV and the breakdowns are correct by construction.
+2. **VAT is calculated at confirm and snapshotted**, like price and cost
+   (`App\Domain\Tax\VatCalculation`). A rate change tomorrow cannot restate an order
+   confirmed today.
+3. **Prices may include or exclude VAT** (`prices_include_vat`, default: include, the
+   Gulf norm). Inclusive shelf prices are converted at confirm, and the customer still pays
+   exactly the shelf price.
+4. **Rates.** A business rate, plus an optional per-product rate: NULL follows the
+   business, 0 is zero-rated or exempt.
+5. **An order-level discount reduces the VAT base.** It is shared across lines in
+   proportion to their shelf amounts, with the rounding remainder on the largest line, so
+   the shares sum exactly. A share never exceeds its line, so VAT can never go negative.
+6. **A refund is split.** The customer's refund is divided in the order's own proportion
+   of tax to total: the revenue part goes to `refunded_amount` (which Net Revenue
+   subtracts), and the tax part to `refunded_vat_amount` (which it does not).
+7. **Off by default.** With VAT off, confirm behaves exactly as before, including a
+   typed-in tax figure. The existing test suite passes unchanged with VAT off.
+8. **The report is operational, not a return.** `GET /analytics/vat` gives output VAT by
+   rate, VAT refunded, and VAT due for a period, from the snapshots. Opsight records no
+   purchase VAT, so there is no input VAT to reclaim. The screen says so.
+
+**Not decided here, deliberately.**
+- E-invoicing (ZATCA and others) is left to an accredited provider. Opsight will hand it
+  confirmed orders (MARKET_STUDY.md §4.3).
+- VAT on shipping is not calculated. Shipping is outside revenue already, and the order
+  form has no shipping input yet.
+
+**Identity the tests hold.** subtotal − net discount + VAT = the shelf total less the
+discount when prices include VAT, or that plus VAT when they exclude it
+(`tests/Unit/Tax/VatCalculationTest.php`). End to end:
+`tests/Feature/Orders/ValueAddedTaxTest.php`.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

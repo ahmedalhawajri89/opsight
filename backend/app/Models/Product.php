@@ -54,6 +54,7 @@ class Product extends Model
         'category_id',
         'price',
         'cost',
+        'vat_rate',
         'unit',
         'low_stock_threshold',
     ];
@@ -65,6 +66,7 @@ class Product extends Model
         return [
             'price' => 'decimal:4',
             'cost' => 'decimal:4',
+            'vat_rate' => 'decimal:2',
             'is_active' => 'boolean',
             'low_stock_threshold' => 'integer',
         ];

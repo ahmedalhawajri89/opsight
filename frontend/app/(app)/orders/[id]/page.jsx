@@ -135,10 +135,17 @@ export default function OrderDetailPage({ params }) {
             {order.refunded_at && (
               <>
                 <Row label={t('orderDetail.refunded')} value={formatDateTime(order.refunded_at)} />
+                {/* What the customer got back: the revenue part plus any VAT returned. */}
                 <Row
                   label={t('orderDetail.refundAmount')}
-                  value={formatMoney(order.refunded_amount)}
+                  value={formatMoney(order.refunded_total ?? order.refunded_amount)}
                 />
+                {order.vat_applied && (
+                  <Row
+                    label={t('orderDetail.refundVat')}
+                    value={formatMoney(order.refunded_vat_amount)}
+                  />
+                )}
               </>
             )}
           </dl>
@@ -162,7 +169,11 @@ export default function OrderDetailPage({ params }) {
               value={formatMoney(order.discount_amount)}
               numeric
             />
-            <Row label={t('orderDetail.tax')} value={formatMoney(order.tax_amount)} numeric />
+            <Row
+              label={order.vat_applied ? t('orderDetail.vat') : t('orderDetail.tax')}
+              value={formatMoney(order.tax_amount)}
+              numeric
+            />
             <Row
               label={t('orderDetail.shipping')}
               value={formatMoney(order.shipping_amount)}
@@ -195,7 +206,11 @@ export default function OrderDetailPage({ params }) {
             )}
           </dl>
 
-          <p className="mt-4 text-sm text-(--color-muted)">{t('orderDetail.taxNote')}</p>
+          <p className="mt-4 text-sm text-(--color-muted)">
+            {order.vat_applied
+              ? t(order.prices_include_vat ? 'orderDetail.vatNoteInclusive' : 'orderDetail.vatNote')
+              : t('orderDetail.taxNote')}
+          </p>
         </Card>
       </div>
 

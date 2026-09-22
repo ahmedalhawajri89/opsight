@@ -64,6 +64,8 @@ class Order extends Model
             'cancelled_at' => 'datetime',
             'refunded_at' => 'datetime',
             'refunded_amount' => CurrencyAmount::class,
+            'refunded_vat_amount' => CurrencyAmount::class,
+            'prices_include_vat' => 'boolean',
             'subtotal_amount' => CurrencyAmount::class,
             'discount_amount' => CurrencyAmount::class,
             'tax_amount' => CurrencyAmount::class,

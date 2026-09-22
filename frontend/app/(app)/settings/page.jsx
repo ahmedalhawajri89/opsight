@@ -6,7 +6,7 @@ import { useSettings, useUpdateSettings } from '@/features/admin/useAdmin';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { getFormatLocale } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
-import { Field, Input, NumberInput, Select } from '@/components/ui/Field';
+import { Checkbox, Field, Input, NumberInput, Select } from '@/components/ui/Field';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
 
@@ -117,6 +117,13 @@ export default function SettingsPage() {
   const historyChanged =
     settings !== undefined &&
     affectsHistory.some((key) => key in draft && String(draft[key]) !== String(settings[key]));
+
+  // VAT changes apply to orders confirmed from now on; the server names them.
+  const vatChanged =
+    settings !== undefined &&
+    (meta?.applies_from_now ?? []).some(
+      (key) => key in draft && String(draft[key]) !== String(settings[key]),
+    );
 
   return (
     <div className="space-y-4">
@@ -236,6 +243,112 @@ export default function SettingsPage() {
                 className="rounded-(--radius-control) border border-(--color-warning) bg-(--color-warning-soft) px-3 py-2 text-sm text-(--color-warning)"
               >
                 {t('settings.periods.warning')}
+              </p>
+            )}
+          </fieldset>
+
+          {/*
+            Value-added tax (ADR-018). Unlike the period fields above, a change
+            here moves NOTHING already recorded: every confirmed order keeps
+            the VAT it was confirmed with. The screen says so, because the
+            natural fear is the opposite.
+          */}
+          <fieldset className="space-y-3 rounded-(--radius-control) border border-(--color-line) p-3">
+            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
+              {t('settings.vat.title')}
+            </legend>
+
+            <p className="text-sm leading-relaxed text-(--color-text-2)">
+              {t('settings.vat.description')}
+            </p>
+
+            <Checkbox
+              label={t('settings.vat.enabled')}
+              checked={Boolean(form?.vat_enabled)}
+              onChange={(event) => set('vat_enabled', event.target.checked)}
+              disabled={!editable || isLoading}
+            />
+
+            {form?.vat_enabled && (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label={t('settings.vat.rate')}
+                    hint={t('settings.vat.rateHint')}
+                    error={fieldErrors.vat_rate}
+                  >
+                    {(props) => (
+                      <NumberInput
+                        value={form?.vat_rate ?? ''}
+                        onChange={(event) => set('vat_rate', event.target.value)}
+                        disabled={!editable || isLoading}
+                        min={0}
+                        max={100}
+                        step="0.01"
+                        {...props}
+                      />
+                    )}
+                  </Field>
+
+                  <Field label={t('settings.vat.pricing')} error={fieldErrors.prices_include_vat}>
+                    {(props) => (
+                      <Select
+                        value={form?.prices_include_vat ? 'inclusive' : 'exclusive'}
+                        onChange={(event) =>
+                          set('prices_include_vat', event.target.value === 'inclusive')
+                        }
+                        options={[
+                          { value: 'inclusive', label: t('settings.vat.inclusive') },
+                          { value: 'exclusive', label: t('settings.vat.exclusive') },
+                        ]}
+                        disabled={!editable || isLoading}
+                        {...props}
+                      />
+                    )}
+                  </Field>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={t('settings.vat.number')} error={fieldErrors.vat_number}>
+                    {(props) => (
+                      <Input
+                        value={form?.vat_number ?? ''}
+                        onChange={(event) => set('vat_number', event.target.value || null)}
+                        disabled={!editable || isLoading}
+                        dir="ltr"
+                        maxLength={32}
+                        {...props}
+                      />
+                    )}
+                  </Field>
+
+                  <Field
+                    label={t('settings.vat.registration')}
+                    error={fieldErrors.commercial_registration}
+                  >
+                    {(props) => (
+                      <Input
+                        value={form?.commercial_registration ?? ''}
+                        onChange={(event) =>
+                          set('commercial_registration', event.target.value || null)
+                        }
+                        disabled={!editable || isLoading}
+                        dir="ltr"
+                        maxLength={32}
+                        {...props}
+                      />
+                    )}
+                  </Field>
+                </div>
+              </>
+            )}
+
+            {vatChanged && (
+              <p
+                role="status"
+                className="rounded-(--radius-control) border border-(--color-line) bg-(--color-info-soft) px-3 py-2 text-sm text-(--color-info)"
+              >
+                {t('settings.vat.appliesFromNow')}
               </p>
             )}
           </fieldset>

@@ -13,6 +13,7 @@ use App\Domain\Metrics\MetricSummary;
 use App\Domain\Metrics\Period;
 use App\Domain\Metrics\QuickStats;
 use App\Domain\Metrics\TimeSeries;
+use App\Domain\Tax\VatReport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryItemResource;
 use App\Models\BusinessSetting;
@@ -56,6 +57,22 @@ class AnalyticsController extends Controller
                 fn ($metric): array => $metric->toArray(),
                 $values,
             ),
+            'meta' => $this->meta($period, $comparison),
+        ]);
+    }
+
+    /**
+     * VAT charged, refunded and due for the period (ADR-018). Operational,
+     * not a filed return: output VAT only, from the confirm-time snapshots.
+     */
+    public function vat(Request $request, VatReport $report): JsonResponse
+    {
+        $this->authorizeAnalytics($request);
+
+        [$period, $comparison] = $this->resolvePeriod($request);
+
+        return response()->json([
+            'data' => $report->for($period),
             'meta' => $this->meta($period, $comparison),
         ]);
     }

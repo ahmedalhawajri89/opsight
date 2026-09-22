@@ -33,3 +33,11 @@ export function getBreakdown(params) {
 export function getInsights(params) {
   return api.get('/insights', { params });
 }
+
+/**
+ * VAT charged, refunded and due for the period (ADR-018). Operational output
+ * VAT from the confirm-time snapshots — not a filed return.
+ */
+export function getVat(params) {
+  return api.get('/analytics/vat', { params });
+}

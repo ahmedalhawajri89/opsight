@@ -296,7 +296,7 @@ class DemoDataSeeder extends Seeder
 
                     // A small share of fulfilled orders are refunded.
                     if (mt_rand(1, 100) <= 4) {
-                        $refund($order, (string) round((float) $order->total_amount, 2));
+                        $refund($order, (string) $order->total_amount);
                     }
                 }
                 // The remainder stay confirmed but not yet fulfilled.
