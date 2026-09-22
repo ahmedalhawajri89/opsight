@@ -11,6 +11,9 @@ use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderReference;
 use App\Domain\Orders\OrderStatus;
 use App\Domain\Orders\RecordRefund;
+use App\Domain\Payments\PaymentMethod;
+use App\Domain\Payments\PaymentStatus;
+use App\Domain\Payments\RecordPayment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\AddOrderItemRequest;
 use App\Http\Requests\Orders\StoreOrderRequest;
@@ -20,9 +23,12 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Support\QueryFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -60,6 +66,9 @@ class OrderController extends Controller
                 'shipping_amount' => __('labels.csv.shipping'),
                 'total_amount' => __('labels.csv.total'),
                 'refunded_amount' => __('labels.csv.refunded'),
+                'amount_paid' => __('labels.csv.amount_paid'),
+                'outstanding_amount' => __('labels.csv.outstanding'),
+                'payment_status_label' => __('labels.csv.payment_status'),
                 /*
                  * Dropped automatically for a role without orders.view_margin:
                  * OrderResource omits both keys, so CsvExport never sees them
@@ -97,6 +106,7 @@ class OrderController extends Controller
                 // by "orders in August".
                 'placed_from' => QueryFilter::dateFrom('placed_at'),
                 'placed_to' => QueryFilter::dateTo('placed_at'),
+                'payment_status' => self::paymentStatusFilter(...),
             ],
             sortable: ['reference', 'placed_at', 'total_amount', 'status', 'created_at'],
             defaultSort: '-created_at',
@@ -106,6 +116,33 @@ class OrderController extends Controller
         $query = $filter->apply(Order::query()->with(['customer']), $request);
 
         return $query;
+    }
+
+    /**
+     * Payment status is derived, so it is filtered in SQL on the same formula
+     * PaymentStatus uses, and only over committed orders: a draft owes
+     * nothing (ADR-022).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    private static function paymentStatusFilter(Builder $query, string $value): void
+    {
+        $payment = PaymentStatus::tryFrom($value);
+
+        if ($payment === null) {
+            throw ValidationException::withMessages([
+                'filter' => __('errors.filter.malformed'),
+            ]);
+        }
+
+        $outstanding = PaymentStatus::outstandingSql();
+        $query->whereIn('status', OrderStatus::qualifying());
+
+        match ($payment) {
+            PaymentStatus::Settled => $query->whereRaw("{$outstanding} = 0"),
+            PaymentStatus::PartiallyPaid => $query->whereRaw("{$outstanding} > 0")->where('amount_paid', '>', 0),
+            PaymentStatus::Unpaid => $query->whereRaw("{$outstanding} > 0")->where('amount_paid', '=', 0),
+        };
     }
 
     public function store(StoreOrderRequest $request): JsonResponse
@@ -121,7 +158,7 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        return OrderResource::make($order->load(['customer', 'items', 'creator']));
+        return OrderResource::make($order->load(['customer', 'items', 'creator', 'payments', 'refunds']));
     }
 
     public function update(Request $request, Order $order): OrderResource
@@ -241,13 +278,16 @@ class OrderController extends Controller
         $this->authorize('refund', $order);
 
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
+            'amount' => ['required', 'numeric', 'min:0.001'],
             'return_stock' => ['nullable', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:255'],
         ]);
 
-        if ($order->status !== OrderStatus::Fulfilled) {
+        // A fulfilled order takes its first refund; a refunded one can take
+        // more, in parts, until nothing is left to return (ADR-022).
+        if (! in_array($order->status, [OrderStatus::Fulfilled, OrderStatus::Refunded], true)) {
             throw ValidationException::withMessages([
-                'amount' => 'Only a fulfilled order can be refunded.',
+                'amount' => __('errors.order.not_refundable'),
             ]);
         }
 
@@ -255,9 +295,35 @@ class OrderController extends Controller
             $refund(
                 $order,
                 (string) $validated['amount'],
-                (bool) ($validated['return_stock'] ?? true),
+                // Stock comes back with the first refund unless told otherwise,
+                // and never twice.
+                (bool) ($validated['return_stock'] ?? $order->stock_returned_at === null),
                 $request->user()?->id,
-            )->load(['customer', 'items']),
+                $validated['reason'] ?? null,
+            )->load(['customer', 'items', 'payments', 'refunds']),
+        );
+    }
+
+    public function recordPayment(Request $request, Order $order, RecordPayment $record): OrderResource
+    {
+        $this->authorize('recordPayment', $order);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.001'],
+            'method' => ['required', Rule::enum(PaymentMethod::class)],
+            'paid_at' => ['nullable', 'date', 'before_or_equal:now'],
+            'reference' => ['nullable', 'string', 'max:80'],
+        ]);
+
+        return OrderResource::make(
+            $record(
+                $order,
+                (string) $validated['amount'],
+                PaymentMethod::from($validated['method']),
+                isset($validated['paid_at']) ? Carbon::parse($validated['paid_at']) : null,
+                $validated['reference'] ?? null,
+                $request->user()?->id,
+            )->load(['customer', 'items', 'payments', 'refunds']),
         );
     }
 }

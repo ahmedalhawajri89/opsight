@@ -38,12 +38,20 @@ return [
         'reason_required' => 'A manual stock adjustment requires a reason.',
     ],
 
+    'payments' => [
+        'not_payable' => 'Only a confirmed, fulfilled or refunded order can receive a payment.',
+        'not_positive' => 'A payment must be more than zero.',
+        'exceeds_outstanding' => 'This payment is more than is outstanding on the order.',
+    ],
+
     'order' => [
         'illegal_transition' => 'An order cannot move from :from to :to.',
         'empty' => 'An order cannot be confirmed without at least one item.',
         'not_editable' => 'A :status order cannot be edited. Cancel it and enter a correction instead.',
         'reason_required' => 'A cancellation reason is required.',
-        'refund_exceeds_total' => 'A refund cannot exceed the order total.',
+        'refund_exceeds_total' => 'A refund cannot exceed what is left to refund on this order.',
+        'stock_already_returned' => 'The stock for this order has already been returned. Record this refund without returning stock.',
+        'not_refundable' => 'Only a fulfilled order can be refunded.',
     ],
 
     'users' => [

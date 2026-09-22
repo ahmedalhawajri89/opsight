@@ -29,6 +29,14 @@ use Illuminate\Support\Carbon;
  * @property string $subtotal_amount
  * @property string $total_amount
  * @property string $cogs_amount
+ * @property string $discount_amount
+ * @property string $tax_amount
+ * @property string $shipping_amount
+ * @property string $refunded_amount
+ * @property string $refunded_vat_amount
+ * @property string $amount_paid
+ * @property bool $prices_include_vat
+ * @property Carbon|null $stock_returned_at
  */
 #[ObservedBy(AuditObserver::class)]
 class Order extends Model
@@ -65,6 +73,8 @@ class Order extends Model
             'refunded_at' => 'datetime',
             'refunded_amount' => CurrencyAmount::class,
             'refunded_vat_amount' => CurrencyAmount::class,
+            'amount_paid' => CurrencyAmount::class,
+            'stock_returned_at' => 'datetime',
             'prices_include_vat' => 'boolean',
             'subtotal_amount' => CurrencyAmount::class,
             'discount_amount' => CurrencyAmount::class,
@@ -79,6 +89,18 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** @return HasMany<OrderPayment, $this> */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(OrderPayment::class)->orderBy('paid_at')->orderBy('id');
+    }
+
+    /** @return HasMany<OrderRefund, $this> */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(OrderRefund::class)->orderBy('refunded_at')->orderBy('id');
     }
 
     /** @return BelongsTo<Customer, $this> */

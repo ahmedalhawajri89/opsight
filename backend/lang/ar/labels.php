@@ -22,6 +22,21 @@ return [
         'refunded' => 'مُسترَد',
     ],
 
+    'payment_method' => [
+        'cash' => 'نقدًا',
+        'card' => 'بطاقة',
+        'bank_transfer' => 'تحويل بنكي',
+        'cash_on_delivery' => 'الدفع عند الاستلام',
+        'wallet' => 'محفظة رقمية',
+        'other' => 'أخرى',
+    ],
+
+    'payment_status' => [
+        'unpaid' => 'غير مدفوع',
+        'partially_paid' => 'مدفوع جزئيًا',
+        'settled' => 'مسدَّد',
+    ],
+
     'comparison' => [
         'previous_period' => 'الفترة السابقة',
         'previous_year' => 'الفترة نفسها من العام الماضي',
@@ -75,6 +90,9 @@ return [
         'shipping' => 'الشحن',
         'total' => 'الإجمالي',
         'refunded' => 'المبلغ المسترد',
+        'amount_paid' => 'المدفوع',
+        'outstanding' => 'المتبقّي',
+        'payment_status' => 'حالة الدفع',
         'cogs' => 'تكلفة البضاعة المباعة',
         'gross_profit' => 'مجمل الربح',
         'sku' => 'رمز المنتج',

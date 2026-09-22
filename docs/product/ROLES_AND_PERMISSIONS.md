@@ -105,6 +105,7 @@ into an oracle for the hidden value.
 | `orders.fulfil` | ✓ | ✓ | — | ✓ |
 | `orders.cancel` | ✓ | ✓ | — | — |
 | `orders.refund` | ✓ | ✓ | — | — |
+| `orders.record_payment` | ✓ | ✓ | — | ✓ |
 | `customers.update` | ✓ | ✓ | — | ✓ |
 | `products.update` | ✓ | ✓ | — | — |
 | `expenses.update` | ✓ | ✓ | — | — |
@@ -116,6 +117,9 @@ into an oracle for the hidden value.
   for everyone (MVP_SCOPE §5).
 - Cancel and refund are withheld from Staff because both reverse recognized revenue and
   move stock. They are supervisory actions.
+- Recording a payment is granted to Staff: it is money coming in, taken at the till or
+  brought back by a driver on cash on delivery. Money going back out stays under refund
+  (ADR-022).
 
 ### 3.4 Delete
 

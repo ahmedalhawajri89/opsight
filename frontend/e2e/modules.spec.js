@@ -98,6 +98,28 @@ test.describe('as an owner', () => {
     await expect(page.getByRole('heading', { name: 'Totals' })).toBeVisible();
   });
 
+  test('finds an unpaid order and offers to record its payment', async ({ page }) => {
+    await page.goto('/orders?payment_status=unpaid');
+
+    const table = page.getByRole('table', { name: 'Orders' });
+    await expect(table.getByText('Unpaid').first()).toBeVisible();
+
+    const firstOrder = table.getByRole('link', { name: /^ORD-\d{4}-\d{6}$/ }).first();
+    await expect(firstOrder).toBeVisible();
+    await firstOrder.click();
+
+    await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
+    await page.getByRole('button', { name: 'Record payment' }).click();
+
+    // Prefilled with what is outstanding, so the common case is one click.
+    // Read-only: the dialog is closed without saving, leaving the data as seeded.
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByLabel('Amount received')).not.toHaveValue('');
+    await expect(dialog.getByLabel('Method')).toHaveValue('card');
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+  });
+
   test('sees low stock flagged and can open an adjustment', async ({ page }) => {
     await page.goto('/inventory');
 

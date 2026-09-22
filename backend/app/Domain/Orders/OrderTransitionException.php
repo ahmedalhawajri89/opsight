@@ -53,4 +53,13 @@ class OrderTransitionException extends DomainException
             'order.refund_exceeds_total',
         );
     }
+
+    /** Stock goes back once per order; a later refund cannot return it again (ADR-022). */
+    public static function stockAlreadyReturned(): self
+    {
+        return new self(
+            __('errors.order.stock_already_returned'),
+            'order.stock_already_returned',
+        );
+    }
 }

@@ -80,6 +80,28 @@ export function OrderStatusBadge({ status, className }) {
 }
 
 /**
+ * Where an order stands on payment (ADR-022). Derived on the server; a draft
+ * or cancelled order has none, and renders nothing.
+ */
+const PAYMENT_STATUS_TONE = {
+  unpaid: 'warning',
+  partially_paid: 'accent',
+  settled: 'positive',
+};
+
+export function PaymentStatusBadge({ status, className }) {
+  const { t } = useI18n();
+
+  if (!Object.hasOwn(PAYMENT_STATUS_TONE, status ?? '')) return null;
+
+  return (
+    <Badge tone={PAYMENT_STATUS_TONE[status]} dot className={className}>
+      {t(`paymentStatus.${status}`)}
+    </Badge>
+  );
+}
+
+/**
  * Marks a period that is still accumulating.
  *
  * Without this a half-finished month reads as a finished one, and every

@@ -48,6 +48,7 @@ enum Ability: string
     case OrdersFulfil = 'orders.fulfil';
     case OrdersCancel = 'orders.cancel';
     case OrdersRefund = 'orders.refund';
+    case OrdersRecordPayment = 'orders.record_payment';
     case CustomersUpdate = 'customers.update';
     case ProductsUpdate = 'products.update';
     case ExpensesUpdate = 'expenses.update';

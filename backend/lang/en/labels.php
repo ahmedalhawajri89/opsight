@@ -23,6 +23,21 @@ return [
         'refunded' => 'Refunded',
     ],
 
+    'payment_method' => [
+        'cash' => 'Cash',
+        'card' => 'Card',
+        'bank_transfer' => 'Bank transfer',
+        'cash_on_delivery' => 'Cash on delivery',
+        'wallet' => 'Digital wallet',
+        'other' => 'Other',
+    ],
+
+    'payment_status' => [
+        'unpaid' => 'Unpaid',
+        'partially_paid' => 'Partially paid',
+        'settled' => 'Settled',
+    ],
+
     'comparison' => [
         'previous_period' => 'Previous period',
         'previous_year' => 'Same period last year',
@@ -78,6 +93,9 @@ return [
         'shipping' => 'Shipping',
         'total' => 'Total',
         'refunded' => 'Refunded',
+        'amount_paid' => 'Paid',
+        'outstanding' => 'Outstanding',
+        'payment_status' => 'Payment status',
         'cogs' => 'Cost of goods',
         'gross_profit' => 'Gross profit',
         'sku' => 'SKU',

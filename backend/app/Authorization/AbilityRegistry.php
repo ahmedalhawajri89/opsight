@@ -90,6 +90,7 @@ final class AbilityRegistry
             Ability::OrdersFulfil,
             Ability::OrdersCancel,
             Ability::OrdersRefund,
+            Ability::OrdersRecordPayment,
             Ability::CustomersUpdate,
             Ability::ProductsUpdate,
             Ability::ExpensesUpdate,
@@ -170,6 +171,7 @@ final class AbilityRegistry
             Ability::OrdersUpdate,   // own drafts only — narrowed by policy
             Ability::OrdersConfirm,
             Ability::OrdersFulfil,
+            Ability::OrdersRecordPayment,  // money in only; refunds stay supervisory
             Ability::CustomersUpdate,
 
             Ability::OrdersDelete,   // own drafts only — narrowed by policy

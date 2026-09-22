@@ -87,9 +87,9 @@ final class MetricCalculator
     /**
      * Total item quantity sold.
      *
-     * NOT reduced by refunds: the MVP's order-level refunded_amount carries no
-     * line breakdown, so a unit-level reduction cannot be computed honestly.
-     * A known limitation, resolved by ADR-005's refund ledger.
+     * NOT reduced by refunds: a refund records an amount, not lines (ADR-022),
+     * so a unit-level reduction cannot be computed honestly. A known
+     * limitation until line-level returns exist.
      */
     public function unitsSold(Period $period): int
     {

@@ -98,6 +98,16 @@ class OrderPolicy
         return $user->can(Ability::OrdersRefund->value);
     }
 
+    /**
+     * Recording money received is front-line work: the person at the till,
+     * or the driver back with cash on delivery (ADR-022). Money going back
+     * out stays supervisory, under refund.
+     */
+    public function recordPayment(User $user, Order $order): bool
+    {
+        return $user->can(Ability::OrdersRecordPayment->value);
+    }
+
     public function export(User $user): bool
     {
         return $user->can(Ability::OrdersExport->value);

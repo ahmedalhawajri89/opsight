@@ -169,8 +169,9 @@ Net Revenue = SUM(orders.subtotal_amount)
 **Refund timing caveat.** A refund reduces the revenue of the period in which the order
 was **placed**, not the period the refund was issued. This keeps an order's economics on
 one row and in one period. The consequence is that a closed period's figure can move when
-a late refund is recorded. This is a deliberate, documented trade-off; an issue-date
-refund model requires the refund ledger of ADR-005 and arrives with it.
+a late refund is recorded. This is a deliberate, documented trade-off. The refund ledger
+(ADR-022) now records each refund's own date, so an issue-date model is possible, but it
+is not built.
 
 **Comparison.** Supported, all bases.
 
@@ -207,8 +208,9 @@ was placed.
 **Comparison.** Supported.
 
 **Edge cases.** Not reduced by refunds — the MVP's order-level `refunded_amount` carries
-no line breakdown, so a unit-level reduction cannot be computed honestly. Recorded as a
-known limitation resolved by ADR-005.
+no line breakdown, so a unit-level reduction cannot be computed honestly. The refund
+ledger (ADR-022) records amounts, not lines, so this remains a known limitation until
+line-level returns exist.
 
 ---
 

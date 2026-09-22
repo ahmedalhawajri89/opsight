@@ -152,7 +152,8 @@ separate teams.
 
 ## ADR-005 — Order-level refunds in the MVP, no refund ledger
 
-**Status:** Accepted
+**Status:** Superseded by ADR-022 (2026-09). The two columns remain, as running totals
+beside a ledger.
 **Affects:** `orders` schema, Net Revenue, Units Sold
 
 **Decision.** `orders.refunded_amount` and `orders.refunded_at`. One refund per order, full
@@ -704,6 +705,63 @@ nothing downstream (a WhatsApp message, a duplicate check) could use it.
 
 **Not done here.** The frontend has no product or customer edit form yet, so Arabic names and
 phones are entered through the API until those screens exist.
+
+## ADR-022 — Payments and refunds as ledgers; payment status derived
+
+**Status:** Accepted (2026-09)
+**Affects:** `orders`, new `order_payments` and `order_refunds`, `RecordRefund`,
+`OrderResource`, the order list, the dashboard's quick stats, the roles matrix
+
+**Context.** Opsight knew what an order was worth but not whether it had been paid. In the
+Gulf a large share of online orders are cash on delivery, collected days after the goods
+leave, and an owner's first question after "what did we sell" is "what are we still owed".
+Refunds were one pair of columns (ADR-005), so a second refund overwrote the first.
+
+**Decision.**
+
+1. **A payments ledger.** `order_payments` has one row per payment: amount, method (cash,
+   card, bank transfer, cash on delivery, wallet, other), when, an optional reference.
+   Split payments and late cash-on-delivery collection are rows, not edits. A payment is
+   accepted only on a committed order (confirmed, fulfilled or refunded) and never beyond
+   what is outstanding. An overpayment is a conversation with the customer, not a figure.
+2. **A refunds ledger.** `order_refunds` has one row per refund, split into revenue and VAT
+   (ADR-018), with an optional reason. An order can be refunded in parts until nothing is
+   left to return. The first refund moves a fulfilled order to `refunded`, and later refunds
+   add to it.
+3. **Running totals stay on the order.** `amount_paid`, `refunded_amount` and
+   `refunded_vat_amount` move in the same locked transaction as each ledger row. Every
+   metric already reads the order, so none changed. Tests hold each total to the sum of its
+   ledger.
+4. **Payment status is derived, never stored.** outstanding = max(0, total − refunded −
+   paid). A refund counts against what is owed: goods returned before payment mean less to
+   collect. Only a committed order has a status: *unpaid*, *partially paid* or *settled*.
+   The list filters on the same formula in SQL (`PaymentStatus::outstandingSql`).
+5. **Stock goes back once per order.** Without line-level refund data, "return stock" means
+   every line's full quantity. `stock_returned_at` stops a second refund from shelving the
+   same goods twice. The endpoint defaults `return_stock` to off once stock is back.
+6. **Recording a payment is front-line work.** `orders.record_payment` is granted to Staff
+   as well as Owner and Manager: the cashier and the delivery driver take the money. Money
+   going back out stays supervisory, under `orders.refund`.
+7. **Receivables are a quick stat** for roles with `analytics.view`: what committed orders
+   owe today. Like inventory value, it is a position with no history, so no change is shown.
+
+**Backfill.** Orders fulfilled or refunded before this change are taken as paid in full: one
+payment, method "other", marked `is_backfill`, shown as "recorded before payment tracking".
+Without it every historical sale would read as unpaid and receivables would be inflated by
+money that was, in fact, collected. Confirmed orders not yet fulfilled start unpaid. Existing
+refunds become the first row of the new ledger, with their stock taken as returned.
+
+**Cost accepted.**
+
+- A refund still reduces the revenue of the period the order was **placed** in (METRICS.md
+  §2.2). The ledger records each refund's own date, so refund-date reporting is now
+  possible, but it is not built.
+- Units Sold is still not reduced by refunds: a refund has an amount, not lines.
+- A mistaken payment cannot be edited or deleted; the ledger is append-only. Correcting one
+  needs a reversal entry, which is not built.
+
+**Revisit when:** line-level returns are needed, or a payment gateway starts reporting
+payments on its own (they would be written through `RecordPayment`, not beside it).
 
 ## Open decisions
 

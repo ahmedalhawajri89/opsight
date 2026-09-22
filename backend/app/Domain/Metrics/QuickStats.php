@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Metrics;
 
 use App\Authorization\Ability;
+use App\Domain\Orders\OrderStatus;
+use App\Domain\Payments\PaymentStatus;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +25,8 @@ use Illuminate\Support\Facades\DB;
  * a product today does not rewrite how many there were a month ago.
  *
  * What a role may not see is absent rather than null: inventory value is cost
- * (metrics.view_cost), and the number of user accounts is administration
- * (users.view).
+ * (metrics.view_cost), the number of user accounts is administration
+ * (users.view), and receivables are a financial position (analytics.view).
  */
 final class QuickStats
 {
@@ -49,6 +51,18 @@ final class QuickStats
                     ->whereNull('products.deleted_at')
                     ->selectRaw('COALESCE(SUM(ROUND(inventory_items.stock_on_hand * products.cost, '.Money::scale().')), 0) AS total')
                     ->value('total') ?? Money::zero()),
+                'change' => null,
+            ];
+        }
+
+        if ($user?->can(Ability::AnalyticsView->value) ?? false) {
+            $stats['receivables'] = [
+                // Owed today by committed orders, on PaymentStatus's formula
+                // (ADR-022). Like inventory value, a position with no history.
+                'value' => Money::round((string) (DB::table('orders')
+                    ->whereIn('status', OrderStatus::qualifying())
+                    ->selectRaw('COALESCE(SUM('.PaymentStatus::outstandingSql().'), 0) AS total')
+                    ->value('total') ?? Money::zero())),
                 'change' => null,
             ];
         }
