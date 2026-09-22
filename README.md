@@ -66,6 +66,7 @@ Read in this order:
 | --- | --- |
 | [docs/product/MVP_SCOPE.md](docs/product/MVP_SCOPE.md) | Product definition, data layers, module-by-module MVP scope |
 | [docs/product/ROLES_AND_PERMISSIONS.md](docs/product/ROLES_AND_PERMISSIONS.md) | Roles and the full authorization matrix |
+| [docs/product/MARKET_STUDY.md](docs/product/MARKET_STUDY.md) | Arab market fit (Gulf first): currencies, VAT, calendar, integrations, prioritised roadmap — in Arabic |
 | [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) | System architecture, auth flow, API contract, jobs, caching |
 | [docs/database/DATABASE_DESIGN.md](docs/database/DATABASE_DESIGN.md) | Relational schema, constraints, indexes, integrity rules |
 | [docs/database/METRICS.md](docs/database/METRICS.md) | Every BI metric: definition, formula, sources, edge cases |
