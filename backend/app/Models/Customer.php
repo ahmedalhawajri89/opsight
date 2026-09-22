@@ -22,6 +22,9 @@ use Illuminate\Support\Carbon;
  * second source of truth that goes wrong the first time an order is cancelled
  * or backdated (DATABASE_DESIGN.md §3.5).
  *
+ * @property string $name
+ * @property string|null $name_ar
+ * @property string|null $country
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -37,6 +40,7 @@ class Customer extends Model
     /** @var list<string> */
     protected $fillable = [
         'name',
+        'name_ar',
         'email',
         'phone',
         'company',

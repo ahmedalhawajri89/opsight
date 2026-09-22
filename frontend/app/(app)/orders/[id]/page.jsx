@@ -58,10 +58,10 @@ export default function OrderDetailPage({ params }) {
             href={`/products/${row.product_id}`}
             className="text-(--color-brand-text) hover:underline"
           >
-            {row.product_name}
+            {row.display_name ?? row.product_name}
           </Link>
         ) : (
-          row.product_name
+          (row.display_name ?? row.product_name)
         ),
     },
     {
@@ -109,7 +109,7 @@ export default function OrderDetailPage({ params }) {
               href={`/customers/${order.customer.id}`}
               className="text-(--color-brand-text) hover:underline"
             >
-              {order.customer.name}
+              {order.customer.display_name ?? order.customer.name}
             </Link>
           ) : (
             t('orderDetail.walkIn')

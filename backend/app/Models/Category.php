@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
+ * @property string $name
+ * @property string|null $name_ar
  * @property Carbon|null $created_at
  */
 #[ObservedBy(AuditObserver::class)]
@@ -27,7 +29,7 @@ class Category extends Model
     use SoftDeletes;
 
     /** @var list<string> */
-    protected $fillable = ['name', 'slug', 'description'];
+    protected $fillable = ['name', 'name_ar', 'slug', 'description'];
 
     /** @return HasMany<Product, $this> */
     public function products(): HasMany

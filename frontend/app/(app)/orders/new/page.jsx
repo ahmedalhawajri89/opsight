@@ -140,7 +140,7 @@ export default function NewOrderPage() {
                   placeholder={t('newOrder.walkInOption')}
                   options={customers.map((customer) => ({
                     value: customer.id,
-                    label: customer.name,
+                    label: customer.display_name ?? customer.name,
                   }))}
                   value={customerId}
                   onChange={(event) => setCustomerId(event.target.value)}
@@ -177,7 +177,7 @@ export default function NewOrderPage() {
                     placeholder={t('newOrder.chooseProduct')}
                     options={products.map((product) => ({
                       value: product.id,
-                      label: `${product.sku} — ${product.name}`,
+                      label: `${product.sku} — ${product.display_name ?? product.name}`,
                     }))}
                     value={productId}
                     onChange={(event) => setProductId(event.target.value)}

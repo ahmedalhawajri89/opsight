@@ -26,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $sku
  * @property string $name
+ * @property string|null $name_ar
+ * @property string|null $vat_rate
  * @property string $price
  * @property string $cost
  * @property bool $is_active
@@ -50,6 +52,7 @@ class Product extends Model
      */
     protected $fillable = [
         'name',
+        'name_ar',
         'description',
         'category_id',
         'price',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\InventoryItem;
+use App\Support\Localization\LocalizedName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,6 +29,7 @@ class InventoryItemResource extends JsonResource
                 'id' => $this->product->id,
                 'sku' => $this->product->sku,
                 'name' => $this->product->name,
+                'display_name' => LocalizedName::pick($this->product->name, $this->product->name_ar),
                 'unit' => $this->product->unit,
                 'is_active' => $this->product->is_active,
             ]),

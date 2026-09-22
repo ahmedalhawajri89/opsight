@@ -59,7 +59,7 @@ export default function ProductsPage() {
       sortable: true,
       cell: (row) => (
         <span className="flex items-center gap-2">
-          {row.name}
+          {row.display_name ?? row.name}
           {!row.is_active && <Badge tone="neutral">{t('common.inactive')}</Badge>}
         </span>
       ),

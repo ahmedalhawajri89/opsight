@@ -9,7 +9,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Http\Resources\OrderResource;
 use App\Models\Customer;
+use App\Support\PhoneNumber;
 use App\Support\QueryFilter;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -90,7 +92,7 @@ class CustomerController extends Controller
     {
         $this->authorize('create', Customer::class);
 
-        $customer = new Customer($this->rules($request));
+        $customer = new Customer($this->normalized($this->rules($request)));
         $customer->created_by = $request->user()?->id;
         $customer->save();
 
@@ -108,7 +110,7 @@ class CustomerController extends Controller
     {
         $this->authorize('update', $customer);
 
-        $customer->update($this->rules($request, $customer));
+        $customer->update($this->normalized($this->rules($request, $customer), $customer));
 
         return CustomerResource::make($customer->fresh());
     }
@@ -139,12 +141,30 @@ class CustomerController extends Controller
     }
 
     /**
+     * The validated input with the phone in E.164. Validation has already
+     * refused a number that cannot be placed, so this cannot fail.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalized(array $data, ?Customer $customer = null): array
+    {
+        if (isset($data['phone']) && is_string($data['phone'])) {
+            $country = $data['country'] ?? $customer?->country;
+            $data['phone'] = PhoneNumber::normalize($data['phone'], is_string($country) ? $country : null);
+        }
+
+        return $data;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function rules(Request $request, ?Customer $customer = null): array
     {
         return $request->validate([
             'name' => [$customer ? 'sometimes' : 'required', 'string', 'max:180'],
+            'name_ar' => ['nullable', 'string', 'max:180'],
             // Unique among non-deleted rows, and nullable for walk-in trade.
             'email' => [
                 'nullable', 'email', 'max:190',
@@ -152,7 +172,18 @@ class CustomerController extends Controller
                     ->whereNull('deleted_at')
                     ->ignore($customer?->id),
             ],
-            'phone' => ['nullable', 'string', 'max:40'],
+            /*
+             * Stored in E.164 (ADR-021). A number without a country code takes
+             * the customer's country's; one that cannot be placed is refused
+             * rather than stored as typed.
+             */
+            'phone' => ['nullable', 'string', 'max:40', function (string $attribute, mixed $value, Closure $fail) use ($request, $customer): void {
+                $country = $request->input('country', $customer?->country);
+
+                if (is_string($value) && PhoneNumber::normalize($value, is_string($country) ? $country : null) === null) {
+                    $fail(__('validation.phone'));
+                }
+            }],
             'company' => ['nullable', 'string', 'max:180'],
             // A business customer's VAT registration number, printed on its invoices.
             'vat_number' => ['nullable', 'string', 'max:32'],
