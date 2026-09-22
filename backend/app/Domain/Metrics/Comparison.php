@@ -10,6 +10,8 @@ enum Comparison: string
 {
     case PreviousPeriod = 'previous_period';
     case PreviousYear = 'previous_year';
+    // The same Hijri dates a Hijri year ago: Ramadan against Ramadan (HijriCalendar).
+    case PreviousHijriYear = 'previous_hijri_year';
     case None = 'none';
 
     public function label(): string
@@ -35,6 +37,7 @@ enum Comparison: string
                 'days' => app(Localizer::class)->number($days),
             ]),
             self::PreviousYear => __('labels.versus.previous_year'),
+            self::PreviousHijriYear => __('labels.versus.previous_hijri_year'),
             self::None => '',
         };
     }

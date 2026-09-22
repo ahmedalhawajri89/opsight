@@ -609,6 +609,43 @@ discount when prices include VAT, or that plus VAT when they exclude it
 (`tests/Unit/Tax/VatCalculationTest.php`). End to end:
 `tests/Feature/Orders/ValueAddedTaxTest.php`.
 
+## ADR-019 — Compare by Hijri season, and say when a comparison crosses one
+
+**Status:** Accepted (2026-09)
+**Affects:** `Comparison`, `Period::comparison()`, analytics `meta`, the period selectors, the
+dashboard and analytics screens
+
+**Context.** Ramadan and the two Eids reshape trade across the region, and they move about
+eleven days earlier every Gregorian year. The one year-on-year comparison Opsight had,
+`previous_year`, therefore set Ramadan against ordinary trade in most years. The insights
+built on it reported a collapse or a surge that was only the calendar.
+
+**Decision.**
+
+1. **A fourth comparison basis, `previous_hijri_year`.** The same Hijri dates one Hijri
+   year earlier, under Umm al-Qura, the official calendar of Saudi Arabia. It flows through
+   every metric, time series, breakdown and insight, because they all resolve comparisons
+   through `Period::comparison()`.
+2. **ICU, not a library.** PHP's intl extension already ships Umm al-Qura
+   (`islamic-umalqura`) (`App\Domain\Calendar\HijriCalendar`). The code refuses to run
+   if ICU hands back a Gregorian calendar instead, which it would otherwise do silently.
+   Tests pin Ramadan and both Eids for 1445–1447 to their public dates.
+3. **The server owns the calendar.** The browser does not reimplement Hijri arithmetic. It
+   shows the comparison range the server reports, so there is one implementation, and two
+   cannot disagree.
+4. **Awareness, not just an option.** The server flags `season_mismatch` when the period
+   and its comparison differ by three days or more in any season. The screen explains the
+   mismatch and offers the Hijri comparison in one click. Nobody has to know the option
+   exists to benefit from it.
+
+**Accepted limitation.** Umm al-Qura is a calculated calendar. Where a country starts
+Ramadan or Eid by local moon sighting, the observed first day can differ by one day. For
+comparing weeks and months of trade, one day does not change a conclusion, and the
+three-day threshold absorbs it.
+
+**Not done here.** Hijri dates are not shown beside Gregorian ones on screen. `Intl` can
+render them (`-u-ca-islamic-umalqura`), and it is a presentation choice to make separately.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

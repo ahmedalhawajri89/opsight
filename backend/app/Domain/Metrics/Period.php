@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Metrics;
 
+use App\Domain\Calendar\HijriCalendar;
 use App\Models\BusinessSetting;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
@@ -169,6 +170,19 @@ final readonly class Period
     {
         if ($basis === Comparison::None->value) {
             return null;
+        }
+
+        /*
+         * The same Hijri dates one Hijri year earlier — about 354 days, not
+         * 365 — so a period holding Ramadan is compared with last Ramadan
+         * rather than with whatever trade those Gregorian dates held.
+         */
+        if ($basis === Comparison::PreviousHijriYear->value) {
+            return self::between(
+                HijriCalendar::shiftYears($this->from, -1),
+                HijriCalendar::shiftYears($this->to, -1),
+                $this->timezone,
+            );
         }
 
         if ($basis === Comparison::PreviousYear->value) {

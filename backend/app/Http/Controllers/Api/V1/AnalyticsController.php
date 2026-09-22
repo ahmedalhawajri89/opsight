@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Authorization\Ability;
+use App\Domain\Calendar\HijriCalendar;
 use App\Domain\Inventory\StockLevel;
 use App\Domain\Metrics\Breakdown;
 use App\Domain\Metrics\Comparison;
@@ -322,13 +323,30 @@ class AnalyticsController extends Controller
         $previous = $period->comparison($comparison->value);
         $settings = BusinessSetting::current();
 
+        $seasons = HijriCalendar::seasonsBetween($period->from, $period->to);
+        $previousSeasons = $previous !== null
+            ? HijriCalendar::seasonsBetween($previous->from, $previous->to)
+            : [];
+
         return [
             'period' => $period->toArray(),
+            // Ramadan and the two Eids inside the period, clipped to it.
+            'seasons' => $seasons,
             'comparison' => [
                 'basis' => $comparison->value,
                 'label' => $comparison->describe($period),
                 'from' => $previous?->from,
                 'to' => $previous?->to,
+                'seasons' => $previousSeasons,
+                /*
+                 * The two periods hold different amounts of Ramadan or Eid, so
+                 * a change between them is partly the calendar. The UI offers
+                 * the Hijri comparison instead. Never raised against the
+                 * Hijri basis itself, which is the fix.
+                 */
+                'season_mismatch' => $previous !== null
+                    && $comparison !== Comparison::PreviousHijriYear
+                    && self::seasonsDiffer($seasons, $previousSeasons),
                 /*
                  * An incomplete current period compared against a complete
                  * prior one is flagged, so the UI can warn rather than let the
@@ -339,5 +357,41 @@ class AnalyticsController extends Controller
             'currency' => $settings->currency,
             'currency_decimals' => $settings->currency_decimals,
         ];
+    }
+
+    /**
+     * Whether two periods hold materially different amounts of a season.
+     *
+     * Counted in days per season, not presence: March 2025 was all Ramadan and
+     * March 2026 held nineteen days of it — both "contain Ramadan", and they
+     * are nothing alike. Three days is the threshold because an Eid is three
+     * to four days, and a one- or two-day drift in the calendar moves nothing.
+     *
+     * @param  list<array{key: string, from: string, to: string}>  $current
+     * @param  list<array{key: string, from: string, to: string}>  $previous
+     */
+    private static function seasonsDiffer(array $current, array $previous): bool
+    {
+        $days = function (array $seasons): array {
+            $totals = [];
+
+            foreach ($seasons as $season) {
+                $length = (int) Carbon::parse($season['from'])->diffInDays(Carbon::parse($season['to'])) + 1;
+                $totals[$season['key']] = ($totals[$season['key']] ?? 0) + $length;
+            }
+
+            return $totals;
+        };
+
+        $a = $days($current);
+        $b = $days($previous);
+
+        foreach (array_unique([...array_keys($a), ...array_keys($b)]) as $key) {
+            if (abs(($a[$key] ?? 0) - ($b[$key] ?? 0)) >= 3) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

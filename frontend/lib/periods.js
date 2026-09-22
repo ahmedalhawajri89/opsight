@@ -45,6 +45,8 @@ export const PRESET_LABEL_COUNTS = {
 export const COMPARISON = {
   PreviousPeriod: 'previous_period',
   PreviousYear: 'previous_year',
+  // Ramadan against Ramadan: the same Hijri dates a Hijri year earlier.
+  PreviousHijriYear: 'previous_hijri_year',
   None: 'none',
 };
 
@@ -138,7 +140,13 @@ export function periodLengthInDays(from, to) {
  * seasonal businesses need and for which a previous-period comparison misleads.
  */
 export function resolveComparison(from, to, basis = COMPARISON.PreviousPeriod) {
-  if (basis === COMPARISON.None) return null;
+  /*
+   * The Hijri basis is resolved on the server alone (Umm al-Qura through
+   * ICU), and the screen shows the range the server reports in
+   * `meta.comparison`. A second, JavaScript implementation of the Hijri
+   * calendar here could only ever disagree with it.
+   */
+  if (basis === COMPARISON.None || basis === COMPARISON.PreviousHijriYear) return null;
 
   const start = startOfDay(new Date(from));
   const end = startOfDay(new Date(to));
@@ -202,6 +210,7 @@ export function describeComparison(basis, from, to) {
   if (basis === COMPARISON.None || !from || !to) return '';
 
   if (basis === COMPARISON.PreviousYear) return 'vs same period last year';
+  if (basis === COMPARISON.PreviousHijriYear) return 'vs the same Hijri dates last year';
 
   const days = periodLengthInDays(from, to);
 

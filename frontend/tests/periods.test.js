@@ -130,6 +130,12 @@ describe('resolveComparison', () => {
     expect(resolveComparison('2026-08-01', '2026-08-31', COMPARISON.None)).toBeNull();
   });
 
+  it('leaves the Hijri comparison to the server, which owns the calendar', () => {
+    // One implementation of Umm al-Qura, not two that can disagree: the screen
+    // shows the range the server reports in meta.comparison.
+    expect(resolveComparison('2026-02-18', '2026-03-19', COMPARISON.PreviousHijriYear)).toBeNull();
+  });
+
   it('spans a month boundary correctly', () => {
     expect(resolveComparison('2026-03-01', '2026-03-31', COMPARISON.PreviousPeriod)).toEqual({
       from: '2026-01-29',

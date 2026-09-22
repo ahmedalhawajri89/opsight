@@ -63,11 +63,25 @@ in July and confirmed in August is August revenue.
 | --- | --- |
 | `previous_period` (default) | The equal-length period ending immediately before `from`. A 31-day August compares against 1–31 July. |
 | `previous_year` | The same calendar dates one year earlier. |
+| `previous_hijri_year` | The same **Hijri** dates one Hijri year earlier (Umm al-Qura), about 354 days back. A day that has no twin — the 30th of a month whose predecessor had 29 — lands on the last day of that month. |
 | `none` | No comparison; `previous` and `change_pct` are `null`. |
 
 `previous_period` is the default because it answers "is this better than recently?", which
 is the question an operator actually asks. `previous_year` is offered because seasonal
 businesses need it and a previous-period comparison misleads them.
+
+`previous_hijri_year` exists because Ramadan moves about eleven days earlier every
+Gregorian year (ADR-019). Across the region Ramadan and the two Eids reshape trade, so
+`previous_year` compares Ramadan with ordinary trade in most years. March 2026 held
+nineteen days of Ramadan and then Eid al-Fitr, while March 2025 was all Ramadan.
+
+**Season mismatch.** Every analytics response lists the seasons inside the period and
+inside its comparison: Ramadan, Eid al-Fitr (1–3 Shawwal) and Eid al-Adha (10–13 Dhu
+al-Hijjah). It sets `meta.comparison.season_mismatch` when the two differ by three days or
+more in any one season. The count is days, not presence, because two periods can both
+"contain Ramadan" and hold very different amounts of it. The dashboard and analytics
+screens then say that part of the change is the calendar, and offer the Hijri comparison.
+The flag is never raised against the Hijri basis itself.
 
 ### 1.5 Change calculation
 
