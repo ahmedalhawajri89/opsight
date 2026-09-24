@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The E2E job below says it runs "on main and nightly"; this is the nightly.
+  schedule:
+    - cron: '0 2 * * *'
 
 # A superseded run has nothing useful left to say.
 concurrency:
@@ -177,6 +180,12 @@ jobs:
 
       - name: Start the API with seeded data
         working-directory: backend
+        # The browser specs read a real history — order references, low stock,
+        # activity — which only DemoDataSeeder writes, and it is opt-in
+        # (config/app.php: seed_demo_data). Without this the default business
+        # is empty and most specs fail on an empty table.
+        env:
+          SEED_DEMO_DATA: 'true'
         run: |
           composer install --prefer-dist --no-interaction --no-progress
           cp .env.example .env

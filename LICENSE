@@ -1,0 +1,32 @@
+Copyright (c) 2026 Ahmed Al Hawajri. All rights reserved.
+
+Opsight is proprietary software. It is published here so that it can be read
+and evaluated as a work sample.
+
+You may:
+
+  - read this source code;
+  - clone the repository and run it locally to evaluate it;
+  - quote short excerpts with attribution, for review or discussion.
+
+You may not, without prior written permission from the copyright holder:
+
+  - use this software, in whole or in part, in any product or service,
+    commercial or otherwise;
+  - copy, modify or distribute it, or create derivative works from it;
+  - sublicense, sell, rent or host it for others.
+
+Third-party components keep their own licences. In particular, this repository
+depends on Laravel, Next.js, React, Tailwind CSS and other open-source packages
+declared in composer.json and package.json, and each of those is governed by
+its own licence, not by this one. Fonts and other assets carry the licences
+named in the files that reference them.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For permission beyond this licence, contact the copyright holder.

@@ -22,6 +22,18 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 
+  /*
+   * Ten seconds, not five.
+   *
+   * `php artisan serve` answers one request at a time, and the dashboard asks
+   * for three things at once — figures, insights, activity — each about two
+   * seconds against the seeded three-year history. The default budget left an
+   * assertion waiting on the third while the first was still being computed,
+   * which failed as "heading not found" and passed on a rerun. The wait is on
+   * the data either way; this only stops a slow queue reading as a bug.
+   */
+  expect: { timeout: 10_000 },
+
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',

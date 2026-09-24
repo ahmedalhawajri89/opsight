@@ -55,7 +55,9 @@ export default function OrderDetailPage({ params }) {
       cell: (row) =>
         row.product_id ? (
           <Link
-            href={`/products/${row.product_id}`}
+            // There is no product detail screen; the catalogue filtered to
+            // this SKU is the nearest honest destination.
+            href={`/products?search=${encodeURIComponent(row.product_sku)}`}
             className="text-(--color-brand-text) hover:underline"
           >
             {row.display_name ?? row.product_name}

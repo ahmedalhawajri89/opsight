@@ -89,10 +89,18 @@ test.describe('a new business', () => {
     await page.getByRole('button', { name: 'Save and view draft' }).click();
 
     await expect(page).toHaveURL(/\/orders\/\d+$/);
+
+    // Confirming prices the lines and moves stock; wait for the server to say
+    // it is done rather than for a timeout to pass.
+    const confirmed = page.waitForResponse(
+      (response) => response.url().includes('/confirm') && response.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
     await page.getByRole('button', { name: 'Confirm order' }).click();
+    await confirmed;
 
     // 2 × 12.500 = 25.000, in KWD, with no VAT for Kuwait.
-    await expect(page.getByText('KWD 25.000').first()).toBeVisible();
+    await expect(page.getByText('KWD 25.000').first()).toBeVisible({ timeout: 15_000 });
 
     // ---- And the dashboard now has something to say ------------------------
     await page.goto('/dashboard');

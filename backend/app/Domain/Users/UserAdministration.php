@@ -106,10 +106,21 @@ final class UserAdministration
             return false;
         }
 
+        /*
+         * The OWNER SET is locked, not just the user being changed.
+         *
+         * Locking only the target serialises two people demoting the same
+         * owner — and misses the case that actually empties the business: two
+         * owners demoted at the same moment, each transaction locking a
+         * different row, each seeing the other still active, both allowed.
+         * The result is a business with no owner, which nothing in the
+         * application can undo.
+         */
         $otherActiveOwners = User::query()
             ->where('role', Role::Owner)
             ->where('is_active', true)
             ->whereKeyNot($user->id)
+            ->lockForUpdate()
             ->count();
 
         return $otherActiveOwners === 0;

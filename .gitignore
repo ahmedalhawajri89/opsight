@@ -49,6 +49,14 @@ frontend/playwright-report/
 frontend/test-results/
 frontend/blob-report/
 frontend/.playwright/
+# A local crib sheet of demo logins. Kept out of the repository on purpose:
+# a file called CREDENTIALS.txt is a bad look even when its contents are not
+# secret.
+CREDENTIALS.txt
+
+# Throwaway scripts used while building a screen.
+*.tmp.mjs
+
 # Saved Playwright sessions are real credentials.
 frontend/playwright/.auth/
 

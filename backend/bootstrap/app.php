@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Support\DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -46,6 +47,24 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             SetLocale::class,
         ]);
+
+        // On every response, including the one Blade route.
+        $middleware->append(SecurityHeaders::class);
+
+        /*
+         * Behind a load balancer or a CDN, the client's address is in
+         * X-Forwarded-For and `$request->ip()` is the proxy's. Every limiter
+         * keyed by address — sign-in, sign-up, health — would then share one
+         * bucket for the entire internet, and the audit log would record the
+         * proxy as the origin of every action. TRUSTED_PROXIES names the hops
+         * that may set the header; with none set, nothing is trusted, which is
+         * correct for running the API directly.
+         */
+        $proxies = array_values(array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '')))));
+
+        if ($proxies !== []) {
+            $middleware->trustProxies(at: $proxies === ['*'] ? '*' : $proxies);
+        }
 
         $middleware->alias([
             'active' => EnsureUserIsActive::class,

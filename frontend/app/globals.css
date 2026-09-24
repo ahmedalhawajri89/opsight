@@ -256,7 +256,7 @@
   /*
    * TYPE.
    *
-   * Inter for Latin glyphs, DIN Next LT Arabic for Arabic ones — chosen per
+   * Inter for Latin glyphs, IBM Plex Sans Arabic for Arabic ones — chosen per
    * character, so a line mixing an Arabic label with "BHD" or an SKU renders
    * each script in the face designed for it. Both are self-hosted.
    *
@@ -353,7 +353,7 @@ body {
  *   600  headings and figures: the thing a panel is about
  *   700  the wordmark, and nothing else
  *
- * Never synthesised. DIN Next LT Arabic has no SemiBold, so a 600 heading
+ * Never synthesised. The Arabic face has no SemiBold, so a 600 heading
  * resolves to its Bold; without this line the browser would be free to smear a
  * fake 600 out of Regular instead, which pulls apart the joins that make
  * Arabic legible. Italics are synthesised in neither script — Arabic has no

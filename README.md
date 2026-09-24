@@ -6,10 +6,16 @@ Opsight consolidates a business's operational records — orders, customers, pro
 inventory and expenses — and turns them into metrics, comparative analytics and
 actionable insights for owners and managers.
 
-> **Status: Phase 01 complete — walking skeleton.**
-> Authentication works end to end across both stacks. Operational modules
-> (orders, customers, products, inventory, expenses) arrive in Phase 03 and
-> business metrics in Phase 04. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: feature-complete for a single installation, and multi-business.**
+> Orders with a payment and refund ledger, customers, products, inventory,
+> expenses, analytics with ten insight rules, an audit log, CSV export, four
+> roles, Arabic and English throughout, VAT, the Hijri calendar, a configurable
+> working week — and, since the tenancy work, many businesses on one
+> installation with self-service sign-up and a setup wizard.
+>
+> Not done: deployment hardening (Phase 06), and the P2 integrations — Salla
+> import and WhatsApp alerts. See [docs/ROADMAP.md](docs/ROADMAP.md) and
+> [docs/product/MARKET_STUDY.md](docs/product/MARKET_STUDY.md).
 
 ---
 
@@ -39,7 +45,13 @@ Full instructions in [docs/SETUP.md](docs/SETUP.md).
 ```bash
 # Backend
 cd backend && composer install && cp .env.example .env
-php artisan key:generate && php artisan migrate --seed && php artisan serve --port=8010
+php artisan key:generate
+
+# Three years of realistic history, on top of the accounts. Opt-in: an
+# installation must not arrive pre-populated with invented orders.
+echo "SEED_DEMO_DATA=true" >> .env
+
+php artisan migrate --seed && php artisan serve --port=8010
 
 # Frontend (second terminal)
 cd frontend && npm install && cp .env.example .env.local && npm run dev
@@ -57,6 +69,23 @@ with the password `password`:
 
 Sign in as Staff and then as Owner to see the authorization boundary — the
 difference is produced server-side, not hidden in the browser.
+
+A **second business** is seeded beside the first, to make the isolation visible:
+
+| | |
+| --- | --- |
+| Owner | `owner@alnoor.test` |
+| Business | Al Noor Trading, trading in Kuwaiti dinars (three decimal places) |
+
+Signing in as that owner shows twelve orders and its own currency, and a link to
+the first business's records answers "not found". You can also create a business
+of your own at `/register`, which asks four questions — where you trade, whether
+you charge VAT, which days are your weekend — and sets the rest from the answers.
+
+## Licence
+
+Proprietary — see [LICENSE](LICENSE). The repository is public so the work can be
+read and evaluated; it is not licensed for use in a product.
 
 ## Documentation
 

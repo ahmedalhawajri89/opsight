@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { dashboardReady } from './support/ready';
 
 /**
  * Authentication and the role boundary, through a real browser.
@@ -48,6 +49,9 @@ test('an owner signs in, sees the dashboard, and signs out', async ({ page }) =>
   const user = await signIn(page, OWNER);
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  // The dev server answers one request at a time, so let the dashboard's own
+  // three finish before asking it to sign out.
+  await dashboardReady(page);
 
   // The signed-in identity is on screen, named as the server named it.
   await expect(page.getByText(user.name, { exact: true })).toBeVisible();

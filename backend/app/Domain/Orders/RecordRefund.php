@@ -78,7 +78,7 @@ final class RecordRefund
             $revenue = bcsub($amount, $vat, $scale);
 
             if ($returnStock) {
-                foreach ($order->items()->with('product')->get() as $item) {
+                foreach ($order->items()->with('product')->orderBy('product_id')->get() as $item) {
                     if ($item->product === null) {
                         continue;
                     }

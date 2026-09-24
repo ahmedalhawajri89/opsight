@@ -78,8 +78,12 @@ export function Field({ label, hint, error, required = false, className, childre
         </p>
       )}
 
+      {/*
+        Announced, not only described: aria-describedby is read on focus, so a
+        reader who submits and gets a 422 would otherwise hear nothing.
+      */}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-(--color-danger)">
+        <p role="alert" id={`${id}-error`} className="text-sm text-(--color-danger)">
           {error}
         </p>
       )}

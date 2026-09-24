@@ -22,6 +22,7 @@ use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Money;
 use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -254,7 +255,6 @@ class DemoDataSeeder extends Seeder
                 $sequence++;
                 $order = new Order([
                     'customer_id' => $customer?->id,
-                    'discount_amount' => mt_rand(1, 6) === 1 ? mt_rand(5, 50) : 0,
                     'tax_amount' => 0,
                     'shipping_amount' => mt_rand(1, 3) === 1 ? mt_rand(2, 15) : 0,
                 ]);
@@ -274,6 +274,17 @@ class DemoDataSeeder extends Seeder
                         'line_discount' => 0,
                         'line_total' => 0,
                     ]);
+                }
+
+                /*
+                 * The discount is set once the basket is known, and capped at
+                 * a fifth of it. Drawing it blind produced orders discounted
+                 * below nothing — which is how the missing guard in
+                 * ConfirmOrder was found.
+                 */
+                if (mt_rand(1, 6) === 1) {
+                    $basket = (string) $order->items()->selectRaw('COALESCE(SUM(unit_price * quantity), 0) AS total')->value('total');
+                    $order->forceFill(['discount_amount' => Money::round(bcdiv($basket, '5', 6))])->save();
                 }
 
                 try {

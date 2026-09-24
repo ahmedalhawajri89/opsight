@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Opsight — frontend
 
-## Getting Started
+The Next.js application. Read the [root README](../README.md) first; it explains
+what Opsight is and how to run both halves together.
 
-First, run the development server:
+**JavaScript, not TypeScript.** That is a project-wide decision, not an
+oversight, and nothing here should introduce `.ts`/`.tsx`.
+
+## Running it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # NEXT_PUBLIC_API_URL points at the API
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The API must be running on port 8010 (`cd ../backend && php artisan serve --port=8010`).
+`npm` is the package manager for this project; `pnpm` and `yarn` are not used.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint      # eslint, including the rule that forbids physical CSS sides
+npm run test      # vitest — formatting, i18n parity, permissions, tokens
+npm run build     # a production build, which the browser tests run against
+npm run e2e       # Playwright, against a seeded API
+```
 
-## Learn More
+The browser tests need the API running with demo data seeded
+(`SEED_DEMO_DATA=true`), and they sign in as the seeded accounts.
 
-To learn more about Next.js, take a look at the following resources:
+## Where things live
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Path          | What it holds                                                                                              |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `app/`        | Routes. `(auth)` sign-in and sign-up, `(setup)` the onboarding wizard, `(app)` everything behind the shell |
+| `components/` | Reusable interface: `ui/` primitives, `data/` tables and states, `layout/` the shell, `charts/`            |
+| `features/`   | Feature modules — each owns its hooks, dialogs and logic                                                   |
+| `services/`   | The only place that knows API paths                                                                        |
+| `lib/`        | Formatting, i18n, query keys, permissions                                                                  |
+| `e2e/`        | Playwright specs                                                                                           |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+More detail in
+[docs/architecture/FRONTEND_ARCHITECTURE.md](../docs/architecture/FRONTEND_ARCHITECTURE.md).

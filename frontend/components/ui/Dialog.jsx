@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 
 import { cn } from '@/lib/cn';
 import { Button } from './Button';
@@ -20,6 +20,11 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
   const { t } = useI18n();
   const ref = useRef(null);
   const previouslyFocused = useRef(null);
+  /*
+   * A title id per instance. Two dialogs are mounted together on several
+   * screens, and a shared id gave one of them the other's accessible name.
+   */
+  const titleId = useId();
 
   useEffect(() => {
     const element = ref.current;
@@ -55,7 +60,7 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
   return (
     <dialog
       ref={ref}
-      aria-labelledby={title ? 'dialog-title' : undefined}
+      aria-labelledby={title ? titleId : undefined}
       // Clicking the backdrop closes; clicking the panel must not.
       onClick={(event) => {
         if (event.target === ref.current) ref.current.close();
@@ -70,7 +75,7 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
       <div className="flex items-start justify-between gap-4 border-b border-(--color-line) px-4 py-3">
         <div>
           {title && (
-            <h2 id="dialog-title" className="text-base font-semibold text-(--color-text)">
+            <h2 id={titleId} className="text-base font-semibold text-(--color-text)">
               {title}
             </h2>
           )}

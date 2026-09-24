@@ -20,34 +20,37 @@ const inter = Inter({
 });
 
 /*
- * The Arabic face: DIN Next LT Arabic, self-hosted from `app/fonts` and
- * converted to woff2 (about 50KB a weight, down from 157KB as TrueType).
+ * The Arabic face: IBM Plex Sans Arabic, self-hosted from `app/fonts`
+ * (about 45KB a weight).
  *
- * Three weights, because those are the three the system uses — the family also
- * ships UltraLight, Light, Heavy and Black, and every face listed here is a
- * face every visitor downloads.
+ * IT REPLACED DIN NEXT LT ARABIC, which is a commercial Monotype family:
+ * publishing this repository would have redistributed the binaries. IBM Plex
+ * Sans Arabic is licensed under the SIL Open Font License, is geometric in the
+ * same way DIN is, and was drawn alongside a Latin companion — so it sits
+ * beside Inter without either looking borrowed.
  *
- * THE FAMILY HAS NO SEMIBOLD. Nothing between Medium and Bold exists, so a
- * heading asking for 600 resolves to Bold under the CSS font-matching rules
- * (for a weight above 500 the browser looks upward first). That is not a
- * fallback going wrong — it is the right answer: Arabic needs roughly one step
- * more weight than Latin to look equally present at the same size, so a
- * heading lands on SemiBold in Inter and Bold here, and the two read as equals.
+ * Three weights, because those are the three the system uses; every face
+ * listed here is a face every visitor downloads.
+ *
+ * A heading asking for 600 lands between Medium and Bold and resolves upward
+ * to Bold, which is the right answer: Arabic needs roughly one step more
+ * weight than Latin to look equally present at the same size, so a heading
+ * lands on SemiBold in Inter and Bold here, and the two read as equals.
  * `font-synthesis-weight: none` in globals.css keeps the browser from smearing
- * a fake 600 out of the Regular face, which in a cursive script breaks the
+ * a fake weight out of the Regular face, which in a cursive script breaks the
  * joins between letters.
  *
  * The stack lists Inter first, so Latin characters — SKUs, order references,
  * "BHD", every digit — render in Inter, and Arabic characters fall through to
- * DIN Next, per glyph, in the same line.
+ * IBM Plex Sans Arabic, per glyph, in the same line.
  */
 const arabic = localFont({
   variable: '--font-arabic',
   display: 'swap',
   src: [
-    { path: './fonts/DINNextLTArabic-Regular.woff2', weight: '400', style: 'normal' },
-    { path: './fonts/DINNextLTArabic-Medium.woff2', weight: '500', style: 'normal' },
-    { path: './fonts/DINNextLTArabic-Bold.woff2', weight: '700', style: 'normal' },
+    { path: './fonts/IBMPlexSansArabic-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/IBMPlexSansArabic-500.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/IBMPlexSansArabic-700.woff2', weight: '700', style: 'normal' },
   ],
 });
 
@@ -62,11 +65,10 @@ const mono = JetBrains_Mono({
  *
  * next/font hands each face over paired with a metric-matched fallback:
  * `'Inter', 'Inter Fallback'`. Chained as pairs — Inter's, then the Arabic
- * one — the stack read Inter → Inter Fallback → DIN Next, and Inter Fallback
+ * one — the stack read Inter → Inter Fallback → the Arabic face, and Inter Fallback
  * is `local("Arial")`. Arial has Arabic glyphs, so every Arabic character was
  * claimed by Arial one step before the Arabic face was consulted: the Arabic
- * font downloaded on every page and drew nothing — IBM Plex before this, and
- * DIN Next until this fix. Chrome's own report
+ * font downloaded on every page and drew nothing. Chrome's own report
  * (CSS.getPlatformFontsForNode) said "ArialMT" for every Arabic heading, and
  * because Arial has no 600, every Arabic heading was also a weight too light.
  *

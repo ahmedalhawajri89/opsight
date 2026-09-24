@@ -52,7 +52,7 @@ final class ConfirmOrder
                 throw OrderTransitionException::illegal($order->status, OrderStatus::Confirmed);
             }
 
-            $items = $order->items()->with('product')->get();
+            $items = $order->items()->with('product')->orderBy('product_id')->get();
 
             if ($items->isEmpty()) {
                 throw OrderTransitionException::emptyOrder();
@@ -160,6 +160,18 @@ final class ConfirmOrder
 
                 $line['item']->withoutAudit()->forceFill($snapshot)->save();
                 $subtotal = bcadd($subtotal, $snapshot['line_total'], $scale);
+            }
+
+            /*
+             * A discount may take an order to nothing; it may not take it
+             * below nothing. Without this an order could be confirmed with a
+             * NEGATIVE total, which subtracts from revenue, makes "outstanding"
+             * meaningless and gives a refund a limit below zero. Checked here
+             * rather than at the request, because the subtotal it must be
+             * measured against does not exist until the lines are priced.
+             */
+            if (bccomp($discount, $subtotal, $scale) > 0) {
+                throw OrderTransitionException::discountExceedsSubtotal();
             }
 
             $total = bcadd(

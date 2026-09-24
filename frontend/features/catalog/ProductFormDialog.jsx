@@ -110,9 +110,15 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
               className="me-auto"
               loading={setActive.isPending}
               onClick={async () => {
-                await setActive.mutateAsync({ id: product.id, active: !product.is_active });
-                onCreated?.(null);
-                onClose();
+                setFailure(null);
+
+                try {
+                  await setActive.mutateAsync({ id: product.id, active: !product.is_active });
+                  onCreated?.(null);
+                  onClose();
+                } catch (error) {
+                  setFailure(error.message);
+                }
               }}
             >
               {product.is_active ? t('products.new.deactivate') : t('products.new.activate')}
@@ -139,7 +145,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
 
         <Field
           label={t('orderDetail.columns.sku')}
-          error={fieldErrors.sku?.[0]}
+          error={fieldErrors.sku}
           hint={editing ? t('products.new.skuImmutable') : t('products.new.skuHint')}
           required
         >
@@ -155,7 +161,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
           )}
         </Field>
 
-        <Field label={t('products.new.name')} error={fieldErrors.name?.[0]} required>
+        <Field label={t('products.new.name')} error={fieldErrors.name} required>
           {(props) => (
             <Input
               maxLength={180}
@@ -169,7 +175,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
         {/* Optional, and shown to Arabic readers when present (ADR-021). */}
         <Field
           label={t('products.new.nameAr')}
-          error={fieldErrors.name_ar?.[0]}
+          error={fieldErrors.name_ar}
           hint={t('products.new.nameArHint')}
         >
           {(props) => (
@@ -185,7 +191,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('products.columns.price')} error={fieldErrors.price?.[0]} required>
+          <Field label={t('products.columns.price')} error={fieldErrors.price} required>
             {(props) => (
               <NumberInput
                 min="0"
@@ -198,7 +204,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
           </Field>
 
           {canSeeCost && (
-            <Field label={t('products.columns.cost')} error={fieldErrors.cost?.[0]} required>
+            <Field label={t('products.columns.cost')} error={fieldErrors.cost} required>
               {(props) => (
                 <NumberInput
                   min="0"
@@ -217,7 +223,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
         {!editing && (
           <Field
             label={t('products.new.openingStock')}
-            error={fieldErrors.opening_stock?.[0]}
+            error={fieldErrors.opening_stock}
             hint={t('products.new.openingStockHint')}
           >
             {(props) => (

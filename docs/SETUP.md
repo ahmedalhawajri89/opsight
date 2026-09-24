@@ -104,9 +104,12 @@ NEXT_PUBLIC_API_URL=https://api.opsight.com
 
 ## Demo data
 
-`php artisan migrate --seed` gives a clean install: business settings and one
-account per role, nothing else. A fresh deployment must not arrive pre-populated
-with orders that never happened.
+`php artisan migrate --seed` gives a clean install: business settings, one
+account per role, and a second business (Al Noor Trading, `owner@alnoor.test`)
+so that the isolation between businesses can be seen in a browser. A fresh
+deployment must not arrive pre-populated with orders that never happened, so the
+three years of history are opt-in — set `SEED_DEMO_DATA=true` in `backend/.env`,
+or call the seeder directly.
 
 To load three years of realistic history for development or a demo:
 
@@ -162,12 +165,21 @@ npm run test            # Vitest
 npm run build
 ```
 
-**End to end** — needs the API running with seeded data:
+**End to end** — needs the API running with the demo history seeded, because the
+specs read real orders, low stock and activity:
 
 ```bash
-cd backend && php artisan migrate:fresh --seed && php artisan serve --port=8010
+cd backend
+echo "SEED_DEMO_DATA=true" >> .env      # once
+php artisan migrate:fresh --seed && php artisan serve --port=8010
+
 cd frontend && npx playwright install chromium && npm run e2e
 ```
+
+The owner account's interface language is Arabic in the seeded data if you have
+changed it; the specs read English labels, so switch it back before a run
+(`/settings` or the account menu) — CI starts from a fresh seed and is not
+affected.
 
 ## Troubleshooting
 
