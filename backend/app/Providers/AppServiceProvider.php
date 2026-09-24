@@ -110,6 +110,9 @@ class AppServiceProvider extends ServiceProvider
         // Each sign-up creates a business: a handful an hour from one address.
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));
 
+        // Changing one's own password: a few tries a minute, then wait.
+        RateLimiter::for('password', static fn (Request $request): Limit => Limit::perMinute(5)->by($byUser($request)));
+
         RateLimiter::for('health', static fn (Request $request): Limit => Limit::perMinute(30)->by((string) $request->ip()));
     }
 

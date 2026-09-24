@@ -54,6 +54,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
         Route::patch('me/preferences', [AuthController::class, 'updatePreferences'])->name('me.preferences');
+
+        // Its own limiter: it accepts a current password, so it must not become
+        // a way to guess one (SECURITY.md §7).
+        Route::patch('me/password', [AuthController::class, 'updatePassword'])
+            ->middleware('throttle:password')
+            ->name('me.password');
         Route::post('onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
 
         /* ---- Export ------------------------------------------------------ */

@@ -39,6 +39,14 @@ export function fetchMe() {
 }
 
 /**
+ * A user's own password. The server requires the current one, and answers 204:
+ * nothing about a password comes back.
+ */
+export function changePassword({ current_password: currentPassword, password }) {
+  return api.patch('/me/password', { current_password: currentPassword, password });
+}
+
+/**
  * The signed-in user's own language and digits. Returns the updated user, so
  * the auth cache can be replaced rather than refetched.
  */

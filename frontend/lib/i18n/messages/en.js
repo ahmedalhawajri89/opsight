@@ -192,6 +192,26 @@ const en = {
     MA: 'Morocco',
   },
 
+  profile: {
+    title: 'Your account',
+    description: 'What this account is, and the parts of it that are yours to change.',
+    account: 'Account',
+    name: 'Name',
+    business: 'Business',
+    adminNote:
+      'Your name, address and role are set by an owner. Ask one to change them; your password and language are yours.',
+    password: {
+      title: 'Change your password',
+      description:
+        'You need your current one, which is what tells this apart from someone using a machine you left signed in.',
+      current: 'Current password',
+      next: 'New password',
+      submit: 'Change password',
+      done: 'Password changed. This device stays signed in.',
+      signsOutDevices: 'Every other remembered device will have to sign in again.',
+    },
+  },
+
   dialog: {
     close: 'Close dialog',
   },
@@ -628,6 +648,10 @@ const en = {
     },
     detail: {
       edit: 'Edit customer',
+      delete: 'Delete customer',
+      deleteTitle: 'Delete this customer?',
+      deleteConsequence:
+        'The record is hidden rather than erased, and every metric stays as it was. A customer with committed orders cannot be deleted at all — their history would stop naming anyone.',
       contact: 'Contact',
       noCompany: 'No company recorded',
       orders: 'Orders',

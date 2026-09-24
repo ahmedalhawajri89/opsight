@@ -8,13 +8,16 @@ use App\Domain\Businesses\RegisterBusiness;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePreferencesRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Support\Localization\Localizer;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 /**
  * Sanctum SPA (stateful cookie) authentication — ADR-002.
@@ -99,6 +102,50 @@ class AuthController extends Controller
         assert($user instanceof User);
 
         return UserResource::make($user);
+    }
+
+    /**
+     * A user changing their own password.
+     *
+     * Until now only an Owner could change anyone's password, which left a
+     * member of staff who suspects their password is known with no way to
+     * change it — the one case where speed matters most.
+     *
+     * The current password is required, every remembered device is ended, and
+     * this session stays signed in: the person who just proved who they are
+     * should not be thrown out for doing the right thing.
+     */
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        assert($user instanceof User);
+
+        // Audited as its own action with an empty diff: that it changed is the
+        // event, and the value never reaches the table (SECURITY.md §10).
+        $user->auditAs('user.password_changed');
+
+        $user->forceFill([
+            'password' => (string) $request->string('password'),
+            // A new password ends every "remember me" on every other device.
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        /*
+         * The recaller cookie this browser holds names the OLD token, so the
+         * device that just changed its password would be the one signed out.
+         * Signing in again here reissues it, keeping remember-me where it was.
+         */
+        $guard = Auth::guard('web');
+
+        if ($guard instanceof SessionGuard) {
+            $guard->login($user, remember: $request->hasCookie($guard->getRecallerName()));
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json(null, 204);
     }
 
     /**

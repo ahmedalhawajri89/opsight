@@ -540,16 +540,13 @@ function UserMenu({ user, onSignOut }) {
           </div>
           <div className="my-1 h-px bg-(--color-line-subtle)" />
 
-          {/* No profile screen exists yet: listed, disabled and labelled. */}
-          <span
-            aria-disabled="true"
-            title={t('nav.comingLater')}
-            className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm text-(--color-muted)"
+          <Link
+            href="/profile"
+            className="flex w-full items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-surface-hover)"
           >
-            <Icon name="userCircle" />
+            <Icon name="userCircle" className="text-(--color-text-2)" />
             <span className="flex-1">{t('shell.profile')}</span>
-            <span className="sr-only">{t('nav.comingLater')}</span>
-          </span>
+          </Link>
 
           {/*
             Language is reachable by every role from every screen: it is a

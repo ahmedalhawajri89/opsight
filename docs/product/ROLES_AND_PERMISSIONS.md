@@ -110,9 +110,13 @@ into an oracle for the hidden value.
 | `products.update` | ✓ | ✓ | — | — |
 | `expenses.update` | ✓ | ✓ | — | — |
 | `users.update` | ✓ | — | — | — |
+| Changing **your own** password (`PATCH /me/password`) | ✓ | ✓ | ✓ | ✓ |
 | `users.change_role` | ✓ | — | — | — |
 | `settings.update` | ✓ | — | — | — |
 
+- Every role may change their own password, and only their own: the endpoint acts on the
+  signed-in user, requires the current password, and ends every remembered device. An owner
+  changing someone else's password stays a separate, audited action (`users.update`).
 - Staff may edit only **their own draft** orders. Once confirmed, an order is immutable
   for everyone (MVP_SCOPE §5).
 - Cancel and refund are withheld from Staff because both reverse recognized revenue and
