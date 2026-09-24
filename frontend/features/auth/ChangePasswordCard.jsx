@@ -78,11 +78,7 @@ export function ChangePasswordCard() {
           </p>
         )}
 
-        <Field
-          label={t('profile.password.current')}
-          error={fieldErrors.current_password?.[0]}
-          required
-        >
+        <Field label={t('profile.password.current')} error={fieldErrors.current_password} required>
           {(props) => (
             <Input
               type={revealed ? 'text' : 'password'}
@@ -98,7 +94,7 @@ export function ChangePasswordCard() {
         <Field
           label={t('profile.password.next')}
           hint={t('register.passwordHint', { min: 12 })}
-          error={fieldErrors.password?.[0]}
+          error={fieldErrors.password}
           required
         >
           {(props) => (

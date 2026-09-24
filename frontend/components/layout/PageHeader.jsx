@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@/components/ui/Icon';
+import { useI18n } from '@/features/i18n/I18nProvider';
 import { cn } from '@/lib/cn';
 
 /**
@@ -42,6 +43,8 @@ export function PageHeader({ title, description, actions, className, children })
  * shell's content padding at each breakpoint, so the bar spans edge to edge.
  */
 export function FilterBar({ onClear, activeCount = 0, className, children }) {
+  const { t } = useI18n();
+
   return (
     <div
       className={cn(
@@ -58,7 +61,7 @@ export function FilterBar({ onClear, activeCount = 0, className, children }) {
           onClick={onClear}
           className="ms-auto self-center text-sm text-(--color-brand-text) underline-offset-2 hover:underline"
         >
-          Clear {activeCount} filter{activeCount === 1 ? '' : 's'}
+          {t('filters.clearCount', { count: activeCount })}
         </button>
       )}
     </div>

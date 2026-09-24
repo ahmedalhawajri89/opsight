@@ -585,6 +585,13 @@ const ar = {
     status: 'الحالة',
     placed_from: 'تاريخ الطلب من',
     placed_to: 'تاريخ الطلب إلى',
+    clearCount: {
+      one: 'مسح فلتر واحد',
+      two: 'مسح فلترين',
+      few: 'مسح {count} فلاتر',
+      many: 'مسح {count} فلترًا',
+      other: 'مسح {count} فلتر',
+    },
     payment_status: 'الدفع',
     is_active: 'نشط',
     low_stock: 'مخزون منخفض',

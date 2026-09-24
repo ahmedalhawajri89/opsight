@@ -6,7 +6,7 @@ import { useExpenseActions } from './useCatalog';
 import { useExpenseCategories } from '@/features/admin/useAdmin';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { Button } from '@/components/ui/Button';
-import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
+import { Dialog } from '@/components/ui/Dialog';
 import { DateInput, Field, Input, NumberInput, Select, Textarea } from '@/components/ui/Field';
 import { formatMoney, toIsoDate } from '@/lib/format';
 
@@ -109,7 +109,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
   return (
     <>
       <Dialog
-        open={open && !confirmingDelete}
+        open={open}
         onClose={onClose}
         title={editing ? t('expenses.form.editTitle') : t('expenses.form.newTitle')}
         description={t('expenses.form.description')}
@@ -135,6 +135,38 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
         }
       >
         <div className="space-y-4">
+          {/*
+            The confirmation lives INSIDE this dialog rather than in a second
+            one. A dialog rendered over another closes the one beneath it —
+            which fired its onClose, unmounted this component and meant the
+            confirmation never appeared at all.
+          */}
+          {confirmingDelete && (
+            <div
+              role="alertdialog"
+              aria-label={t('expenses.form.deleteTitle')}
+              className="rounded-(--radius-control) border border-(--color-danger) bg-(--color-danger-soft) p-4"
+            >
+              <p className="text-sm font-medium text-(--color-danger)">
+                {t('expenses.form.deleteTitle')}
+              </p>
+              <p className="measure mt-1 text-sm text-(--color-text-2)">
+                {t('expenses.form.deleteConsequence', {
+                  amount: formatMoney(expense?.amount),
+                  description: expense?.description ?? '',
+                })}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button variant="danger" loading={remove.isPending} onClick={destroy}>
+                  {t('expenses.form.delete')}
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirmingDelete(false)}>
+                  {t('common.cancel')}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {failure && (
             <p
               role="alert"
@@ -144,11 +176,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
             </p>
           )}
 
-          <Field
-            label={t('expenses.columns.description')}
-            error={fieldErrors.description?.[0]}
-            required
-          >
+          <Field label={t('expenses.columns.description')} error={fieldErrors.description} required>
             {(props) => (
               <Input
                 maxLength={255}
@@ -162,7 +190,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label={t('products.columns.category')}
-              error={fieldErrors.expense_category_id?.[0]}
+              error={fieldErrors.expense_category_id}
               required
             >
               {(props) => (
@@ -180,7 +208,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
               )}
             </Field>
 
-            <Field label={t('expenses.columns.amount')} error={fieldErrors.amount?.[0]} required>
+            <Field label={t('expenses.columns.amount')} error={fieldErrors.amount} required>
               {(props) => (
                 <NumberInput
                   min="0"
@@ -195,7 +223,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
             <Field
               label={t('expenses.columns.incurred')}
               hint={t('expenses.form.incurredHint')}
-              error={fieldErrors.incurred_on?.[0]}
+              error={fieldErrors.incurred_on}
               required
             >
               {(props) => (
@@ -207,7 +235,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
               )}
             </Field>
 
-            <Field label={t('expenses.columns.vendor')} error={fieldErrors.vendor?.[0]}>
+            <Field label={t('expenses.columns.vendor')} error={fieldErrors.vendor}>
               {(props) => (
                 <Input
                   maxLength={180}
@@ -222,7 +250,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
           <Field
             label={t('expenses.form.reference')}
             hint={t('expenses.form.referenceHint')}
-            error={fieldErrors.reference?.[0]}
+            error={fieldErrors.reference}
           >
             {(props) => (
               <Input
@@ -235,7 +263,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
             )}
           </Field>
 
-          <Field label={t('customers.form.notes')} error={fieldErrors.notes?.[0]}>
+          <Field label={t('customers.form.notes')} error={fieldErrors.notes}>
             {(props) => (
               <Textarea
                 rows={3}
@@ -248,20 +276,6 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
           </Field>
         </div>
       </Dialog>
-
-      {/* The consequence in business terms, with the real figure. */}
-      <ConfirmDialog
-        open={confirmingDelete}
-        onClose={() => setConfirmingDelete(false)}
-        title={t('expenses.form.deleteTitle')}
-        consequence={t('expenses.form.deleteConsequence', {
-          amount: formatMoney(expense?.amount),
-          description: expense?.description ?? '',
-        })}
-        confirmLabel={t('expenses.form.delete')}
-        loading={remove.isPending}
-        onConfirm={destroy}
-      />
     </>
   );
 }

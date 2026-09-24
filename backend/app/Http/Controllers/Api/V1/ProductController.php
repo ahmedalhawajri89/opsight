@@ -71,7 +71,16 @@ class ProductController extends Controller
         );
 
         /** @var Builder<Product> $query */
-        $query = $filter->apply(Product::query()->with(['category', 'inventoryItem']), $request);
+        /*
+         * `inventoryItem.product` as well as `inventoryItem`: the low-stock
+         * threshold reads back through the inverse relation, so without it
+         * every row fired a query of its own — 25 on a page, and one per
+         * product on a full export.
+         */
+        $query = $filter->apply(
+            Product::query()->with(['category', 'inventoryItem.product']),
+            $request,
+        );
 
         return $query;
     }

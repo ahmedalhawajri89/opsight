@@ -85,7 +85,7 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
 
   function field(key, { label, hint, required = false, ...props } = {}) {
     return (
-      <Field label={label} hint={hint} error={fieldErrors[key]?.[0]} required={required}>
+      <Field label={label} hint={hint} error={fieldErrors[key]} required={required}>
         {(fieldProps) => (
           <Input
             value={values[key]}
@@ -168,7 +168,7 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
 
         {field('address_line', { label: t('customers.form.address'), maxLength: 255 })}
 
-        <Field label={t('customers.form.notes')} error={fieldErrors.notes?.[0]}>
+        <Field label={t('customers.form.notes')} error={fieldErrors.notes}>
           {(props) => (
             <Textarea
               rows={3}

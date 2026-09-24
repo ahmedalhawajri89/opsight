@@ -110,7 +110,7 @@ function useSearch(query, pages) {
       label: t('search.groups.customers'),
       items: (customers.data ?? []).map((customer) => ({
         key: `customer-${customer.id}`,
-        href: `/customers?filter[search]=${encodeURIComponent(customer.name)}`,
+        href: `/customers?search=${encodeURIComponent(customer.name)}`,
         icon: 'customers',
         title: customer.display_name ?? customer.name,
         detail: customer.email ?? customer.company ?? '',
@@ -121,7 +121,7 @@ function useSearch(query, pages) {
       label: t('search.groups.products'),
       items: (products.data ?? []).map((product) => ({
         key: `product-${product.id}`,
-        href: `/products?filter[search]=${encodeURIComponent(product.sku)}`,
+        href: `/products?search=${encodeURIComponent(product.sku)}`,
         icon: 'products',
         title: product.display_name ?? product.name,
         detail: product.sku,

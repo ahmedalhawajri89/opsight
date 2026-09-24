@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { authFile } from './support/authState';
+import { dashboardReady } from './support/ready';
 
 /**
  * The dashboard and analytics screens, against a real backend with three years
@@ -82,6 +83,7 @@ test.describe('dashboard, as an owner', () => {
 
   test('shows a revenue trend that can be read as a table', async ({ page }) => {
     await page.goto('/dashboard');
+    await dashboardReady(page);
 
     const chart = page.getByRole('heading', { name: 'Net revenue', exact: true }).last();
     await expect(chart).toBeVisible();
@@ -155,6 +157,7 @@ test.describe('as staff', () => {
 
   test('sees a dashboard with revenue but no cost, profit or margin tile', async ({ page }) => {
     await page.goto('/dashboard');
+    await dashboardReady(page);
 
     await expect(page.getByRole('heading', { name: 'Net revenue' }).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();

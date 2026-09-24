@@ -46,6 +46,15 @@ class OrderTransitionException extends DomainException
         );
     }
 
+    /** A discount may bring an order to nothing, never below it. */
+    public static function discountExceedsSubtotal(): self
+    {
+        return new self(
+            __('errors.order.discount_exceeds_subtotal'),
+            'order.discount_exceeds_subtotal',
+        );
+    }
+
     public static function refundExceedsTotal(): self
     {
         return new self(

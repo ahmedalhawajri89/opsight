@@ -41,7 +41,7 @@ final class CancelOrder
 
             // Only return stock that was actually taken. A draft never held any.
             if ($order->status->holdsStock()) {
-                foreach ($order->items()->with('product')->get() as $item) {
+                foreach ($order->items()->with('product')->orderBy('product_id')->get() as $item) {
                     if ($item->product === null) {
                         continue;
                     }

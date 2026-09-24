@@ -25,6 +25,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Analytics — the L2 layer over the API.
@@ -295,6 +296,14 @@ class AnalyticsController extends Controller
     /**
      * @return array{0: Period, 1: Comparison}
      */
+    /** The longest custom range the API will answer: three years. */
+    private const MAX_PERIOD_DAYS = 1096;
+
+    /**
+     * The period asked for, and what it is compared against.
+     *
+     * @return array{0: Period, 1: Comparison}
+     */
     private function resolvePeriod(Request $request): array
     {
         $validated = $request->validate([
@@ -309,6 +318,19 @@ class AnalyticsController extends Controller
         $period = $preset === 'custom'
             ? Period::between($validated['from'], $validated['to'])
             : Period::preset($preset);
+
+        /*
+         * A ceiling on a custom range. Three years covers every comparison the
+         * product offers; without one, `from=1900-01-01&to=2100-12-31` with a
+         * daily grain builds seventy thousand empty buckets in memory and
+         * serialises them — a cheap way for one signed-in user to occupy a
+         * worker for a long time.
+         */
+        if ($period->lengthInDays() > self::MAX_PERIOD_DAYS) {
+            throw ValidationException::withMessages([
+                'to' => __('errors.analytics.period_too_long', ['days' => self::MAX_PERIOD_DAYS]),
+            ]);
+        }
 
         $comparison = Comparison::from($validated['comparison'] ?? Comparison::PreviousPeriod->value);
 

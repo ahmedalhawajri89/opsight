@@ -144,7 +144,7 @@ test.describe('a visitor on the sign-in page', () => {
    * glyphs. Computed `font-family` looked right the entire time; only the
    * platform-font report told the truth.
    */
-  test('draws Arabic in DIN Next LT Arabic, not a system fallback', async ({
+  test('draws Arabic in IBM Plex Sans Arabic, not a system fallback', async ({
     page,
     context,
     baseURL,
@@ -166,7 +166,7 @@ test.describe('a visitor on the sign-in page', () => {
 
     const drawn = fonts.map((font) => font.familyName);
     expect(drawn, `the Arabic heading was drawn with: ${drawn.join(', ')}`).toContain(
-      'DIN Next LT Arabic',
+      'IBM Plex Sans Arabic',
     );
     expect(drawn).not.toContain('Arial');
   });

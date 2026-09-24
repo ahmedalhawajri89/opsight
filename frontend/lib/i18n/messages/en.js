@@ -565,6 +565,10 @@ const en = {
     status: 'Status',
     placed_from: 'Placed from',
     placed_to: 'Placed to',
+    clearCount: {
+      one: 'Clear {count} filter',
+      other: 'Clear {count} filters',
+    },
     payment_status: 'Payment',
     is_active: 'Active',
     low_stock: 'Low stock',

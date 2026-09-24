@@ -38,6 +38,10 @@ return [
         'reason_required' => 'A manual stock adjustment requires a reason.',
     ],
 
+    'analytics' => [
+        'period_too_long' => 'A custom range cannot be longer than :days days.',
+    ],
+
     'payments' => [
         'not_payable' => 'Only a confirmed, fulfilled or refunded order can receive a payment.',
         'not_positive' => 'A payment must be more than zero.',
@@ -49,6 +53,7 @@ return [
         'empty' => 'An order cannot be confirmed without at least one item.',
         'not_editable' => 'A :status order cannot be edited. Cancel it and enter a correction instead.',
         'reason_required' => 'A cancellation reason is required.',
+        'discount_exceeds_subtotal' => 'The discount is more than the goods on this order are worth.',
         'refund_exceeds_total' => 'A refund cannot exceed what is left to refund on this order.',
         'stock_already_returned' => 'The stock for this order has already been returned. Record this refund without returning stock.',
         'not_refundable' => 'Only a fulfilled order can be refunded.',
