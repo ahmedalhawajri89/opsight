@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { use, useState } from 'react';
 
-import { useCustomer, useCustomerOrders } from '@/features/catalog/useCatalog';
+import { useRouter } from 'next/navigation';
+
+import { useCustomer, useCustomerActions, useCustomerOrders } from '@/features/catalog/useCatalog';
 import { CustomerFormDialog } from '@/features/catalog/CustomerFormDialog';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -12,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { SkeletonTable, SkeletonText } from '@/components/ui/Skeleton';
 import { DataTable } from '@/components/data/DataTable';
 import { EmptyState, ErrorState, ForbiddenState } from '@/components/data/States';
+import { ConfirmDialog } from '@/components/ui/Dialog';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
 import { formatDate, formatMoney } from '@/lib/format';
 
@@ -30,6 +33,10 @@ export default function CustomerDetailPage({ params }) {
   const { customer, isLoading, isError, error, refetch } = useCustomer(id);
   const { orders, meta, isLoading: ordersLoading } = useCustomerOrders(id, { per_page: 25 });
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [failure, setFailure] = useState(null);
+  const { remove } = useCustomerActions();
+  const router = useRouter();
 
   if (isLoading) {
     return (
@@ -107,9 +114,23 @@ export default function CustomerDetailPage({ params }) {
                 {t('customers.detail.edit')}
               </Button>
             )}
+            {can('customers.delete') && (
+              <Button variant="danger" onClick={() => setDeleting(true)}>
+                {t('customers.detail.delete')}
+              </Button>
+            )}
           </div>
         }
       />
+
+      {failure && (
+        <p
+          role="alert"
+          className="rounded-(--radius-control) border border-(--color-danger) bg-(--color-danger-soft) px-4 py-3 text-sm text-(--color-danger)"
+        >
+          {failure}
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title={t('customers.detail.contact')} className="lg:col-span-1">
@@ -153,6 +174,31 @@ export default function CustomerDetailPage({ params }) {
           )}
         </Card>
       </div>
+
+      {/*
+        Soft, and refused by the server for a customer with committed orders —
+        their history would stop naming anyone. The refusal is shown as the
+        server worded it.
+      */}
+      <ConfirmDialog
+        open={deleting}
+        onClose={() => setDeleting(false)}
+        title={t('customers.detail.deleteTitle')}
+        consequence={t('customers.detail.deleteConsequence')}
+        confirmLabel={t('customers.detail.delete')}
+        loading={remove.isPending}
+        onConfirm={async () => {
+          setFailure(null);
+
+          try {
+            await remove.mutateAsync(customer.id);
+            router.replace('/customers');
+          } catch (error) {
+            setDeleting(false);
+            setFailure(error.message);
+          }
+        }}
+      />
 
       <CustomerFormDialog
         key={editing ? 'open' : 'closed'}

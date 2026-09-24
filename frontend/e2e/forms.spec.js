@@ -76,6 +76,74 @@ test.describe('as the second business', () => {
   });
 });
 
+test.describe('an account holder', () => {
+  test.use({ storageState: authFile('owner') });
+
+  test('creates an account, then that person changes their own password', async ({
+    page,
+    browser,
+  }) => {
+    const stamp = Date.now();
+    const email = `e2e.staff+${stamp}@opsight.test`;
+    const first = 'first-long-passphrase';
+    const second = 'second-long-passphrase';
+
+    // ---- An owner creates the account --------------------------------------
+    await page.goto('/settings/users');
+    await page.getByRole('button', { name: 'Add user' }).first().click();
+
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('textbox', { name: /^Name/ }).fill(`E2E Staff ${stamp}`);
+    await dialog.getByLabel('Email').fill(email);
+    await dialog.getByRole('textbox', { name: 'Password', exact: true }).fill(first);
+    await dialog.getByRole('textbox', { name: 'Confirm password' }).fill(first);
+    await dialog.getByRole('button', { name: 'Create user' }).click();
+
+    await expect(page.getByRole('table', { name: 'Users' })).toContainText(email);
+
+    // ---- That person signs in and changes their own password ---------------
+    // The owner's session is dropped rather than a second context opened: a
+    // context made from the browser fixture carries none of the test's own
+    // options, and this test is about one account at a time anyway.
+    await page.context().clearCookies();
+
+    async function signIn(password) {
+      await page.goto('/login');
+      await page.getByLabel('Email').fill(email);
+      await page.getByLabel('Password', { exact: true }).fill(password);
+      await page.getByRole('button', { name: 'Sign in' }).click();
+    }
+
+    await signIn(first);
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await page.goto('/profile');
+    await page.getByLabel('Current password').fill(first);
+    await page.getByLabel('New password').fill(second);
+    await page.getByRole('button', { name: 'Change password' }).click();
+    await expect(page.getByText('Password changed. This device stays signed in.')).toBeVisible();
+
+    // Still signed in: securing an account must not throw you out of it.
+    await page.goto('/dashboard');
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+
+    await page.getByRole('button', { name: /^Account/ }).click();
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(page).toHaveURL(/\/login/);
+
+    // The old password no longer opens the account; the new one does.
+    await signIn(first);
+    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
+
+    await signIn(second);
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    // The account is left in place: accounts are deactivated by an owner, not
+    // deleted, and every run makes its own.
+  });
+});
+
 test.describe('as the first business', () => {
   test.use({ storageState: authFile('owner') });
 
