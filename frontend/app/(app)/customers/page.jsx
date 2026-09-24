@@ -1,6 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 import { useCustomers } from '@/features/catalog/useCatalog';
+import { CustomerFormDialog } from '@/features/catalog/CustomerFormDialog';
+import { Can } from '@/features/auth/Can';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { describeFilters } from '@/lib/i18n/filters';
@@ -40,6 +46,8 @@ export default function CustomersPage() {
   };
 
   const { customers, meta, isLoading, isError, error, refetch } = useCustomers(query);
+  const [creating, setCreating] = useState(false);
+  const router = useRouter();
 
   const columns = [
     {
@@ -95,9 +103,14 @@ export default function CustomersPage() {
            * commercial relationship map, and the one file a departing employee
            * has a motive to take. Gated on its own ability and audited.
            */
-          can('customers.export') ? (
-            <ExportButton onExport={exportCustomers} filters={query} />
-          ) : null
+          <div className="flex flex-wrap items-start gap-2">
+            {can('customers.export') && <ExportButton onExport={exportCustomers} filters={query} />}
+            <Can ability="customers.create">
+              <Button variant="primary" onClick={() => setCreating(true)}>
+                {t('customers.form.action')}
+              </Button>
+            </Can>
+          </div>
         }
       />
 
@@ -131,6 +144,7 @@ export default function CustomersPage() {
           loading={isLoading}
           error={isError ? error : null}
           onRetry={refetch}
+          onRowClick={(row) => router.push(`/customers/${row.id}`)}
           sort={filters.sort}
           onSortChange={setSort}
           activeFilters={describeFilters(activeKeys, filters, t)}
@@ -139,6 +153,13 @@ export default function CustomersPage() {
             <EmptyState
               title={t('customers.empty.title')}
               description={t('customers.empty.description')}
+              action={
+                <Can ability="customers.create">
+                  <Button variant="primary" onClick={() => setCreating(true)}>
+                    {t('customers.form.action')}
+                  </Button>
+                </Can>
+              }
             />
           }
         />
@@ -148,6 +169,13 @@ export default function CustomersPage() {
           onPerPageChange={(perPage) => setFilters({ per_page: perPage })}
         />
       </Card>
+
+      <CustomerFormDialog
+        key={creating ? 'open' : 'closed'}
+        open={creating}
+        onClose={() => setCreating(false)}
+        onSaved={() => refetch()}
+      />
     </div>
   );
 }

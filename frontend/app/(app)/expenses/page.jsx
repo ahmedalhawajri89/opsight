@@ -1,7 +1,12 @@
 'use client';
 
 import { useExpenseCategories } from '@/features/admin/useAdmin';
+import { useState } from 'react';
+
 import { useExpenses } from '@/features/catalog/useCatalog';
+import { ExpenseFormDialog } from '@/features/catalog/ExpenseFormDialog';
+import { Can } from '@/features/auth/Can';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { describeFilters } from '@/lib/i18n/filters';
@@ -50,6 +55,8 @@ export default function ExpensesPage() {
   };
 
   const { expenses, meta, isLoading, isError, error, refetch } = useExpenses(query);
+  // null means "no dialog"; an expense means edit; 'new' means create.
+  const [editing, setEditing] = useState(null);
   const { categories } = useExpenseCategories();
 
   const columns = [
@@ -91,7 +98,14 @@ export default function ExpensesPage() {
         title={t('nav.items.expenses')}
         description={t('expenses.description')}
         actions={
-          can('expenses.export') ? <ExportButton onExport={exportExpenses} filters={query} /> : null
+          <div className="flex flex-wrap items-start gap-2">
+            {can('expenses.export') && <ExportButton onExport={exportExpenses} filters={query} />}
+            <Can ability="expenses.create">
+              <Button variant="primary" onClick={() => setEditing('new')}>
+                {t('expenses.form.action')}
+              </Button>
+            </Can>
+          </div>
         }
       />
 
@@ -137,6 +151,7 @@ export default function ExpensesPage() {
           loading={isLoading}
           error={isError ? error : null}
           onRetry={refetch}
+          onRowClick={can('expenses.update') ? (row) => setEditing(row) : undefined}
           sort={filters.sort}
           onSortChange={setSort}
           activeFilters={describeFilters(activeKeys, filters, t)}
@@ -145,6 +160,13 @@ export default function ExpensesPage() {
             <EmptyState
               title={t('expenses.empty.title')}
               description={t('expenses.empty.description')}
+              action={
+                <Can ability="expenses.create">
+                  <Button variant="primary" onClick={() => setEditing('new')}>
+                    {t('expenses.form.action')}
+                  </Button>
+                </Can>
+              }
             />
           }
         />
@@ -154,6 +176,14 @@ export default function ExpensesPage() {
           onPerPageChange={(perPage) => setFilters({ per_page: perPage })}
         />
       </Card>
+
+      <ExpenseFormDialog
+        key={editing === null ? 'closed' : (editing.id ?? 'new')}
+        open={editing !== null}
+        expense={editing === 'new' ? null : editing}
+        onClose={() => setEditing(null)}
+        onSaved={() => refetch()}
+      />
     </div>
   );
 }

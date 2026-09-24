@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Authorization\Role;
+use App\Domain\Businesses\DefaultExpenseCategories;
 use App\Domain\Inventory\AdjustStock;
 use App\Domain\Inventory\StockLedger;
 use App\Domain\Orders\ConfirmOrder;
@@ -62,6 +63,9 @@ class SecondBusinessSeeder extends Seeder
             'timezone' => 'Asia/Kuwait',
             'weekend_days' => [5, 6],
         ]);
+
+        // Without these the expenses screen has nothing to file a cost under.
+        DefaultExpenseCategories::seed('en');
 
         $owner = User::query()->firstOrNew(['email' => self::OWNER_EMAIL]);
         $owner->fill(['name' => 'Salem Al Noor', 'password' => 'password', 'locale' => 'en']);

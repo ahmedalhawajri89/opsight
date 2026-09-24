@@ -28,12 +28,29 @@ import { Field, Input, NumberInput } from '@/components/ui/Field';
  */
 const EMPTY = { sku: '', name: '', name_ar: '', price: '', cost: '', opening_stock: '' };
 
-export function ProductFormDialog({ open, onClose, onCreated }) {
+function initialValues(product) {
+  if (!product) return EMPTY;
+
+  return {
+    sku: product.sku ?? '',
+    name: product.name ?? '',
+    name_ar: product.name_ar ?? '',
+    price: String(product.price ?? ''),
+    cost: String(product.cost ?? ''),
+    // Opening stock belongs to creation only; stock moves through the ledger.
+    opening_stock: '',
+  };
+}
+
+export function ProductFormDialog({ open, onClose, product = null, onCreated }) {
   const { t } = useI18n();
   const { can } = useAuth();
-  const { create } = useProductActions();
+  const { create, update, setActive } = useProductActions();
 
-  const [values, setValues] = useState(EMPTY);
+  const editing = product !== null;
+  const mutation = editing ? update : create;
+
+  const [values, setValues] = useState(() => initialValues(product));
   const [fieldErrors, setFieldErrors] = useState({});
   const [failure, setFailure] = useState(null);
 
@@ -48,16 +65,18 @@ export function ProductFormDialog({ open, onClose, onCreated }) {
     setFieldErrors({});
 
     const body = {
-      sku: values.sku.trim(),
       name: values.name.trim(),
       name_ar: values.name_ar.trim() || null,
       price: values.price,
       ...(canSeeCost ? { cost: values.cost } : {}),
-      ...(values.opening_stock ? { opening_stock: Number(values.opening_stock) } : {}),
+      // The SKU is immutable: order lines snapshot it, so changing it would
+      // make an old order name a product that never sold.
+      ...(editing ? {} : { sku: values.sku.trim() }),
+      ...(!editing && values.opening_stock ? { opening_stock: Number(values.opening_stock) } : {}),
     };
 
     try {
-      const response = await create.mutateAsync(body);
+      const response = await mutation.mutateAsync(editing ? { id: product.id, ...body } : body);
 
       onCreated?.(response.data);
       onClose();
@@ -78,16 +97,32 @@ export function ProductFormDialog({ open, onClose, onCreated }) {
     <Dialog
       open={open}
       onClose={onClose}
-      title={t('products.new.title')}
+      title={editing ? t('products.new.editTitle') : t('products.new.title')}
       description={t('products.new.description')}
       size="sm"
       footer={
         <>
+          {/* A product with history is never deleted, only taken out of the
+              catalogue — past orders keep their snapshot either way. */}
+          {editing && can('products.deactivate') && (
+            <Button
+              variant="ghost"
+              className="me-auto"
+              loading={setActive.isPending}
+              onClick={async () => {
+                await setActive.mutateAsync({ id: product.id, active: !product.is_active });
+                onCreated?.(null);
+                onClose();
+              }}
+            >
+              {product.is_active ? t('products.new.deactivate') : t('products.new.activate')}
+            </Button>
+          )}
           <Button variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant="primary" loading={create.isPending} onClick={submit}>
-            {t('products.new.submit')}
+          <Button variant="primary" loading={mutation.isPending} onClick={submit}>
+            {editing ? t('common.save') : t('products.new.submit')}
           </Button>
         </>
       }
@@ -105,13 +140,14 @@ export function ProductFormDialog({ open, onClose, onCreated }) {
         <Field
           label={t('orderDetail.columns.sku')}
           error={fieldErrors.sku?.[0]}
-          hint={t('products.new.skuHint')}
+          hint={editing ? t('products.new.skuImmutable') : t('products.new.skuHint')}
           required
         >
           {(props) => (
             <Input
               dir="ltr"
               maxLength={64}
+              readOnly={editing}
               value={values.sku}
               onChange={(event) => set('sku', event.target.value)}
               {...props}
@@ -176,21 +212,25 @@ export function ProductFormDialog({ open, onClose, onCreated }) {
           )}
         </div>
 
-        <Field
-          label={t('products.new.openingStock')}
-          error={fieldErrors.opening_stock?.[0]}
-          hint={t('products.new.openingStockHint')}
-        >
-          {(props) => (
-            <NumberInput
-              min="0"
-              step="1"
-              value={values.opening_stock}
-              onChange={(event) => set('opening_stock', event.target.value)}
-              {...props}
-            />
-          )}
-        </Field>
+        {/* Only on creation: afterwards stock moves through the ledger, with
+            a reason, on the inventory screen. */}
+        {!editing && (
+          <Field
+            label={t('products.new.openingStock')}
+            error={fieldErrors.opening_stock?.[0]}
+            hint={t('products.new.openingStockHint')}
+          >
+            {(props) => (
+              <NumberInput
+                min="0"
+                step="1"
+                value={values.opening_stock}
+                onChange={(event) => set('opening_stock', event.target.value)}
+                {...props}
+              />
+            )}
+          </Field>
+        )}
       </div>
     </Dialog>
   );
