@@ -8,7 +8,6 @@ use App\Authorization\Role;
 use App\Domain\Audit\AuditRecorder;
 use App\Models\Business;
 use App\Models\BusinessSetting;
-use App\Models\ExpenseCategory;
 use App\Models\User;
 use App\Support\Tenancy\CurrentBusiness;
 use Illuminate\Support\Facades\DB;
@@ -27,9 +26,6 @@ use Illuminate\Support\Str;
  */
 final class RegisterBusiness
 {
-    /** Keys into labels.default_expense_categories, named in the registrant's language. */
-    private const EXPENSE_CATEGORIES = ['rent', 'salaries', 'utilities', 'marketing', 'shipping', 'supplies', 'other'];
-
     public function __construct(private readonly AuditRecorder $recorder) {}
 
     /**
@@ -60,12 +56,7 @@ final class RegisterBusiness
             $owner->is_active = true;
             $owner->save();
 
-            foreach (self::EXPENSE_CATEGORIES as $key) {
-                ExpenseCategory::query()->create([
-                    'name' => trans("labels.default_expense_categories.{$key}", [], $locale),
-                    'slug' => $key,
-                ]);
-            }
+            DefaultExpenseCategories::seed($locale);
 
             $this->recorder->record(
                 action: 'business.registered',

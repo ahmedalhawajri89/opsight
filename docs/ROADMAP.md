@@ -341,7 +341,7 @@ the server's answer, which the single-threaded dev API made intermittent.
 
 ---
 
-## Phase 06 — Hardening & deployment
+## Phase 06 — Hardening & deployment *(not started; the last phase of the original plan)*
 
 - Full security test sweep; rate limiting verified end to end.
 - Security headers and CSP.
@@ -513,7 +513,9 @@ Ordered by likely value, not committed:
 
 1. Saved report definitions, queued PDF generation, scheduled email delivery (running as
    the owning user).
-2. The refund ledger (ADR-005), unlocking refund-date reporting and unit-level refunds.
+2. ~~The refund ledger~~ — **done** (ADR-022, 2026-09): payments and refunds are ledgers, and
+   payment status is derived from them. Refund-date reporting is now possible but not built;
+   unit-level refunds still need line-level refund data.
 3. Two-factor authentication and session management.
 4. Cohort retention and RFM customer segmentation.
 5. Multi-location inventory (ADR-006).
@@ -521,7 +523,9 @@ Ordered by likely value, not committed:
 7. Category hierarchy (ADR-008).
 8. Inventory valuation snapshots, unlocking Inventory Turnover (ADR-014).
 9. Anomaly detection over dense history (ADR-010).
-10. Multi-tenancy (ADR-001) — only if the product is sold to a second business.
+10. ~~Multi-tenancy (ADR-001)~~ — **done** (ADR-023 and ADR-024, 2026-09): `business_id` on
+    every owned table with isolation proven endpoint by endpoint, self-service sign-up and a
+    setup wizard.
 
 ---
 

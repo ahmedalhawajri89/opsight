@@ -49,7 +49,8 @@ export default function ProductsPage() {
   };
 
   const { products, meta, isLoading, isError, error, refetch } = useProducts(query);
-  const [creating, setCreating] = useState(false);
+  // null means "no dialog"; a product means edit; 'new' means create.
+  const [editing, setEditing] = useState(null);
 
   const columns = [
     {
@@ -122,7 +123,7 @@ export default function ProductsPage() {
           <div className="flex flex-wrap items-start gap-2">
             {can('products.export') && <ExportButton onExport={exportProducts} filters={query} />}
             <Can ability="products.create">
-              <Button variant="primary" onClick={() => setCreating(true)}>
+              <Button variant="primary" onClick={() => setEditing('new')}>
                 {t('products.new.action')}
               </Button>
             </Can>
@@ -168,6 +169,7 @@ export default function ProductsPage() {
           loading={isLoading}
           error={isError ? error : null}
           onRetry={refetch}
+          onRowClick={can('products.update') ? (row) => setEditing(row) : undefined}
           sort={filters.sort}
           onSortChange={setSort}
           activeFilters={describeFilters(activeKeys, filters, t)}
@@ -178,7 +180,7 @@ export default function ProductsPage() {
               description={t('products.empty.description')}
               action={
                 <Can ability="products.create">
-                  <Button variant="primary" onClick={() => setCreating(true)}>
+                  <Button variant="primary" onClick={() => setEditing('new')}>
                     {t('products.new.action')}
                   </Button>
                 </Can>
@@ -194,9 +196,10 @@ export default function ProductsPage() {
       </Card>
 
       <ProductFormDialog
-        key={creating ? 'open' : 'closed'}
-        open={creating}
-        onClose={() => setCreating(false)}
+        key={editing === null ? 'closed' : (editing.id ?? 'new')}
+        open={editing !== null}
+        product={editing === 'new' ? null : editing}
+        onClose={() => setEditing(null)}
         onCreated={() => refetch()}
       />
     </div>
