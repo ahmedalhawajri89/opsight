@@ -23,6 +23,17 @@ return [
         'refunded' => 'Refunded',
     ],
 
+    // Created with every new business, named in its owner's language (ADR-024).
+    'default_expense_categories' => [
+        'rent' => 'Rent',
+        'salaries' => 'Salaries',
+        'utilities' => 'Utilities',
+        'marketing' => 'Marketing',
+        'shipping' => 'Shipping and delivery',
+        'supplies' => 'Supplies',
+        'other' => 'Other',
+    ],
+
     'payment_method' => [
         'cash' => 'Cash',
         'card' => 'Card',

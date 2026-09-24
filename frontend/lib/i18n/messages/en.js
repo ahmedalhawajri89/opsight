@@ -29,6 +29,8 @@ const en = {
     unknown: 'Unknown',
     inactive: 'Inactive',
     viewAll: 'View all',
+    back: 'Back',
+    next: 'Next',
   },
 
   shell: {
@@ -105,7 +107,9 @@ const en = {
     headline:
       'Every figure here is computed from the records it came from, the moment you ask for it.',
     formSubtitle: 'Use the account your owner created for you.',
-    help: 'There is no self-registration. Ask the owner of your workspace to create your account, or to reset your password.',
+    newBusiness: 'New to Opsight?',
+    createBusiness: 'Set up your business',
+    help: 'Working for a business already on Opsight? Its owner creates your account, and resets your password.',
     switchLanguage: 'Switch the interface to {language}',
     lockoutNote:
       'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
@@ -116,6 +120,76 @@ const en = {
       computed: 'Computed on request',
       figure: 'The figure',
     },
+  },
+
+  register: {
+    title: 'Set up your business',
+    subtitle: 'A few details now, then four questions about how your business trades.',
+    businessName: 'Business name',
+    businessNameRequired: 'Your business needs a name.',
+    yourName: 'Your name',
+    nameRequired: 'Tell us what to call you.',
+    passwordHint: 'At least {min} characters. Long is better than complicated.',
+    submit: 'Create business',
+    creating: 'Creating…',
+    haveAccount: 'Already have an account?',
+  },
+
+  onboarding: {
+    stepOf: 'Step {step} of {total}',
+    progress: 'Setup progress',
+    market: {
+      title: 'Where does your business trade?',
+      description:
+        'This sets your currency, time zone and working week. You can change any of it later in Settings.',
+      country: 'Country',
+      choose: 'Choose a country',
+      currency: 'Currency',
+      currencyValue: '{currency} — {decimals} decimal places',
+      timezone: 'Time zone',
+      note: 'Every figure is computed in this time zone, so a day ends when your business day ends.',
+    },
+    vat: {
+      title: 'Does your business charge VAT?',
+      description:
+        'When it does, tax is calculated per line and kept out of revenue — it is collected for a tax authority, not earned.',
+      enabled: 'Charge VAT on sales',
+      enabledHint:
+        'Prices are then treated as including VAT, which is how shelf prices are usually shown.',
+      rateHint:
+        'The standard rate for your country is filled in. Rates change — check the current one with your tax authority.',
+      numberHint: 'Printed on invoices later. You can add it any time.',
+    },
+    week: {
+      title: 'Which days are your weekend?',
+      description:
+        'This decides where weeks begin on every chart, and which days are shaded as days off.',
+      note: 'Days off move no figure. They change how a daily chart reads.',
+    },
+    ready: {
+      title: 'Your business is set up',
+      description: 'Here is what happens next.',
+      products:
+        'Add your products with their price and cost. The cost is what makes profit measurable.',
+      orders: 'Record orders. Confirming one snapshots today\u2019s prices and moves stock.',
+      analytics: 'The dashboard fills as soon as there is something to measure — never before.',
+      importNote:
+        'Importing an existing store, such as Salla, arrives in a later phase. Until then orders are recorded here or through the API.',
+      addProducts: 'Add the first product',
+      finish: 'Go to the dashboard',
+    },
+  },
+
+  countries: {
+    SA: 'Saudi Arabia',
+    AE: 'United Arab Emirates',
+    BH: 'Bahrain',
+    KW: 'Kuwait',
+    OM: 'Oman',
+    QA: 'Qatar',
+    EG: 'Egypt',
+    JO: 'Jordan',
+    MA: 'Morocco',
   },
 
   dialog: {
@@ -557,6 +631,19 @@ const en = {
     empty: {
       title: 'No products yet',
       description: 'Products supply the price and cost used at the moment of sale.',
+    },
+    new: {
+      action: 'New product',
+      title: 'New product',
+      description: 'Price and cost are read at the moment of sale and kept on the order.',
+      name: 'Name',
+      nameAr: 'Arabic name',
+      nameArHint: 'Optional. Shown to Arabic readers in place of the name above.',
+      skuHint: 'Your own code for this product. It cannot be changed later.',
+      openingStock: 'Opening stock',
+      openingStockHint:
+        'How many are on the shelf today. Recorded as a stock movement, like every other change.',
+      submit: 'Create product',
     },
   },
 

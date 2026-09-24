@@ -16,7 +16,9 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property string|null $country
  * @property string $status
+ * @property Carbon|null $onboarded_at
  * @property Carbon|null $created_at
  */
 class Business extends Model
@@ -24,8 +26,22 @@ class Business extends Model
     /** @use HasFactory<BusinessFactory> */
     use HasFactory;
 
+    /**
+     * The markets the setup wizard offers: the six Gulf states first, then the
+     * expansion markets of the market study (docs/product/MARKET_STUDY.md).
+     */
+    public const COUNTRIES = ['SA', 'AE', 'BH', 'KW', 'OM', 'QA', 'EG', 'JO', 'MA'];
+
     /** @var list<string> */
     protected $fillable = ['name', 'slug'];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'onboarded_at' => 'datetime',
+        ];
+    }
 
     /** @return HasMany<User, $this> */
     public function users(): HasMany

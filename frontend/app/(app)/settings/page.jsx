@@ -1,5 +1,6 @@
 'use client';
 
+import { weekdayOptions } from '@/lib/weekdays';
 import { useState } from 'react';
 
 import { useSettings, useUpdateSettings } from '@/features/admin/useAdmin';
@@ -40,17 +41,6 @@ function monthOptions() {
  * Weekday names from Intl, ISO-numbered (1 = Monday … 7 = Sunday) to match
  * the server. 1 January 2024 was a Monday, so day N of that week is ISO day N.
  */
-function weekdayOptions() {
-  const formatter = new Intl.DateTimeFormat(getFormatLocale(), {
-    weekday: 'long',
-    timeZone: 'UTC',
-  });
-
-  return Array.from({ length: 7 }, (_, index) => ({
-    value: String(index + 1),
-    label: formatter.format(new Date(Date.UTC(2024, 0, index + 1))),
-  }));
-}
 
 /*
  * A short list rather than the full IANA set.

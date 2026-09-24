@@ -48,6 +48,10 @@ class UserResource extends JsonResource
                 'name' => BusinessSetting::current()->company_name,
                 'currency' => BusinessSetting::current()->currency,
                 'currency_decimals' => (int) BusinessSetting::current()->currency_decimals,
+                // Where it trades, and whether the owner has finished the
+                // setup wizard; until then the owner is taken back to it.
+                'country' => $this->business?->country,
+                'onboarded' => $this->business?->onboarded_at !== null,
             ]),
         ];
     }

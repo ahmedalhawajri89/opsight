@@ -41,9 +41,9 @@ export default defineConfig({
     { name: 'setup', testMatch: /auth\.setup\.js/ },
 
     {
-      // Signing in and out is what this spec tests, so it must do it for real.
+      // Signing in, out and up is what these specs test, so they do it for real.
       name: 'anonymous',
-      testMatch: /auth\.spec\.js/,
+      testMatch: /(auth|onboarding)\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
 

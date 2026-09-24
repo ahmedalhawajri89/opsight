@@ -529,6 +529,14 @@ function UserMenu({ user, onSignOut }) {
           <div className="px-3 py-2.5">
             <p className="truncate text-base font-semibold text-(--color-text)">{user.name}</p>
             <p className="truncate text-xs text-(--color-text-2)">{user.email}</p>
+            {/* Which business this session acts for: one installation now
+                serves several, and every figure below belongs to this one. */}
+            {user.business?.name && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-(--color-text-2)">
+                <Icon name="home" size={12} className="shrink-0 text-(--color-muted)" />
+                <span className="truncate">{user.business.name}</span>
+              </p>
+            )}
           </div>
           <div className="my-1 h-px bg-(--color-line-subtle)" />
 

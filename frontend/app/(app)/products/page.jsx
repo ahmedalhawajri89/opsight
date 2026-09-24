@@ -1,6 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useProducts } from '@/features/catalog/useCatalog';
+import { ProductFormDialog } from '@/features/catalog/ProductFormDialog';
+import { Can } from '@/features/auth/Can';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { describeFilters } from '@/lib/i18n/filters';
@@ -44,6 +49,7 @@ export default function ProductsPage() {
   };
 
   const { products, meta, isLoading, isError, error, refetch } = useProducts(query);
+  const [creating, setCreating] = useState(false);
 
   const columns = [
     {
@@ -113,7 +119,14 @@ export default function ProductsPage() {
         title={t('nav.items.products')}
         description={t('products.description')}
         actions={
-          can('products.export') ? <ExportButton onExport={exportProducts} filters={query} /> : null
+          <div className="flex flex-wrap items-start gap-2">
+            {can('products.export') && <ExportButton onExport={exportProducts} filters={query} />}
+            <Can ability="products.create">
+              <Button variant="primary" onClick={() => setCreating(true)}>
+                {t('products.new.action')}
+              </Button>
+            </Can>
+          </div>
         }
       />
 
@@ -163,6 +176,13 @@ export default function ProductsPage() {
             <EmptyState
               title={t('products.empty.title')}
               description={t('products.empty.description')}
+              action={
+                <Can ability="products.create">
+                  <Button variant="primary" onClick={() => setCreating(true)}>
+                    {t('products.new.action')}
+                  </Button>
+                </Can>
+              }
             />
           }
         />
@@ -172,6 +192,13 @@ export default function ProductsPage() {
           onPerPageChange={(perPage) => setFilters({ per_page: perPage })}
         />
       </Card>
+
+      <ProductFormDialog
+        key={creating ? 'open' : 'closed'}
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={() => refetch()}
+      />
     </div>
   );
 }
