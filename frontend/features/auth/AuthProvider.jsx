@@ -89,6 +89,25 @@ export function AuthProvider({ children }) {
     [queryClient],
   );
 
+  // Sign-up signs the new owner in: the response is the user, as for login.
+  const register = useCallback(
+    async (details) => {
+      const response = await authService.register(details);
+
+      queryClient.setQueryData(AUTH_QUERY_KEY, response.data);
+
+      return response.data;
+    },
+    [queryClient],
+  );
+
+  // Replaces the cached user with the one the server returns, so the change
+  // (setup finished, for instance) is seen at once without a refetch.
+  const replaceUser = useCallback(
+    (next) => queryClient.setQueryData(AUTH_QUERY_KEY, next),
+    [queryClient],
+  );
+
   const logout = useCallback(async () => {
     try {
       await authService.logout();
@@ -127,9 +146,11 @@ export function AuthProvider({ children }) {
       isAuthenticated,
       can: (ability) => canAbility(user?.abilities, ability),
       login,
+      register,
+      replaceUser,
       logout,
     }),
-    [user, isPending, isAuthenticated, login, logout],
+    [user, isPending, isAuthenticated, login, register, replaceUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

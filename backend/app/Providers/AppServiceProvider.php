@@ -107,6 +107,9 @@ class AppServiceProvider extends ServiceProvider
         // per email-and-address limit.
         RateLimiter::for('login', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->ip()));
 
+        // Each sign-up creates a business: a handful an hour from one address.
+        RateLimiter::for('register', static fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));
+
         RateLimiter::for('health', static fn (Request $request): Limit => Limit::perMinute(30)->by((string) $request->ip()));
     }
 

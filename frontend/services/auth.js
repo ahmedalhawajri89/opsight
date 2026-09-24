@@ -8,6 +8,22 @@ export function login({ email, password, remember = false }) {
   return api.post('/auth/login', { email, password, remember });
 }
 
+/** A new business and its owner; the owner comes back signed in (ADR-024). */
+export function register({ businessName, name, email, password, locale }) {
+  return api.post('/auth/register', {
+    business_name: businessName,
+    name,
+    email,
+    password,
+    locale,
+  });
+}
+
+/** The end of the setup wizard: where the business trades, and that setup is done. */
+export function completeOnboarding({ country }) {
+  return api.post('/onboarding/complete', { country });
+}
+
 export function logout() {
   return api.post('/auth/logout');
 }

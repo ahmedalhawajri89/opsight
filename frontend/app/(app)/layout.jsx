@@ -14,14 +14,31 @@ import { AppShell } from '@/components/layout/AppShell';
  * redirected before any child mounts.
  */
 export default function AuthenticatedLayout({ children }) {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user, can } = useAuth();
   const router = useRouter();
 
+  /*
+   * A business whose owner has not finished setup is sent back to the wizard
+   * (ADR-024): until the currency and the working week are settled, every
+   * figure on every screen would be stated in the wrong terms. Only the owner
+   * can finish it, so nobody else is redirected into a screen they cannot use.
+   */
+  const needsSetup =
+    isAuthenticated && user?.business?.onboarded === false && can('settings.update');
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
       router.replace('/login');
+
+      return;
     }
-  }, [isLoading, isAuthenticated, router]);
+
+    if (needsSetup) {
+      router.replace('/onboarding');
+    }
+  }, [isLoading, isAuthenticated, needsSetup, router]);
 
   if (isLoading) {
     return (
@@ -31,7 +48,7 @@ export default function AuthenticatedLayout({ children }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || needsSetup) {
     return null;
   }
 

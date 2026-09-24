@@ -852,6 +852,60 @@ code before this step and failed, then passed after it:
 new raw query needs the business filter. The phase 2 tests exist to make forgetting either
 fail loudly.
 
+## ADR-024 — A business signs itself up, then answers four questions
+
+**Status:** Accepted (2026-09)
+**Affects:** `businesses`, auth routes, `/me`, the sign-in screen, a new setup wizard, the
+products screen
+
+**Context.** With tenancy in place (ADR-023) the installation can hold many businesses, but
+there was no way to create one: a business had to be inserted by hand. Selling a
+subscription means a stranger can start on their own.
+
+**Decision.**
+
+1. **One transaction creates everything** (`RegisterBusiness`): the business, its settings,
+   its owner, and the expense categories a business needs before it can record a cost, named
+   in the owner's language. A failure anywhere leaves nothing behind — no business without an
+   owner, no owner without a business. A test proves it by making the last step throw.
+2. **The owner is signed in by the response**, as after sign-in, so there is no second trip
+   through the login form.
+3. **Rate-limited to five an hour per address.** Each call creates a business.
+4. **Email stays unique across the installation**, because signing in is by email. That means
+   sign-up does tell a caller whether an address is registered — accepted, as on every
+   sign-up form, and bounded by the limiter. Sign-in still refuses to distinguish an unknown
+   address from a wrong password.
+5. **A four-question wizard, not a form of forty fields.** Where the business trades → VAT →
+   the weekend → what to do first. The country fills in currency, decimal places, time zone,
+   week start, weekend and a suggested VAT rate; every one of them is SHOWN before it is
+   saved and can be changed. Nothing is inferred from the browser: a laptop bought abroad
+   carries the wrong locale, and a wrong currency is a wrong figure on every screen
+   afterwards.
+6. **Rates are offered, never asserted.** The wizard fills in the standard rate for the
+   country and says to check the current one with the tax authority — rates change, and the
+   market study's figures carry an "as of" date.
+7. **Each step saves as it is left**, so a closed tab loses nothing, and `onboarded_at`
+   records that setup finished. Until it is set, an owner signing in is brought back to the
+   wizard; nobody else is, since only an owner can change settings.
+8. **The catalogue got a create form.** Until now products could only be added by the seeder
+   or a direct API call, which is fine for a demo and impossible for a business that has just
+   signed up: with no product there is no order, and with no order there is no figure
+   anywhere.
+
+**Proof.** `tests/Feature/Tenancy/RegistrationTest.php` covers the transaction, the duplicate
+address, the password policy, the limiter, the wizard's last step and who may finish it, and
+that a new business starts genuinely empty. `e2e/onboarding.spec.js` walks the whole path in
+a browser — sign-up, the four questions with Kuwait chosen, an empty catalogue, a first
+product, a first order — and reads the resulting figure back as `KWD 25.000`: the currency
+the wizard chose, at its three decimal places.
+
+**Cost accepted.** Sign-up is slow by design (a hash, and the breach-corpus check the
+password policy has always made). The browser test waits for it rather than working around
+it.
+
+**Not done here.** No email verification, no password reset, no subscription or billing, and
+no importing an existing store — the wizard says so rather than implying it exists.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

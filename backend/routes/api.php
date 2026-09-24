@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\InventoryController;
+use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SettingsController;
@@ -42,12 +43,18 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:login')  // coarse backstop; LoginRequest owns
         ->name('auth.login');           // the real 5/min per email+IP limit
 
+    // A new business and its owner (ADR-024). Each call creates a business.
+    Route::post('auth/register', [AuthController::class, 'register'])
+        ->middleware('throttle:register')
+        ->name('auth.register');
+
     // ---- Authenticated -----------------------------------------------------
     Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function (): void {
 
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
         Route::patch('me/preferences', [AuthController::class, 'updatePreferences'])->name('me.preferences');
+        Route::post('onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
 
         /* ---- Export ------------------------------------------------------ */
         /*

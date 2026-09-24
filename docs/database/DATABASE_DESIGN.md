@@ -44,8 +44,9 @@ this business" are composite with it: `products(business_id, sku)`,
 `categories(business_id, slug)`, and `expense_categories(business_id, name)` and
 `(business_id, slug)`. `users.email` stays globally unique. `business_settings` has one row
 per business, UNIQUE(business_id). `activity_logs.business_id` is nullable, for a failed
-sign-in that matches no account. `businesses` is id, name, slug (unique), status and
-timestamps.
+sign-in that matches no account. `businesses` is id, name, slug (unique), country, status, `onboarded_at` and timestamps
+(ADR-024): `country` is where the business trades, chosen in the setup wizard, and
+`onboarded_at` records that the wizard was finished.
 
 
 **Keys.** `BIGINT UNSIGNED AUTO_INCREMENT` primary keys. Sequential integers are fine

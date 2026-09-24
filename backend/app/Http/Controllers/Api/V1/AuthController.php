@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Businesses\RegisterBusiness;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\UpdatePreferencesRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -44,6 +46,35 @@ class AuthController extends Controller
         return UserResource::make($user)
             ->response()
             ->setStatusCode(200);
+    }
+
+    /**
+     * A new business signs itself up, and its owner is signed in (ADR-024).
+     *
+     * Rate-limited per address (the `register` limiter), because each call
+     * creates a business. Saying that an email is already registered does tell
+     * the caller an account exists; that is accepted here, as it is on every
+     * sign-up form, and the limiter keeps it from becoming a bulk lookup.
+     */
+    public function register(RegisterRequest $request, RegisterBusiness $register, Localizer $localizer): JsonResponse
+    {
+        /** @var array{business_name: string, name: string, email: string, password: string, locale?: string|null} $data */
+        $data = $request->validated();
+
+        $user = $register($data);
+
+        Auth::guard('web')->login($user);
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        $user->forceFill(['last_login_at' => now()])->save();
+        $localizer->use($user->locale ?? 'en', $user->numerals ?? 'latn');
+
+        return UserResource::make($user)
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function logout(Request $request): JsonResponse

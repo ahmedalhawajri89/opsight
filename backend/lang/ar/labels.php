@@ -22,6 +22,17 @@ return [
         'refunded' => 'مُسترَد',
     ],
 
+    // تُنشأ مع كل شركة جديدة، بلغة مالكها (ADR-024).
+    'default_expense_categories' => [
+        'rent' => 'الإيجار',
+        'salaries' => 'الرواتب',
+        'utilities' => 'المرافق',
+        'marketing' => 'التسويق',
+        'shipping' => 'الشحن والتوصيل',
+        'supplies' => 'المستلزمات',
+        'other' => 'أخرى',
+    ],
+
     'payment_method' => [
         'cash' => 'نقدًا',
         'card' => 'بطاقة',

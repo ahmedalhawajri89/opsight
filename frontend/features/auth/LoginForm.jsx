@@ -5,18 +5,13 @@ import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth } from './AuthProvider';
+import { FIELD, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { cn } from '@/lib/cn';
 
-const FIELD =
-  'h-11 w-full rounded-(--radius-control) border bg-(--color-surface) px-4 text-base text-(--color-text) transition-colors duration-(--duration-fast) placeholder:text-(--color-muted)';
-
-const LABEL = 'block text-sm font-medium text-(--color-text)';
-
 // Mirrors LoginRequest::REMEMBER_MINUTES on the server; stated, not enforced, here.
 const REMEMBER_DAYS = 30;
-const MESSAGE = 'mt-2 text-sm text-(--color-danger)';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -188,11 +183,7 @@ export function LoginForm() {
         </span>
       </label>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-control) bg-(--color-brand) px-4 text-base font-semibold text-(--color-text-inverse) transition-colors duration-(--duration-fast) hover:bg-(--color-brand-hover) disabled:opacity-60"
-      >
+      <button type="submit" disabled={isSubmitting} className={SUBMIT}>
         {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
         {!isSubmitting && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
       </button>
