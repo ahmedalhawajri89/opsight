@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { STOCK_AFFECTING_KEYS, queryKeys } from '@/lib/queryKeys';
+import { AUDITED_KEYS, STOCK_AFFECTING_KEYS, queryKeys } from '@/lib/queryKeys';
 import * as catalog from '@/services/catalog';
 
 /**
@@ -29,15 +29,27 @@ export function useProducts(filters) {
 export function useProductActions() {
   const queryClient = useQueryClient();
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+  /*
+   * Every write is audited, so every write also moves the activity log. It is
+   * a small thing, and leaving it out is what makes an audit screen feel
+   * unreliable: the action you just took is missing from it.
+   */
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+    AUDITED_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+  };
 
   return {
     create: useMutation({
       mutationFn: (body) => catalog.createProduct(body),
       onSuccess: () => {
-        // A new product creates an inventory row, so both lists change.
+        /*
+         * A new product creates an inventory row, and it may arrive with
+         * opening stock — which is a stock movement, and therefore moves every
+         * figure that reads stock.
+         */
         invalidate();
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+        STOCK_AFFECTING_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
       },
     }),
     update: useMutation({
@@ -96,7 +108,18 @@ export function useCustomerOrders(id, filters) {
 export function useCustomerActions() {
   const queryClient = useQueryClient();
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
+  /*
+   * A customer's name is printed on order rows and in the dashboard's panels,
+   * so renaming or removing one changes screens that are not the customer
+   * list.
+   */
+  const invalidate = () => {
+    for (const key of [queryKeys.customers.all, queryKeys.orders.all, queryKeys.dashboard.all]) {
+      queryClient.invalidateQueries({ queryKey: key });
+    }
+
+    AUDITED_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+  };
 
   return {
     create: useMutation({ mutationFn: catalog.createCustomer, onSuccess: invalidate }),
@@ -172,11 +195,23 @@ export function useExpenses(filters) {
 export function useExpenseActions() {
   const queryClient = useQueryClient();
 
-  // Expenses feed operating profit, so analytics changes with them.
+  /*
+   * Expenses feed operating profit, so analytics and the dashboard change with
+   * them — and so do the insights, which read the analytics layer. Without
+   * that last one, "expenses rose 30% this month" stays on screen after the
+   * expense that said so is corrected.
+   */
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    for (const key of [
+      queryKeys.expenses.all,
+      queryKeys.analytics.all,
+      queryKeys.dashboard.all,
+      queryKeys.insights.all,
+    ]) {
+      queryClient.invalidateQueries({ queryKey: key });
+    }
+
+    AUDITED_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
   };
 
   return {

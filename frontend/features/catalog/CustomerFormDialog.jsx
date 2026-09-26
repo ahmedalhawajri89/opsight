@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { useCustomerActions } from './useCatalog';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -44,6 +44,7 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
   const { create, update } = useCustomerActions();
 
   const [values, setValues] = useState(() => initialValues(customer));
+  const formId = useId();
   const [fieldErrors, setFieldErrors] = useState({});
   const [failure, setFailure] = useState(null);
 
@@ -52,6 +53,12 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
 
   function set(key, value) {
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  function onSubmit(event) {
+    event.preventDefault();
+
+    return submit();
   }
 
   async function submit() {
@@ -110,13 +117,13 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
           <Button variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant="primary" loading={mutation.isPending} onClick={submit}>
+          <Button type="submit" form={formId} variant="primary" loading={mutation.isPending}>
             {editing ? t('common.save') : t('customers.form.submit')}
           </Button>
         </>
       }
     >
-      <div className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         {failure && (
           <p
             role="alert"
@@ -179,7 +186,7 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
             />
           )}
         </Field>
-      </div>
+      </form>
     </Dialog>
   );
 }

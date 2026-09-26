@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useCustomers } from '@/features/catalog/useCatalog';
@@ -56,7 +57,17 @@ export default function CustomersPage() {
       sortable: true,
       cell: (row) => (
         <span className="flex items-center gap-2">
-          {row.display_name ?? row.name}
+          {/*
+            A link, not just a clickable row: the row click below is for the
+            mouse, and this is how the screen is reached from a keyboard.
+          */}
+          <Link
+            href={`/customers/${row.id}`}
+            className="text-(--color-brand-text) hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {row.display_name ?? row.name}
+          </Link>
           {!row.is_active && <Badge tone="neutral">{t('common.inactive')}</Badge>}
         </span>
       ),

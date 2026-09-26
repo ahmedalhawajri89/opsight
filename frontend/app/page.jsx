@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useI18n } from '@/features/i18n/I18nProvider';
 
 /**
  * Entry point. Routes to the dashboard or the login screen once the session
@@ -11,6 +12,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
  */
 export default function RootPage() {
   const { isLoading, isAuthenticated } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export default function RootPage() {
 
   return (
     <div aria-busy="true" className="flex min-h-dvh items-center justify-center">
-      <span className="sr-only">Loading Opsight…</span>
+      <span className="sr-only">{t('common.loading')}</span>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { useProductActions } from './useCatalog';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -51,6 +51,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
   const mutation = editing ? update : create;
 
   const [values, setValues] = useState(() => initialValues(product));
+  const formId = useId();
   const [fieldErrors, setFieldErrors] = useState({});
   const [failure, setFailure] = useState(null);
 
@@ -58,6 +59,12 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
 
   function set(key, value) {
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  function onSubmit(event) {
+    event.preventDefault();
+
+    return submit();
   }
 
   async function submit() {
@@ -127,13 +134,13 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
           <Button variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant="primary" loading={mutation.isPending} onClick={submit}>
+          <Button type="submit" form={formId} variant="primary" loading={mutation.isPending}>
             {editing ? t('common.save') : t('products.new.submit')}
           </Button>
         </>
       }
     >
-      <div className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         {failure && (
           <p
             role="alert"
@@ -237,7 +244,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
             )}
           </Field>
         )}
-      </div>
+      </form>
     </Dialog>
   );
 }

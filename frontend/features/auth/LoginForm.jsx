@@ -97,7 +97,7 @@ export function LoginForm() {
             'mt-2',
             errors.email ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
           )}
-          placeholder="you@company.com"
+          placeholder={t('auth.emailPlaceholder')}
           {...register('email', { required: t('auth.emailRequired') })}
         />
         {errors.email && (
