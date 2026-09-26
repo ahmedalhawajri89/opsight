@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { getMoneyDefaults } from '@/lib/format';
 import { useDashboard } from '@/features/analytics/useAnalytics';
 import { KpiPanel } from '@/features/analytics/KpiPanel';
@@ -17,9 +19,7 @@ import { InsightFeed } from '@/features/insights/InsightFeed';
 import { useInsights } from '@/features/insights/useInsights';
 import { RecentOrdersCard } from '@/features/orders/RecentOrdersCard';
 import { ErrorState } from '@/components/data/States';
-import { CashFlowChart } from '@/components/charts/CashFlowChart';
-import { CategoryShareChart } from '@/components/charts/CategoryShareChart';
-import { RevenueExpensesChart } from '@/components/charts/RevenueExpensesChart';
+
 import { TopBarPortal } from '@/components/layout/AppShell';
 import { Card } from '@/components/layout/PageHeader';
 import { PeriodControls } from '@/components/layout/PeriodControls';
@@ -28,6 +28,31 @@ import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { SeasonNotice } from '@/features/analytics/SeasonNotice';
 import { cn } from '@/lib/cn';
 import { resolvePreset } from '@/lib/periods';
+
+/*
+ * The charts arrive on their own.
+ *
+ * Recharts is about 114KB gzipped and only two screens draw with it — but one
+ * of them is this, where every session lands. Loading it on demand lets the
+ * figures, which are the point, paint without waiting for the library that
+ * draws their history. `ssr: false` because it measures the DOM it is in.
+ */
+const CashFlowChart = dynamic(
+  () => import('@/components/charts/CashFlowChart').then((module) => module.CashFlowChart),
+  { ssr: false },
+);
+const CategoryShareChart = dynamic(
+  () =>
+    import('@/components/charts/CategoryShareChart').then((module) => module.CategoryShareChart),
+  { ssr: false },
+);
+const RevenueExpensesChart = dynamic(
+  () =>
+    import('@/components/charts/RevenueExpensesChart').then(
+      (module) => module.RevenueExpensesChart,
+    ),
+  { ssr: false },
+);
 
 const PERIOD_CONFIG = {
   defaults: { preset: '30d', comparison: 'previous_period' },

@@ -142,9 +142,13 @@ export default function UsersPage() {
    * own message is better than a generic failure: it says what to do next —
    * promote another user first.
    */
-  const guardError = [actions.changeRole.error, actions.setActive.error].find(
-    (candidate) => candidate?.code === 'users.last_owner',
-  );
+  /*
+   * Any refusal, not only the last-Owner guard.
+   *
+   * Showing that one and swallowing the rest left the role control displaying
+   * a value the server had rejected, with nothing on screen to say so.
+   */
+  const actionError = [actions.changeRole.error, actions.setActive.error].find(Boolean);
 
   return (
     <div>
@@ -158,12 +162,12 @@ export default function UsersPage() {
         }
       />
 
-      {guardError && (
+      {actionError && (
         <p
           role="alert"
           className="mb-3 rounded-(--radius-control) border border-(--color-warning) bg-(--color-warning-soft) px-3 py-2 text-sm text-(--color-warning)"
         >
-          {guardError.message}
+          {actionError.message}
         </p>
       )}
 

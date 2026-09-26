@@ -101,8 +101,14 @@ export default function NewOrderPage() {
           size="sm"
           variant="ghost"
           onClick={async () => {
-            await removeItem.mutateAsync({ orderId: draftId, itemId: row.id });
-            refetch();
+            setFailure(null);
+
+            try {
+              await removeItem.mutateAsync({ orderId: draftId, itemId: row.id });
+              refetch();
+            } catch (error) {
+              setFailure(error.message);
+            }
           }}
         >
           {t('newOrder.remove')}

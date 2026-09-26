@@ -122,6 +122,9 @@ describe('Arabic dictionary', () => {
     // Brand and format names are the same in both languages by design.
     const SAME_BY_DESIGN = new Set([
       'common.appName',
+      // A sample address, shown as an example of the shape rather than as
+      // words to read; an email address is Latin in either language.
+      'auth.emailPlaceholder',
       'dashboard.topProducts.rank',
       'pagination.page',
       'pagination.range',

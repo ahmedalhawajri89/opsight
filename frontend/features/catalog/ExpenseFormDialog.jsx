@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { useExpenseActions } from './useCatalog';
 import { useExpenseCategories } from '@/features/admin/useAdmin';
@@ -51,6 +51,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
   const { categories } = useExpenseCategories();
 
   const [values, setValues] = useState(() => initialValues(expense));
+  const formId = useId();
   const [fieldErrors, setFieldErrors] = useState({});
   const [failure, setFailure] = useState(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -60,6 +61,12 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
 
   function set(key, value) {
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  function onSubmit(event) {
+    event.preventDefault();
+
+    return submit();
   }
 
   async function submit() {
@@ -128,13 +135,13 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
             <Button variant="ghost" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button variant="primary" loading={mutation.isPending} onClick={submit}>
+            <Button type="submit" form={formId} variant="primary" loading={mutation.isPending}>
               {editing ? t('common.save') : t('expenses.form.submit')}
             </Button>
           </>
         }
       >
-        <div className="space-y-4">
+        <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
           {/*
             The confirmation lives INSIDE this dialog rather than in a second
             one. A dialog rendered over another closes the one beneath it —
@@ -274,7 +281,7 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
               />
             )}
           </Field>
-        </div>
+        </form>
       </Dialog>
     </>
   );

@@ -69,7 +69,27 @@ export default function ExpensesPage() {
       // The business date, which may be backdated. Not the entry date.
       cell: (row) => formatDate(row.incurred_on),
     },
-    { key: 'description', header: t('expenses.columns.description'), sortable: true },
+    {
+      key: 'description',
+      header: t('expenses.columns.description'),
+      sortable: true,
+      // Reachable from a keyboard, not only by clicking the row.
+      cell: (row) =>
+        can('expenses.update') ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setEditing(row);
+            }}
+            className="text-start text-(--color-brand-text) hover:underline"
+          >
+            {row.description}
+          </button>
+        ) : (
+          row.description
+        ),
+    },
     {
       key: 'category',
       header: t('products.columns.category'),

@@ -37,6 +37,7 @@ const ar = {
     yes: 'نعم',
     no: 'لا',
     walkIn: 'عميل مباشر',
+    loading: 'جارٍ التحميل…',
     unknown: 'غير معروف',
     inactive: 'غير نشط',
     viewAll: 'عرض الكل',
@@ -84,6 +85,16 @@ const ar = {
 
   states: {
     empty: 'لا يوجد شيء هنا بعد',
+    crash: {
+      title: 'حدث خطأ في هذه الشاشة',
+      description:
+        'سُجِّل الخطأ. المحاولة مرة أخرى تنجح غالبًا، وإن لم تنجح فلوحة المعلومات ما زالت متاحة.',
+      home: 'اذهب إلى لوحة المعلومات',
+    },
+    notFound: {
+      title: 'لا يوجد شيء على هذا العنوان',
+      description: 'قد يكون الرابط قديمًا، أو يكون السجل قد حُذف.',
+    },
     noResults: {
       title: 'لا توجد سجلات مطابقة',
       matching: 'لا توجد نتائج مطابقة',
@@ -106,6 +117,7 @@ const ar = {
   auth: {
     sessionExpired: 'انتهت جلستك. يُرجى تسجيل الدخول مجددًا.',
     email: 'البريد الإلكتروني',
+    emailPlaceholder: 'you@company.com',
     emailRequired: 'البريد الإلكتروني مطلوب.',
     password: 'كلمة المرور',
     passwordRequired: 'كلمة المرور مطلوبة.',

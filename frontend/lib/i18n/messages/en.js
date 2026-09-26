@@ -26,6 +26,7 @@ const en = {
     yes: 'Yes',
     no: 'No',
     walkIn: 'Walk-in',
+    loading: 'Loading…',
     unknown: 'Unknown',
     inactive: 'Inactive',
     viewAll: 'View all',
@@ -69,6 +70,16 @@ const en = {
 
   states: {
     empty: 'Nothing here yet',
+    crash: {
+      title: 'Something broke on this screen',
+      description:
+        'The error has been recorded. Trying again usually works; if it does not, the dashboard is still there.',
+      home: 'Go to the dashboard',
+    },
+    notFound: {
+      title: 'There is nothing at this address',
+      description: 'The link may be old, or the record may have been removed.',
+    },
     noResults: {
       title: 'No matching records',
       matching: 'Nothing matches',
@@ -91,6 +102,7 @@ const en = {
   auth: {
     sessionExpired: 'Your session expired. Please sign in again.',
     email: 'Email',
+    emailPlaceholder: 'you@company.com',
     emailRequired: 'Email is required.',
     password: 'Password',
     passwordRequired: 'Password is required.',

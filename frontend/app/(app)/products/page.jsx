@@ -59,6 +59,22 @@ export default function ProductsPage() {
       sortable: true,
       mono: true,
       width: '10rem',
+      // Reachable from a keyboard, not only by clicking the row.
+      cell: (row) =>
+        can('products.update') ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setEditing(row);
+            }}
+            className="font-mono text-(--color-brand-text) hover:underline"
+          >
+            {row.sku}
+          </button>
+        ) : (
+          row.sku
+        ),
     },
     {
       key: 'name',

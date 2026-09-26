@@ -117,7 +117,9 @@ export function ErrorState({ title, error, onRetry, className }) {
 
   return (
     <Frame className={className}>
-      <div className="space-y-1">
+      {/* Announced: a failed fetch replaces a table, and a reader who cannot
+          see that happen waits for rows that will never arrive. */}
+      <div role="alert" className="space-y-1">
         <p className="text-base font-medium text-(--color-danger)">
           {title ?? t('states.error.title')}
         </p>
