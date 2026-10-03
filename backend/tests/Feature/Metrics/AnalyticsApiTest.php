@@ -122,10 +122,21 @@ it('includes the cost metrics on the dashboard for a manager', function (): void
 });
 
 it('refuses a cost-bearing time series rather than returning zeros', function (): void {
-    // Returning zeros would tell a cost-blind caller that profit was nil, which
-    // is a different and false claim.
+    /*
+     * The refusal is the point. This used to sign in as a Manager — who HOLDS
+     * metrics.view_cost — and assert a 200, so it passed against exactly the
+     * all-zero payload its own comment forbids. Staff is the role that must be
+     * refused, because zeros would tell them profit was nil, which is a
+     * different and false claim.
+     */
+    $this->actingAs(User::factory()->staff()->create());
+    $this->getJson("/api/v1/analytics/timeseries{$this->range}&metric=gross_profit")->assertForbidden();
+
+    // A role that may read cost still gets the series.
     $this->actingAs(User::factory()->manager()->create());
-    $this->getJson("/api/v1/analytics/timeseries{$this->range}&metric=gross_profit")->assertOk();
+    $this->getJson("/api/v1/analytics/timeseries{$this->range}&metric=gross_profit")
+        ->assertOk()
+        ->assertJsonStructure(['data' => [['bucket', 'bucket_end', 'value']]]);
 });
 
 /*

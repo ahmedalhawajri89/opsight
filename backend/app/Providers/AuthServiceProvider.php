@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Authorization\Ability;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\InventoryItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Policies\ActivityLogPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\ExpensePolicy;
 use App\Policies\InventoryPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\ProductPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +38,10 @@ class AuthServiceProvider extends ServiceProvider
         Customer::class => CustomerPolicy::class,
         Expense::class => ExpensePolicy::class,
         InventoryItem::class => InventoryPolicy::class,
+        // Both of these were found by convention until now, in a list whose
+        // whole reason for existing is that convention fails silently.
+        ActivityLog::class => ActivityLogPolicy::class,
+        User::class => UserPolicy::class,
     ];
 
     public function boot(): void

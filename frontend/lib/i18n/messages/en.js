@@ -1107,6 +1107,7 @@ const en = {
     start: 'Start draft',
     addItemTitle: 'Add an item',
     chooseProduct: 'Choose a product',
+    showingFirst: 'Showing the first {shown} of {total} — search to reach the rest.',
     quantity: 'Quantity',
     addItem: 'Add item',
     priceNote:

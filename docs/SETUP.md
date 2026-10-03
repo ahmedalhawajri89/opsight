@@ -176,6 +176,17 @@ php artisan migrate:fresh --seed && php artisan serve --port=8010
 cd frontend && npx playwright install chromium && npm run e2e
 ```
 
+**Stop any `next dev` first.** `playwright.config.mjs` sets
+`reuseExistingServer: !CI`, so a dev server left on port 3000 is used instead of
+the production build the config asks for — and Next's floating "Open Next.js Dev
+Tools" button then makes `getByRole('button', { name: 'Next' })` ambiguous, among
+other differences. A spare port is not a way around it: Sanctum's stateful domain
+and the CORS origin both pin the app to `localhost:3000`.
+
+A tired dev server also costs real time. One run against servers that had been up
+for hours failed nine specs — including the notification bell, which no change had
+touched — and all nine passed from cold.
+
 The owner account's interface language is Arabic in the seeded data if you have
 changed it; the specs read English labels, so switch it back before a run
 (`/settings` or the account menu) — CI starts from a fresh seed and is not

@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { cn } from '@/lib/cn';
 import { formatMoney } from '@/lib/format';
 import { listCustomers, listProducts } from '@/services/catalog';
@@ -58,14 +59,7 @@ function useSource(term, allowed, key, fetcher) {
 function useSearch(query, pages) {
   const { t } = useI18n();
   const { can } = useAuth();
-  const [debounced, setDebounced] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(query.trim()), 200);
-
-    return () => clearTimeout(timer);
-  }, [query]);
-
+  const debounced = useDebouncedValue(query.trim());
   const term = debounced.length >= MIN_QUERY ? debounced : '';
 
   const orders = useSource(term, can('orders.view'), 'orders', () =>

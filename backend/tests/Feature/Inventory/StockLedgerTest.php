@@ -159,27 +159,6 @@ it('does not change the product cost when stock is received', function (): void 
 
 /*
 |--------------------------------------------------------------------------
-| The transaction requirement
-|--------------------------------------------------------------------------
-*/
-
-it('refuses to move stock outside a transaction', function (): void {
-    $product = Product::factory()->create();
-
-    // A lock released before the surrounding work commits protects nothing, so
-    // the ledger asserts rather than trusting every future caller to remember.
-    expect(fn () => app(StockLedger::class)->move(
-        product: $product,
-        delta: 5,
-        reason: InventoryMovement::REASON_RESTOCK,
-    ))->toThrow(LogicException::class);
-})->skip(
-    fn (): bool => DB::transactionLevel() > 0,
-    'RefreshDatabase wraps each test in a transaction, so this is asserted in isolation elsewhere.',
-);
-
-/*
-|--------------------------------------------------------------------------
 | Low stock
 |--------------------------------------------------------------------------
 */
