@@ -6,6 +6,7 @@ import { ComparisonValue } from '@/components/data/ComparisonValue';
 import { DataTable } from '@/components/data/DataTable';
 import { StatTile } from '@/components/data/StatTile';
 import { EmptyState, NoResultsState } from '@/components/data/States';
+import { CatalogPicker } from '@/features/orders/CatalogPicker';
 import { Badge, OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
@@ -356,5 +357,117 @@ describe('NoResultsState', () => {
 
     expect(screen.getByText('status: cancelled')).toBeInTheDocument();
     expect(screen.getByText('August 2026')).toBeInTheDocument();
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| CatalogPicker — the two ways a dropdown lies
+|--------------------------------------------------------------------------
+|
+| A picker fed by one page of a catalogue can mislead in exactly two ways: it
+| can show nothing because the fetch failed, and it can show a hundred records
+| while implying that is all of them. Both used to be silent on the new-order
+| screen.
+|
+*/
+
+describe('CatalogPicker', () => {
+  const base = {
+    label: 'Product',
+    searchLabel: 'Search products',
+    searchPlaceholder: 'Search name or SKU…',
+    placeholder: 'Choose a product',
+    options: [
+      { value: 1, label: 'WIDGET-1 — Widget' },
+      { value: 2, label: 'WIDGET-2 — Widget, larger' },
+    ],
+    value: '',
+    onChange: () => {},
+    search: '',
+    onSearchChange: () => {},
+  };
+
+  it('names a failed fetch instead of rendering an empty list', async () => {
+    const onRetry = vi.fn();
+
+    render(
+      <CatalogPicker
+        {...base}
+        options={[]}
+        isError
+        error={{ code: 'unknown', message: 'The catalogue could not be read.' }}
+        onRetry={onRetry}
+      />,
+    );
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('The catalogue could not be read.');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('names a fetch that never reached the server by its code, not its message', () => {
+    render(<CatalogPicker {...base} options={[]} isError error={{ code: 'network.unreachable' }} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/connection|offline|reach/i);
+  });
+
+  it('admits when it is showing only the first page of a longer catalogue', () => {
+    render(<CatalogPicker {...base} total={412} />);
+
+    expect(screen.getByText(/Showing the first 2 of 412/)).toBeInTheDocument();
+  });
+
+  it('says nothing of the sort when the page IS the whole catalogue', () => {
+    render(<CatalogPicker {...base} total={2} hint="Pick one." />);
+
+    expect(screen.queryByText(/Showing the first/)).not.toBeInTheDocument();
+    expect(screen.getByText('Pick one.')).toBeInTheDocument();
+  });
+
+  it('reports what was typed, so the caller can search the server', async () => {
+    const onSearchChange = vi.fn();
+
+    render(<CatalogPicker {...base} onSearchChange={onSearchChange} />);
+
+    await userEvent.type(screen.getByLabelText('Search products'), 'W');
+    expect(onSearchChange).toHaveBeenCalledWith('W');
+  });
+
+  it('tells a reader whose search matched nothing, rather than showing a bare list', () => {
+    render(<CatalogPicker {...base} options={[]} search="ZZZ" total={0} />);
+
+    expect(screen.getByText(/ZZZ/)).toBeInTheDocument();
+  });
+
+  it('keeps what was already chosen on the list when a later search would hide it', () => {
+    // Searching for something else must not quietly un-choose the record the
+    // form is still holding the id of.
+    render(
+      <CatalogPicker
+        {...base}
+        options={[{ value: 9, label: 'GADGET-9 - Gadget' }]}
+        search="GADGET"
+        value="3"
+        selected={{ value: 3, label: 'WIDGET-3 - Widget' }}
+      />,
+    );
+
+    expect(screen.getByRole('option', { name: 'WIDGET-3 - Widget' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Product' })).toHaveValue('3');
+  });
+
+  it('does not list the chosen record twice when the search still returns it', () => {
+    render(
+      <CatalogPicker
+        {...base}
+        value="1"
+        selected={{ value: 1, label: 'WIDGET-1 - Widget' }}
+      />,
+    );
+
+    expect(screen.getAllByRole('option', { name: /WIDGET-1/ })).toHaveLength(1);
   });
 });

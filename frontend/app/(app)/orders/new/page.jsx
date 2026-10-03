@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 
 import { useOrder, useOrderDraft } from '@/features/orders/useOrders';
 import { useCustomers, useProducts } from '@/features/catalog/useCatalog';
+import { CatalogPicker } from '@/features/orders/CatalogPicker';
 import { OrderActions } from '@/features/orders/OrderActions';
 import { Button } from '@/components/ui/Button';
-import { Field, NumberInput, Select, Textarea } from '@/components/ui/Field';
+import { Field, NumberInput, Textarea } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { EmptyState } from '@/components/data/States';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { formatMoney, formatNumber } from '@/lib/format';
 
 /**
@@ -33,12 +35,45 @@ export default function NewOrderPage() {
 
   const { create, addItem, removeItem } = useOrderDraft();
   const { order, refetch } = useOrder(draftId);
-  const { customers } = useCustomers({ per_page: 100, sort: 'name' });
-  const { products } = useProducts({ per_page: 100, sort: 'name', filter: { is_active: 'true' } });
+
+  /*
+   * A page of the catalogue is not the catalogue. `per_page: 100` is the
+   * server's maximum, so the only way to reach the hundred-and-first product
+   * is to search for it — on the server, through the same filter the list
+   * screens use.
+   */
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const customerTerm = useDebouncedValue(customerSearch.trim());
+  const productTerm = useDebouncedValue(productSearch.trim());
+
+  const {
+    customers,
+    meta: customerMeta,
+    isLoading: loadingCustomers,
+    isError: customersFailed,
+    error: customerError,
+    refetch: refetchCustomers,
+  } = useCustomers({ per_page: 100, sort: 'name', filter: { search: customerTerm } });
+
+  const {
+    products,
+    meta: productMeta,
+    isLoading: loadingProducts,
+    isError: productsFailed,
+    error: productError,
+    refetch: refetchProducts,
+  } = useProducts({
+    per_page: 100,
+    sort: 'name',
+    filter: { is_active: 'true', search: productTerm },
+  });
 
   const [customerId, setCustomerId] = useState('');
+  const [chosenCustomer, setChosenCustomer] = useState(null);
   const [notes, setNotes] = useState('');
   const [productId, setProductId] = useState('');
+  const [chosenProduct, setChosenProduct] = useState(null);
   const [quantity, setQuantity] = useState('1');
   const [failure, setFailure] = useState(null);
 
@@ -68,11 +103,33 @@ export default function NewOrderPage() {
       });
 
       setProductId('');
+      setChosenProduct(null);
       setQuantity('1');
       refetch();
     } catch (error) {
       setFailure(error.fieldErrors?.product_id ?? error.fieldErrors?.quantity ?? error.message);
     }
+  }
+
+  /*
+   * The option objects, built once: the pickers keep whichever one is chosen
+   * on the list even after a later search would have filtered it out.
+   */
+  const customerOptions = customers.map((customer) => ({
+    value: customer.id,
+    label: customer.display_name ?? customer.name,
+  }));
+
+  const productOptions = products.map((product) => ({
+    value: product.id,
+    label: `${product.sku} — ${product.display_name ?? product.name}`,
+  }));
+
+  function choose(options, setId, setChosen) {
+    return (event) => {
+      setId(event.target.value);
+      setChosen(options.find((option) => String(option.value) === event.target.value) ?? null);
+    };
   }
 
   const itemColumns = [
@@ -140,20 +197,24 @@ export default function NewOrderPage() {
       {!draftId ? (
         <Card title={t('newOrder.details')}>
           <div className="grid max-w-2xl gap-4">
-            <Field label={t('newOrder.customer')} hint={t('newOrder.customerHint')}>
-              {(props) => (
-                <Select
-                  placeholder={t('newOrder.walkInOption')}
-                  options={customers.map((customer) => ({
-                    value: customer.id,
-                    label: customer.display_name ?? customer.name,
-                  }))}
-                  value={customerId}
-                  onChange={(event) => setCustomerId(event.target.value)}
-                  {...props}
-                />
-              )}
-            </Field>
+            <CatalogPicker
+              label={t('newOrder.customer')}
+              hint={t('newOrder.customerHint')}
+              searchLabel={t('customers.searchLabel')}
+              searchPlaceholder={t('customers.searchPlaceholder')}
+              search={customerSearch}
+              onSearchChange={setCustomerSearch}
+              placeholder={t('newOrder.walkInOption')}
+              options={customerOptions}
+              value={customerId}
+              selected={chosenCustomer}
+              onChange={choose(customerOptions, setCustomerId, setChosenCustomer)}
+              isLoading={loadingCustomers}
+              isError={customersFailed}
+              error={customerError}
+              onRetry={refetchCustomers}
+              total={customerMeta?.total}
+            />
 
             <Field label={t('newOrder.notes')}>
               {(props) => (
@@ -177,20 +238,24 @@ export default function NewOrderPage() {
         <>
           <Card title={t('newOrder.addItemTitle')}>
             <div className="flex flex-wrap items-end gap-3">
-              <Field label={t('orderDetail.columns.product')} className="min-w-64 flex-1">
-                {(props) => (
-                  <Select
-                    placeholder={t('newOrder.chooseProduct')}
-                    options={products.map((product) => ({
-                      value: product.id,
-                      label: `${product.sku} — ${product.display_name ?? product.name}`,
-                    }))}
-                    value={productId}
-                    onChange={(event) => setProductId(event.target.value)}
-                    {...props}
-                  />
-                )}
-              </Field>
+              <CatalogPicker
+                label={t('orderDetail.columns.product')}
+                className="min-w-64 flex-1"
+                searchLabel={t('products.searchLabel')}
+                searchPlaceholder={t('products.searchPlaceholder')}
+                search={productSearch}
+                onSearchChange={setProductSearch}
+                placeholder={t('newOrder.chooseProduct')}
+                options={productOptions}
+                value={productId}
+                selected={chosenProduct}
+                onChange={choose(productOptions, setProductId, setChosenProduct)}
+                isLoading={loadingProducts}
+                isError={productsFailed}
+                error={productError}
+                onRetry={refetchProducts}
+                total={productMeta?.total}
+              />
 
               <Field label={t('newOrder.quantity')} className="w-28">
                 {(props) => (

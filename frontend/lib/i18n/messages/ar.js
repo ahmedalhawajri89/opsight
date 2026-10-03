@@ -1133,6 +1133,7 @@ const ar = {
     start: 'بدء المسودة',
     addItemTitle: 'إضافة بند',
     chooseProduct: 'اختر منتجًا',
+    showingFirst: 'يُعرض أول {shown} من {total} — ابحث للوصول إلى الباقي.',
     quantity: 'الكمية',
     addItem: 'إضافة البند',
     priceNote:

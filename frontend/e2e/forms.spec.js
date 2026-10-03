@@ -28,6 +28,22 @@ test.describe('as the second business', () => {
     await dialog.getByLabel('Country').fill('KW');
     await dialog.getByRole('button', { name: 'Create customer' }).click();
 
+    // The dialog closes only once the server has accepted it — and navigating
+    // before that aborts the request in flight.
+    await expect(dialog).toBeHidden();
+
+    /*
+     * Search for it rather than expecting it on the page already shown.
+     *
+     * This test adds a customer every time it runs, and the list is sorted by
+     * name and paginated at 25 — so once the business passed a page of
+     * customers the newest one fell off the end and the test could never pass
+     * again. A test that poisons its own fixture is worse than no test: it
+     * passes for months and then fails deterministically for a reason that
+     * looks like flake.
+     */
+    await page.goto(`/customers?search=${stamp}`);
+
     const table = page.getByRole('table', { name: 'Customers' });
     await expect(table.getByText(name)).toBeVisible();
 
@@ -117,6 +133,52 @@ test.describe('as the second business', () => {
     await dialog.getByRole('button', { name: 'Save' }).click();
 
     await expect(table).toContainText('KWD 1.850');
+  });
+
+  test('searches the list from the order form instead of scrolling a page of it', async ({
+    page,
+  }) => {
+    /*
+     * The form used to load the first hundred customers and the first hundred
+     * products and offer no way to reach the rest — a hundred being the
+     * server's own maximum page, not a soft limit it could raise. Both lists
+     * are searchable now, on the server.
+     *
+     * Only the customer list is exercised here, because it is on the screen
+     * before a draft exists: the product list sits behind "Start draft", and a
+     * test that creates an order would change this business's order count,
+     * which the isolation spec asserts exactly. Both lists are the same
+     * component (CatalogPicker, covered per-state in tests/components.test.jsx)
+     * bound to a different hook.
+     */
+    await page.goto('/orders/new');
+
+    const customer = page.getByLabel('Customer', { exact: true });
+    const search = page.getByLabel('Search customers');
+
+    /*
+     * Polled, not counted once: `locator.count()` does not auto-wait, so
+     * reading it straight after goto() asks how many options exist before the
+     * list has been fetched — which is zero, every time.
+     *
+     * A lower bound rather than an exact count, because the customer form test
+     * above adds one customer to this business on every run.
+     */
+    await expect
+      .poll(() => customer.locator('option').count())
+      .toBeGreaterThan(2);
+
+    await search.fill('Mishref');
+    await expect(customer.locator('option')).toHaveCount(2);
+    await customer.selectOption({ index: 1 });
+    await expect(customer).toHaveValue(/\d+/);
+
+    // A term that matches nothing says so, rather than showing a bare list —
+    // and the customer already chosen stays chosen, and stays visible.
+    await search.fill('Zzzz No Such Customer');
+    await expect(page.getByText(/Zzzz No Such Customer/)).toBeVisible();
+    await expect(customer.locator('option')).toHaveCount(2);
+    await expect(customer).toHaveValue(/\d+/);
   });
 });
 

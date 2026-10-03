@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Metrics;
 
+use App\Support\Money;
+
 /**
  * One metric, with its comparison.
  *
@@ -25,7 +27,8 @@ final readonly class MetricValue
         public string $key,
         public int|string|float|null $value,
         public int|string|float|null $previous,
-        public ?float $changeAbsolute,
+        /** A money metric keeps its string; everything else is a number. */
+        public float|string|null $changeAbsolute,
         public ?float $changePercent,
         /** 'up' or 'down' — which direction is good news for THIS metric. */
         public string $favourable,
@@ -42,7 +45,7 @@ final readonly class MetricValue
         string $format = 'count',
         ?string $emptyReason = null,
     ): self {
-        [$absolute, $percent] = self::change($value, $previous);
+        [$absolute, $percent] = self::change($value, $previous, $format);
 
         return new self(
             key: $key,
@@ -57,17 +60,29 @@ final readonly class MetricValue
     }
 
     /**
-     * @return array{0: float|null, 1: float|null}
+     * The movement between two periods: how much, and what share of it.
+     *
+     * An amount of money stays a string, subtracted with bcmath like every
+     * other amount in the system (ADR-015) — this was the one place a figure
+     * the dashboard prints was computed as a float. The PERCENTAGE is a ratio,
+     * not money, and stays a float on purpose.
+     *
+     * @return array{0: float|string|null, 1: float|null}
      */
-    private static function change(int|string|float|null $value, int|string|float|null $previous): array
-    {
+    private static function change(
+        int|string|float|null $value,
+        int|string|float|null $previous,
+        string $format = 'count',
+    ): array {
         if ($value === null || $previous === null) {
             return [null, null];
         }
 
         $current = (float) $value;
         $before = (float) $previous;
-        $absolute = $current - $before;
+        $absolute = $format === 'money'
+            ? bcsub((string) $value, (string) $previous, Money::scale())
+            : $current - $before;
 
         // Division by zero. There is no percentage change from nothing.
         if ($before === 0.0) {

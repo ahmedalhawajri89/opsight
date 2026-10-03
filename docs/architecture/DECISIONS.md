@@ -704,8 +704,10 @@ nothing downstream (a WhatsApp message, a duplicate check) could use it.
    with its trunk zero removed. A number that cannot be placed is refused, with a message in
    the reader's language, and never stored as typed.
 
-**Not done here.** The frontend has no product or customer edit form yet, so Arabic names and
-phones are entered through the API until those screens exist.
+**Since superseded.** This said the frontend had no product or customer edit form, so Arabic
+names and phones had to be entered through the API. Both forms now exist — `ProductFormDialog`
+and `CustomerFormDialog` — and each carries its own `name_ar` field with `dir="rtl"` and
+`lang="ar"`, and a phone field normalised by the server.
 
 ## ADR-022 — Payments and refunds as ledgers; payment status derived
 
@@ -905,6 +907,65 @@ it.
 
 **Not done here.** No email verification, no password reset, no subscription or billing, and
 no importing an existing store — the wizard says so rather than implying it exists.
+
+## ADR-025 — Time-series buckets are cut in PHP, not in SQL
+
+**Status:** Accepted (2026-09)
+**Affects:** `app/Domain/Metrics/TimeSeries.php`
+
+**Context.** A daily, weekly or monthly series has to group orders by the business's own
+calendar day, and `placed_at` is stored in UTC. The query therefore has to know where each
+local day begins. It used to work that out itself:
+
+```sql
+CONVERT_TZ(placed_at, '+00:00', '+03:00')
+```
+
+MySQL's `CONVERT_TZ` accepts either a named zone or a fixed offset. **A named zone returns
+`NULL` unless the server's `mysql.time_zone` tables have been loaded** — they are empty on a
+stock XAMPP install and on the CI image — so every bucket would come back empty, reported as
+a legitimate zero. The offset always works, but there is only one of it: the offset in force
+on the day the report is run, applied to the whole history.
+
+For every Gulf zone that is exactly right, because none of them change their clocks. For a
+zone that does, every bucket on the far side of the change is an hour out. And the failure
+is worse than a misplaced label: `emptyBuckets()` builds the PHP keys from the real named
+zone, so a shifted SQL key matches no PHP key and the row falls through `?? zeroFor()`. A
+day's trade silently reads as zero, and only for orders placed near local midnight.
+
+**Decision.** The boundaries are computed **once**, in PHP, where the named zone is always
+available and `Period` already does the same arithmetic correctly. The query is handed the
+resulting edges:
+
+```sql
+CASE WHEN placed_at < ? THEN ? WHEN placed_at < ? THEN ? … END
+```
+
+— ascending, first match wins, one pair of bindings per bucket, `bucket_end + 1 day` at
+midnight in the business zone as the exclusive edge. The keys the query returns are by
+construction the keys `emptyBuckets()` produced, so the two cannot disagree. `CONVERT_TZ`,
+`WEEKDAY()` and the offset helper are gone, and with them the class of bug ADR-020 fixed
+once already from the other direction.
+
+**Rejected: a named zone plus a setup step.** `CONVERT_TZ(placed_at, 'UTC', 'Europe/Berlin')`
+is the correct SQL, and it would have cost one line. It was rejected because it makes every
+figure in the product depend on a database that has been provisioned with timezone tables,
+and gets it wrong **silently** on one that has not — the worst possible failure mode for a
+BI tool, and one that would have hit this project's own development and CI databases first.
+
+**Cost accepted.** The bucket count is bounded by the period cap (1096 days) and the grain,
+so the CASE is at most ~1,100 branches. Measured against the development database (2,277
+orders):
+
+| Range | Buckets | Before | After |
+| --- | --- | --- | --- |
+| 30 days, daily (the dashboard's own request) | 31 | 2.8 ms | 4.2 ms |
+| 6 months, weekly | 27 | 2.8 ms | 4.9 ms |
+| 3 years, daily (only if explicitly asked for) | 1,096 | 27 ms | 248 ms |
+
+A millisecond and a half on the request the product actually makes, in exchange for buckets
+that are right everywhere. The pathological case is a quarter of a second and reachable only
+by asking for a grain the auto-selection would never choose.
 
 ## Open decisions
 

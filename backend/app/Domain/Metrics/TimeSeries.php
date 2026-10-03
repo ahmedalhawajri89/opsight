@@ -26,8 +26,10 @@ use InvalidArgumentException;
  *    in is not a low month; it is an unfinished one, and the UI renders it
  *    dashed rather than as a cliff (METRICS.md §3).
  *
- * Bucket boundaries are computed in the BUSINESS timezone, like every other
- * period boundary, then converted for the query.
+ * Bucket boundaries are computed ONCE, in PHP, in the business timezone — and
+ * the query is told where they fall rather than deriving them again in SQL.
+ * Two derivations of the same boundary is how this class has failed before:
+ * see `bucketCase()`.
  *
  * A NOTE ON THE LAYER RULE. L2 is supposed to compose from L1 rather than
  * query L0 itself, and this class does not: a per-bucket aggregation cannot be
@@ -85,8 +87,8 @@ final class TimeSeries
     {
         $this->assertMetricIsPermitted($metric, $user);
 
-        $rows = $this->query($period, $metric, $grain);
         $buckets = $this->emptyBuckets($period, $grain);
+        $rows = $this->query($period, $metric, $buckets);
         $today = Carbon::now($period->timezone)->toDateString();
 
         foreach ($buckets as $key => $bucket) {
@@ -163,31 +165,24 @@ final class TimeSeries
     }
 
     /**
+     * @param  array<string, array<string, mixed>>  $buckets
      * @return array<string, int|string|float|null>
      */
-    private function query(Period $period, string $metric, string $grain): array
+    private function query(Period $period, string $metric, array $buckets): array
     {
         if ($metric === 'operating_expenses') {
-            return $this->expenseQuery($period, $grain);
+            return $this->expenseQuery($period, $buckets);
         }
 
         [$from, $to] = $period->utcBounds();
-        $timezone = BusinessSetting::current()->timezone;
 
         /*
-         * placed_at is stored in UTC, so it is converted to the business
-         * timezone BEFORE being truncated to a bucket. Grouping on the raw UTC
-         * value would put a late-evening order into the wrong day for any
-         * business east of Greenwich — which is most of them.
+         * placed_at is stored in UTC and a bucket is a range of local days, so
+         * the comparison is against each bucket's end as a UTC INSTANT. A
+         * late-evening order east of Greenwich belongs to the local day it was
+         * placed on, not to the UTC one.
          */
-        $local = "CONVERT_TZ(placed_at, '+00:00', ?)";
-        $offset = $this->utcOffset($timezone);
-
-        $bucketExpression = match ($grain) {
-            'week' => "DATE(DATE_SUB({$local}, INTERVAL ".self::weekOffsetSql($local).' DAY))',
-            'month' => "DATE_FORMAT({$local}, '%Y-%m-01')",
-            default => "DATE({$local})",
-        };
+        [$bucketExpression, $bindings] = $this->bucketCase($buckets, $period->timezone, 'placed_at', asInstant: true);
 
         $valueExpression = match ($metric) {
             'net_revenue' => 'COALESCE(SUM(subtotal_amount - discount_amount - refunded_amount), 0)',
@@ -204,9 +199,6 @@ final class TimeSeries
                 .'THEN ROUND(SUM(subtotal_amount - discount_amount - refunded_amount) / COUNT(*), '.Money::scale().') ELSE NULL END',
             default => throw new InvalidArgumentException("Unknown time series metric: {$metric}."),
         };
-
-        // The bucket expression repeats the offset binding once per use.
-        $bindings = array_fill(0, substr_count($bucketExpression, '?'), $offset);
 
         $rows = TenantQuery::table('orders')
             ->whereIn('status', OrderStatus::qualifying())
@@ -225,26 +217,23 @@ final class TimeSeries
      * Operating expenses per bucket.
      *
      * Its own query because expenses are not orders: they are dated by
-     * `incurred_on`, a calendar DATE in the business's own terms, so there is
-     * no timezone conversion to apply — converting a date as if it were an
-     * instant would move an expense across a month end (METRICS.md §2.9). The
-     * same definition as MetricCalculator::operatingExpenses(), and a test
+     * `incurred_on`, a calendar DATE in the business's own terms, so the same
+     * bucket edges are compared as DATES rather than instants — treating a date
+     * as an instant would move an expense across a month end (METRICS.md §2.9).
+     * The same definition as MetricCalculator::operatingExpenses(), and a test
      * holds the buckets to its total.
      *
+     * @param  array<string, array<string, mixed>>  $buckets
      * @return array<string, string>
      */
-    private function expenseQuery(Period $period, string $grain): array
+    private function expenseQuery(Period $period, array $buckets): array
     {
-        $bucketExpression = match ($grain) {
-            'week' => 'DATE(DATE_SUB(incurred_on, INTERVAL '.self::weekOffsetSql('incurred_on').' DAY))',
-            'month' => "DATE_FORMAT(incurred_on, '%Y-%m-01')",
-            default => 'DATE(incurred_on)',
-        };
+        [$bucketExpression, $bindings] = $this->bucketCase($buckets, $period->timezone, 'incurred_on', asInstant: false);
 
         return TenantQuery::table('expenses')
             ->whereNull('deleted_at')
             ->whereBetween('incurred_on', [$period->from, $period->to])
-            ->selectRaw("{$bucketExpression} AS bucket, COALESCE(SUM(amount), 0) AS value")
+            ->selectRaw("{$bucketExpression} AS bucket, COALESCE(SUM(amount), 0) AS value", $bindings)
             ->groupBy('bucket')
             ->get()
             ->mapWithKeys(fn ($row): array => [(string) $row->bucket => (string) $row->value])
@@ -284,10 +273,55 @@ final class TimeSeries
         };
     }
 
-    /** MySQL CONVERT_TZ needs a named zone loaded or an offset; the offset always works. */
-    private function utcOffset(string $timezone): string
+    /**
+     * Which bucket a row belongs to, as SQL, from edges computed in PHP.
+     *
+     * WHY NOT CONVERT_TZ. The obvious SQL — convert the column to local time
+     * and truncate — needs a zone, and MySQL takes either a named zone or a
+     * fixed offset. A named zone returns NULL unless the server's
+     * `mysql.time_zone` tables have been loaded, which they are not on a stock
+     * XAMPP or CI database, so every bucket would come back empty and say so
+     * as a zero. An offset always works, but there is only one of it: today's.
+     * Applied to a whole history it shifts every bucket by an hour on the far
+     * side of a daylight-saving change — and since `emptyBuckets()` computes
+     * the PHP keys with the real named zone, the shifted SQL keys then match
+     * NOTHING and those rows fall through `?? zeroFor()`. Not a mislabelled
+     * bucket: a lost one.
+     *
+     * So the boundaries are computed once, in PHP, where the named zone is
+     * always available, and the query is handed the resulting edges. The keys
+     * it returns are by construction the keys `emptyBuckets()` produced — the
+     * two cannot disagree, because there is no longer a second derivation.
+     *
+     * Ordered ascending, so the first matching WHEN wins. The last edge is at
+     * or after the period's own end and the caller's WHERE excludes anything
+     * beyond it, so no row can fall out of the CASE.
+     *
+     * @param  array<string, array<string, mixed>>  $buckets
+     * @param  bool  $asInstant  true for a UTC datetime column, false for a calendar date
+     * @return array{0: string, 1: array<int, string>}
+     */
+    private function bucketCase(array $buckets, string $timezone, string $column, bool $asInstant): array
     {
-        return Carbon::now($timezone)->format('P');
+        $sql = 'CASE';
+        $bindings = [];
+
+        foreach ($buckets as $bucket) {
+            /*
+             * Exclusive: midnight at the start of the day AFTER the bucket's
+             * last day, in the business timezone — the same half-open rule
+             * Period uses.
+             */
+            $end = Carbon::parse((string) $bucket['bucket_end'], $timezone)->startOfDay()->addDay();
+
+            $sql .= " WHEN {$column} < ? THEN ?";
+            $bindings[] = $asInstant
+                ? $end->utc()->format('Y-m-d H:i:s')
+                : $end->toDateString();
+            $bindings[] = (string) $bucket['bucket'];
+        }
+
+        return [$sql.' END', $bindings];
     }
 
     /**
@@ -305,20 +339,5 @@ final class TimeSeries
         if (! ($user?->can(Ability::MetricsViewCost->value) ?? false)) {
             abort(403, __('errors.http.metric_not_permitted'));
         }
-    }
-
-    /**
-     * Days from a date back to the start of its business week, in SQL.
-     *
-     * WEEKDAY() is 0 for Monday … 6 for Sunday; the business week starts on
-     * ISO day `week_starts_on` (1 = Monday … 7 = Sunday). The offset is an
-     * integer from settings, validated 1–7, never user text — so it is safe to
-     * write into the expression, and it must match the PHP bucket keys above.
-     */
-    private static function weekOffsetSql(string $dateExpression): string
-    {
-        $start = (int) BusinessSetting::current()->week_starts_on - 1;
-
-        return "MOD(WEEKDAY({$dateExpression}) - {$start} + 7, 7)";
     }
 }

@@ -83,7 +83,7 @@ test.describe('a new business', () => {
     await page.getByRole('button', { name: 'Start draft' }).click();
 
     // The only product in a brand-new catalogue: the first real option.
-    await page.getByLabel('Product').selectOption({ index: 1 });
+    await page.getByLabel('Product', { exact: true }).selectOption({ index: 1 });
     await page.getByLabel('Quantity').fill('2');
     await page.getByRole('button', { name: 'Add item' }).click();
     await page.getByRole('button', { name: 'Save and view draft' }).click();

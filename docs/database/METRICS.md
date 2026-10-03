@@ -543,7 +543,9 @@ Composed from §2, never recomputed from raw rows.
 
 - **Buckets with no data are emitted as zero rows, not omitted.** A gap in a date series
   makes a line chart lie about slope.
-- Bucket boundaries use the business timezone, like every other period.
+- Bucket boundaries use the business timezone, like every other period — and they are
+  computed **once, in PHP**, then handed to the query as edges. Deriving them a second time
+  in SQL is what once made a daylight-saving day report as zero (ADR-025).
 - The final bucket is flagged `is_partial` when it contains today, so the client can
   render it dashed rather than as a cliff.
 - Grain defaults: ≤ 31 days → daily; ≤ 180 days → weekly; beyond → monthly.
