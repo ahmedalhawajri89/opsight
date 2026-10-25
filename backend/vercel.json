@@ -1,0 +1,21 @@
+{
+  "regions": ["fra1"],
+  "functions": {
+    "api/index.php": {
+      "runtime": "vercel-php@0.7.4",
+      "maxDuration": 30
+    },
+    "api/demo-reset.php": {
+      "runtime": "vercel-php@0.7.4",
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    { "path": "/api/demo-reset", "schedule": "0 1 * * *" }
+  ],
+  "routes": [
+    { "src": "/api/demo-reset", "dest": "/api/demo-reset.php" },
+    { "src": "/(favicon\\.ico|robots\\.txt)", "dest": "/public/$1" },
+    { "src": "/(.*)", "dest": "/api/index.php" }
+  ]
+}

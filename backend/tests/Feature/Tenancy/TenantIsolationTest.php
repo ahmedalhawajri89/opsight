@@ -336,6 +336,9 @@ it('reaches business tables only through the tenancy layer', function (): void {
         str_replace('/', DIRECTORY_SEPARATOR, 'app/Support/Tenancy/TenantQuery.php'),
         // Framework tables that belong to no business.
         str_replace('/', DIRECTORY_SEPARATOR, 'app/Http/Controllers/Api/V1/HealthController.php'),
+        // The demo snapshot copies the whole database, every business in it;
+        // only the demo commands use it (demo:snapshot, demo:reset).
+        str_replace('/', DIRECTORY_SEPARATOR, 'app/Support/DemoSnapshot.php'),
     ];
 
     $offenders = [];

@@ -202,8 +202,12 @@ class DemoDataSeeder extends Seeder
         $start = Carbon::now()->subMonths(self::MONTHS_OF_HISTORY)->startOfMonth();
         $sequence = 0;
 
-        for ($month = 0; $month < self::MONTHS_OF_HISTORY; $month++) {
+        // Every full month, then the one in progress up to today, in
+        // proportion: without it "this month" and "the last 30 days" are
+        // empty, and every comparison reads as a collapse.
+        for ($month = 0; $month <= self::MONTHS_OF_HISTORY; $month++) {
             $monthStart = $start->copy()->addMonths($month);
+            $days = $this->daysCovered($monthStart);
 
             /*
              * Price and cost drift, applied roughly twice a year.
@@ -231,7 +235,7 @@ class DemoDataSeeder extends Seeder
                 default => 1.0,
             };
 
-            $ordersThisMonth = (int) round(mt_rand(55, 85) * $seasonal);
+            $ordersThisMonth = (int) round(mt_rand(55, 85) * $seasonal * $days / $monthStart->daysInMonth);
 
             // Periodic restocks, so stock does not simply drain to zero.
             if ($month % 2 === 0) {
@@ -246,7 +250,7 @@ class DemoDataSeeder extends Seeder
             }
 
             for ($i = 0; $i < $ordersThisMonth; $i++) {
-                $placedAt = $this->businessDayIn($monthStart);
+                $placedAt = $this->businessDayIn($monthStart, $days);
 
                 // Roughly one order in eight is walk-in trade with no customer
                 // record, which new-customer metrics must exclude.
@@ -366,10 +370,16 @@ class DemoDataSeeder extends Seeder
         };
     }
 
-    /** A weekday-weighted instant within the month, at a plausible hour. */
-    private function businessDayIn(Carbon $monthStart): Carbon
+    /** Days of a month the history covers: all of a past one, up to today for this one. */
+    private function daysCovered(Carbon $monthStart): int
     {
-        $day = $monthStart->copy()->addDays(mt_rand(0, $monthStart->daysInMonth - 1));
+        return $monthStart->isSameMonth(now()) ? now()->day : $monthStart->daysInMonth;
+    }
+
+    /** A weekday-weighted instant within the month's first $days days, at a plausible hour, never ahead of now. */
+    private function businessDayIn(Carbon $monthStart, int $days): Carbon
+    {
+        $day = $monthStart->copy()->addDays(mt_rand(0, $days - 1));
 
         // The business's weekend is quieter — Friday and Saturday by default,
         // not the Saturday and Sunday Carbon assumes — so most orders that land
@@ -382,7 +392,7 @@ class DemoDataSeeder extends Seeder
             }
         }
 
-        return $day->setTime(mt_rand(8, 19), mt_rand(0, 59));
+        return $day->setTime(mt_rand(8, 19), mt_rand(0, 59))->min(now());
     }
 
     /**
@@ -400,8 +410,12 @@ class DemoDataSeeder extends Seeder
             'Software' => [120, 400],
         ];
 
-        for ($month = 0; $month < self::MONTHS_OF_HISTORY; $month++) {
+        // Every full month, then the one in progress up to today, in
+        // proportion: without it "this month" and "the last 30 days" are
+        // empty, and every comparison reads as a collapse.
+        for ($month = 0; $month <= self::MONTHS_OF_HISTORY; $month++) {
             $monthStart = $start->copy()->addMonths($month);
+            $days = $this->daysCovered($monthStart);
 
             // Recurring costs are entered as individual rows in the MVP; there
             // is no recurrence automation (MVP_SCOPE.md §6.7).
@@ -412,7 +426,7 @@ class DemoDataSeeder extends Seeder
                     'expense_category_id' => $category->id,
                     'description' => $name.' — '.$monthStart->format('F Y'),
                     'amount' => mt_rand($min * 100, $max * 100) / 100,
-                    'incurred_on' => $monthStart->copy()->addDays(mt_rand(0, 5))->toDateString(),
+                    'incurred_on' => $monthStart->copy()->addDays(mt_rand(0, min(5, $days - 1)))->toDateString(),
                 ]);
                 $expense->created_by = $owner?->id;
                 $expense->save();
@@ -428,7 +442,7 @@ class DemoDataSeeder extends Seeder
                     'amount' => mt_rand(3000, 180000) / 100,
                     // Backdated within the month: an invoice dated last week is
                     // last week's expense, whenever it was entered.
-                    'incurred_on' => $monthStart->copy()->addDays(mt_rand(0, $monthStart->daysInMonth - 1))->toDateString(),
+                    'incurred_on' => $monthStart->copy()->addDays(mt_rand(0, $days - 1))->toDateString(),
                     'vendor' => fake()->company(),
                 ]);
                 $expense->created_by = $owner?->id;

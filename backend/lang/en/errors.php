@@ -20,6 +20,7 @@ return [
         'server' => 'An unexpected error occurred.',
         'account_deactivated' => 'Your account has been deactivated.',
         'metric_not_permitted' => 'This metric is not available for your role.',
+        'demo_account_protected' => 'The demo accounts stay as they are, so the next visitor can sign in too. Everything else is yours to try, and the data resets every night.',
     ],
 
     'filter' => [

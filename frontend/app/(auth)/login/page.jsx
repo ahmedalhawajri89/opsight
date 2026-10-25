@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { AuthLayout } from '@/features/auth/AuthLayout';
+import { DemoAccounts } from '@/features/auth/DemoAccounts';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -60,6 +61,7 @@ export default function LoginPage() {
         </div>
       ) : (
         <Suspense fallback={null}>
+          <DemoAccounts />
           <LoginForm />
         </Suspense>
       )}

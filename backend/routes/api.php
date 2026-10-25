@@ -63,7 +63,9 @@ Route::prefix('v1')->group(function (): void {
         ->name('webhooks.receive');
 
     // ---- Authenticated -----------------------------------------------------
-    Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function (): void {
+    // `demo` keeps the public demo's own accounts unchangeable (config/demo.php);
+    // it does nothing on any other installation.
+    Route::middleware(['auth:sanctum', 'active', 'demo', 'throttle:api'])->group(function (): void {
 
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');

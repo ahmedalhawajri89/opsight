@@ -1,0 +1,20 @@
+{
+    "taken_at": "2026-10-25T08:16:23+00:00",
+    "tables": [
+        "activity_logs",
+        "businesses",
+        "business_settings",
+        "categories",
+        "customers",
+        "expenses",
+        "expense_categories",
+        "inventory_items",
+        "inventory_movements",
+        "orders",
+        "order_items",
+        "order_payments",
+        "order_refunds",
+        "products",
+        "users"
+    ]
+}

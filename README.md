@@ -40,7 +40,8 @@ opsight/
 
 ## Quick start
 
-Full instructions in [docs/SETUP.md](docs/SETUP.md).
+Full instructions in [docs/SETUP.md](docs/SETUP.md). The public demo's deployment
+(Vercel, TiDB, the nightly reset) is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ```bash
 # Backend

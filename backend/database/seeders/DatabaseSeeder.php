@@ -47,6 +47,13 @@ class DatabaseSeeder extends Seeder
         // An existing installation's business was created by the migration
         // under the slug `default`; a fresh one gets it here.
         $business = Business::query()->firstOrCreate(['slug' => 'default'], ['name' => 'Opsight Demo Trading']);
+
+        // Set up by this seeder, not by an owner in the wizard: it counts as
+        // onboarded, as businesses set up by hand do (the onboarding
+        // migration). Otherwise its owner is sent to the wizard on sign-in.
+        if ($business->onboarded_at === null) {
+            $business->forceFill(['onboarded_at' => now()])->save();
+        }
         CurrentBusiness::get()->set($business->id);
 
         BusinessSetting::ensureExists(['company_name' => 'Opsight Demo Trading']);
@@ -61,8 +68,9 @@ class DatabaseSeeder extends Seeder
         $this->seedAccounts($accounts);
 
         // A second business beside the first, so isolation can be seen and
-        // tested in a browser (ADR-023). Never in production.
-        if (app()->environment('local', 'testing')) {
+        // tested in a browser (ADR-023). Never in production, except on the
+        // public demo, which is there to be seen (config/demo.php).
+        if (app()->environment('local', 'testing') || config('demo.enabled')) {
             $this->call(SecondBusinessSeeder::class);
             CurrentBusiness::get()->set($business->id);
         }
@@ -71,9 +79,10 @@ class DatabaseSeeder extends Seeder
          * Demo data is opt-in: `php artisan db:seed` gives a clean install with
          * only the accounts and settings, and `--class=DemoDataSeeder` adds
          * three years of realistic history. A fresh production deployment must
-         * not arrive pre-populated with invented orders.
+         * not arrive pre-populated with invented orders; the public demo is the
+         * one installation that must, and it says so with DEMO_MODE.
          */
-        if (app()->environment('local', 'testing') && config('app.seed_demo_data')) {
+        if ((app()->environment('local', 'testing') && config('app.seed_demo_data')) || config('demo.enabled')) {
             $this->call(DemoDataSeeder::class);
         }
     }
