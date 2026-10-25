@@ -176,6 +176,20 @@ php artisan migrate:fresh --seed && php artisan serve --port=8010
 cd frontend && npx playwright install chromium && npm run e2e
 ```
 
+**The queue worker.** From Phase 5 the queue is used for real: a webhook
+delivery is stored and answered at once, and handled by a worker afterwards
+(ADR-027). Without a worker running, deliveries sit unprocessed and nothing
+reports it — the endpoint keeps returning 202 because receiving did succeed.
+
+```bash
+cd backend && php artisan queue:work --tries=4
+```
+
+In production it belongs under a supervisor that restarts it, and
+`php artisan queue:restart` is part of deploying — a worker holds the old code
+in memory until it is told otherwise. On a development machine you only need
+it when exercising webhooks; everything else is synchronous.
+
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly
 audit-log prune (ADR-026):
 

@@ -220,6 +220,47 @@ metric derived from `orders`, and storing them creates a second source of truth 
 wrong the first time an order is cancelled. If aggregation becomes slow, the answer is
 ADR-009's rebuildable rollup, not a denormalised column nobody recomputes.
 
+### 3.5a `integrations` and `webhook_receipts`
+
+Added in Phase 5 (ADR-027), before any provider exists.
+
+`integrations` — one connected account per business per provider:
+`business_id`, `provider`, `external_account_id`, `status`
+(`connected|expired|revoked|error`), `access_token`, `refresh_token`,
+`token_expires_at`, `scopes` JSON, `last_synced_at`, `last_error`.
+`UNIQUE(business_id, provider)`: connecting the same provider again is a
+reconnection, not a second integration.
+
+**The token columns are TEXT holding ciphertext.** The model casts them
+`encrypted`, so the length is the encrypted length, and the plaintext exists
+only in memory. They are also `$hidden`, so no resource can serialise them by
+accident. Rotating `APP_KEY` without re-encrypting disconnects every
+integration — deliberately the right way round.
+
+`webhook_receipts` — every delivery, stored before it is acted on:
+`business_id` NULL-able, `provider`, `event`, `external_event_id` **UNIQUE**,
+`payload` JSON, `signature_ok`, `processed_at`, `error`, `attempts`.
+The unique event id is what makes a provider's retry recognisable as the same
+delivery rather than a second one. A delivery that fails signature
+verification is **kept**, with `signature_ok` false: it is the evidence that a
+secret rotated, or that someone is trying.
+
+This is the one table whose model carries neither tenancy trait. It is written
+by an unauthenticated request before any business is in context, and its
+business comes from the verified payload rather than from ambient state.
+
+### 3.5b `source` and `external_id`
+
+`products`, `customers` and `orders` each carry `source` VARCHAR(32) NULL and
+`external_id` VARCHAR(190) NULL, with `UNIQUE(business_id, source,
+external_id)`.
+
+NULL means "entered here", and NULLs do not collide in MySQL or MariaDB — so
+every manually entered row is exempt from the constraint while every imported
+one is held to it. Two businesses may both import the provider's order
+"1001"; one business may import "1001" from two different providers; the same
+business cannot import the same record twice.
+
 ### 3.6 `orders`
 
 | Column | Type | Notes |

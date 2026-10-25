@@ -365,13 +365,24 @@ Queue driver: `database` for the MVP. Redis is not introduced until there is a r
 
 | Job | Phase | Why queued |
 | --- | --- | --- |
+| `ProcessWebhookReceipt` | **Phase 5 — shipped** | The provider is waiting on the response and retries a slow one |
 | `GenerateExport` | Post-MVP | Large CSV/PDF exceeding a synchronous response |
 | `RebuildDailyMetrics` | Post-MVP | Batch aggregation over a date range |
 | `SendScheduledReport` | Post-MVP | Email delivery, external and slow |
 | `RecalculateInventoryCache` | Post-MVP | Reconciliation sweep |
 
-MVP exports are synchronous and row-capped. Queue workers only become a deployment
-requirement when the first real job ships, which keeps Phase 01 operationally simple.
+Exports are still synchronous and row-capped. The queue exists now, but that is not a
+reason to move work onto it: things move when something measured says they should.
+
+**A queue worker is a deployment requirement from Phase 5 on** (ADR-027), alongside the
+scheduler's cron. The failure mode if it is forgotten is quiet in the worst way — the
+webhook endpoint keeps answering 202, because receiving did succeed, and nothing is ever
+handled. The integration dashboard surfaces unprocessed receipts for that reason.
+
+**Every job carries its business and restores it** through `WithBusinessContext`
+middleware, and a job naming no business throws rather than running for everyone. Jobs
+carry ids rather than models: `SerializesModels` re-fetches through the tenant scope with
+no business in context, and the row comes back missing.
 
 **Scheduled reports (Post-MVP).** A `report_schedules` table holds a saved report
 definition, a cron expression, recipients and the acting user. The scheduler dispatches

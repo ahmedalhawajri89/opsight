@@ -361,10 +361,15 @@ exist. Laravel's driver abstraction makes the switch a configuration change.
 database contention to show. Redis then also improves rate limiting across multiple
 application instances.
 
-**In sight (2026-10).** ADR-026's audit-log value sweep runs synchronously inside a
-request and is bounded by no filter — the first operation here whose cost a user can grow
-without limit. It is accepted for now because an erasure is rare and human-initiated, but
-it is the operation that will cross this trigger.
+**Crossed (2026-10), partly.** ADR-026's audit-log value sweep brought the trigger into
+sight; ADR-027 crossed it. Webhook deliveries are handled by a queued job, because the
+provider is waiting on the response and retries a slow one — which is how an importer
+produces two of the same order. Deployment now needs `queue:work` as well as the
+scheduler's cron.
+
+What has NOT changed: exports are still synchronous and row-capped, and the erasure sweep
+is still synchronous. Those move to the queue when something measured says they should,
+not because a queue now exists.
 
 ---
 
@@ -1065,6 +1070,106 @@ wrong for the same reason it is right there — see decision 3.
 the path under `commandRoutePaths`. That is true and irrelevant:
 `Application::configure()` already calls `withCommands()` with no arguments, which
 defaults to scanning `app/Console/Commands`. Reading a function is not running it.
+
+## ADR-027 — Integration plumbing, and the first queued job
+
+**Status:** Accepted (2026-10)
+**Affects:** `integrations`, `webhook_receipts`, `source`/`external_id` on products,
+customers and orders, a new `app/Jobs/`, `config/integrations.php`, one public route
+**Supersedes in part:** ADR-011 (no queued jobs)
+
+**Context.** The Salla importer and the WhatsApp alerts are the two things P2 is for, and
+both need the same four things underneath: somewhere to keep a connected account's tokens,
+a way to receive a provider's webhooks without being fooled by a forged one, a way to not
+create the same order twice, and a way to do work outside a request. Building those once,
+before either integration, is cheaper than building them twice inside each.
+
+This phase deliberately ships **no provider**. Salla's signature header, event names and
+payload shapes are read from Salla's current documentation when the importer is built, not
+guessed at now — a contract shaped around an imagined provider is one the real provider
+then has to be bent into.
+
+**Decision.**
+
+1. **Tokens are encrypted by a cast, not by the column.** `integrations.access_token` and
+   `refresh_token` are `encrypted`, so the database holds ciphertext. The threat is a copy
+   of the data leaving the server; a refresh token is a standing grant to read a
+   business's whole order history. The tests assert against the **raw column**, because
+   asserting through the model would decrypt and prove nothing. Both are `$hidden`, so a
+   carelessly written resource cannot serialise them.
+
+   **The cost is `APP_KEY`.** Rotating it without re-encrypting disconnects every
+   integration. That is the right way round: a lost connection is a reconnection, a leaked
+   refresh token is somebody else reading the business's books.
+
+2. **`source` and `external_id` land now, empty.** They are what makes importing
+   idempotent — re-importing an order must update the row it made last time. Unique on
+   `(business_id, source, external_id)`, so two businesses may both import the provider's
+   order "1001", one business may import "1001" from two providers, and every manually
+   entered row is exempt because NULLs do not collide. Added later, they would have to be
+   reconciled against the duplicates the first run already made.
+
+3. **Every delivery is stored before it is believed, and answered before it is handled.**
+   Unknown provider → 404, so there is no endpoint accepting payloads nothing can verify.
+   Oversized body → 413, because the body is the one thing an unauthenticated caller
+   controls before any check runs. Bad signature → stored, then 401: that row is how an
+   operator tells a rotated secret from someone probing. Good signature → stored under the
+   provider's own event id, 202, and a job.
+
+   A duplicate event id is answered 202 "duplicate" and goes no further. Both a lookup and
+   a unique index, because only the index cannot lose a race.
+
+4. **`WebhookReceipt` carries neither tenancy trait — the only model that does not.**
+   `ScopedToBusiness` would hide the rejected deliveries an operator most needs to see.
+   `BelongsToBusiness` is the interesting one: it fills `business_id` from whatever
+   business is in context, which is right everywhere else and wrong here, because a
+   delivery's owner must come from the payload that was just verified rather than from
+   ambient state. A test caught it filing an unverified delivery under a real business.
+
+5. **A job carries its business, and a middleware restores it.** `CurrentBusiness` is
+   container-scoped and Laravel flushes scoped instances between jobs, so inheriting the
+   previous job's business "should" not happen. Should is not something anyone can act on,
+   so `WithBusinessContext` sets it explicitly, restores the caller's context afterwards
+   however the job ends, and **throws when a job names no business** — a job must never
+   run for everyone. Jobs carry ids, not models: `SerializesModels` re-fetches through the
+   global scope with no business in context, and the row would come back missing.
+
+6. **The stock policy for imported orders, decided here and implemented with the
+   importer.** When a store is the system of record, it has already decremented its own
+   stock; an importer that also decrements produces an order whose stock moved twice.
+   So the importer **does not move stock for an imported order**. Quantities are synced
+   from the store as a distinct movement reason, `source_sync`, which keeps the ledger
+   invariant (every change has a row explaining it) without claiming a sale happened here.
+
+   The enum value lands with the code that writes it, not now: a reason nothing can
+   produce is dead weight in a schema.
+
+**Rejected: a generic "integration" abstraction with adapters for everything.** Two
+providers that do genuinely different things — importing a store and sending a message —
+share a token store and nothing else. The webhook contract covers what they do share.
+
+**Rejected: handling the delivery inside the request.** It is the shortest path to the
+duplicate this whole design exists to prevent: the provider times out, retries, and now
+there are two orders.
+
+**Costs accepted.**
+
+- **ADR-011 is now partly superseded.** That decision said the MVP has no queued jobs and
+  named "the first real background job" as its revisit trigger. ADR-026 said the trigger
+  was in sight; this is it. Deployment now needs a worker (`queue:work`) as well as the
+  scheduler's cron, both recorded in SETUP.md. **A deployment that forgets the worker
+  fails silently in the worst way: the endpoint keeps answering 202, because receiving did
+  succeed, and nothing is ever handled.** The integration dashboard in Phase 6 shows
+  unprocessed receipts for exactly that reason.
+- **`external_event_id` is unique across providers, not per provider.** A collision
+  between two providers' id schemes would reject a genuine delivery. That is the safe
+  direction to fail, and the column carries the provider's own namespace in practice.
+- **An unmatched delivery is kept and not queued.** Genuine, verified, for a store we
+  cannot place — most likely one that disconnected mid-flight. Failing a job four times
+  would say nothing the row does not.
+- **No provider ships**, so none of this is exercised in production until Phase 6. The
+  tests run against a fake that signs with HMAC-SHA256, which is what both Salla and Meta
+  use — a fake shaped like the real thing, rather than a mock that returns true.
 
 ## Open decisions
 

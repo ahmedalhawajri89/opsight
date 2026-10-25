@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,6 +48,19 @@ Route::prefix('v1')->group(function (): void {
     Route::post('auth/register', [AuthController::class, 'register'])
         ->middleware('throttle:register')
         ->name('auth.register');
+
+    /*
+     * Webhook deliveries (ADR-027). Unauthenticated by necessity — a provider
+     * has no session — and the signature is the authentication.
+     *
+     * An unregistered provider name is a 404, so this is not an open endpoint
+     * waiting for a handler: today there are no providers and every name is a
+     * 404. Phase 6 registers Salla.
+     */
+    Route::post('webhooks/{provider}', WebhookController::class)
+        ->middleware('throttle:webhooks')
+        ->where('provider', '[a-z][a-z0-9_-]{1,31}')
+        ->name('webhooks.receive');
 
     // ---- Authenticated -----------------------------------------------------
     Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function (): void {

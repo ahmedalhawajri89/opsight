@@ -143,6 +143,21 @@ it('answers 404 to every route that names another business\'s record, and change
             continue;
         }
 
+        /*
+         * The webhook route's {provider} names a provider, not a record, and
+         * the route is deliberately public and unauthenticated — the
+         * signature is its authentication (ADR-027). Its own suite covers
+         * the isolation that matters there: which business a verified
+         * delivery is filed under.
+         *
+         * Listed by NAME rather than skipped by shape, so a future route
+         * with an unfamiliar parameter still fails this test rather than
+         * quietly matching an exemption.
+         */
+        if ($route->getName() === 'webhooks.receive') {
+            continue;
+        }
+
         $unknown = array_diff($parameters, array_keys($records));
         expect($unknown)->toBe([], "Route {$route->uri()} has a parameter this test cannot fill: ".implode(', ', $unknown));
 

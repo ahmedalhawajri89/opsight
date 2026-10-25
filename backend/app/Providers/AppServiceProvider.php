@@ -114,6 +114,17 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('password', static fn (Request $request): Limit => Limit::perMinute(5)->by($byUser($request)));
 
         RateLimiter::for('health', static fn (Request $request): Limit => Limit::perMinute(30)->by((string) $request->ip()));
+
+        /*
+         * Webhook deliveries (ADR-027), counted per provider and address.
+         *
+         * Generous on purpose: a busy store legitimately bursts — one sale,
+         * forty order events — and a provider that gets a 429 simply retries,
+         * which costs more than letting it through. This is a ceiling against
+         * a flood, not a traffic policy.
+         */
+        RateLimiter::for('webhooks', static fn (Request $request): Limit => Limit::perMinute(300)
+            ->by($request->route('provider').'|'.$request->ip()));
     }
 
     /**
