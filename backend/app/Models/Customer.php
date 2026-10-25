@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string|null $name_ar
  * @property string|null $country
+ * @property Carbon|null $erased_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -56,7 +57,7 @@ class Customer extends Model
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return ['is_active' => 'boolean', 'erased_at' => 'datetime'];
     }
 
     /** @return HasMany<Order, $this> */

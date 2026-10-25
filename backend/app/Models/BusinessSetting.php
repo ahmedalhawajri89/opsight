@@ -33,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $commercial_registration
  * @property int $week_starts_on
  * @property list<int>|null $weekend_days
+ * @property int $activity_retention_days
  * @property Carbon|null $created_at
  */
 #[ObservedBy(AuditObserver::class)]
@@ -73,6 +74,7 @@ class BusinessSetting extends Model
         'commercial_registration',
         'week_starts_on',
         'weekend_days',
+        'activity_retention_days',
     ];
 
     /** @return array<string, string> */
@@ -87,6 +89,7 @@ class BusinessSetting extends Model
             'prices_include_vat' => 'boolean',
             'week_starts_on' => 'integer',
             'weekend_days' => 'array',
+            'activity_retention_days' => 'integer',
         ];
     }
 

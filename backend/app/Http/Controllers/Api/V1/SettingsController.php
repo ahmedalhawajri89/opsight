@@ -71,6 +71,8 @@ class SettingsController extends Controller
                 // The business week (ADR-020), ISO days: 1 = Monday … 7 = Sunday.
                 'week_starts_on' => (int) $settings->week_starts_on,
                 'weekend_days' => $settings->weekend_days ?? [],
+                // How long the audit log is kept, in days (ADR-026).
+                'activity_retention_days' => (int) $settings->activity_retention_days,
             ],
             'meta' => [
                 // Non-null: the guard above returned already if it were not.
@@ -87,6 +89,17 @@ class SettingsController extends Controller
                  * the screen can say that, rather than implying a restatement.
                  */
                 'applies_from_now' => ['vat_enabled', 'vat_rate', 'prices_include_vat'],
+                /*
+                 * A third list, because the other two both say the wrong thing
+                 * here. `affects_history` promises "the totals move, the
+                 * records do not" — and LOWERING a retention window moves no
+                 * total and DESTROYS records, on the next nightly run, with
+                 * nothing to undo it. `applies_from_now` would reassure.
+                 *
+                 * The screen warns on a decrease only: raising the window
+                 * deletes nothing.
+                 */
+                'destructive' => ['activity_retention_days'],
             ],
         ]);
     }
@@ -120,6 +133,12 @@ class SettingsController extends Controller
             'week_starts_on' => ['sometimes', 'integer', 'between:1,7'],
             'weekend_days' => ['sometimes', 'array', 'max:6'],
             'weekend_days.*' => ['integer', 'between:1,7', 'distinct'],
+            /*
+             * Audit retention, in days (ADR-026). The floor matches the CHECK
+             * constraint: a window shorter than an investigation is not a
+             * policy, and the only person it serves is the one being audited.
+             */
+            'activity_retention_days' => ['sometimes', 'integer', 'between:30,3650'],
         ]);
 
         $settings = BusinessSetting::current();

@@ -28,6 +28,10 @@ return [
         'unsortable' => "Cannot sort by ':field'. Allowed: :allowed.",
     ],
 
+    'customer' => [
+        'already_erased' => 'This customer was already erased. Their personal details are gone and cannot be erased again.',
+    ],
+
     'export' => [
         'too_many_rows' => 'This export would contain :rows rows, above the limit of :limit. Narrow the filters and try again.',
     ],

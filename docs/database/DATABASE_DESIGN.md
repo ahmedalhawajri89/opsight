@@ -123,6 +123,7 @@ Singleton. One row, enforced by a fixed primary key of 1.
 | `timezone` | VARCHAR(64) | IANA name; **drives every metric period boundary** |
 | `fiscal_year_start_month` | TINYINT UNSIGNED | 1–12; YTD and QTD depend on it |
 | `default_low_stock_threshold` | INT UNSIGNED | Fallback when a product sets none |
+| `activity_retention_days` | SMALLINT UNSIGNED | How long the audit log is kept; default 730, `CHECK (BETWEEN 30 AND 3650)` (ADR-026) |
 | `created_at`, `updated_at` | TIMESTAMP | |
 
 Purpose: business configuration that an Owner edits at runtime, kept out of `.env`.
@@ -200,11 +201,19 @@ in the schema.
 | `country` | CHAR(2) NULL | ISO 3166-1 alpha-2; enables geographic breakdown |
 | `notes` | TEXT NULL | |
 | `is_active` | BOOLEAN | Default true |
+| `erased_at` | TIMESTAMP NULL | Set when a data-subject erasure has overwritten the identifying columns (ADR-026) |
 | `created_by` | BIGINT UNSIGNED NULL | FK → `users.id` `ON DELETE SET NULL` |
 | `deleted_at` | TIMESTAMP NULL | |
 | `created_at`, `updated_at` | TIMESTAMP | |
 
 Indexes: `UNIQUE(email)`, `INDEX(name)`, `INDEX(created_at)`, `INDEX(country)`.
+
+**On erasure, `deleted_at` and `created_at` stay as they are, deliberately.**
+`MetricCalculator::dormantCustomerCount()` reads `deleted_at` and `QuickStats` reads both,
+so soft-deleting or re-dating an erased customer would move figures that describe trade
+rather than people. The identifying columns are overwritten in place instead; `email`
+becomes NULL rather than a sentinel, because the unique index would otherwise collide on
+the second erasure (ADR-026).
 
 **No `total_orders`, `total_spent` or `first_order_at` columns.** Every one of those is a
 metric derived from `orders`, and storing them creates a second source of truth that goes

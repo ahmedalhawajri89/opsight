@@ -63,6 +63,14 @@ enum Ability: string
     case ExpensesDelete = 'expenses.delete';
     case UsersDeactivate = 'users.deactivate';
 
+    /*
+     * A data-subject erasure request (ADR-026). Owner only, irreversible, and
+     * deliberately NOT folded into customers.delete: that one is a reversible
+     * soft delete which CustomerPolicy refuses for a customer with order
+     * history, and this one exists for precisely that customer.
+     */
+    case CustomersErase = 'customers.erase';
+
     // ---- Export ------------------------------------------------------------
     case OrdersExport = 'orders.export';
     case CustomersExport = 'customers.export';

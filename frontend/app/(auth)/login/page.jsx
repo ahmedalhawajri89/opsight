@@ -42,7 +42,13 @@ export default function LoginPage() {
               {t('login.createBusiness')}
             </Link>
           </p>
-          <p className="text-(--color-muted)">{t('login.help')}</p>
+          <p className="text-(--color-muted)">
+            {t('login.help')}{' '}
+            {/* Readable without an account, which is the point of it. */}
+            <Link href="/privacy" className="underline-offset-4 hover:underline">
+              {t('privacy.title')}
+            </Link>
+          </p>
         </div>
       }
     >

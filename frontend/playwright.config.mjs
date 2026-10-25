@@ -55,7 +55,7 @@ export default defineConfig({
     {
       // Signing in, out and up is what these specs test, so they do it for real.
       name: 'anonymous',
-      testMatch: /(auth|onboarding)\.spec\.js/,
+      testMatch: /(auth|onboarding|privacy)\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
 

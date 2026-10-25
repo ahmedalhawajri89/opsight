@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Compliance\EraseCustomer;
 use App\Domain\Export\CsvExport;
+use App\Domain\Export\CustomerDataExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Http\Resources\OrderResource;
@@ -124,6 +126,49 @@ class CustomerController extends Controller
         $customer->delete();   // soft
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Everything held about one person, for a data-subject request (ADR-026).
+     *
+     * Gated by `customers.export`, not a new ability: the payload is a strict
+     * subset of what the customer list export plus this customer's order
+     * history already release to the same three roles. A separate ability
+     * would gate identical data under a different name.
+     */
+    public function exportData(Request $request, Customer $customer, CustomerDataExport $export): JsonResponse
+    {
+        $this->authorize('export', Customer::class);
+
+        return response()
+            ->json($export->for($customer, $request))
+            ->withHeaders([
+                'Content-Disposition' => 'attachment; filename="'.$export->filename($customer).'"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+    }
+
+    /**
+     * Forget the person, keep the trade (ADR-026).
+     *
+     * Returns 200 and the resource rather than 204, unlike destroy(): the row
+     * is still there and visibly different, so the screen should repaint with
+     * what it became instead of guessing.
+     */
+    public function erase(Request $request, Customer $customer, EraseCustomer $erase): CustomerResource
+    {
+        $this->authorize('erase', $customer);
+
+        $validated = $request->validate([
+            /*
+             * Why, in the operator's own words. It goes into the audit context
+             * and nowhere else, and it is the only part of an erasure that
+             * anyone can review afterwards — the data it acted on is gone.
+             */
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+
+        return CustomerResource::make($erase($customer, $validated['reason']));
     }
 
     /** A customer's own order history. */

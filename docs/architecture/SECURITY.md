@@ -250,12 +250,29 @@ the entries that matter.
 tokens, `remember_token`. A central redaction key list is applied to every diff before
 writing, and it is unit-tested with a case for each key.
 
-**Integrity.** The application exposes no update or delete path for the table. In a
-hardened deployment the application's database user is granted `INSERT` and `SELECT` only
-on it, so tampering requires administrative access, which is itself auditable.
+**Integrity.** The application exposes no update or delete path for the table **over
+HTTP**: no route writes to it, and a test asserts that. Two processes outside the request
+cycle do write, and both are named here rather than left to be discovered (ADR-026):
 
-Retention: indefinite in the MVP. Monthly partitioning and archival are noted for when the
-table grows large.
+- `opsight:prune-activity`, the nightly retention command, DELETEs entries past the
+  window;
+- a customer erasure UPDATEs the rows that carry that person's details, replacing the
+  values and keeping the keys.
+
+So the hardened grant is no longer `INSERT, SELECT` for one user. It is `INSERT, SELECT`
+for the web user, and `DELETE, UPDATE` additionally for the account the scheduler runs as.
+Tampering through the application is still impossible; tampering through the database
+still requires administrative access.
+
+**Retention.** Per business, `business_settings.activity_retention_days`, 730 days by
+default and constrained to between 30 and 3,650. Entries past the window are deleted by a
+nightly scheduled command, which runs each business in its own tenant context and sweeps
+rows belonging to no business at the longest window any business has configured. The
+deletion is itself audited, after the fact, in a row the prune cannot reach.
+
+A floor of 30 days is deliberate: a retention window shorter than an investigation is not
+a policy, and the only person it serves is the one being audited. Monthly partitioning and
+archival are still noted for when the table grows large.
 
 ## 11. Sensitive data handling
 
@@ -265,7 +282,7 @@ table grows large.
 | Session cookies | Secret | HttpOnly, Secure, SameSite |
 | Product cost, COGS, margin | Confidential | Ability-gated, omitted from responses (§4) |
 | Financial aggregates | Confidential | Ability-gated |
-| Customer PII (name, email, phone, address) | Confidential | Authenticated-only, export-gated, audited |
+| Customer PII (name, email, phone, address) | Confidential | Authenticated-only, export-gated, audited, erasable on request (§16) |
 | Order data | Internal | Authenticated-only |
 | Business settings | Internal | Owner-only write |
 
@@ -279,7 +296,9 @@ table grows large.
   search and sorting on exactly the columns the product needs to search and sort, for a
   threat (database file theft) better addressed by disk-level encryption and access control.
   Recorded as a conscious decision, with `customers.phone` and address noted as the first
-  candidates should the requirement change.
+  candidates should the requirement change. Erasure (§16) is the mitigation that exists
+  today: a person's identifying columns can be overwritten in place, in the customers
+  table and in the audit log's copy of them.
 - Backups inherit the same classification and require the same access control. Backup
   strategy is a deployment-phase deliverable.
 
@@ -341,3 +360,79 @@ Binding on Phase 01 onward:
 13. CSV cells beginning `=`, `+`, `-` or `@` are escaped in export output.
 14. An `activity_logs` diff never contains a redaction-list key.
 15. The last active Owner cannot be demoted or deactivated.
+16. A customer erasure leaves `MetricSummary` byte-identical, and leaves no email, phone
+    or address anywhere in `activity_logs`.
+17. The erasure's own audit row carries no diff and no personal data.
+18. The retention command deletes past each business's own window and no other's, and
+    survives a business whose settings are missing.
+
+## 16. Compliance and data subject rights
+
+Added in Phase 4 of the sales-readiness work, for the Gulf market's data-protection
+expectations — Saudi PDPL in particular (MARKET_STUDY.md §9). The decisions behind this
+chapter are ADR-026.
+
+**Opsight is a processor, not the controller.** The people it holds records about are the
+customers of the business using it. That business decides what to record and answers the
+requests; what this chapter describes is the machinery the software gives it. A privacy
+statement written for those people is served at `/privacy`, readable without an account.
+
+### 16.1 Retention
+
+See §10. Per business, configurable, enforced nightly, floor of 30 days.
+
+### 16.2 Access — a copy of what is held
+
+`GET /customers/{customer}/export` returns one person's whole dossier as JSON: their
+record, every order they placed with its lines, payments and refunds, and the audit trail
+of changes to their record.
+
+Gated by `customers.export` rather than a new ability, because the payload is a strict
+subset of what the customer-list export plus that customer's order history already release
+to the same three roles. **One exception, and it matters:** an Analyst holds
+`customers.export` but not `activity.view`, so the audit section is omitted entirely for a
+reader without it — omitted, not emptied, the same rule the resources use for a denied
+field. The release is audited as `customer.exported` before the body is produced.
+
+### 16.3 Erasure — anonymisation, not deletion
+
+`POST /customers/{customer}/erase`, Owner only (`customers.erase`), reason required.
+
+Name, Arabic name, email, phone, company, address, city, tax number and notes are
+overwritten; `is_active` becomes false; `erased_at` is set. The country is kept — it
+identifies no one and the customer list filters on it. `deleted_at` and `created_at` are
+untouched.
+
+**The orders stay, and that is the design, not a limitation.** Every revenue, cost, tax
+and customer-growth figure in the product is computed from orders. Deleting them would not
+protect the person; it would silently restate the business's own reported history. Soft
+deleting the customer would do the same on a smaller scale, because two metrics read
+`customers.deleted_at`. After an erasure the orders remain and name nobody. The customer
+dimension of a breakdown keeps its value and shows a pseudonym — correct, and stated here
+so it is not filed as a defect.
+
+### 16.4 The audit log after an erasure
+
+Two passes, and one honest gap.
+
+The **targeted pass** rewrites every row whose subject is that customer, replacing the
+personal values and **keeping the keys**. This is the opposite of the redaction rule in
+§10, deliberately: there, the key's presence is the leak; here, the key's presence is the
+surviving auditable fact. "Someone changed this customer's email in March" must still be
+true afterwards.
+
+The **value sweep** then searches every row for the person's email, phone, tax number and
+address, because those can appear in a row with no subject id — most realistically in the
+search filter recorded with an `export.generated` entry.
+
+**The gap:** the sweep deliberately does not search for the NAME. A customer called "Ali"
+would have that substring struck out of "Alia Trading" in rows belonging to other people.
+The targeted pass already covers every row naming this customer, so what remains exposed
+is a short name inside an old search filter. A bounded, stated gap was judged a smaller
+harm than corrupting unrelated audit history.
+
+### 16.5 What is not provided
+
+No self-service portal for the data subject — requests go through the business. No
+automatic erasure on a schedule. No data-processing agreement generator. Each is absent
+deliberately, and none of them is implied anywhere in the product.

@@ -63,6 +63,11 @@ final class AbilityRegistry
      * Full operational and financial authority. No authority over access
      * control, users or business settings, and no hard deletes.
      *
+     * Note on what is ABSENT: `customers.erase` is not listed here, and that
+     * omission is the denial — these three roles are allowlists, and only the
+     * Owner's list is "everything". A Manager may hide a customer; forgetting
+     * one is irreversible and the Owner's alone (ADR-026).
+     *
      * @return array<int, Ability>
      */
     private static function manager(): array

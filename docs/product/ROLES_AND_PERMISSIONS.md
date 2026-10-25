@@ -131,6 +131,7 @@ into an oracle for the hidden value.
 | --- | :---: | :---: | :---: | :---: |
 | `orders.delete` (draft only) | ✓ | ✓ | — | own |
 | `customers.delete` (soft) | ✓ | ✓ | — | — |
+| `customers.erase` (anonymise) | ✓ | — | — | — |
 | `products.deactivate` | ✓ | ✓ | — | — |
 | `expenses.delete` | ✓ | ✓ | — | — |
 | `users.deactivate` | ✓ | — | — | — |
@@ -138,6 +139,15 @@ into an oracle for the hidden value.
 
 No role can hard-delete a record that participates in a metric. Deletion is deactivation
 or soft-deletion; the row survives so that history does not change underneath a report.
+
+**`customers.erase` is the opposite case to `customers.delete`, not a stronger version of
+it** (ADR-026). A soft delete is refused for a customer with committed orders, because
+hiding them would rewrite history. An erasure is *for* exactly that customer: it answers a
+data-subject request by overwriting the person — name, email, phone, address, tax number —
+while every order, every figure and the audit trail of what was done stay exactly as they
+were. It is irreversible, it rewrites the audit log's own copy of that person's details,
+and it is the Owner's alone. A Manager may hide a customer; only the Owner may forget
+one.
 
 ### 3.5 Export
 

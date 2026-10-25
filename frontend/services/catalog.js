@@ -75,6 +75,15 @@ export function deleteCustomer(id) {
   return api.delete(`/customers/${id}`);
 }
 
+/** One person's whole dossier, for a data-subject request (ADR-026). */
+export function exportCustomerData(id) {
+  return download(`/customers/${id}/export`, { fallbackName: `customer-${id}.json` });
+}
+
+export function eraseCustomer({ id, reason }) {
+  return api.post(`/customers/${id}/erase`, { reason });
+}
+
 /* -------------------------------------------------------------------------- */
 /* Inventory                                                                   */
 /* -------------------------------------------------------------------------- */

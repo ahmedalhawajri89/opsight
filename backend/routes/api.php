@@ -109,6 +109,20 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy']);
         Route::get('customers/{customer}/orders', [CustomerController::class, 'orders']);
 
+        /*
+         * A data-subject export, and an erasure (ADR-026). Sub-resource
+         * actions for the same reason the order transitions are: erasing a
+         * person is not `PATCH /customers/1 {name: null}`, it is a named,
+         * audited event with legal meaning.
+         *
+         * The export spends the same budget as every other bulk extraction —
+         * it is one person's whole dossier. No ordering hazard with
+         * `customers/export` above: that is two segments and these are three.
+         */
+        Route::get('customers/{customer}/export', [CustomerController::class, 'exportData'])
+            ->middleware('throttle:exports');
+        Route::post('customers/{customer}/erase', [CustomerController::class, 'erase']);
+
         /* ---- Products ---------------------------------------------------- */
         Route::get('products', [ProductController::class, 'index']);
         Route::post('products', [ProductController::class, 'store']);

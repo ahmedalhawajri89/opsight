@@ -43,6 +43,51 @@ const en = {
     },
   },
 
+  privacy: {
+    title: 'Privacy',
+    subtitle: 'What Opsight holds, for how long, and how to have it removed.',
+    intro:
+      'Opsight is business software. The people it holds records about are the customers of the business using it, and that business decides what to record. This page describes what the software does with those records — not what any particular business does.',
+    back: 'Back to sign in',
+    held: {
+      title: 'What is held',
+      body:
+        'For a customer: name, an Arabic name if given, email, phone, company, address, city, country, tax number and free-text notes. For an order: what was bought, when, at what price, and what was paid. For a member of staff: name, email, role, language and the time they last signed in.',
+    },
+    purpose: {
+      title: 'Why it is held',
+      body:
+        'To run the business that entered it: to raise an order, to know who placed it, and to report revenue, cost and stock. Nothing is sold, shared with an advertiser, or used to train anything. There are no third-party processors receiving this data.',
+    },
+    retention: {
+      title: 'How long it is kept',
+      body:
+        'Orders, expenses and stock movements are kept for as long as the business keeps its account, because every historical figure is computed from them. The activity log — who changed what, and when — is kept for a window the business sets, {default} days by default, and entries past it are deleted automatically each night.',
+    },
+    access: {
+      title: 'Asking for a copy',
+      body:
+        'A business can export everything it holds about one person as a single file: their record, every order they placed, and the audit trail of changes to their record. Ask the business you deal with.',
+    },
+    erasure: {
+      title: 'Asking to be forgotten',
+      body:
+        'A person can be erased. Their name, email, phone, company, address, city and tax number are overwritten and cannot be recovered, and the activity log is rewritten so that it no longer carries those details either.',
+      why:
+        'The orders themselves stay. This is deliberate, and it is worth being plain about: every revenue, cost and tax figure the business has ever reported is computed from its orders, so deleting them would not protect a person — it would silently restate the business\u2019s own history. After an erasure the orders remain, and they no longer name anyone.',
+    },
+    access_control: {
+      title: 'Who can see what',
+      body:
+        'Access follows the role the business assigns. An owner sees everything. A manager runs operations and sees cost. An analyst reads figures and exports them but changes nothing. Front-line staff see the orders they work on, and no cost, no export and no audit trail. Erasing a person is the owner\u2019s alone.',
+    },
+    contact: {
+      title: 'How to ask',
+      body:
+        'Opsight does not hold a direct relationship with the customers of the businesses that use it. Requests for a copy, a correction or an erasure go to the business you deal with, which has the controls described here.',
+    },
+  },
+
   search: {
     label: 'Search',
     placeholder: 'Search anything…',
@@ -668,6 +713,18 @@ const en = {
       deleteTitle: 'Delete this customer?',
       deleteConsequence:
         'The record is hidden rather than erased, and every metric stays as it was. A customer with committed orders cannot be deleted at all — their history would stop naming anyone.',
+      exportData: 'Export their data',
+      erase: 'Erase personal data',
+      eraseTitle: 'Erase this person from the records?',
+      eraseConsequence:
+        'Their name, email, phone, company, address and tax number are overwritten and cannot be recovered. Their orders stay, and every figure stays exactly as it is — the orders simply stop naming anyone. The activity log keeps what was done and loses who it was done to.',
+      eraseReason: 'Why (recorded in the audit log)',
+      eraseReasonPlaceholder: 'Erasure requested by the customer, ticket…',
+      eraseConfirmLabel: 'Type the customer name to confirm',
+      eraseSubmit: 'Erase permanently',
+      erased: 'Erased',
+      erasedNotice:
+        'This person was erased on {date}. Their orders and every figure are unchanged; only the details that identified them are gone.',
       contact: 'Contact',
       noCompany: 'No company recorded',
       orders: 'Orders',
@@ -1018,6 +1075,15 @@ const en = {
         'These two decide where every period begins and ends. Changing either one leaves every record untouched but moves which month, quarter or year it is counted in, so historical totals will shift.',
       warning:
         'You have changed a field that moves historical figures. Saving will change the totals reported for periods that have already closed. The underlying orders and expenses are not modified.',
+    },
+    retention: {
+      title: 'Audit log retention',
+      description:
+        'How long the activity log is kept. Entries older than this are deleted automatically, once a night. Nothing else is affected: orders, expenses and every figure stay exactly as they are.',
+      label: 'Keep the activity log for (days)',
+      hint: 'Between {min} and {max} days. The default of {default} is two years.',
+      warning:
+        'You are shortening how long the activity log is kept. Entries older than the new window will be deleted on the next nightly run, permanently, and nothing restores them.',
     },
     vat: {
       title: 'Value-added tax',

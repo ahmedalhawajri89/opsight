@@ -176,6 +176,17 @@ php artisan migrate:fresh --seed && php artisan serve --port=8010
 cd frontend && npx playwright install chromium && npm run e2e
 ```
 
+**The scheduler.** One cron entry runs everything scheduled, which today is the nightly
+audit-log prune (ADR-026):
+
+```bash
+* * * * * cd /path/to/backend && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Without it nothing errors — the audit log simply keeps growing, which is the kind of
+failure nobody notices. On a development machine it is not needed; run
+`php artisan opsight:prune-activity --dry-run` to see what it would remove.
+
 **Stop any `next dev` first.** `playwright.config.mjs` sets
 `reuseExistingServer: !CI`, so a dev server left on port 3000 is used instead of
 the production build the config asks for — and Next's floating "Open Next.js Dev

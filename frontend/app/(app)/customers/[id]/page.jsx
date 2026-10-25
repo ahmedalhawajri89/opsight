@@ -13,10 +13,13 @@ import { Badge, OrderStatusBadge, PaymentStatusBadge } from '@/components/ui/Bad
 import { Button } from '@/components/ui/Button';
 import { SkeletonTable, SkeletonText } from '@/components/ui/Skeleton';
 import { DataTable } from '@/components/data/DataTable';
+import { ExportButton } from '@/components/data/ExportButton';
 import { EmptyState, ErrorState, ForbiddenState } from '@/components/data/States';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
+import { Field, Input, Textarea } from '@/components/ui/Field';
 import { formatDate, formatMoney } from '@/lib/format';
+import * as catalog from '@/services/catalog';
 
 /**
  * One customer: who they are, and everything they have bought.
@@ -34,8 +37,11 @@ export default function CustomerDetailPage({ params }) {
   const { orders, meta, isLoading: ordersLoading } = useCustomerOrders(id, { per_page: 25 });
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [erasing, setErasing] = useState(false);
+  const [reason, setReason] = useState('');
+  const [typedName, setTypedName] = useState('');
   const [failure, setFailure] = useState(null);
-  const { remove } = useCustomerActions();
+  const { remove, erase } = useCustomerActions();
   const router = useRouter();
 
   if (isLoading) {
@@ -109,14 +115,28 @@ export default function CustomerDetailPage({ params }) {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {!customer.is_active && <Badge tone="neutral">{t('common.inactive')}</Badge>}
-            {can('customers.update') && (
+            {customer.erased_at && <Badge tone="neutral">{t('customers.detail.erased')}</Badge>}
+            {can('customers.export') && (
+              <ExportButton
+                label={t('customers.detail.exportData')}
+                onExport={() => catalog.exportCustomerData(customer.id)}
+              />
+            )}
+            {/* Nothing is editable, deletable or erasable once the person is
+                gone: there is no one left to act on. */}
+            {can('customers.update') && !customer.erased_at && (
               <Button variant="secondary" onClick={() => setEditing(true)}>
                 {t('customers.detail.edit')}
               </Button>
             )}
-            {can('customers.delete') && (
+            {can('customers.delete') && !customer.erased_at && (
               <Button variant="danger" onClick={() => setDeleting(true)}>
                 {t('customers.detail.delete')}
+              </Button>
+            )}
+            {can('customers.erase') && !customer.erased_at && (
+              <Button variant="danger" onClick={() => setErasing(true)}>
+                {t('customers.detail.erase')}
               </Button>
             )}
           </div>
@@ -199,6 +219,60 @@ export default function CustomerDetailPage({ params }) {
           }
         }}
       />
+
+      {/*
+        Erasure (ADR-026). Irreversible, so the operator types the name — a
+        confirmation you cannot give by reflex — and states a reason, which is
+        the only part of an erasure anyone can review afterwards.
+      */}
+      <ConfirmDialog
+        open={erasing}
+        onClose={() => setErasing(false)}
+        title={t('customers.detail.eraseTitle')}
+        consequence={t('customers.detail.eraseConsequence')}
+        confirmLabel={t('customers.detail.eraseSubmit')}
+        loading={erase.isPending}
+        confirmDisabled={typedName.trim() !== (customer.name ?? '').trim() || reason.trim().length < 3}
+        onConfirm={async () => {
+          setFailure(null);
+
+          try {
+            await erase.mutateAsync({ id: customer.id, reason: reason.trim() });
+            setErasing(false);
+            setReason('');
+            setTypedName('');
+            refetch();
+          } catch (error) {
+            setErasing(false);
+            setFailure(error.message);
+          }
+        }}
+      >
+        <div className="space-y-3">
+          <Field label={t('customers.detail.eraseReason')} required>
+            {(props) => (
+              <Textarea
+                rows={2}
+                maxLength={500}
+                placeholder={t('customers.detail.eraseReasonPlaceholder')}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                {...props}
+              />
+            )}
+          </Field>
+
+          <Field label={t('customers.detail.eraseConfirmLabel')} required>
+            {(props) => (
+              <Input
+                value={typedName}
+                onChange={(event) => setTypedName(event.target.value)}
+                {...props}
+              />
+            )}
+          </Field>
+        </div>
+      </ConfirmDialog>
 
       <CustomerFormDialog
         key={editing ? 'open' : 'closed'}

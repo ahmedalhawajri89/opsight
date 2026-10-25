@@ -42,6 +42,24 @@ class CustomerPolicy
             && ! $customer->hasOrderHistory();
     }
 
+    /**
+     * Erasure — the OPPOSITE case to delete() above, not a stronger one.
+     *
+     * delete() refuses a customer with committed orders because hiding them
+     * would rewrite history. Erasure exists FOR that customer: the orders
+     * stay, every figure is unmoved, and only the person behind them is
+     * removed. So there is deliberately no hasOrderHistory() guard here
+     * (ADR-026).
+     *
+     * Whether it has already been done is state, not authority, so it is not
+     * decided here: the service answers a second attempt with a 409 that says
+     * so, rather than a 403 that says the operator may not.
+     */
+    public function erase(User $user): bool
+    {
+        return $user->can(Ability::CustomersErase->value);
+    }
+
     public function viewLifetimeValue(User $user): bool
     {
         return $user->can(Ability::CustomersViewLtv->value);

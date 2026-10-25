@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { useSettings, useUpdateSettings } from '@/features/admin/useAdmin';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { getFormatLocale } from '@/lib/format';
+import { formatNumber, getFormatLocale } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
 import { Checkbox, Field, Input, NumberInput, Select } from '@/components/ui/Field';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
@@ -123,6 +123,17 @@ export default function SettingsPage() {
   const historyChanged =
     settings !== undefined &&
     affectsHistory.some((key) => key in draft && String(draft[key]) !== String(settings[key]));
+
+  /*
+   * Lowering the retention window deletes audit entries on the next nightly
+   * run, with nothing to undo it — so the warning fires on a DECREASE only.
+   * Raising it deletes nothing and deserves no alarm.
+   */
+  const retentionLowered =
+    settings !== undefined &&
+    (meta?.destructive ?? []).some(
+      (key) => key in draft && Number(draft[key]) < Number(settings[key]),
+    );
 
   // VAT changes apply to orders confirmed from now on; the server names them.
   const vatChanged =
@@ -400,6 +411,54 @@ export default function SettingsPage() {
                 className="rounded-(--radius-control) border border-(--color-line) bg-(--color-info-soft) px-3 py-2 text-sm text-(--color-info)"
               >
                 {t('settings.vat.appliesFromNow')}
+              </p>
+            )}
+          </fieldset>
+
+          {/*
+            Audit retention (ADR-026). A tone above the amber used for the
+            period fields: that change restates figures and is reversible by
+            changing it back, and this one destroys records that nothing
+            restores.
+          */}
+          <fieldset className="space-y-3 rounded-(--radius-control) border border-(--color-line) p-3">
+            <legend className="px-1 text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
+              {t('settings.retention.title')}
+            </legend>
+
+            <p className="text-sm leading-relaxed text-(--color-text-2)">
+              {t('settings.retention.description')}
+            </p>
+
+            <Field
+              label={t('settings.retention.label')}
+              hint={t('settings.retention.hint', {
+                min: formatNumber(30),
+                max: formatNumber(3650),
+                default: formatNumber(730),
+              })}
+              error={fieldErrors.activity_retention_days}
+              className="max-w-xs"
+            >
+              {(props) => (
+                <NumberInput
+                  min="30"
+                  max="3650"
+                  step="1"
+                  value={form?.activity_retention_days ?? ''}
+                  onChange={(event) => set('activity_retention_days', Number(event.target.value))}
+                  disabled={!editable}
+                  {...props}
+                />
+              )}
+            </Field>
+
+            {retentionLowered && (
+              <p
+                role="alert"
+                className="rounded-(--radius-control) border border-(--color-danger) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)"
+              >
+                {t('settings.retention.warning')}
               </p>
             )}
           </fieldset>

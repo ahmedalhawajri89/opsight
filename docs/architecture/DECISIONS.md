@@ -361,6 +361,11 @@ exist. Laravel's driver abstraction makes the switch a configuration change.
 database contention to show. Redis then also improves rate limiting across multiple
 application instances.
 
+**In sight (2026-10).** ADR-026's audit-log value sweep runs synchronously inside a
+request and is bounded by no filter — the first operation here whose cost a user can grow
+without limit. It is accepted for now because an erasure is rare and human-initiated, but
+it is the operation that will cross this trigger.
+
 ---
 
 ## ADR-012 — No client-side schema validation library
@@ -966,6 +971,100 @@ orders):
 A millisecond and a half on the request the product actually makes, in exchange for buckets
 that are right everywhere. The pathological case is a quarter of a second and reachable only
 by asking for a grain the auto-selection would never choose.
+
+## ADR-026 — Erasure by anonymisation, and a retention window per business
+
+**Status:** Accepted (2026-10)
+**Affects:** `activity_logs`, `customers`, `business_settings`, a new
+`app/Domain/Compliance/`, the first scheduled command, the settings and customer screens,
+a public privacy page
+
+**Context.** Selling to Saudi customers means answering PDPL questions the product had no
+answer for (MARKET_STUDY.md §9.1): how long is the audit log kept, how does a person get a
+copy of what is held about them, and how do they get it removed. The honest answers were
+"for ever", "they cannot" and "they cannot". The audit log's own documentation said
+*"Retention: indefinite in the MVP"*, and SECURITY.md promised the table was append-only.
+
+**Decision.**
+
+1. **Retention is a per-business setting, enforced nightly.**
+   `business_settings.activity_retention_days`, 730 by default, constrained 30–3,650 in
+   both the database and the request. `opsight:prune-activity` runs each business inside
+   its own tenant context, then sweeps rows belonging to no business at the longest window
+   any business configured — without that sweep they would never be pruned at all, because
+   `BusinessScope` hides them from every per-business pass.
+
+   The floor is not arbitrary. A retention window shorter than an investigation is not a
+   policy, and the only person it serves is the one being audited.
+
+2. **Erasure anonymises; it does not delete.** Every revenue, cost, tax and
+   customer-growth figure is computed from orders, so removing them would not protect the
+   person — it would silently restate the business's own history. `deleted_at` stays NULL
+   for the same reason: `MetricCalculator::dormantCustomerCount()` and `QuickStats` both
+   read it, so a soft delete moves the dashboard. The person's columns are overwritten in
+   place and `erased_at` is set.
+
+   A test holds `MetricSummary` byte-identical across an erasure. Because no summary
+   metric reads the customers table, that is nearly true by construction — so it is paired
+   with a control proving a soft delete of the same customer DOES move the figures.
+   Without the control the first test would pass whatever the code did.
+
+3. **The scrub replaces values and keeps keys — the inverse of `AuditRedactor`.** There,
+   the key's presence is the leak: `"password": "[redacted]"` still says a password was in
+   scope. Here the key's presence is the surviving auditable fact. "Someone changed this
+   customer's email in March" must stay true after the erasure; only the address goes.
+   Dropping the key would erase the accountability along with the data.
+
+4. **The value sweep is best-effort, and excludes the name.** Personal data also sits in
+   rows with no subject id — most realistically the search term recorded in an
+   `export.generated` entry's filters. A `LIKE` sweep finds those by email, phone, tax
+   number and address. It deliberately does not sweep for the name: a customer called
+   "Ali" would have that substring struck out of "Alia Trading" in other people's rows.
+   The targeted pass already covers every row naming this customer, so a bounded, stated
+   gap was judged a smaller harm than corrupting unrelated history.
+
+5. **The export reuses `customers.export`, with one correction.** The dossier is a strict
+   subset of what the list export plus the order history already release to the same
+   roles. But an Analyst holds `customers.export` and NOT `activity.view`, so the audit
+   section is omitted for a reader without it — omitted, not emptied.
+
+6. **`customers.erase` is Owner-only, and is the opposite case to `customers.delete`.**
+   The soft delete is refused for a customer with committed orders; erasure exists for
+   precisely that customer. A Manager may hide a customer; only the Owner may forget one.
+
+**Rejected: deleting the person's orders.** It is what "erasure" sounds like it should
+mean, and it is the one option that would make the product's numbers lie. Stated here
+because it will be proposed again.
+
+**Rejected: dropping the keys in the audit log.** Consistent with `AuditRedactor` and
+wrong for the same reason it is right there — see decision 3.
+
+**Costs accepted.**
+
+- **`activity_logs` is no longer append-only**, and SECURITY.md §10 now says so, with the
+  hardened grant split: `INSERT, SELECT` for the web user, `DELETE, UPDATE` additionally
+  for the scheduler's account. A promise the code no longer keeps is worse than no
+  promise.
+- **The value sweep is an unindexable `LIKE` scan over the fastest-growing table**, run
+  synchronously inside a request. Accepted because an erasure is a rare, human-initiated
+  act. It is, however, the first operation in this system whose cost is not bounded by a
+  filter — so **ADR-011's revisit trigger ("the first real background job") is now in
+  sight**, and this is the operation that will cross it.
+- **The breakdown's customer label changes** after an erasure while its value does not.
+  Correct, and named so it is not filed as a bug.
+- **The erasure's own audit row must suppress the observer.** `AuditRecorder::diff()`
+  builds `before` from `getRawOriginal()`, so the obvious `$customer->update([…])` writes
+  the name, email and address straight back into the table being scrubbed, in the same
+  transaction. The service uses `withoutAudit()` and records by hand with `changes: null`
+  — the second sanctioned use of that escape hatch, and a test holds it.
+- **The scheduler needs one real cron entry** (`* * * * * php artisan schedule:run`).
+  Without it nothing errors; the log simply keeps growing. Recorded in SETUP.md.
+
+**A correction worth keeping.** The plan for this phase asserted that a command in
+`app/Console/Commands/` would not be registered, because `withRouting(commands: …)` files
+the path under `commandRoutePaths`. That is true and irrelevant:
+`Application::configure()` already calls `withCommands()` with no arguments, which
+defaults to scanning `app/Console/Commands`. Reading a function is not running it.
 
 ## Open decisions
 

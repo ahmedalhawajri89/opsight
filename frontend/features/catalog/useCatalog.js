@@ -128,6 +128,12 @@ export function useCustomerActions() {
       onSuccess: invalidate,
     }),
     remove: useMutation({ mutationFn: catalog.deleteCustomer, onSuccess: invalidate }),
+    /*
+     * The same invalidation as the rest: an erasure changes the customer name
+     * printed on order rows and in the dashboard panels, and it writes audit
+     * rows — so it moves exactly the screens a rename moves.
+     */
+    erase: useMutation({ mutationFn: catalog.eraseCustomer, onSuccess: invalidate }),
   };
 }
 

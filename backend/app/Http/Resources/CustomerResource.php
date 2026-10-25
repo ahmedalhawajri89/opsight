@@ -31,6 +31,10 @@ class CustomerResource extends JsonResource
             'country' => $this->country,
             'notes' => $this->notes,
             'is_active' => $this->is_active,
+            // Set once a data-subject erasure has run (ADR-026). The screen
+            // reads this rather than sniffing the name for a sentinel, and it
+            // writes its own words in the reader's language.
+            'erased_at' => $this->erased_at?->toIso8601String(),
 
             // Order counts and lifetime value are METRICS, not columns. They
             // arrive from the analytics endpoints in Phase 04, computed from

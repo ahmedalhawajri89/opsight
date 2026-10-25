@@ -126,6 +126,11 @@ export function ConfirmDialog({
   consequence,
   confirmLabel,
   loading = false,
+  /*
+   * For a confirmation the reader must not be able to give by reflex — an
+   * irreversible erasure asks them to type the name first (ADR-026).
+   */
+  confirmDisabled = false,
   children,
 }) {
   const { t } = useI18n();
@@ -141,7 +146,7 @@ export function ConfirmDialog({
           <Button variant="ghost" onClick={onClose} disabled={loading}>
             {t('common.cancel')}
           </Button>
-          <Button variant="danger" onClick={onConfirm} loading={loading}>
+          <Button variant="danger" onClick={onConfirm} loading={loading} disabled={confirmDisabled}>
             {confirmLabel ?? t('common.confirm')}
           </Button>
         </>
