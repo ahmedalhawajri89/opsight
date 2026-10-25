@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\DB;
  * check neither can see, search or open the other's records.
  *
  * Never seeded in production: an installation starts with no invented
- * business.
+ * business. The public demo is the exception (config/demo.php).
  */
 class SecondBusinessSeeder extends Seeder
 {
@@ -44,6 +44,11 @@ class SecondBusinessSeeder extends Seeder
     public function run(): void
     {
         $business = Business::query()->firstOrCreate(['slug' => self::SLUG], ['name' => 'Al Noor Trading']);
+
+        // Configured here, so onboarded, as in DatabaseSeeder.
+        if ($business->onboarded_at === null) {
+            $business->forceFill(['onboarded_at' => now()])->save();
+        }
 
         if (CurrentBusiness::get()->run($business->id, fn (): bool => Product::query()->exists())) {
             return;

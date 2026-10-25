@@ -115,6 +115,13 @@ const en = {
     rememberHint: 'For {days} days. Leave it unticked on a shared computer.',
   },
 
+  demo: {
+    title: 'Try it with a demo account',
+    body: 'Each role sees a different Opsight, decided by the server. The business and its figures are invented, and everything goes back to how it was every night.',
+    secondBusiness: 'Owner of a second business, in Kuwaiti dinars',
+    signIn: 'Sign in',
+  },
+
   login: {
     headline:
       'Every figure here is computed from the records it came from, the moment you ask for it.',

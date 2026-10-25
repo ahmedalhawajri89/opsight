@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\ProtectDemoAccounts;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Support\DomainException;
@@ -68,6 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'active' => EnsureUserIsActive::class,
+            'demo' => ProtectDemoAccounts::class,
         ]);
 
         $middleware->removeFromGroup('web', AddLinkHeadersForPreloadedAssets::class);
