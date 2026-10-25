@@ -187,7 +187,9 @@ cd backend && php artisan queue:work --tries=4
 
 In production it belongs under a supervisor that restarts it, and
 `php artisan queue:restart` is part of deploying — a worker holds the old code
-in memory until it is told otherwise. On a development machine you only need
+in memory until it is told otherwise. The one deployment without a worker is
+the serverless demo, which sets `QUEUE_CONNECTION=sync` instead and accepts
+the consequence; docs/DEPLOYMENT.md says what that consequence is. On a development machine you only need
 it when exercising webhooks; everything else is synchronous.
 
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly

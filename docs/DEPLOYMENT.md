@@ -88,6 +88,19 @@ Leave `SESSION_DOMAIN` **unset**: the cookie belongs to the frontend's host.
 The disk is read-only except `/tmp`; `api/_runtime.php` moves storage and the
 compiled caches there.
 
+**`QUEUE_CONNECTION=sync` here, and `database` everywhere else.** SETUP.md says
+a queue worker is a requirement from Phase 5 on, and on an ordinary server it
+is. Serverless functions have no process to run one in, so on this deployment
+a queued job runs inline in the request that dispatched it.
+
+That is harmless for the demo as it stands: no webhook provider is registered
+(`config/integrations.php` is empty), so `/v1/webhooks/*` is a 404 and no job
+is ever dispatched. **It stops being harmless the moment a provider is
+registered here** — a delivery handled inside the request is exactly the slow
+response that makes a provider time out and retry, which is the duplicate
+ADR-027 exists to prevent. Connecting a real store to this demo means moving
+the API off serverless, or onto a queue service with its own worker.
+
 ## 3. The frontend project (`frontend/`)
 
 A second Vercel project from the same repository, **Root Directory**
