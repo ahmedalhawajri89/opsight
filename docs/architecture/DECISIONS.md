@@ -612,7 +612,7 @@ authority, and had to trust whatever figure someone typed.
 
 **Not decided here, deliberately.**
 - E-invoicing (ZATCA and others) is left to an accredited provider. Opsight will hand it
-  confirmed orders (MARKET_STUDY.md §4.3).
+  confirmed orders — the Gulf VAT requirement the product was shaped around.
 - VAT on shipping is not calculated. Shipping is outside revenue already, and the order
   form has no shipping input yet.
 
@@ -985,7 +985,7 @@ by asking for a grain the auto-selection would never choose.
 a public privacy page
 
 **Context.** Selling to Saudi customers means answering PDPL questions the product had no
-answer for (MARKET_STUDY.md §9.1): how long is the audit log kept, how does a person get a
+answer for: how long is the audit log kept, how does a person get a
 copy of what is held about them, and how do they get it removed. The honest answers were
 "for ever", "they cannot" and "they cannot". The audit log's own documentation said
 *"Retention: indefinite in the MVP"*, and SECURITY.md promised the table was append-only.

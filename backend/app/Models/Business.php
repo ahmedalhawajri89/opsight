@@ -28,7 +28,7 @@ class Business extends Model
 
     /**
      * The markets the setup wizard offers: the six Gulf states first, then the
-     * expansion markets of the market study (docs/product/MARKET_STUDY.md).
+     * expansion markets the product targets after the Gulf.
      */
     public const COUNTRIES = ['SA', 'AE', 'BH', 'KW', 'OM', 'QA', 'EG', 'JO', 'MA'];
 

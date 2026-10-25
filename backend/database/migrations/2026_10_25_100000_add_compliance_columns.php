@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Schema;
  * `activity_retention_days` is how long a business keeps its audit log. The
  * default of 730 is two years: long enough to answer "who changed this price
  * last spring?", short enough that a PDPL data-minimisation question has an
- * answer that is not "for ever" (MARKET_STUDY.md §9.1).
+ * answer that is not "for ever" — the question a Saudi buyer asks about
+ * PDPL data minimisation.
  *
  * The floor of 30 is deliberate. A retention window shorter than an
  * investigation is not a retention policy, it is an alibi — and the one person

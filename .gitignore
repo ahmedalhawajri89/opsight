@@ -67,3 +67,12 @@ coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Working files that are deliberately not published.
+#
+# The market study is commercial thinking — competitors, positioning, what to
+# build in what order — and belongs with the owner, not in a public
+# repository. The engineering documentation in docs/ stays: the code cites it
+# four hundred times, and a citation to a file nobody can open is worse than
+# no citation.
+/private/

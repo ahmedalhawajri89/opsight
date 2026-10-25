@@ -369,7 +369,7 @@ Binding on Phase 01 onward:
 ## 16. Compliance and data subject rights
 
 Added in Phase 4 of the sales-readiness work, for the Gulf market's data-protection
-expectations — Saudi PDPL in particular (MARKET_STUDY.md §9). The decisions behind this
+expectations — Saudi PDPL in particular. The decisions behind this
 chapter are ADR-026.
 
 **Opsight is a processor, not the controller.** The people it holds records about are the

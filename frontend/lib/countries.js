@@ -3,9 +3,9 @@
  *
  * These are STARTING POINTS the owner confirms or changes, never rules applied
  * behind their back: the wizard shows every one before it is saved. Weekends
- * and VAT rates are as the market study found them (docs/product/MARKET_STUDY.md
- * §4 and §5, September 2026). Tax rates change, which is why the wizard asks
- * the owner to check the rate rather than stating it as fact.
+ * and VAT rates are as they stood in September 2026. Tax rates change, which
+ * is why the wizard asks the owner to check the rate rather than stating it
+ * as fact.
  *
  * Weekdays are ISO-numbered, as the API stores them: 1 = Monday … 7 = Sunday.
  * The list order mirrors the backend's Business::COUNTRIES.
