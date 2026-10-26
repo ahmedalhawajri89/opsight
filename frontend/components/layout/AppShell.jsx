@@ -16,6 +16,8 @@ import Link from 'next/link';
 import packageInfo from '@/package.json';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { FocusControls } from '@/components/layout/FocusControls';
+import { FocusHint } from '@/components/layout/FocusHint';
+import { InstallPrompt } from '@/features/pwa/InstallPrompt';
 import { Icon } from '@/components/ui/Icon';
 import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
@@ -24,6 +26,7 @@ import { useI18n } from '@/features/i18n/I18nProvider';
 import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
 import { SearchDialog, TopBarSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
 import { useFocusMode } from '@/hooks/useFocusMode';
+import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 /**
@@ -233,6 +236,17 @@ export function AppShell({ children }) {
    */
   const focus = useFocusMode();
 
+  /*
+   * One sentence, once, so the feature is findable. It also ends the moment
+   * focus mode is first used: a reader who found it does not need telling.
+   */
+  const [showFocusHint, dismissFocusHint] = useSeenOnce('focus-mode');
+
+  // Per session, not per navigation — see recordVisit.
+  useEffect(() => {
+    recordVisit();
+  }, []);
+
   return (
     <div className="flex min-h-dvh">
       {/*
@@ -313,8 +327,14 @@ export function AppShell({ children }) {
                 focused={focus.focused}
                 fullscreen={focus.fullscreen}
                 supported={focus.supported}
-                onToggleFocus={focus.toggleFocus}
-                onToggleFullscreen={focus.toggleFullscreen}
+                onToggleFocus={() => {
+                  dismissFocusHint();
+                  focus.toggleFocus();
+                }}
+                onToggleFullscreen={() => {
+                  dismissFocusHint();
+                  focus.toggleFullscreen();
+                }}
               />
               {/*
                 The account menu is the way out of focus mode for a reader who
@@ -341,8 +361,16 @@ export function AppShell({ children }) {
             tabIndex={-1}
             className="mx-auto w-full max-w-[1760px] flex-1 px-4 py-5 focus:outline-none sm:px-6 lg:py-6"
           >
+            {/*
+              Above the content and in its flow, so it takes a line of its
+              own rather than landing on top of what the reader came for.
+            */}
+            <FocusHint show={showFocusHint} onDismiss={dismissFocusHint} />
+
             {children}
           </main>
+
+          <InstallPrompt />
         </TopBarContext.Provider>
       </div>
     </div>

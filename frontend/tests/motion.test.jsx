@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CountUp } from '@/components/data/CountUp';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useGsap } from '@/hooks/useGsap';
+import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 
 /*
 |--------------------------------------------------------------------------
@@ -214,6 +215,83 @@ describe('useFocusMode', () => {
 
     // Private browsing. The preference stops persisting; nothing else breaks.
     expect(() => render(<Probe />)).not.toThrow();
+
+    getItem.mockRestore();
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Hints that are offered once
+|--------------------------------------------------------------------------
+|
+| Two rules, and both of them are about trust rather than cleverness: a
+| dismissed hint never comes back, and an invitation that asks for a
+| commitment waits until the reader has one. Break the first and dismissing
+| anything in this application stops meaning anything, including the
+| messages that matter. Break the second and the application begs on the
+| first screen.
+|
+*/
+
+describe('useSeenOnce', () => {
+  function Probe({ after = 0 }) {
+    const [show, dismiss] = useSeenOnce('probe', { after });
+
+    return (
+      <button type="button" onClick={dismiss}>
+        {show ? 'offered' : 'quiet'}
+      </button>
+    );
+  }
+
+  afterEach(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+
+  it('never offers the same hint twice', async () => {
+    const { getByRole, unmount } = render(<Probe />);
+    expect(getByRole('button')).toHaveTextContent('offered');
+
+    await userEvent.click(getByRole('button'));
+    expect(getByRole('button')).toHaveTextContent('quiet');
+
+    // The point of the whole hook: a reload is not a second chance to ask.
+    unmount();
+    render(<Probe />);
+    expect(getByRole('button')).toHaveTextContent('quiet');
+  });
+
+  it('holds a hint back until the reader has come back', () => {
+    const { getByRole, unmount } = render(<Probe after={3} />);
+    expect(getByRole('button')).toHaveTextContent('quiet');
+
+    // Twice within one session is still one visit — browsing is not
+    // returning, and counting it would ask on the first look.
+    recordVisit();
+    recordVisit();
+    expect(getByRole('button')).toHaveTextContent('quiet');
+
+    unmount();
+    window.sessionStorage.clear();
+    recordVisit();
+    window.sessionStorage.clear();
+    recordVisit();
+
+    render(<Probe after={3} />);
+    expect(getByRole('button')).toHaveTextContent('offered');
+  });
+
+  it('stays quiet when nothing can be remembered', () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Access denied');
+    });
+
+    // Private browsing: a hint that cannot record its dismissal would
+    // otherwise appear on every single page.
+    const { getByRole } = render(<Probe />);
+    expect(getByRole('button')).toHaveTextContent('quiet');
 
     getItem.mockRestore();
   });

@@ -32,6 +32,7 @@ const en = {
     viewAll: 'View all',
     back: 'Back',
     next: 'Next',
+    gotIt: 'Got it',
   },
 
   shell: {
@@ -40,6 +41,7 @@ const en = {
     focus: {
       enter: 'Focus mode',
       leave: 'Leave focus mode',
+      hint: 'Need more room? Focus mode hides the navigation and gives the width to your figures — press Shift + F, or use the button above.',
     },
     fullscreen: {
       enter: 'Fill the screen',
@@ -467,6 +469,13 @@ const en = {
       label: 'Returning customers',
       definition: 'Customers who ordered in this period and had ordered before it.',
     },
+  },
+
+  install: {
+    title: 'Install Opsight',
+    body: 'Open it in its own window, from your taskbar, without a browser around it.',
+    action: 'Install',
+    dismiss: 'Not now',
   },
 
   dashboard: {
