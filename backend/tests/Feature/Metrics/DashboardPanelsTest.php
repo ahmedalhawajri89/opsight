@@ -2,14 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Authorization\Role;
 use App\Domain\Metrics\MetricCalculator;
 use App\Domain\Metrics\Period;
 use App\Domain\Metrics\TimeSeries;
 use App\Models\BusinessSetting;
 use App\Models\InventoryItem;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\Money;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\MetricFixture;
@@ -286,4 +289,54 @@ it('charts margin and average order value per bucket, empty where there was noth
     expect(fn () => app(TimeSeries::class)->build(
         Period::preset('30d'), 'gross_margin', 'day', User::query()->latest('id')->first(),
     ))->toThrow(HttpException::class);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Telling "nothing happened" apart from "nothing happened HERE"
+|--------------------------------------------------------------------------
+|
+| Both render as a column of zeros and they mean opposite things. Without a
+| date to compare against, someone back from a quiet month opens the app,
+| sees an empty screen, and has nothing to tell them where it all went.
+|
+*/
+
+it('says when the business last traded, so an empty period can explain itself', function (): void {
+    $owner = User::factory()->role(Role::Owner)->create();
+
+    $order = Order::factory()->create(['status' => 'confirmed']);
+    $order->forceFill(['placed_at' => Carbon::parse('2026-08-15 12:00', 'Asia/Bahrain')->utc()])->save();
+
+    // A window with nothing in it, well after the last order.
+    $meta = $this->actingAs($owner)
+        ->getJson('/api/v1/dashboard?preset=custom&from=2026-10-01&to=2026-10-31')
+        ->assertOk()
+        ->json('meta');
+
+    expect($meta['latest_activity_on'])->toBe('2026-08-15');
+});
+
+it('says nothing of the sort for a business that has never traded', function (): void {
+    // A business opened yesterday has an empty dashboard for the honest
+    // reason, and must not be sent to a period that is also empty.
+    $meta = $this->actingAs(User::factory()->role(Role::Owner)->create())
+        ->getJson('/api/v1/dashboard')
+        ->assertOk()
+        ->json('meta');
+
+    expect($meta['latest_activity_on'])->toBeNull();
+});
+
+it('ignores a draft, which is not trade', function (): void {
+    $owner = User::factory()->role(Role::Owner)->create();
+
+    $draft = Order::factory()->create(['status' => 'draft']);
+    $draft->forceFill(['placed_at' => Carbon::parse('2026-09-01 12:00', 'Asia/Bahrain')->utc()])->save();
+
+    $meta = $this->actingAs($owner)->getJson('/api/v1/dashboard')->assertOk()->json('meta');
+
+    // Sending someone to the week they last saved a draft is sending them
+    // somewhere still empty.
+    expect($meta['latest_activity_on'])->toBeNull();
 });

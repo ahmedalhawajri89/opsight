@@ -470,6 +470,10 @@ const en = {
   },
 
   dashboard: {
+    emptyPeriod: {
+      body: 'Nothing was traded in this period. The most recent order was on {date}.',
+      action: 'Go to that month',
+    },
     investigate: 'Look into {metric}',
     movement: 'Change against the comparison period',
     description: 'Business performance for the selected period',

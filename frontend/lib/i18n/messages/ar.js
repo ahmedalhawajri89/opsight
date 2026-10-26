@@ -479,6 +479,10 @@ const ar = {
   },
 
   dashboard: {
+    emptyPeriod: {
+      body: 'لم تُسجَّل أي حركة في هذه الفترة. آخر طلب كان في {date}.',
+      action: 'انتقل إلى ذلك الشهر',
+    },
     investigate: 'تفاصيل {metric}',
     movement: 'الفرق عن فترة المقارنة',
     description: 'أداء النشاط التجاري خلال الفترة المحددة',

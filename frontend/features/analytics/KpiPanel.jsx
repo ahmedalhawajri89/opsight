@@ -128,9 +128,9 @@ export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 min-[90rem]:grid-cols-8">
+        <div className="grid grid-cols-2 divide-(--color-line-subtle) overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-4 sm:divide-x rtl:sm:divide-x-reverse min-[90rem]:grid-cols-8">
           {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
-            <div key={index} className={cn(CARD, 'p-3.5')}>
+            <div key={index} className="border-b border-(--color-line-subtle) px-3.5 py-3 sm:border-b-0">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="mt-3 h-5 w-24" />
               <Skeleton className="mt-2 h-3 w-12" />
@@ -163,10 +163,19 @@ export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading
       </div>
 
       {secondary.length > 0 && (
+        /*
+          ONE quiet surface, divided — not eight more cards.
+
+          The reference screen has four figures and nothing else, and its
+          calm comes from that restraint. These eight are real metrics that
+          roles depend on, so they stay; what goes is their competition with
+          the four above. No border each, no shadow each, no hover lift: a
+          strip of supporting figures, read after the headline rather than
+          alongside it.
+        */
         <div
           className={cn(
-            'grid grid-cols-2 gap-3 sm:grid-cols-4',
-            // Eight to a row when there are eight; fewer fill the row instead.
+            'grid grid-cols-2 divide-(--color-line-subtle) overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-4 sm:divide-x rtl:sm:divide-x-reverse',
             secondary.length > 4 && 'min-[90rem]:grid-cols-8',
           )}
         >
@@ -318,7 +327,9 @@ function CompactKpi({ index, metricKey, metric, currency, decimals }) {
 
   return (
     <div
-      className={cn(CARD, 'rise @container flex flex-col px-3 py-3')}
+      className={cn(
+        'rise @container flex flex-col border-b border-(--color-line-subtle) px-3.5 py-3 transition-colors duration-(--duration-fast) last:border-b-0 hover:bg-(--color-ground) sm:border-b-0',
+      )}
       style={{ '--rise-index': index }}
       title={definition}
     >

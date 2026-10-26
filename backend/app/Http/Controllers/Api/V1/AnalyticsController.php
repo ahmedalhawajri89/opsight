@@ -14,6 +14,7 @@ use App\Domain\Metrics\MetricSummary;
 use App\Domain\Metrics\Period;
 use App\Domain\Metrics\QuickStats;
 use App\Domain\Metrics\TimeSeries;
+use App\Domain\Orders\OrderStatus;
 use App\Domain\Tax\VatReport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryItemResource;
@@ -21,6 +22,8 @@ use App\Models\BusinessSetting;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Support\Money;
+use App\Support\Tenancy\TenantQuery;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -211,8 +214,45 @@ class AnalyticsController extends Controller
 
         return response()->json([
             'data' => $payload,
-            'meta' => $this->meta($period, $comparison),
+            'meta' => $this->meta($period, $comparison) + [
+                /*
+                 * The day this business last traded, or null if it never has.
+                 *
+                 * Without it the dashboard cannot tell two situations apart
+                 * that look identical and mean opposite things: a business
+                 * with no orders at all, and a business whose orders are
+                 * simply older than the window on screen. Both render as a
+                 * column of zeros, and the second one — someone back from a
+                 * quiet month, or opening the app after a break — is left
+                 * staring at an empty screen with nothing to say where
+                 * everything went.
+                 */
+                'latest_activity_on' => $this->latestActivityOn(),
+            ],
         ]);
+    }
+
+    /**
+     * The business's most recent qualifying order, as a calendar date in its
+     * own timezone.
+     *
+     * Qualifying statuses only, matching every revenue figure: a draft is not
+     * trade, and sending someone to the week they last saved a draft would be
+     * sending them somewhere still empty.
+     */
+    private function latestActivityOn(): ?string
+    {
+        $placedAt = TenantQuery::table('orders')
+            ->whereIn('status', OrderStatus::qualifying())
+            ->max('placed_at');
+
+        if ($placedAt === null) {
+            return null;
+        }
+
+        return CarbonImmutable::parse($placedAt, 'UTC')
+            ->setTimezone(BusinessSetting::current()->timezone)
+            ->toDateString();
     }
 
     /* ---------------------------------------------------------------------- */
