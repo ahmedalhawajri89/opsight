@@ -208,6 +208,15 @@ at twenty-five rows, twenty-five runs were enough to push two seeded accounts of
 page and turn three unrelated specs red — a failure that looked like a bug in the code under
 test and was not.
 
+The same rule covers settings, not just rows. Every spec asserts English strings, and the
+interface language is a preference stored on the **account**, so the suite inherited whichever
+language the last person using the application had chosen. One run failed thirty-seven specs
+against a working application because the owner reads Arabic. `auth.setup.js` now records each
+account's language and pins it to English, and a `restore` teardown project puts every one of
+them back — which is why the anonymous project declares a dependency on setup although it
+signs in for itself: the language must not be restored while specs that assert English are
+still running.
+
 ## 6. Contract consistency
 
 Frontend and backend are tested separately and can drift silently. Two lightweight guards:

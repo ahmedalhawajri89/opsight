@@ -1,6 +1,7 @@
 import { expect, test as setup } from '@playwright/test';
 
 import { ACCOUNTS, authFile } from './support/authState';
+import { ENGLISH, readPreferences, rememberOriginal, savePreferences } from './support/preferences';
 
 /**
  * Sign in once per role and save the session for the rest of the suite.
@@ -17,6 +18,14 @@ import { ACCOUNTS, authFile } from './support/authState';
  *
  * auth.spec.js deliberately does NOT use these states — it is the spec that
  * tests signing in and out, so it must do it for real.
+ *
+ * It also pins each account's language to English, because every spec in the
+ * suite asserts English strings and the language is a preference stored on
+ * the account rather than in the browser. Left to inherit whatever the last
+ * human chose, the suite failed thirty-seven specs in one run against an
+ * application that was working perfectly — it was reading Arabic because the
+ * owner reads Arabic. What was there is written down and put back by the
+ * teardown project (support/preferences.js).
  */
 
 for (const [role, email] of ACCOUNTS) {
@@ -30,5 +39,16 @@ for (const [role, email] of ACCOUNTS) {
 
     // Persist the HttpOnly session cookie for the dependent projects.
     await page.context().storageState({ path: authFile(role) });
+
+    const original = await readPreferences(page);
+
+    // Recorded before anything is changed, and recorded even when it is
+    // already English: a teardown that only knows about the accounts it had
+    // to change cannot tell "unchanged" from "never seen".
+    rememberOriginal(role, original);
+
+    if (original.locale !== ENGLISH.locale || original.numerals !== ENGLISH.numerals) {
+      expect(await savePreferences(page, ENGLISH)).toBe(200);
+    }
   });
 }

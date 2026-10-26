@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { authFile } from './support/authState';
+import { savePreferences } from './support/preferences';
 
 /**
  * Arabic, through a real browser against a real backend.
@@ -14,36 +15,6 @@ import { authFile } from './support/authState';
  * Arabic puts it back in `finally` — a failure half way must not leave the
  * rest of the suite reading a page in a language it does not expect.
  */
-
-const API = process.env.E2E_API_URL ?? 'http://localhost:8010';
-
-/** Saves preferences through the API with the page's own session and CSRF token. */
-async function savePreferences(page, preferences) {
-  return page.evaluate(
-    async ({ api, body }) => {
-      const token = decodeURIComponent(
-        document.cookie
-          .split('; ')
-          .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
-          ?.split('=')[1] ?? '',
-      );
-
-      const response = await fetch(`${api}/api/v1/me/preferences`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          'X-XSRF-TOKEN': token,
-        },
-        body: JSON.stringify(body),
-      });
-
-      return response.status;
-    },
-    { api: API, body: preferences },
-  );
-}
 
 test.describe('a signed-in user choosing Arabic', () => {
   test.use({ storageState: authFile('manager') });

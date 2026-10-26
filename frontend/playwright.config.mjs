@@ -50,13 +50,25 @@ export default defineConfig({
      * minute — so the later specs failed with a 429 that vanished when they
      * were run alone. The limit is right; logging in twenty times was not.
      */
-    { name: 'setup', testMatch: /auth\.setup\.js/ },
+    { name: 'setup', testMatch: /auth\.setup\.js/, teardown: 'restore' },
+
+    /*
+     * Puts each account's language back the way the setup found it. Declared
+     * as the setup project's teardown, so it runs only once everything that
+     * depends on setup has finished (e2e/auth.teardown.js).
+     */
+    { name: 'restore', testMatch: /auth\.teardown\.js/, use: { ...devices['Desktop Chrome'] } },
 
     {
       // Signing in, out and up is what these specs test, so they do it for real.
+      //
+      // It still depends on setup: not for the saved sessions, which it does
+      // not use, but because setup is what holds the interface in English —
+      // and because the language must not be put back while these are running.
       name: 'anonymous',
       testMatch: /(auth|onboarding|privacy)\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
 
     {
