@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Integrations\Salla\SallaWebhooks;
+
 /*
  * Providers this installation accepts webhook deliveries from (ADR-027).
  *
@@ -17,13 +19,18 @@ declare(strict_types=1);
 return [
 
     /**
-     * Empty until Phase 6 adds Salla:
+     * Registered, and still inert until a secret is set.
      *
-     *     'salla' => \App\Domain\Integrations\Salla\SallaWebhooks::class,
+     * `WebhookProviders::secretFor()` returns null without
+     * `SALLA_WEBHOOK_SECRET`, and the controller answers 404 to a provider
+     * with no secret — so an installation that has not connected Salla has
+     * no webhook endpoint at all, exactly as before this line was added.
      *
      * @var array<string, class-string>
      */
-    'providers' => [],
+    'providers' => [
+        'salla' => SallaWebhooks::class,
+    ],
 
     'secrets' => [
         'salla' => env('SALLA_WEBHOOK_SECRET'),
