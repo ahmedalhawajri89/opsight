@@ -1,7 +1,9 @@
 import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CountUp } from '@/components/data/CountUp';
+import { useFocusMode } from '@/hooks/useFocusMode';
 import { useGsap } from '@/hooks/useGsap';
 
 /*
@@ -146,5 +148,73 @@ describe('CountUp', () => {
     const { container } = render(<CountUp value={null} format={() => '—'} />);
 
     expect(container.querySelector('[aria-hidden="true"]').textContent).toBe('—');
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Focus mode
+|--------------------------------------------------------------------------
+|
+| Fullscreen is the browser's to refuse — a permissions policy, an embedded
+| view, a gesture it did not recognise — and the one thing that must never
+| happen is the application being left in a state that claims otherwise.
+|
+*/
+
+describe('useFocusMode', () => {
+  function Probe() {
+    const focus = useFocusMode();
+
+    return (
+      <button type="button" aria-pressed={focus.focused} onClick={focus.toggleFocus}>
+        {focus.supported ? 'fullscreen offered' : 'fullscreen absent'}
+      </button>
+    );
+  }
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('remembers the choice, because it is a preference and not a mode', async () => {
+    stubPreference(false);
+    document.fullscreenEnabled = true;
+
+    const { getByRole, unmount } = render(<Probe />);
+    await userEvent.click(getByRole('button'));
+
+    expect(getByRole('button')).toHaveAttribute('aria-pressed', 'true');
+    expect(window.localStorage.getItem('opsight:focus-mode')).toBe('1');
+
+    // A reload must come back into focus mode, not out of it.
+    unmount();
+    render(<Probe />);
+    expect(getByRole('button')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('offers no fullscreen button where the browser forbids it', () => {
+    stubPreference(false);
+    document.fullscreenEnabled = false;
+
+    const { getByRole } = render(<Probe />);
+
+    // Absent, not present-and-dead: a control that cannot work is worse
+    // than no control, because the reader blames themselves.
+    expect(getByRole('button')).toHaveTextContent('fullscreen absent');
+  });
+
+  it('survives storage being unavailable', () => {
+    stubPreference(false);
+    document.fullscreenEnabled = true;
+
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Access denied');
+    });
+
+    // Private browsing. The preference stops persisting; nothing else breaks.
+    expect(() => render(<Probe />)).not.toThrow();
+
+    getItem.mockRestore();
   });
 });

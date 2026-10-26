@@ -272,6 +272,34 @@ const PATHS = {
       <path d="M3.5 10h17M8 3v4M16 3v4" />
     </>
   ),
+
+  /*
+   * Focus and fullscreen. Four corner brackets pointing outward mean "take
+   * the room"; pointing inward, "give it back". Deliberately NOT arrows on a
+   * box, which every operating system already uses for maximise — a reader
+   * would expect a window to change size, not a layout.
+   */
+  focus: (
+    <>
+      <path d="M3.5 9V5.5A2 2 0 0 1 5.5 3.5H9M15 3.5h3.5a2 2 0 0 1 2 2V9M20.5 15v3.5a2 2 0 0 1-2 2H15M9 20.5H5.5a2 2 0 0 1-2-2V15" />
+      <rect x="8.25" y="8.25" width="7.5" height="7.5" rx="1.25" />
+    </>
+  ),
+  minimise: (
+    <>
+      <path d="M9 3.5V7a2 2 0 0 1-2 2H3.5M15 3.5V7a2 2 0 0 0 2 2h3.5M20.5 15H17a2 2 0 0 0-2 2v3.5M3.5 15H7a2 2 0 0 1 2 2v3.5" />
+    </>
+  ),
+  expand: (
+    <>
+      <path d="M14.5 3.5h6v6M9.5 20.5h-6v-6M20.5 3.5 14 10M3.5 20.5 10 14" />
+    </>
+  ),
+  collapse: (
+    <>
+      <path d="M20.5 9.5h-6v-6M3.5 14.5h6v6M14.5 9.5 21 3M9.5 14.5 3 21" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 16, label, className, strokeWidth = 1.75 }) {

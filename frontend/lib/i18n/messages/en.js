@@ -37,6 +37,14 @@ const en = {
   shell: {
     account: 'Account: {name}',
     profile: 'Profile',
+    focus: {
+      enter: 'Focus mode',
+      leave: 'Leave focus mode',
+    },
+    fullscreen: {
+      enter: 'Fill the screen',
+      leave: 'Leave full screen',
+    },
     promo: {
       title: 'Better decisions. Stronger business.',
       body: 'Opsight turns your data into clear insights and real results.',

@@ -15,6 +15,7 @@ import Link from 'next/link';
 
 import packageInfo from '@/package.json';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { FocusControls } from '@/components/layout/FocusControls';
 import { Icon } from '@/components/ui/Icon';
 import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
@@ -22,6 +23,7 @@ import { cn } from '@/lib/cn';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
 import { SearchDialog, TopBarSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
+import { useFocusMode } from '@/hooks/useFocusMode';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 /**
@@ -224,6 +226,13 @@ export function AppShell({ children }) {
 
   const sidebar = <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} />;
 
+  /*
+   * Focus mode (UI_UX_DIRECTION.md). The sidebar and top bar are this
+   * application's furniture; a reader studying a month of figures can have
+   * the room back.
+   */
+  const focus = useFocusMode();
+
   return (
     <div className="flex min-h-dvh">
       {/*
@@ -243,9 +252,17 @@ export function AppShell({ children }) {
         icon rail from 768px — where 216px of names would cost the content a
         fifth of the screen — and a drawer below that.
       */}
-      <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex lg:w-[216px] [view-transition-name:app-sidebar]">
-        <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} compact />
-      </aside>
+      {/*
+        Removed from the DOM in focus mode rather than hidden with CSS: a
+        visually hidden sidebar is still in the tab order and still read out,
+        so a keyboard or screen-reader user would tab through twelve
+        invisible links to reach the content they asked to focus on.
+      */}
+      {!focus.focused && (
+        <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex lg:w-[216px] [view-transition-name:app-sidebar]">
+          <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} compact />
+        </aside>
+      )}
 
       {drawerOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
@@ -292,7 +309,20 @@ export function AppShell({ children }) {
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
               <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
-              <NotificationsMenu />
+              <FocusControls
+                focused={focus.focused}
+                fullscreen={focus.fullscreen}
+                supported={focus.supported}
+                onToggleFocus={focus.toggleFocus}
+                onToggleFullscreen={focus.toggleFullscreen}
+              />
+              {/*
+                The account menu is the way out of focus mode for a reader who
+                does not know the shortcut and cannot see the sidebar, so it
+                stays. Notifications do not: they are an interruption, which
+                is the one thing focus mode exists to remove.
+              */}
+              {!focus.focused && <NotificationsMenu />}
               <UserMenu user={user} onSignOut={handleSignOut} />
             </div>
           </header>
