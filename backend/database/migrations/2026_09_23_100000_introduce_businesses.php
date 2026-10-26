@@ -97,7 +97,12 @@ return new class extends Migration
 
         // One settings row per business, instead of one row in total.
         DB::statement('ALTER TABLE business_settings DROP CONSTRAINT chk_business_settings_singleton');
-        DB::statement('ALTER TABLE business_settings MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+
+        if (str_contains((string) DB::scalar('SELECT VERSION()'), 'TiDB')) {
+            $this->recreateSettingsWithSequenceOnTiDb();
+        } else {
+            DB::statement('ALTER TABLE business_settings MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        }
 
         Schema::table('business_settings', function (Blueprint $table): void {
             $table->unique('business_id');
@@ -145,6 +150,29 @@ return new class extends Migration
         }
 
         Schema::dropIfExists('businesses');
+    }
+
+    /*
+     * TiDB, where the demo runs, refuses to add AUTO_INCREMENT to an existing
+     * column. There the table is created again from its own definition with
+     * the new id. That is only safe while it is empty, which it is on a fresh
+     * installation, the only kind of TiDB database this migration meets.
+     */
+    private function recreateSettingsWithSequenceOnTiDb(): void
+    {
+        if (DB::table('business_settings')->exists()) {
+            throw new RuntimeException('TiDB cannot add AUTO_INCREMENT to business_settings.id while it holds rows.');
+        }
+
+        $definition = DB::selectOne('SHOW CREATE TABLE business_settings')->{'Create Table'};
+        $definition = preg_replace('/`id` tinyint(\(\d+\))? unsigned NOT NULL/i', '`id` bigint unsigned NOT NULL AUTO_INCREMENT', $definition, 1, $replaced);
+
+        if ($replaced !== 1) {
+            throw new RuntimeException('Unexpected definition of business_settings.id on TiDB.');
+        }
+
+        Schema::drop('business_settings');
+        DB::statement($definition);
     }
 
     /** The business existing data moves into, or null on an empty database. */

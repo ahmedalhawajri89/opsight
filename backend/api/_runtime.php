@@ -37,3 +37,8 @@ foreach ($paths as $key => $value) {
 // Vercel always serves HTTPS and hands PHP the request through its own proxy:
 // without this, URLs would be built with http and secure cookies refused.
 $_SERVER['HTTPS'] = 'on';
+
+// The function lives at /api/index.php, so Symfony would take /api for the
+// app's base path and strip it from every request: /api/v1/health would reach
+// the router as /v1/health and match nothing. The app is served from the root.
+$_SERVER['SCRIPT_NAME'] = $_SERVER['PHP_SELF'] = '/index.php';
