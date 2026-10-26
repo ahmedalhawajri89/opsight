@@ -164,35 +164,64 @@ export function CategoryShareChart({
             )}
           </div>
 
-          <ul className="w-full min-w-0 flex-1 space-y-3">
+          {/*
+            A bar per category rather than a list of dots and figures.
+            A share is a LENGTH before it is a number: five bars put the
+            categories in order at a glance, where five percentages have to
+            be read and compared one against another.
+
+            The ring stays beside them — it answers "how is the whole split"
+            and the bars answer "which is biggest" — and hovering either one
+            lights the other.
+          */}
+          <ul className="w-full min-w-0 flex-1 space-y-2.5">
             {data.map((row, index) => (
               <li
                 key={row.key}
                 onMouseEnter={() => setActive(index)}
                 onMouseLeave={() => setActive(null)}
                 className={cn(
-                  'flex items-center gap-3 rounded-(--radius-control) px-1.5 py-0.5 text-sm transition-colors duration-(--duration-fast)',
+                  'rounded-(--radius-control) px-1.5 py-1 text-sm transition-colors duration-(--duration-fast)',
                   active === index && 'bg-(--color-surface-hover)',
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ background: row.colour }}
-                />
-                {/* dir="auto": a Latin name in an Arabic page truncates at its own end. */}
-                <span
-                  dir="auto"
-                  className={cn(
-                    'min-w-0 flex-1 truncate text-start',
-                    row.is_other ? 'text-(--color-text-2)' : 'text-(--color-text)',
-                  )}
+                <div className="flex items-center gap-2">
+                  {/* dir="auto": a Latin name in an Arabic page truncates at its own end. */}
+                  <span
+                    dir="auto"
+                    className={cn(
+                      'min-w-0 flex-1 truncate text-start text-xs',
+                      row.is_other ? 'text-(--color-text-2)' : 'text-(--color-text)',
+                    )}
+                  >
+                    {row.name}
+                  </span>
+                  <span className="tabular shrink-0 text-xs font-semibold text-(--color-text)">
+                    {row.share === null ? EMPTY : formatPercent(row.share)}
+                  </span>
+                </div>
+
+                {/*
+                  The track is the whole; the fill is this category's share
+                  of it. A real meter, so a screen reader is told the figure
+                  rather than meeting a decorative div.
+                */}
+                <div
+                  role="meter"
+                  aria-valuenow={row.share === null ? undefined : Math.round(row.share * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={row.name}
+                  className="mt-1 h-2 w-full overflow-hidden rounded-full bg-(--color-surface-subtle)"
                 >
-                  {row.name}
-                </span>
-                <span className="tabular shrink-0 text-end font-medium text-(--color-text)">
-                  {row.share === null ? EMPTY : formatPercent(row.share)}
-                </span>
+                  <div
+                    className="h-full rounded-full transition-[inline-size] duration-(--duration-slow) ease-(--ease-out)"
+                    style={{
+                      inlineSize: `${Math.max(row.share === null ? 0 : row.share * 100, 1.5)}%`,
+                      background: row.colour,
+                    }}
+                  />
+                </div>
               </li>
             ))}
           </ul>

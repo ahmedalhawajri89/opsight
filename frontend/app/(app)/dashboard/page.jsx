@@ -223,7 +223,6 @@ export default function DashboardPage() {
         <div className="min-w-0 space-y-4">
           <KpiPanel
             metrics={metrics}
-            trends={trends}
             currency={currency}
             decimals={decimals}
             comparisonLabel={comparisonLabel}

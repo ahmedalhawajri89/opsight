@@ -3,7 +3,6 @@
 import Link from 'next/link';
 
 import { CountUp } from '@/components/data/CountUp';
-import { Sparkline } from '@/components/charts/Sparkline';
 import { Icon } from '@/components/ui/Icon';
 import { InfoTip } from '@/components/ui/Tooltip';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -98,14 +97,6 @@ const TINTS = {
   red: 'bg-(--color-danger-soft) text-(--color-danger)',
 };
 
-const SPARKS = {
-  green: 'var(--spark-green)',
-  blue: 'var(--spark-blue)',
-  cyan: 'var(--spark-cyan)',
-  teal: 'var(--spark-teal)',
-  amber: 'var(--chart-2)',
-  red: 'var(--danger)',
-};
 
 /** Splits the metrics that arrived into the two rows, with no key in both. */
 export function tierMetrics(metrics = {}) {
@@ -118,7 +109,7 @@ export function tierMetrics(metrics = {}) {
 const CARD =
   'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
 
-export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
+export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading }) {
   const { t } = useI18n();
 
   if (loading) {
@@ -166,7 +157,6 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
             index={index}
             metricKey={key}
             metric={metrics[key]}
-            trend={trends[key]}
             {...context}
           />
         ))}
@@ -195,13 +185,12 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
   );
 }
 
-function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, comparisonLabel }) {
+function PrimaryKpi({ index, metricKey, metric, currency, decimals, comparisonLabel }) {
   const { t } = useI18n();
   const label = metricLabel(t, metricKey);
   const definition = metricDefinition(t, metricKey);
   const shown = presentMetric(metric, { currency, decimals });
   const visual = VISUALS[metricKey] ?? { icon: 'analytics', accent: 'blue' };
-  const series = Array.isArray(trend) ? trend.map((bucket) => bucket.value) : [];
   const destination = DESTINATIONS[metricKey];
 
   return (
@@ -233,11 +222,18 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
       </div>
 
       {/*
-        24px, shrinking with the card rather than truncating: a money figure
-        cut to "BHD 69,54…" is a different number.
+        Figure and movement on ONE row, which is the reference layout's whole
+        trick: the eye lands on the number and the direction together instead
+        of travelling down to find out which way it went.
+
+        The figure shrinks with the card rather than truncating — a money
+        figure cut to "BHD 69,54…" is a different number — and the pill never
+        shrinks, so a narrow card squeezes the figure and keeps the verdict
+        legible.
       */}
+      <div className="mt-5 flex items-end justify-between gap-3">
       <p
-        className="tabular mt-4 text-[clamp(1.125rem,9.5cqi,1.5rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
+        className="tabular min-w-0 text-[clamp(1.125rem,8.5cqi,1.625rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
         title={shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined}
       >
         {shown.value === null ? (
@@ -254,20 +250,18 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         )}
       </p>
 
-      <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-        <Change metric={metric} shown={shown} costly={visual.costly} size="md" />
-        {comparisonLabel && (
-          <span className="truncate text-xs text-(--color-muted)">{comparisonLabel}</span>
-        )}
+        <Change metric={metric} shown={shown} costly={visual.costly} size="pill" />
       </div>
 
-      <div className="mt-auto pt-4">
-        {series.filter((value) => value !== null).length > 1 ? (
-          <Sparkline values={series} colour={SPARKS[visual.accent]} height={40} />
-        ) : (
-          <div aria-hidden="true" className="h-10" />
-        )}
-      </div>
+      {/*
+        The comparison basis, once, quietly. It is the same sentence on all
+        four cards, so it reads as a caption rather than four facts.
+      */}
+      {comparisonLabel && (
+        <p className="mt-2 truncate text-xs text-(--color-muted)">{comparisonLabel}</p>
+      )}
+
+      <div className="mt-auto" />
 
       {/*
         A figure that cannot be investigated is a poster. Each card now ends
@@ -398,6 +392,36 @@ function Change({ metric, shown, costly = false, size }) {
           ? 'text-(--color-warning)'
           : 'text-(--color-danger)'
         : 'text-(--color-text-2)';
+
+  if (size === 'pill') {
+    /*
+     * A filled pill rather than coloured text, as the reference has it. The
+     * arrow stays: colour alone must never be the only carrier of a verdict,
+     * and roughly one reader in twelve cannot separate the red from the
+     * green (UI_UX_DIRECTION.md).
+     */
+    const fill =
+      tone === 'positive'
+        ? 'bg-(--color-success-soft) text-(--color-success)'
+        : tone === 'negative'
+          ? costly
+            ? 'bg-(--color-warning-soft) text-(--color-warning)'
+            : 'bg-(--color-danger-soft) text-(--color-danger)'
+          : 'bg-(--color-surface-subtle) text-(--color-text-2)';
+
+    return (
+      <span
+        data-tone={tone}
+        className={cn(
+          'tabular inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap',
+          fill,
+        )}
+      >
+        <span aria-hidden="true">{tone === 'negative' ? '▼' : tone === 'positive' ? '▲' : '→'}</span>
+        {magnitude}
+      </span>
+    );
+  }
 
   return (
     <span
