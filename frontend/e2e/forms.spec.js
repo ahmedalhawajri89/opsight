@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { authFile } from './support/authState';
+import { pruneAccount } from './support/prune';
 
 /**
  * Creating and editing records from the screen.
@@ -185,12 +186,19 @@ test.describe('as the second business', () => {
 test.describe('an account holder', () => {
   test.use({ storageState: authFile('owner') });
 
+  const stamp = Date.now();
+  const email = `e2e.staff+${stamp}@opsight.test`;
+
+  // The product deactivates accounts rather than deleting them, so this one
+  // has to be removed from outside it (support/prune.js).
+  test.afterAll(() => {
+    pruneAccount(email);
+  });
+
   test('creates an account, then that person changes their own password', async ({
     page,
     browser,
   }) => {
-    const stamp = Date.now();
-    const email = `e2e.staff+${stamp}@opsight.test`;
     const first = 'first-long-passphrase';
     const second = 'second-long-passphrase';
 
@@ -245,8 +253,8 @@ test.describe('an account holder', () => {
     await signIn(second);
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // The account is left in place: accounts are deactivated by an owner, not
-    // deleted, and every run makes its own.
+    // What this run made is removed in afterAll: left in place they pile up,
+    // and the users screen pages at twenty-five rows.
   });
 });
 

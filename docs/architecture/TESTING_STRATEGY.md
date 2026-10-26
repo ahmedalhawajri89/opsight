@@ -195,6 +195,19 @@ a security boundary across both stacks.
 Rules: no `waitForTimeout`; wait on state. Each test seeds and cleans its own data.
 Run on merge to main and nightly, not on every push, to keep the feedback loop fast.
 
+Two of them create something the product deliberately offers no way to delete: `onboarding`
+signs a business up, and `forms` has an owner create an account (accounts are deactivated,
+never deleted — SECURITY.md §10). Those clean up in `afterAll` through
+`php artisan opsight:e2e:prune`, given the exact name or address the run generated, rather
+than through a destructive endpoint added to the API for the test suite's convenience. The
+command refuses to run on a production installation, and refuses a seeded business or any
+of the accounts the suite signs in with.
+
+This is not housekeeping. Left alone the rows accumulate, and since the users screen pages
+at twenty-five rows, twenty-five runs were enough to push two seeded accounts off the first
+page and turn three unrelated specs red — a failure that looked like a bug in the code under
+test and was not.
+
 ## 6. Contract consistency
 
 Frontend and backend are tested separately and can drift silently. Two lightweight guards:

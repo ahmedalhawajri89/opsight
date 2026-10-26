@@ -339,6 +339,10 @@ it('reaches business tables only through the tenancy layer', function (): void {
         // The demo snapshot copies the whole database, every business in it;
         // only the demo commands use it (demo:snapshot, demo:reset).
         str_replace('/', DIRECTORY_SEPARATOR, 'app/Support/DemoSnapshot.php'),
+        // Deletes a whole business a browser test created, from outside any
+        // business context — TenantQuery would scope away the very rows it
+        // exists to remove. Refuses to run on a production installation.
+        str_replace('/', DIRECTORY_SEPARATOR, 'app/Console/Commands/PruneE2eData.php'),
     ];
 
     $offenders = [];
