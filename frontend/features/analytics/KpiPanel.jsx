@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { CountUp } from '@/components/data/CountUp';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { Icon } from '@/components/ui/Icon';
@@ -46,6 +48,23 @@ const COMPACT_ORDER = [
 ];
 
 const PRIMARY_COUNT = 4;
+
+/*
+ * Where a reader goes to understand a figure.
+ *
+ * Not every metric has somewhere better than the screen it is already on:
+ * a margin is explained by the analytics screen, but there is no "margin
+ * list". A metric absent from here simply gets no arrow, rather than a link
+ * that lands somewhere unhelpful.
+ */
+const DESTINATIONS = {
+  net_revenue: '/analytics',
+  orders_count: '/orders',
+  gross_profit: '/analytics',
+  gross_margin: '/analytics',
+  average_order_value: '/orders',
+  units_sold: '/products',
+};
 
 /*
  * Accent per metric: the icon's tint and, on a primary card, the sparkline.
@@ -183,6 +202,7 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
   const shown = presentMetric(metric, { currency, decimals });
   const visual = VISUALS[metricKey] ?? { icon: 'analytics', accent: 'blue' };
   const series = Array.isArray(trend) ? trend.map((bucket) => bucket.value) : [];
+  const destination = DESTINATIONS[metricKey];
 
   return (
     <div
@@ -248,6 +268,49 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
           <div aria-hidden="true" className="h-10" />
         )}
       </div>
+
+      {/*
+        A figure that cannot be investigated is a poster. Each card now ends
+        where the reader would go next to understand it — orders to the order
+        list, revenue to analytics — and says how much the figure moved in its
+        own unit, which the percentage beside it does not.
+
+        A link inside the card rather than the card as a link: the E2E suite
+        finds a card through its heading's ancestors, and wrapping the whole
+        thing in an anchor would also make every sparkline and tooltip inside
+        it part of one enormous click target.
+      */}
+      {destination && (
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-(--color-line-subtle) pt-3">
+          {/*
+            A signed figure alone is ambiguous \u2014 the movement, or another
+            number? The comparison basis is already stated higher up the
+            card, so rather than repeat it in a cramped footer the movement
+            is named for a screen reader and on hover.
+          */}
+          {shown.delta === null ? (
+            <span aria-hidden="true">&nbsp;</span>
+          ) : (
+            <span
+              className="tabular min-w-0 truncate text-xs text-(--color-text-2)"
+              title={t('dashboard.movement')}
+            >
+              <span className="sr-only">{t('dashboard.movement')}: </span>
+              {shown.delta}
+            </span>
+          )}
+
+          <Link
+            href={destination}
+            aria-label={t('dashboard.investigate', { metric: label })}
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-(--color-line) text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:bg-(--color-brand-soft) hover:text-(--color-brand-text)"
+          >
+            {/* Logical: the arrow points the way reading runs, so it flips
+                with the page rather than pointing back in Arabic. */}
+            <Icon name="arrowRight" size={15} className="rtl:-scale-x-100" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

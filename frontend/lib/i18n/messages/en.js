@@ -470,6 +470,8 @@ const en = {
   },
 
   dashboard: {
+    investigate: 'Look into {metric}',
+    movement: 'Change against the comparison period',
     description: 'Business performance for the selected period',
     subtitle: 'Here’s what’s happening with your business today.',
     incompleteNote:

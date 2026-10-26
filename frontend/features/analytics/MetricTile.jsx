@@ -93,6 +93,20 @@ export function presentMetric(metric, { currency, decimals }) {
     format,
     /* The raw figure, for anything that needs to compute rather than print. */
     raw: metric.value === null || metric.value === undefined ? null : Number(metric.value),
+    /*
+     * How much it moved, in the metric's own unit — money as money, a count
+     * as a count. The percentage beside the figure says how FAST it moved;
+     * this says how MUCH, and on a finance screen the two answer different
+     * questions: "up 12%" and "up 3,256 dinars" are both worth knowing.
+     *
+     * Null for a ratio: a margin's absolute movement is percentage points,
+     * which `format` would render as a percentage of a percentage. Those are
+     * already shown beside the figure, correctly, by Change.
+     */
+    delta:
+      isRatio || metric.change_absolute === null || metric.change_absolute === undefined
+        ? null
+        : format(metric.change_absolute),
   };
 }
 
