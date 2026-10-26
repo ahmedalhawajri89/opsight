@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Integrations\WebhookProviders;
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessUnclaimedDelivery;
 use App\Jobs\ProcessWebhookReceipt;
 use App\Models\WebhookReceipt;
 use Illuminate\Database\QueryException;
@@ -127,10 +128,24 @@ class WebhookController extends Controller
 
         if ($businessId === null) {
             /*
-             * Genuine, and for a store we do not know — most likely one that
-             * disconnected while a delivery was in flight. Kept with its
-             * reason rather than queued: a job with no business cannot run,
-             * and failing it four times would say nothing this row does not.
+             * One kind of ownerless delivery is legitimate: the event that
+             * CREATES a connection. Salla's install event carries a store's
+             * tokens and is the first this installation has heard of it, so
+             * there is nothing for businessIdFor() to have matched. The
+             * provider says, per event name, whether that is this one.
+             */
+            if ($handler->acceptsUnmatched($receipt->event)) {
+                ProcessUnclaimedDelivery::dispatch($receipt->id);
+
+                return response()->json(['status' => 'accepted'], 202);
+            }
+
+            /*
+             * Everything else is genuine and for a store we do not know —
+             * most likely one that disconnected while a delivery was in
+             * flight. Kept with its reason rather than queued: a job with no
+             * business cannot run, and failing it four times would say
+             * nothing this row does not.
              */
             $receipt->markFailed('No connected business matches this delivery.');
 

@@ -6,8 +6,11 @@ namespace App\Domain\Integrations\Salla;
 
 use App\Domain\Integrations\WebhookProvider;
 use App\Models\Integration;
+use App\Models\UnclaimedIntegration;
 use App\Models\WebhookReceipt;
 use App\Support\Tenancy\BusinessScope;
+use App\Support\Tenancy\CurrentBusiness;
+use Carbon\CarbonImmutable;
 use RuntimeException;
 
 /**
@@ -35,6 +38,16 @@ use RuntimeException;
 class SallaWebhooks implements WebhookProvider
 {
     public const PROVIDER = 'salla';
+
+    /**
+     * Salla's documentation names this event both ways, in two places. Both
+     * are accepted rather than guessing which is current: being wrong costs
+     * a merchant their installation, and accepting an extra name costs
+     * nothing, since an unknown event reaches a handler that refuses it.
+     *
+     * @var list<string>
+     */
+    public const INSTALL_EVENTS = ['app.store.authorize', 'app.store.authorized'];
 
     public function name(): string
     {
@@ -128,19 +141,96 @@ class SallaWebhooks implements WebhookProvider
         return $businessId === null ? null : (int) $businessId;
     }
 
+    /**
+     * The events that arrive before any business has connected the store.
+     *
+     * Salla sends the tokens themselves in the install event, so it is the
+     * one delivery that cannot be matched to a business — matching it is
+     * what it exists to make possible.
+     */
+    public function acceptsUnmatched(string $event): bool
+    {
+        return in_array($event, self::INSTALL_EVENTS, true);
+    }
+
     public function handle(WebhookReceipt $receipt): void
     {
+        /** @var array<string, mixed> $payload */
+        $payload = $receipt->payload ?? [];
+
+        if ($this->acceptsUnmatched($receipt->event)) {
+            $this->store($payload);
+
+            return;
+        }
+
         /*
-         * Phase 6 builds the importer on top of this. Until it does, a
-         * verified delivery is stored and acknowledged and nothing is
-         * invented from it.
+         * The importer is the next section. Until it exists, a verified
+         * delivery is stored and acknowledged and nothing is invented from
+         * it.
          *
          * It throws rather than returning quietly so the receipt is marked
          * failed with a reason an operator can read, instead of being marked
-         * processed — which would be a lie, and the kind that is discovered
-         * only when someone asks why an order never arrived.
+         * processed — which would be a lie, and the kind discovered only
+         * when someone asks why an order never arrived.
          */
         throw new RuntimeException("No importer handles '{$receipt->event}' yet.");
+    }
+
+    /**
+     * Keeps a newly authorised store until a business claims it.
+     *
+     * Two ways in, and they are not the same. A store nobody has claimed is
+     * written to `unclaimed_integrations`, which belongs to no business by
+     * design. A store that IS already connected has simply been reauthorised
+     * — Salla reissues tokens when a merchant updates the app — so its
+     * existing connection is updated in place, inside its own business.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function store(array $payload): void
+    {
+        $merchant = $payload['merchant'] ?? null;
+        $data = $payload['data'] ?? [];
+
+        if ((! is_int($merchant) && ! is_string($merchant)) || ! is_array($data)) {
+            throw new RuntimeException('An install delivery arrived without a merchant and tokens.');
+        }
+
+        $tokens = SallaTokens::fromPayload($data);
+        $merchant = (string) $merchant;
+
+        $existing = Integration::query()
+            ->withoutGlobalScope(BusinessScope::class)
+            ->where('provider', self::PROVIDER)
+            ->where('external_account_id', $merchant)
+            ->first();
+
+        if ($existing !== null) {
+            // Reauthorisation of a store that is already somebody's. Its
+            // business is on the row; nothing here decides whose it is.
+            CurrentBusiness::get()->run((int) $existing->business_id, static function () use ($existing, $tokens): void {
+                $existing->forceFill($tokens->toAttributes() + [
+                    'status' => Integration::STATUS_CONNECTED,
+                    'last_error' => null,
+                ])->save();
+            });
+
+            return;
+        }
+
+        /*
+         * updateOrCreate on the store id: a merchant who installs twice
+         * before claiming replaces their own pending tokens rather than
+         * leaving a live set behind, and the unique index says the same
+         * thing where it cannot be forgotten.
+         */
+        UnclaimedIntegration::query()->updateOrCreate(
+            ['provider' => self::PROVIDER, 'external_account_id' => $merchant],
+            $tokens->toAttributes() + [
+                'expires_at' => CarbonImmutable::now()->addMinutes(UnclaimedIntegration::CLAIM_WINDOW_MINUTES),
+            ],
+        );
     }
 
     /**
