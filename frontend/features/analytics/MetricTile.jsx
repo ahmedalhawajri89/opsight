@@ -84,6 +84,15 @@ export function presentMetric(metric, { currency, decimals }) {
      */
     change: isRatio ? metric.change_absolute : metric.change_pct,
     changeFormat: isRatio ? 'points' : 'percent',
+    /*
+     * The same formatter, exposed so a figure can be animated frame by frame
+     * (CountUp) without a second idea of what a dinar looks like. A count-up
+     * that interpolated the finished STRING would print "BHD 1,2•9.00"
+     * halfway through.
+     */
+    format,
+    /* The raw figure, for anything that needs to compute rather than print. */
+    raw: metric.value === null || metric.value === undefined ? null : Number(metric.value),
   };
 }
 

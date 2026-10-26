@@ -1,5 +1,6 @@
 'use client';
 
+import { CountUp } from '@/components/data/CountUp';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { Icon } from '@/components/ui/Icon';
 import { InfoTip } from '@/components/ui/Tooltip';
@@ -222,7 +223,14 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
         {shown.value === null ? (
           <span className="text-(--color-muted)">{EMPTY}</span>
         ) : (
-          <bdi dir={figureDirection(shown.value)}>{shown.value}</bdi>
+          <bdi dir={figureDirection(shown.value)}>
+            {/*
+              Counted up only on the four primary cards. Twelve figures all
+              counting at once is a slot machine, not a dashboard — the
+              compact row prints its values outright.
+            */}
+            <CountUp value={shown.raw} format={shown.format} />
+          </bdi>
         )}
       </p>
 
