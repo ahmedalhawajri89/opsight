@@ -32,6 +32,29 @@ return [
         'salla' => SallaWebhooks::class,
     ],
 
+    /*
+     * Salla's own endpoints and app credentials.
+     *
+     * The hosts are configurable so a test can point them at nothing and a
+     * fixture recorder can point them at a sandbox, not because they are
+     * expected to change.
+     */
+    'salla' => [
+        'client_id' => env('SALLA_CLIENT_ID'),
+        'client_secret' => env('SALLA_CLIENT_SECRET'),
+        'token_url' => env('SALLA_TOKEN_URL', 'https://accounts.salla.sa/oauth2/token'),
+        'api_base' => env('SALLA_API_BASE', 'https://api.salla.dev/admin/v2'),
+
+        /*
+         * How long before expiry a token is treated as due for refresh.
+         *
+         * Salla's access tokens last a fortnight, so five minutes is not
+         * caution about clock drift — it is about a token that passes the
+         * check and then expires during the request that used it.
+         */
+        'refresh_margin_minutes' => 5,
+    ],
+
     'secrets' => [
         'salla' => env('SALLA_WEBHOOK_SECRET'),
     ],

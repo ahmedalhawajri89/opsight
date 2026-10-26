@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InsightController;
+use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\OrderController;
@@ -201,6 +202,18 @@ Route::prefix('v1')->group(function (): void {
         Route::post('users/{user}/role', [UserController::class, 'changeRole']);
         Route::post('users/{user}/activate', [UserController::class, 'activate']);
         Route::post('users/{user}/deactivate', [UserController::class, 'deactivate']);
+
+        /* ---- Integrations ------------------------------------------------ */
+        /*
+         * Claiming has a limiter of its own because it accepts an identifier
+         * a merchant reads off a screen, not a secret. The limit is what
+         * keeps "say which store is yours" from becoming "try store ids
+         * until one of them is waiting" (SECURITY.md §7).
+         */
+        Route::get('integrations', [IntegrationController::class, 'index']);
+        Route::post('integrations/claim', [IntegrationController::class, 'claim'])
+            ->middleware('throttle:integration-claim');
+        Route::delete('integrations/{integration}', [IntegrationController::class, 'destroy']);
 
         /* ---- Business settings ------------------------------------------- */
         Route::get('settings', [SettingsController::class, 'show']);

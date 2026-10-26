@@ -101,7 +101,7 @@ it('lets staff take a payment but keeps refunds supervisory', function (): void 
 
 it('grants the analyst no write ability of any kind', function (): void {
     $writeSuffixes = ['.create', '.update', '.delete', '.confirm', '.fulfil',
-        '.cancel', '.refund', '.adjust', '.deactivate', '.change_role', '.erase'];
+        '.cancel', '.refund', '.adjust', '.deactivate', '.change_role', '.erase', '.manage'];
 
     foreach (AbilityRegistry::for(Role::Analyst) as $ability) {
         foreach ($writeSuffixes as $suffix) {

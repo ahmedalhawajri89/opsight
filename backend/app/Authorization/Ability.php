@@ -71,6 +71,13 @@ enum Ability: string
      */
     case CustomersErase = 'customers.erase';
 
+    /*
+     * Connecting and disconnecting a store (P2 phase 6). Owner only, because
+     * it decides whose orders this business's figures are computed from —
+     * and because disconnecting is how a store claimed in error is undone.
+     */
+    case IntegrationsManage = 'integrations.manage';
+
     // ---- Export ------------------------------------------------------------
     case OrdersExport = 'orders.export';
     case CustomersExport = 'customers.export';

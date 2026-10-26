@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\Integration;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -44,7 +45,7 @@ const LEAK_MARKER = 'LEAKMARKER';
 /**
  * A second, fully populated business, with a marker in every name it holds.
  *
- * @return array{business: Business, owner: User, staff: User, customer: Customer, product: Product, expense: Expense, category: ExpenseCategory, draft: Order, fulfilled: Order}
+ * @return array{business: Business, owner: User, staff: User, customer: Customer, product: Product, expense: Expense, category: ExpenseCategory, draft: Order, fulfilled: Order, integration: Integration}
  */
 function otherBusiness(): array
 {
@@ -59,6 +60,15 @@ function otherBusiness(): array
         $product = Product::factory()->withStock(50)->create(['name' => LEAK_MARKER.' Product', 'sku' => 'LEAK-1']);
         $category = ExpenseCategory::factory()->create(['name' => LEAK_MARKER.' Rent']);
         $expense = Expense::factory()->create(['expense_category_id' => $category->id, 'description' => LEAK_MARKER.' expense']);
+
+        // A connected store, so the routes that name one are covered by the
+        // route-driven test below (P2 phase 6).
+        $integration = Integration::query()->create([
+            'provider' => 'salla',
+            'external_account_id' => LEAK_MARKER.'-store',
+            'status' => Integration::STATUS_CONNECTED,
+            'access_token' => LEAK_MARKER.'-token',
+        ]);
 
         $draft = Order::factory()->forCustomer($customer)->create(['notes' => LEAK_MARKER]);
         $draft->items()->create([
@@ -88,7 +98,7 @@ function otherBusiness(): array
         // Inside the analytics period, so a leak in any aggregate shows a name.
         DB::table('orders')->where('id', $fulfilled->id)->update(['placed_at' => '2026-08-20 10:00:00']);
 
-        return compact('business', 'owner', 'staff', 'customer', 'product', 'expense', 'category', 'draft', 'fulfilled');
+        return compact('business', 'owner', 'staff', 'customer', 'product', 'expense', 'category', 'draft', 'fulfilled', 'integration');
     });
 }
 
@@ -131,6 +141,7 @@ it('answers 404 to every route that names another business\'s record, and change
         'order' => $b['draft']->id,
         'item' => $b['draft']->items()->withoutGlobalScopes()->value('id'),
         'user' => $b['staff']->id,
+        'integration' => $b['integration']->id,
     ];
 
     $this->actingAs($this->ownerA);

@@ -8,6 +8,7 @@ use App\Authorization\Ability;
 use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Expense;
+use App\Models\Integration;
 use App\Models\InventoryItem;
 use App\Models\Order;
 use App\Models\Product;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Policies\ActivityLogPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\ExpensePolicy;
+use App\Policies\IntegrationPolicy;
 use App\Policies\InventoryPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\ProductPolicy;
@@ -42,6 +44,7 @@ class AuthServiceProvider extends ServiceProvider
         // whole reason for existing is that convention fails silently.
         ActivityLog::class => ActivityLogPolicy::class,
         User::class => UserPolicy::class,
+        Integration::class => IntegrationPolicy::class,
     ];
 
     public function boot(): void
