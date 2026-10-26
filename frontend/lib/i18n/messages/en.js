@@ -32,11 +32,21 @@ const en = {
     viewAll: 'View all',
     back: 'Back',
     next: 'Next',
+    gotIt: 'Got it',
   },
 
   shell: {
     account: 'Account: {name}',
     profile: 'Profile',
+    focus: {
+      enter: 'Focus mode',
+      leave: 'Leave focus mode',
+      hint: 'Need more room? Focus mode hides the navigation and gives the width to your figures — press Shift + F, or use the button above.',
+    },
+    fullscreen: {
+      enter: 'Fill the screen',
+      leave: 'Leave full screen',
+    },
     promo: {
       title: 'Better decisions. Stronger business.',
       body: 'Opsight turns your data into clear insights and real results.',
@@ -461,7 +471,20 @@ const en = {
     },
   },
 
+  install: {
+    title: 'Install Opsight',
+    body: 'Open it in its own window, from your taskbar, without a browser around it.',
+    action: 'Install',
+    dismiss: 'Not now',
+  },
+
   dashboard: {
+    emptyPeriod: {
+      body: 'Nothing was traded in this period. The most recent order was on {date}.',
+      action: 'Go to that month',
+    },
+    investigate: 'Look into {metric}',
+    movement: 'Change against the comparison period',
     description: 'Business performance for the selected period',
     subtitle: 'Here’s what’s happening with your business today.',
     incompleteNote:

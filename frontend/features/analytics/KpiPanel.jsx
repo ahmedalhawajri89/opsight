@@ -1,6 +1,8 @@
 'use client';
 
-import { Sparkline } from '@/components/charts/Sparkline';
+import Link from 'next/link';
+
+import { CountUp } from '@/components/data/CountUp';
 import { Icon } from '@/components/ui/Icon';
 import { InfoTip } from '@/components/ui/Tooltip';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -47,6 +49,23 @@ const COMPACT_ORDER = [
 const PRIMARY_COUNT = 4;
 
 /*
+ * Where a reader goes to understand a figure.
+ *
+ * Not every metric has somewhere better than the screen it is already on:
+ * a margin is explained by the analytics screen, but there is no "margin
+ * list". A metric absent from here simply gets no arrow, rather than a link
+ * that lands somewhere unhelpful.
+ */
+const DESTINATIONS = {
+  net_revenue: '/analytics',
+  orders_count: '/orders',
+  gross_profit: '/analytics',
+  gross_margin: '/analytics',
+  average_order_value: '/orders',
+  units_sold: '/products',
+};
+
+/*
  * Accent per metric: the icon's tint and, on a primary card, the sparkline.
  *
  * `costly` marks a metric whose unfavourable movement is money going out
@@ -78,14 +97,6 @@ const TINTS = {
   red: 'bg-(--color-danger-soft) text-(--color-danger)',
 };
 
-const SPARKS = {
-  green: 'var(--spark-green)',
-  blue: 'var(--spark-blue)',
-  cyan: 'var(--spark-cyan)',
-  teal: 'var(--spark-teal)',
-  amber: 'var(--chart-2)',
-  red: 'var(--danger)',
-};
 
 /** Splits the metrics that arrived into the two rows, with no key in both. */
 export function tierMetrics(metrics = {}) {
@@ -98,7 +109,7 @@ export function tierMetrics(metrics = {}) {
 const CARD =
   'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
 
-export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
+export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading }) {
   const { t } = useI18n();
 
   if (loading) {
@@ -117,9 +128,9 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 min-[90rem]:grid-cols-8">
+        <div className="grid grid-cols-2 divide-(--color-line-subtle) overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-4 sm:divide-x rtl:sm:divide-x-reverse min-[90rem]:grid-cols-8">
           {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
-            <div key={index} className={cn(CARD, 'p-3.5')}>
+            <div key={index} className="border-b border-(--color-line-subtle) px-3.5 py-3 sm:border-b-0">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="mt-3 h-5 w-24" />
               <Skeleton className="mt-2 h-3 w-12" />
@@ -146,17 +157,25 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
             index={index}
             metricKey={key}
             metric={metrics[key]}
-            trend={trends[key]}
             {...context}
           />
         ))}
       </div>
 
       {secondary.length > 0 && (
+        /*
+          ONE quiet surface, divided — not eight more cards.
+
+          The reference screen has four figures and nothing else, and its
+          calm comes from that restraint. These eight are real metrics that
+          roles depend on, so they stay; what goes is their competition with
+          the four above. No border each, no shadow each, no hover lift: a
+          strip of supporting figures, read after the headline rather than
+          alongside it.
+        */
         <div
           className={cn(
-            'grid grid-cols-2 gap-3 sm:grid-cols-4',
-            // Eight to a row when there are eight; fewer fill the row instead.
+            'grid grid-cols-2 divide-(--color-line-subtle) overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-4 sm:divide-x rtl:sm:divide-x-reverse',
             secondary.length > 4 && 'min-[90rem]:grid-cols-8',
           )}
         >
@@ -175,13 +194,13 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
   );
 }
 
-function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, comparisonLabel }) {
+function PrimaryKpi({ index, metricKey, metric, currency, decimals, comparisonLabel }) {
   const { t } = useI18n();
   const label = metricLabel(t, metricKey);
   const definition = metricDefinition(t, metricKey);
   const shown = presentMetric(metric, { currency, decimals });
   const visual = VISUALS[metricKey] ?? { icon: 'analytics', accent: 'blue' };
-  const series = Array.isArray(trend) ? trend.map((bucket) => bucket.value) : [];
+  const destination = DESTINATIONS[metricKey];
 
   return (
     <div
@@ -212,34 +231,89 @@ function PrimaryKpi({ index, metricKey, metric, trend, currency, decimals, compa
       </div>
 
       {/*
-        24px, shrinking with the card rather than truncating: a money figure
-        cut to "BHD 69,54…" is a different number.
+        Figure and movement on ONE row, which is the reference layout's whole
+        trick: the eye lands on the number and the direction together instead
+        of travelling down to find out which way it went.
+
+        The figure shrinks with the card rather than truncating — a money
+        figure cut to "BHD 69,54…" is a different number — and the pill never
+        shrinks, so a narrow card squeezes the figure and keeps the verdict
+        legible.
       */}
+      <div className="mt-5 flex items-end justify-between gap-3">
       <p
-        className="tabular mt-4 text-[clamp(1.125rem,9.5cqi,1.5rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
+        className="tabular min-w-0 text-[clamp(1.125rem,8.5cqi,1.625rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
         title={shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined}
       >
         {shown.value === null ? (
           <span className="text-(--color-muted)">{EMPTY}</span>
         ) : (
-          <bdi dir={figureDirection(shown.value)}>{shown.value}</bdi>
+          <bdi dir={figureDirection(shown.value)}>
+            {/*
+              Counted up only on the four primary cards. Twelve figures all
+              counting at once is a slot machine, not a dashboard — the
+              compact row prints its values outright.
+            */}
+            <CountUp value={shown.raw} format={shown.format} />
+          </bdi>
         )}
       </p>
 
-      <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-        <Change metric={metric} shown={shown} costly={visual.costly} size="md" />
-        {comparisonLabel && (
-          <span className="truncate text-xs text-(--color-muted)">{comparisonLabel}</span>
-        )}
+        <Change metric={metric} shown={shown} costly={visual.costly} size="pill" />
       </div>
 
-      <div className="mt-auto pt-4">
-        {series.filter((value) => value !== null).length > 1 ? (
-          <Sparkline values={series} colour={SPARKS[visual.accent]} height={40} />
-        ) : (
-          <div aria-hidden="true" className="h-10" />
-        )}
-      </div>
+      {/*
+        The comparison basis, once, quietly. It is the same sentence on all
+        four cards, so it reads as a caption rather than four facts.
+      */}
+      {comparisonLabel && (
+        <p className="mt-2 truncate text-xs text-(--color-muted)">{comparisonLabel}</p>
+      )}
+
+      <div className="mt-auto" />
+
+      {/*
+        A figure that cannot be investigated is a poster. Each card now ends
+        where the reader would go next to understand it — orders to the order
+        list, revenue to analytics — and says how much the figure moved in its
+        own unit, which the percentage beside it does not.
+
+        A link inside the card rather than the card as a link: the E2E suite
+        finds a card through its heading's ancestors, and wrapping the whole
+        thing in an anchor would also make every sparkline and tooltip inside
+        it part of one enormous click target.
+      */}
+      {destination && (
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-(--color-line-subtle) pt-3">
+          {/*
+            A signed figure alone is ambiguous \u2014 the movement, or another
+            number? The comparison basis is already stated higher up the
+            card, so rather than repeat it in a cramped footer the movement
+            is named for a screen reader and on hover.
+          */}
+          {shown.delta === null ? (
+            <span aria-hidden="true">&nbsp;</span>
+          ) : (
+            <span
+              className="tabular min-w-0 truncate text-xs text-(--color-text-2)"
+              title={t('dashboard.movement')}
+            >
+              <span className="sr-only">{t('dashboard.movement')}: </span>
+              {shown.delta}
+            </span>
+          )}
+
+          <Link
+            href={destination}
+            aria-label={t('dashboard.investigate', { metric: label })}
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-(--color-line) text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:bg-(--color-brand-soft) hover:text-(--color-brand-text)"
+          >
+            {/* Logical: the arrow points the way reading runs, so it flips
+                with the page rather than pointing back in Arabic. */}
+            <Icon name="arrowRight" size={15} className="rtl:-scale-x-100" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,7 +327,9 @@ function CompactKpi({ index, metricKey, metric, currency, decimals }) {
 
   return (
     <div
-      className={cn(CARD, 'rise @container flex flex-col px-3 py-3')}
+      className={cn(
+        'rise @container flex flex-col border-b border-(--color-line-subtle) px-3.5 py-3 transition-colors duration-(--duration-fast) last:border-b-0 hover:bg-(--color-ground) sm:border-b-0',
+      )}
       style={{ '--rise-index': index }}
       title={definition}
     >
@@ -327,6 +403,36 @@ function Change({ metric, shown, costly = false, size }) {
           ? 'text-(--color-warning)'
           : 'text-(--color-danger)'
         : 'text-(--color-text-2)';
+
+  if (size === 'pill') {
+    /*
+     * A filled pill rather than coloured text, as the reference has it. The
+     * arrow stays: colour alone must never be the only carrier of a verdict,
+     * and roughly one reader in twelve cannot separate the red from the
+     * green (UI_UX_DIRECTION.md).
+     */
+    const fill =
+      tone === 'positive'
+        ? 'bg-(--color-success-soft) text-(--color-success)'
+        : tone === 'negative'
+          ? costly
+            ? 'bg-(--color-warning-soft) text-(--color-warning)'
+            : 'bg-(--color-danger-soft) text-(--color-danger)'
+          : 'bg-(--color-surface-subtle) text-(--color-text-2)';
+
+    return (
+      <span
+        data-tone={tone}
+        className={cn(
+          'tabular inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap',
+          fill,
+        )}
+      >
+        <span aria-hidden="true">{tone === 'negative' ? '▼' : tone === 'positive' ? '▲' : '→'}</span>
+        {magnitude}
+      </span>
+    );
+  }
 
   return (
     <span

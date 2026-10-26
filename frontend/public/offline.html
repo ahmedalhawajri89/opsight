@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opsight — no connection</title>
+    <!--
+      Deliberately plain and self-contained: no stylesheet, no script, no
+      font. This page is only ever shown when the network is gone, which is
+      the one moment nothing else can be fetched.
+
+      Both languages at once, because this page is served by the service
+      worker before any of the application's own language handling runs —
+      there is no cookie read, no preference, nothing to choose with. Two
+      short sentences is a smaller cost than guessing wrong.
+    -->
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #f5f7fb;
+        color: #0f2a47;
+        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 32rem; text-align: center; }
+      svg { color: #0f2a47; }
+      h1 { font-size: 1.25rem; margin: 20px 0 8px; }
+      p { margin: 0 0 6px; color: #475569; }
+      p[lang="ar"] { direction: rtl; }
+      button {
+        margin-top: 22px;
+        padding: 10px 20px;
+        font: inherit;
+        font-weight: 600;
+        color: #fff;
+        background: #0f2a47;
+        border: 0;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0b1020; color: #e8eefc; }
+        p { color: #94a3b8; }
+        svg { color: #8fb8f0; }
+        button { background: #1d4e7e; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg
+        width="46"
+        height="46"
+        viewBox="0 0 32 32"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M22.4 6.2A11.6 11.6 0 1 0 27 14.3" />
+        <path d="m19.6 16.6 4-4.6 3.1 2.6 3.6-6.1" />
+      </svg>
+
+      <h1>Opsight</h1>
+      <p lang="en">No connection, so there are no current figures to show.</p>
+      <p lang="ar">لا يوجد اتصال، فلا توجد أرقام حديثة تُعرض.</p>
+
+      <button type="button" onclick="location.reload()">Retry &middot; إعادة المحاولة</button>
+    </main>
+  </body>
+</html>

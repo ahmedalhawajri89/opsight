@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 
+import { ServiceWorker } from '@/features/pwa/ServiceWorker';
 import { Providers } from './providers';
 import {
   LOCALE_COOKIE,
@@ -87,6 +88,21 @@ const FONT_STACK = [interFace, arabicFace, interFallback, arabicFallback]
 export const metadata = {
   title: 'Opsight',
   description: 'Operations & Business Intelligence',
+  // The icons the browser tab and an iOS home screen use. The installed
+  // application's own icons are declared in app/manifest.js (ADR-028).
+  icons: {
+    icon: [{ url: '/icons/favicon-64.png', type: 'image/png', sizes: '64x64' }],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+  },
+};
+
+/*
+ * The browser's own chrome — the window title bar of an installed copy, and
+ * the address bar on a phone — painted navy so the application does not sit
+ * in a white frame it did not choose.
+ */
+export const viewport = {
+  themeColor: '#0f2a47',
 };
 
 export default async function RootLayout({ children }) {
@@ -115,6 +131,7 @@ export default async function RootLayout({ children }) {
         <Providers initialLocale={locale} initialNumerals={numerals}>
           {children}
         </Providers>
+        <ServiceWorker />
       </body>
     </html>
   );

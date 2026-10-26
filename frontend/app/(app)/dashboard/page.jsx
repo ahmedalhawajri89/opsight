@@ -25,6 +25,7 @@ import { Card } from '@/components/layout/PageHeader';
 import { PeriodControls } from '@/components/layout/PeriodControls';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
+import { EmptyPeriodNotice } from '@/features/analytics/EmptyPeriodNotice';
 import { SeasonNotice } from '@/features/analytics/SeasonNotice';
 import { cn } from '@/lib/cn';
 import { resolvePreset } from '@/lib/periods';
@@ -79,6 +80,27 @@ const PERIOD_CONFIG = {
  * the Analytics entry point render only for roles that have them, and each row
  * closes up around what is missing rather than leaving a hole.
  */
+/** Is this calendar day inside the period the server resolved? */
+function withinPeriod(day, period) {
+  if (!period?.from || !period?.to) return false;
+
+  return day >= period.from && day <= period.to;
+}
+
+/** The whole calendar month containing a day, as a custom range. */
+function monthAround(day) {
+  const date = new Date(`${day}T00:00:00`);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const pad = (value) => String(value).padStart(2, '0');
+  const last = new Date(year, month + 1, 0).getDate();
+
+  return {
+    from: `${year}-${pad(month + 1)}-01`,
+    to: `${year}-${pad(month + 1)}-${pad(last)}`,
+  };
+}
+
 export default function DashboardPage() {
   const { user, can } = useAuth();
   const { t } = useI18n();
@@ -106,6 +128,23 @@ export default function DashboardPage() {
   const comparisonLabel = meta?.comparison?.label ?? '';
   const currency = meta?.currency ?? getMoneyDefaults().currency;
   const decimals = meta?.currency_decimals ?? getMoneyDefaults().decimals;
+
+  /*
+   * An empty window that is not an empty business.
+   *
+   * "Nothing happened" and "nothing happened HERE" render identically — a
+   * column of zeros — and mean opposite things. The notice appears only when
+   * both are true: this period produced no trade, and the server says the
+   * business traded on some other day.
+   *
+   * Orders, not revenue, decides it: a period CAN legitimately contain
+   * orders worth nothing once discounts and refunds are counted, and that
+   * is trade, not silence.
+   */
+  const periodIsEmpty = Number(metrics.orders_count?.value ?? 0) === 0;
+  const latestActivityOn = meta?.latest_activity_on ?? null;
+  const tradedElsewhere =
+    periodIsEmpty && latestActivityOn !== null && !withinPeriod(latestActivityOn, meta?.period);
   const money = { currency, decimals };
   const firstLoad = isLoading && !dashboard;
 
@@ -221,9 +260,21 @@ export default function DashboardPage() {
 
       <div className="grid items-start gap-5 min-[90rem]:grid-cols-[minmax(0,1fr)_17.5rem] min-[100rem]:grid-cols-[minmax(0,1fr)_19.5rem]">
         <div className="min-w-0 space-y-4">
+          {tradedElsewhere && (
+            <EmptyPeriodNotice
+              latestActivityOn={latestActivityOn}
+              onJump={() =>
+                changePeriod({
+                  preset: 'custom',
+                  ...monthAround(latestActivityOn),
+                  comparison: filters.comparison,
+                })
+              }
+            />
+          )}
+
           <KpiPanel
             metrics={metrics}
-            trends={trends}
             currency={currency}
             decimals={decimals}
             comparisonLabel={comparisonLabel}

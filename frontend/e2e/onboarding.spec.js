@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { pruneBusiness } from './support/prune';
+
 /**
  * A business signs itself up and starts trading, through a real browser
  * (ADR-024).
@@ -10,14 +12,25 @@ import { expect, test } from '@playwright/test';
  * than the one the demo business happens to use.
  *
  * It signs in for itself (no saved session), so it runs in the anonymous
- * project. Each run leaves a real business behind in the development database,
- * which is the point: the flow is exercised against the real API, not a mock.
+ * project. The business it creates is real — the flow is exercised against the
+ * real API, not a mock — and is removed again afterwards, with the owner
+ * account and everything the run traded (support/prune.js).
  */
 test.describe('a new business', () => {
+  const stamp = Date.now();
+  const email = `owner+${stamp}@e2e.test`;
+  const businessName = `E2E Trading ${stamp}`;
+
+  /*
+   * Deleting the business takes its owner with it, so the account needs no
+   * line of its own. It runs even when the test failed half way, which is
+   * when a half-made business would otherwise be left behind for good.
+   */
+  test.afterAll(() => {
+    pruneBusiness(businessName);
+  });
+
   test('signs up, sets itself up, and records its first sale', async ({ page }) => {
-    const stamp = Date.now();
-    const email = `owner+${stamp}@e2e.test`;
-    const businessName = `E2E Trading ${stamp}`;
 
     // ---- Sign-up ----------------------------------------------------------
     await page.goto('/login');

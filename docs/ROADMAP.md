@@ -507,6 +507,62 @@ used, because nothing in Opsight is AI-powered.
 
 ---
 
+## Dashboard — motion, focus and installation *(between Phase 07 and Phase 06)*
+
+The owner supplied a second reference image (a dashboard called "SalesX") and asked for four
+things: that layout, GSAP, a way to give the whole screen to the figures as though the
+application were installed on the desktop, and a logo. The reference is purple; the decision
+was **its layout only, the navy stays**. Work ran on `feature/dashboard-gsap`, one commit per
+section, no dependency beyond GSAP itself.
+
+1. **Motion** — GSAP has exactly one job: animating the TEXT of a number as it counts up,
+   which CSS cannot do. Everything that enters, hovers or settles is still CSS. One door
+   (`useGsap`) scopes every tween to a ref, reverts its inline styles on unmount, and does
+   nothing at all under `prefers-reduced-motion` — GSAP writes inline styles and never sees
+   the media query that governs the stylesheet, so honouring the preference is the
+   application's own job.
+2. **Focus mode** — the navigation folds away and the width goes to the figures. Offered as
+   two separate controls, not one: focus mode is a layout preference that is remembered,
+   fullscreen is a browser state that is not. `Shift + F` toggles it, Escape is deliberately
+   unbound (the browser already owns it in fullscreen), and the fullscreen button is **absent**
+   where `document.fullscreenEnabled` is false rather than present and dead.
+3. **Destinations and movement** — every headline figure now links to the screen that explains
+   it, and says how much it moved rather than only what it is.
+4. **Installable** — a web app manifest, a service worker that caches the fingerprinted shell
+   and **never** `/api/`, an offline page, and a maskable icon drawn separately rather than the
+   same square padded. A cached figure is a wrong figure; proven empirically to cache 22 shell
+   files and 0 API responses.
+5. **The KPI card, rebuilt** on the reference's anatomy: icon and label, the figure and its
+   change on one line, the comparison in words beneath, and a footer carrying the movement and
+   the link. Sparklines were removed — three pixels of trend under a figure that already states
+   its own change earns nothing.
+6. **The second row as a quiet strip** — eight compact figures on one divided surface instead of
+   eight competing cards; and the dashboard no longer opens on an unexplained void. "Nothing
+   happened" and "nothing happened HERE" rendered identically, as a column of zeros; the API
+   gained `latest_activity_on` so an empty period can say the business traded elsewhere and
+   offer a jump to it.
+7. **Discoverability** — a feature nobody finds was not built. Focus mode says it exists once,
+   in the flow of the page rather than as a coach mark over the content, and stops the moment
+   it is first used. The install invitation waits for the third visit, counts visits per session
+   rather than per navigation, and exists only when the browser says the application is
+   installable. Both share one rule: dismissal is permanent.
+8. **The mark** — an open "C" rising into a line that climbs: the eye that measures. One
+   stroke weight, legible at 16px, no gradient and no wordmark lock-up.
+9. **Test hygiene** — the two browser specs that create something the product cannot delete (a
+   business signing itself up, an owner creating an account) now remove it again through
+   `opsight:e2e:prune`. Left alone the rows had accumulated until two seeded accounts fell off
+   the first page of the users screen and three unrelated specs went red
+   (TESTING_STRATEGY.md §5).
+
+**What the reference shows that the data does not support yet** (left out rather than faked):
+the stock-status pill in the top-products table, which would need a per-product stock state on
+the products endpoint rather than the figures it returns today.
+
+**Gate.** 626 backend tests (2,745 assertions), 259 frontend tests, 74 browser E2E tests green
+from a cold production server. Pint clean, PHPStan level 6 clean, ESLint clean.
+
+---
+
 ## Phase 08 — Post-MVP depth
 
 Ordered by likely value, not committed:
