@@ -35,14 +35,23 @@ import { useGsap } from '@/hooks/useGsap';
  * Opsight.
  */
 
-/* A record's kind decides its chip colour. Six rows, three kinds. */
+/*
+ * A record's kind decides its chip colour. Six rows, three kinds.
+ *
+ * Three VALUES of light rather than three saturated hues: the chart palette
+ * is tuned for a white ground and goes muddy on ink, and three bright dots
+ * on a dark panel read as a toy. These three are already contrast-checked
+ * against the panel (tests/contrast.test.js), and the claim the scene makes
+ * — records of different kinds becoming one figure — needs them to be
+ * distinguishable, not colourful.
+ */
 const ROWS = [
-  { kind: 'chart-1', width: 196 },
-  { kind: 'chart-2', width: 148 },
-  { kind: 'chart-1', width: 172 },
-  { kind: 'chart-3', width: 124 },
-  { kind: 'chart-1', width: 184 },
-  { kind: 'chart-2', width: 136 },
+  { kind: 'on-brand', width: 196 },
+  { kind: 'accent-on-brand', width: 148 },
+  { kind: 'on-brand', width: 172 },
+  { kind: 'on-brand-2', width: 124 },
+  { kind: 'on-brand', width: 184 },
+  { kind: 'accent-on-brand', width: 136 },
 ];
 
 /* The figure's columns: shapes, not values. Rising, with one honest dip. */
@@ -166,7 +175,7 @@ export function LedgerScene() {
   });
 
   return (
-    <figure className="mt-10" ref={root}>
+    <figure className="mt-12" ref={root}>
       <svg
         role="img"
         aria-label={t('login.scene.label')}
@@ -175,8 +184,36 @@ export function LedgerScene() {
         className="h-auto w-full"
         fill="none"
       >
+        {/*
+          The rules a figure is read against — the same dashed gridlines the
+          real charts use, so the door is drawn in the product's own hand.
+          Faint enough to sit behind everything: a frame of reference, not
+          content.
+        */}
+        {[0.28, 0.52, 0.76].map((fraction) => (
+          <line
+            key={fraction}
+            x1="36"
+            x2="444"
+            y1={BASELINE - BASELINE * fraction}
+            y2={BASELINE - BASELINE * fraction}
+            stroke="var(--on-brand-line)"
+            strokeWidth="1"
+            strokeDasharray="3 6"
+            opacity="0.3"
+          />
+        ))}
+
         {/* The rule every figure stands on. */}
-        <line x1="36" x2="444" y1={BASELINE} y2={BASELINE} stroke="var(--border)" strokeWidth="2" />
+        <line
+          x1="36"
+          x2="444"
+          y1={BASELINE}
+          y2={BASELINE}
+          stroke="var(--on-brand-line)"
+          strokeWidth="2"
+          opacity="0.7"
+        />
 
         {/* 1 — records arrive. */}
         {ROWS.map((row, index) => (
@@ -193,7 +230,8 @@ export function LedgerScene() {
               width={row.width}
               height="10"
               rx="5"
-              fill="var(--surface-hover)"
+              fill="var(--on-brand)"
+              opacity="0.18"
             />
           </g>
         ))}
@@ -208,7 +246,8 @@ export function LedgerScene() {
             width={COLUMN_WIDTH}
             height={column.height}
             rx="6"
-            fill="var(--brand-soft)"
+            fill="var(--on-brand)"
+            opacity="0.26"
           />
         ))}
 
@@ -218,7 +257,7 @@ export function LedgerScene() {
           points={LINE}
           pathLength="1"
           strokeDasharray="1"
-          stroke="var(--brand)"
+          stroke="var(--on-brand)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -228,7 +267,7 @@ export function LedgerScene() {
           cx={NOW_X}
           cy={NOW_Y}
           r="7"
-          stroke="var(--accent)"
+          stroke="var(--accent-on-brand)"
           strokeWidth="2"
           /*
            * Invisible until the pulse drives it. It is the one element whose
@@ -238,18 +277,26 @@ export function LedgerScene() {
            */
           opacity="0"
         />
-        <circle className="ledger-dot" cx={NOW_X} cy={NOW_Y} r="5.5" fill="var(--accent)" />
+        <circle
+          className="ledger-dot"
+          cx={NOW_X}
+          cy={NOW_Y}
+          r="5.5"
+          fill="var(--accent-on-brand)"
+        />
       </svg>
 
       {/* The three beats, named — lit in turn as the drawing reaches each one. */}
-      <figcaption className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+      <figcaption className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-(--color-on-brand-line)/25 pt-5 text-sm text-(--color-on-brand-2)">
         {STEPS.map((step, index) => (
           <span key={step.key} className="inline-flex items-center gap-3">
-            {index > 0 && <span aria-hidden="true" className="h-px w-6 bg-(--color-line-strong)" />}
-            <span className="ledger-step inline-flex items-center gap-2 text-(--color-text-2)">
+            {index > 0 && (
+              <span aria-hidden="true" className="h-px w-6 bg-(--color-on-brand-line)/40" />
+            )}
+            <span className="ledger-step inline-flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="size-2 rounded-(--radius-pill) bg-(--color-brand)"
+                className="size-1.5 rounded-(--radius-pill) bg-(--color-accent-on-brand)"
               />
               {t(`login.scene.${step.key}`)}
             </span>

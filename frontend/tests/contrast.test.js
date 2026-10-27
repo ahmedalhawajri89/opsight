@@ -177,6 +177,13 @@ const TEXT_PAIRS = [
   ['info', 'surface', 4.5, 'informational text'],
   ['info', 'info-soft', 4.5, 'informational banner'],
   ['text-inverse', 'brand', 4.5, 'primary button label'],
+
+  // The sign-in panel: the one place in the product that is a page-sized
+  // wash of brand ink, and therefore the one place these pairs apply.
+  ['on-brand', 'brand-panel', 4.5, 'headline on the sign-in panel'],
+  ['on-brand-2', 'brand-panel', 4.5, 'secondary text on the sign-in panel'],
+  ['on-brand', 'brand-panel-deep', 4.5, 'headline over the deep edge of the panel'],
+  ['on-brand-2', 'brand-panel-deep', 4.5, 'secondary text over the deep edge'],
 ];
 
 /** Non-text elements: 3:1 is the requirement for a meaningful boundary. */
@@ -185,6 +192,8 @@ const GRAPHIC_PAIRS = [
   ['accent', 'surface', 3, 'focus ring on a card'],
   ['accent', 'ground', 3, 'focus ring on the page ground'],
   ['brand', 'surface', 3, 'primary button against a card'],
+  ['on-brand-line', 'brand-panel', 3, 'a rule drawn on the sign-in panel'],
+  ['accent-on-brand', 'brand-panel', 3, 'the point marking "now" on the panel'],
 ];
 
 for (const [themeName, tokens] of Object.entries(themes)) {

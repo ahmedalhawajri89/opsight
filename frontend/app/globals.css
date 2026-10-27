@@ -91,6 +91,29 @@
   --accent-soft: #fdf3e0;
 
   /*
+   * THE ONE PAGE-SIZED BRAND WASH, and the exception is deliberate.
+   *
+   * The rule above — brand ink is for the mark, the primary button and a
+   * header, never a wash — is about screens that are READ. A dashboard
+   * flooded with navy fights its own figures for eight hours a day.
+   *
+   * The door is the opposite case. It is seen for ten seconds by someone who
+   * has not yet decided what this product is, and two pale cards floating on
+   * a pale ground say nothing about it. So the sign-in and sign-up screens
+   * get a full-height panel of it, and nothing else does.
+   *
+   * These are deliberately NOT `--brand`: in the dark theme that token is a
+   * light blue, which would turn the panel into a pale wash at night. A
+   * brand surface is the brand's colour in both themes, only deepened.
+   */
+  --brand-panel: #0f2a47;
+  --brand-panel-deep: #0a1d33;
+  --on-brand: #ffffff;
+  --on-brand-2: #9fb3cc;
+  --on-brand-line: #7e96b3;
+  --accent-on-brand: #e0a44c;
+
+  /*
    * SEMANTIC — meaning only, never decoration. Each has a soft tint for the
    * background of a badge or an inline message.
    */
@@ -176,6 +199,14 @@
   --accent-strong: #f0c877;
   --accent-soft: #2a2113;
 
+  /* Deepened, not lightened: the panel stays the brand's colour at night. */
+  --brand-panel: #0b1a2e;
+  --brand-panel-deep: #071221;
+  --on-brand: #ffffff;
+  --on-brand-2: #9fb3cc;
+  --on-brand-line: #7e96b3;
+  --accent-on-brand: #e0a44c;
+
   --success: #4ade80;
   --success-soft: #10281a;
   --warning: #fbbf24;
@@ -227,6 +258,12 @@
   --color-brand-active: var(--brand-active);
   --color-brand-text: var(--brand-text);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-panel: var(--brand-panel);
+  --color-brand-panel-deep: var(--brand-panel-deep);
+  --color-on-brand: var(--on-brand);
+  --color-on-brand-2: var(--on-brand-2);
+  --color-on-brand-line: var(--on-brand-line);
+  --color-accent-on-brand: var(--accent-on-brand);
 
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
@@ -552,16 +589,13 @@ html[lang='ar'] [class*='tracking-'] {
  * Under reduced motion useGsap never runs and the markup is already the
  * finished figure, which is the same end state this file used to collapse to.
  *
- * What stays is the one thing GSAP needs from CSS: without `transform-box`,
- * an SVG element's transform origin is the whole canvas, so a column scaling
- * from its baseline would instead swing from the corner of the drawing.
+ * NOTHING FOR IT IS LEFT HERE, and the one rule that was is the reason:
+ * `transform-box: fill-box` was a leftover from the keyframes, and with it
+ * GSAP resolved the columns' origin to 0 0 — the top-left of each bar — so
+ * they grew DOWNWARD through the baseline instead of rising from it. GSAP
+ * computes SVG transform origins itself, in the element's own user units,
+ * and does it correctly when CSS is not also asserting a box.
  */
-.ledger-col,
-.ledger-row,
-.ledger-dot,
-.ledger-ring {
-  transform-box: fill-box;
-}
 
 /*
  * ---------------------------------------------------------------------------

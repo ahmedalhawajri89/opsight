@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { cn } from '@/lib/cn';
 
 /**
  * The product mark and wordmark.
@@ -22,11 +23,24 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * on the light sidebar, the pale brand blue in dark mode — without a second
  * set of tokens to keep in step.
  */
-export function Logo({ compact = false }) {
+const TONES = {
+  /** On a light surface: the mark in link blue, the name in ink. */
+  brand: { mark: 'text-(--color-brand-text)', word: 'text-(--color-text)' },
+
+  /** On the sign-in panel's brand wash, where both must be light. */
+  onBrand: { mark: 'text-(--color-on-brand)', word: 'text-(--color-on-brand)' },
+};
+
+/**
+ * @param {boolean} compact  The mark alone, without the name.
+ * @param {'brand'|'onBrand'} tone  Which ground it is standing on.
+ */
+export function Logo({ compact = false, tone = 'brand' }) {
   const { t } = useI18n();
+  const colours = TONES[tone] ?? TONES.brand;
 
   return (
-    <span className="flex items-center gap-2.5 text-(--color-brand-text)">
+    <span className={cn('flex items-center gap-2.5', colours.mark)}>
       <svg
         aria-hidden="true"
         viewBox="0 0 32 32"
@@ -46,7 +60,7 @@ export function Logo({ compact = false }) {
       </svg>
 
       {!compact && (
-        <span className="text-xl font-bold tracking-tight text-(--color-text)">
+        <span className={cn('text-xl font-bold tracking-tight', colours.word)}>
           {t('common.appName')}
         </span>
       )}
