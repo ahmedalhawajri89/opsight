@@ -27,6 +27,7 @@ import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
 import { SearchDialog, TopBarSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 /**
@@ -54,11 +55,13 @@ const NAV_GROUPS = [
         icon: 'customers',
         ability: 'customers.view',
       },
-      { href: '/products', label: 'nav.items.products', icon: 'gallery', ability: 'products.view' },
+      // `box`, not `gallery`: a 2x2 grid of squares means "grid", and on the
+      // icon rail the icon is the only label there is.
+      { href: '/products', label: 'nav.items.products', icon: 'box', ability: 'products.view' },
       {
         href: '/inventory',
         label: 'nav.items.inventory',
-        icon: 'inventory',
+        icon: 'shelves',
         ability: 'inventory.view',
       },
       {
@@ -233,7 +236,9 @@ export function AppShell({ children }) {
     [groups, t],
   );
 
-  const sidebar = <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} />;
+  const sidebar = (
+    <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} variant="full" />
+  );
 
   /*
    * Focus mode (UI_UX_DIRECTION.md). The sidebar and top bar are this
@@ -241,6 +246,7 @@ export function AppShell({ children }) {
    * the room back.
    */
   const focus = useFocusMode();
+  const [sidebarCollapsed, toggleSidebar] = useSidebarCollapsed();
 
   /*
    * One sentence, once, so the feature is findable. It also ends the moment
@@ -279,8 +285,26 @@ export function AppShell({ children }) {
         invisible links to reach the content they asked to focus on.
       */}
       {!focus.focused && (
-        <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex lg:w-[216px] [view-transition-name:app-sidebar]">
-          <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} compact />
+        <aside
+          id="app-sidebar"
+          className={cn(
+            'sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex [view-transition-name:app-sidebar]',
+            /*
+             * Collapsed means a rail at every width. Not collapsed leaves
+             * the decision to the layout, which is where it belonged before
+             * anyone was asked.
+             */
+            !sidebarCollapsed && 'lg:w-[216px]',
+          )}
+        >
+          <Sidebar
+            groups={groups}
+            current={current}
+            canAnalyse={can('analytics.view')}
+            variant={sidebarCollapsed ? 'rail' : 'auto'}
+            collapsed={sidebarCollapsed}
+            onToggle={toggleSidebar}
+          />
         </aside>
       )}
 
@@ -383,36 +407,82 @@ export function AppShell({ children }) {
   );
 }
 
-function Sidebar({ groups, current, canAnalyse, compact = false }) {
+/*
+ * Three forms of one sidebar, as class sets rather than a boolean with `lg:`
+ * escapes sprinkled through it.
+ *
+ * There used to be two, and `compact` meant "a rail that unfolds itself at
+ * 1024px". Letting the reader fold it by choice makes a third state that
+ * the boolean could not express: a rail at EVERY width, including the one
+ * where the layout would have unfolded it.
+ *
+ *   full  the drawer on a phone, where the sidebar is the whole screen
+ *   auto  the layout decides: a rail under 1024px, names above it
+ *   rail  the reader decided: icons at every width
+ */
+const SIDEBAR = {
+  full: {
+    header: 'px-5',
+    nav: 'px-3',
+    item: 'gap-3 px-3',
+    label: '',
+    group: '',
+    rule: 'hidden',
+    markSmall: 'hidden',
+    markFull: 'block',
+    foot: '',
+    toggle: 'hidden',
+  },
+  auto: {
+    header: 'justify-center lg:justify-start lg:px-5',
+    nav: 'px-2 lg:px-3',
+    item: 'justify-center lg:justify-start lg:gap-3 lg:px-3',
+    label: 'sr-only lg:not-sr-only',
+    group: 'hidden lg:block',
+    rule: 'lg:hidden',
+    markSmall: 'lg:hidden',
+    markFull: 'hidden lg:block',
+    foot: 'hidden lg:block',
+    toggle: 'justify-center lg:justify-start lg:gap-3 lg:px-3',
+  },
+  rail: {
+    header: 'justify-center',
+    nav: 'px-2',
+    item: 'justify-center',
+    label: 'sr-only',
+    group: 'hidden',
+    rule: '',
+    markSmall: '',
+    markFull: 'hidden',
+    foot: 'hidden',
+    toggle: 'justify-center',
+  },
+};
+
+function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = false, onToggle }) {
   const { t } = useI18n();
+  const style = SIDEBAR[variant] ?? SIDEBAR.full;
+  const compact = variant !== 'full';
 
   return (
     <>
-      <div
-        className={cn(
-          'flex h-16 shrink-0 items-center',
-          compact ? 'justify-center lg:justify-start lg:px-5' : 'px-5',
-        )}
-      >
+      <div className={cn('flex h-16 shrink-0 items-center', style.header)}>
         <Link
           href="/dashboard"
           className="rounded-(--radius-control)"
           aria-label={t('common.appName')}
         >
           {/* The wordmark needs room; the rail shows the mark alone. */}
-          <span className={compact ? 'lg:hidden' : 'hidden'}>
+          <span className={style.markSmall}>
             <Logo compact />
           </span>
-          <span className={compact ? 'hidden lg:block' : 'block'}>
+          <span className={style.markFull}>
             <Logo />
           </span>
         </Link>
       </div>
 
-      <nav
-        aria-label={t('nav.main')}
-        className={cn('flex-1 overflow-y-auto pt-1 pb-4', compact ? 'px-2 lg:px-3' : 'px-3')}
-      >
+      <nav aria-label={t('nav.main')} className={cn('flex-1 overflow-y-auto pt-1 pb-4', style.nav)}>
         {groups.map((group, index) => {
           const id = group.label ? `nav-${group.label.replaceAll('.', '-')}` : `nav-group-${index}`;
 
@@ -428,23 +498,31 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
                   className={cn(
                     'px-3 pb-2 text-xs font-medium tracking-[0.1em] text-(--color-muted) uppercase',
                     // On the rail the group is shown by a rule instead of a word.
-                    compact && 'hidden lg:block',
+                    style.group,
                   )}
                 >
                   {t(group.label)}
                 </p>
               )}
               {group.label && compact && (
-                <div aria-hidden="true" className="mx-2 mb-2 h-px bg-(--color-line) lg:hidden" />
+                <div
+                  aria-hidden="true"
+                  className={cn('mx-2 mb-2 h-px bg-(--color-line)', style.rule)}
+                />
               )}
 
               <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
                 {group.items.map((item) => (
                   <li key={item.href}>
                     {item.ready === false ? (
-                      <DisabledNavItem item={item} compact={compact} />
+                      <DisabledNavItem item={item} style={style} compact={compact} />
                     ) : (
-                      <NavLink item={item} active={current === item.href} compact={compact} />
+                      <NavLink
+                        item={item}
+                        active={current === item.href}
+                        style={style}
+                        compact={compact}
+                      />
                     )}
                   </li>
                 ))}
@@ -454,8 +532,41 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
         })}
       </nav>
 
+      {/*
+        Folding the navigation away.
+
+        At the FOOT and in every form, rather than beside the mark: one
+        placement to read and one set of classes to keep true, and it never
+        crowds the logo on the rail. Hidden in the drawer, where the sidebar
+        IS the screen and folding it to icons would leave a phone showing a
+        column of glyphs over a page it is already covering.
+
+        `aria-expanded` with `aria-controls`, so it announces the state of
+        the thing it operates rather than merely naming itself.
+      */}
+      {onToggle && (
+        <div className={cn('shrink-0 px-2 pb-2 lg:px-3', style.toggle === 'hidden' && 'hidden')}>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-controls="app-sidebar"
+            title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+            className={cn(
+              'flex h-9 w-full items-center rounded-(--radius-control) text-sm font-medium text-(--color-text-2) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+              style.toggle,
+            )}
+          >
+            <Icon name="panel" size={18} className="text-(--color-muted)" />
+            <span className={style.label}>
+              {collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* The promo card and version line need width; the rail omits them. */}
-      <div className={cn('shrink-0 px-3 pb-4', compact && 'hidden lg:block')}>
+      <div className={cn('shrink-0 px-3 pb-4', style.foot)}>
         <div className="rounded-(--radius-card) bg-(--color-brand-soft) p-4">
           <span
             aria-hidden="true"
@@ -486,7 +597,7 @@ function Sidebar({ groups, current, canAnalyse, compact = false }) {
   );
 }
 
-function NavLink({ item, active, compact = false }) {
+function NavLink({ item, active, style, compact = false }) {
   const { t } = useI18n();
   const label = t(item.label);
 
@@ -497,7 +608,7 @@ function NavLink({ item, active, compact = false }) {
       title={compact ? label : undefined}
       className={cn(
         'flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out)',
-        compact ? 'justify-center lg:justify-start lg:gap-3 lg:px-3' : 'gap-3 px-3',
+        style.item,
         active
           ? 'bg-(--color-brand-soft) font-semibold text-(--color-brand-text)'
           : 'font-medium text-(--color-text-2) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
@@ -509,12 +620,12 @@ function NavLink({ item, active, compact = false }) {
         className={active ? 'text-(--color-brand-text)' : 'text-(--color-muted)'}
       />
       {/* On the rail the name is the tooltip and the accessible name. */}
-      <span className={compact ? 'sr-only lg:not-sr-only' : undefined}>{label}</span>
+      <span className={style.label}>{label}</span>
     </Link>
   );
 }
 
-function DisabledNavItem({ item, compact = false }) {
+function DisabledNavItem({ item, style, compact = false }) {
   const { t } = useI18n();
 
   return (
@@ -523,11 +634,11 @@ function DisabledNavItem({ item, compact = false }) {
       title={`${t(item.label)} — ${t('nav.comingLater')}`}
       className={cn(
         'flex h-9 cursor-not-allowed items-center rounded-(--radius-control) text-sm font-medium text-(--color-muted)',
-        compact ? 'justify-center lg:justify-start lg:gap-3 lg:px-3' : 'gap-3 px-3',
+        style.item,
       )}
     >
       <Icon name={item.icon} size={18} />
-      <span className={cn('flex-1', compact && 'sr-only lg:not-sr-only')}>{t(item.label)}</span>
+      <span className={cn('flex-1', style.label)}>{t(item.label)}</span>
       <span className="sr-only">{t('nav.comingLater')}</span>
     </span>
   );

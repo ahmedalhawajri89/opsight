@@ -6,6 +6,7 @@ import { CountUp } from '@/components/data/CountUp';
 import { LedgerScene } from '@/features/auth/LedgerScene';
 import { toWords } from '@/features/auth/authMotion';
 import { useFocusMode } from '@/hooks/useFocusMode';
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
 import { useGsap } from '@/hooks/useGsap';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 
@@ -357,5 +358,77 @@ describe('LedgerScene', () => {
     const { container } = render(<LedgerScene />);
 
     expect(container.querySelector('.ledger-ring')).toHaveAttribute('opacity', '0');
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Folding the navigation away
+|--------------------------------------------------------------------------
+|
+| A standing preference, not a mode: someone who folds the navigation on a
+| wide screen means it for every screen they open after, which is the whole
+| difference between this and focus mode.
+|
+*/
+
+describe('useSidebarCollapsed', () => {
+  function Probe() {
+    const [collapsed, toggle] = useSidebarCollapsed();
+
+    return (
+      <button type="button" aria-expanded={!collapsed} onClick={toggle}>
+        {collapsed ? 'rail' : 'names'}
+      </button>
+    );
+  }
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('starts with the names, because that is what the layout already decides', () => {
+    // Not collapsed means "whatever the width calls for", which is the
+    // behaviour everyone had before this preference existed.
+    const { getByRole } = render(<Probe />);
+
+    expect(getByRole('button')).toHaveTextContent('names');
+  });
+
+  it('remembers the choice, because it is a preference and not a mode', async () => {
+    const { getByRole, unmount } = render(<Probe />);
+
+    await userEvent.click(getByRole('button'));
+    expect(getByRole('button')).toHaveTextContent('rail');
+
+    // The point: a new page must open folded, not unfold itself again.
+    unmount();
+    render(<Probe />);
+    expect(getByRole('button')).toHaveTextContent('rail');
+  });
+
+  it('announces the state of the navigation, not of itself', async () => {
+    // aria-expanded describes what the button operates. A control that only
+    // named itself would leave a screen-reader user to guess which way it
+    // currently stands.
+    const { getByRole } = render(<Probe />);
+    expect(getByRole('button')).toHaveAttribute('aria-expanded', 'true');
+
+    await userEvent.click(getByRole('button'));
+    expect(getByRole('button')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('still folds and unfolds when nothing can be remembered', async () => {
+    // Private browsing: the preference stops persisting, and the navigation
+    // still works — which is the part that matters.
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Access denied');
+    });
+
+    const { getByRole } = render(<Probe />);
+
+    await expect(userEvent.click(getByRole('button'))).resolves.not.toThrow();
+
+    setItem.mockRestore();
   });
 });

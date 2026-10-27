@@ -61,40 +61,32 @@ const en = {
     back: 'Back to sign in',
     held: {
       title: 'What is held',
-      body:
-        'For a customer: name, an Arabic name if given, email, phone, company, address, city, country, tax number and free-text notes. For an order: what was bought, when, at what price, and what was paid. For a member of staff: name, email, role, language and the time they last signed in.',
+      body: 'For a customer: name, an Arabic name if given, email, phone, company, address, city, country, tax number and free-text notes. For an order: what was bought, when, at what price, and what was paid. For a member of staff: name, email, role, language and the time they last signed in.',
     },
     purpose: {
       title: 'Why it is held',
-      body:
-        'To run the business that entered it: to raise an order, to know who placed it, and to report revenue, cost and stock. Nothing is sold, shared with an advertiser, or used to train anything. There are no third-party processors receiving this data.',
+      body: 'To run the business that entered it: to raise an order, to know who placed it, and to report revenue, cost and stock. Nothing is sold, shared with an advertiser, or used to train anything. There are no third-party processors receiving this data.',
     },
     retention: {
       title: 'How long it is kept',
-      body:
-        'Orders, expenses and stock movements are kept for as long as the business keeps its account, because every historical figure is computed from them. The activity log — who changed what, and when — is kept for a window the business sets, {default} days by default, and entries past it are deleted automatically each night.',
+      body: 'Orders, expenses and stock movements are kept for as long as the business keeps its account, because every historical figure is computed from them. The activity log — who changed what, and when — is kept for a window the business sets, {default} days by default, and entries past it are deleted automatically each night.',
     },
     access: {
       title: 'Asking for a copy',
-      body:
-        'A business can export everything it holds about one person as a single file: their record, every order they placed, and the audit trail of changes to their record. Ask the business you deal with.',
+      body: 'A business can export everything it holds about one person as a single file: their record, every order they placed, and the audit trail of changes to their record. Ask the business you deal with.',
     },
     erasure: {
       title: 'Asking to be forgotten',
-      body:
-        'A person can be erased. Their name, email, phone, company, address, city and tax number are overwritten and cannot be recovered, and the activity log is rewritten so that it no longer carries those details either.',
-      why:
-        'The orders themselves stay. This is deliberate, and it is worth being plain about: every revenue, cost and tax figure the business has ever reported is computed from its orders, so deleting them would not protect a person — it would silently restate the business\u2019s own history. After an erasure the orders remain, and they no longer name anyone.',
+      body: 'A person can be erased. Their name, email, phone, company, address, city and tax number are overwritten and cannot be recovered, and the activity log is rewritten so that it no longer carries those details either.',
+      why: 'The orders themselves stay. This is deliberate, and it is worth being plain about: every revenue, cost and tax figure the business has ever reported is computed from its orders, so deleting them would not protect a person — it would silently restate the business\u2019s own history. After an erasure the orders remain, and they no longer name anyone.',
     },
     access_control: {
       title: 'Who can see what',
-      body:
-        'Access follows the role the business assigns. An owner sees everything. A manager runs operations and sees cost. An analyst reads figures and exports them but changes nothing. Front-line staff see the orders they work on, and no cost, no export and no audit trail. Erasing a person is the owner\u2019s alone.',
+      body: 'Access follows the role the business assigns. An owner sees everything. A manager runs operations and sees cost. An analyst reads figures and exports them but changes nothing. Front-line staff see the orders they work on, and no cost, no export and no audit trail. Erasing a person is the owner\u2019s alone.',
     },
     contact: {
       title: 'How to ask',
-      body:
-        'Opsight does not hold a direct relationship with the customers of the businesses that use it. Requests for a copy, a correction or an erasure go to the business you deal with, which has the controls described here.',
+      body: 'Opsight does not hold a direct relationship with the customers of the businesses that use it. Requests for a copy, a correction or an erasure go to the business you deal with, which has the controls described here.',
     },
   },
 
@@ -293,6 +285,8 @@ const en = {
 
   nav: {
     main: 'Main',
+    collapseSidebar: 'Collapse the navigation',
+    expandSidebar: 'Expand the navigation',
     skipToContent: 'Skip to content',
     openNavigation: 'Open navigation',
     closeNavigation: 'Close navigation',
@@ -364,7 +358,8 @@ const en = {
 
     empty: {
       title: 'No store is connected',
-      description: 'Connect one above, and its orders will appear in your figures as they are placed.',
+      description:
+        'Connect one above, and its orders will appear in your figures as they are placed.',
     },
 
     confirm: {

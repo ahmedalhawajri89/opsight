@@ -177,6 +177,34 @@ const PATHS = {
       <path d="M3.5 20c.8-3.6 3.3-6 6.5-6 1.6 0 3 .6 4.1 1.6M18 14v6M15 17h6" />
     </>
   ),
+  /*
+   * The navigation itself, folded or unfolded. A pane with its first column
+   * ruled off is the glyph every editor and dashboard uses for this, which
+   * is exactly why it is the right one: nobody has to learn it.
+   */
+  panel: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M9.5 4.5v15" />
+    </>
+  ),
+
+  /*
+   * Stock on shelves — NOT a warehouse, which is what stood here.
+   *
+   * A warehouse is a roof over a box, and at 18px on an icon rail that is
+   * the same silhouette as the house that means Dashboard. Two items in one
+   * list cannot look alike when the icon is the only label.
+   */
+  shelves: (
+    <>
+      <path d="M3.5 11h17M3.5 19.5h17" />
+      <rect x="6.5" y="5.5" width="5.5" height="5.5" rx="1" />
+      <rect x="14.5" y="7.5" width="4" height="3.5" rx="1" />
+      <rect x="6.5" y="14" width="4.5" height="5.5" rx="1" />
+    </>
+  ),
+
   // Two links of a chain, joined: a connection to something outside.
   link: (
     <>
