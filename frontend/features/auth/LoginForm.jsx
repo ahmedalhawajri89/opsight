@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { gsap } from 'gsap';
 
 import { useAuth } from './AuthProvider';
 import { FIELD, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
 
 // Mirrors LoginRequest::REMEMBER_MINUTES on the server; stated, not enforced, here.
@@ -21,6 +23,29 @@ export function LoginForm() {
   const [formError, setFormError] = useState(null);
   const [failures, setFailures] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
+
+  const reducedMotion = useReducedMotion();
+
+  /*
+   * One short shake, and only for a refusal the fields cannot explain —
+   * "those credentials are wrong" has nowhere else to point. A field error
+   * already marks its own field red, and shaking the whole form for a
+   * missing email would be noise.
+   *
+   * A callback ref rather than a tween fired from the submit handler: it
+   * runs when the element is on the page, and because the banner is keyed on
+   * the attempt count, a second refusal remounts it — so the shake repeats
+   * and role="alert" announces again, which a re-render alone would not do.
+   */
+  const shakeOnMount = useCallback(
+    (node) => {
+      if (node === null || reducedMotion) return;
+
+      gsap.fromTo(node, { x: -6 }, { x: 0, duration: 0.45, ease: 'elastic.out(1, 0.35)' });
+    },
+    [reducedMotion],
+  );
 
   const {
     register,
@@ -71,6 +96,8 @@ export function LoginForm() {
 
       {formError && (
         <p
+          key={failures}
+          ref={shakeOnMount}
           role="alert"
           className="flex items-start gap-3 rounded-(--radius-control) bg-(--color-danger-soft) px-4 py-3 text-sm text-(--color-danger)"
         >
@@ -79,7 +106,7 @@ export function LoginForm() {
         </p>
       )}
 
-      <div>
+      <div data-auth-field>
         <label htmlFor="email" className={LABEL}>
           {t('auth.email')}
         </label>
@@ -90,6 +117,12 @@ export function LoginForm() {
           // right-to-left field its "@" and "." visibly jump around.
           dir="ltr"
           autoComplete="username"
+          /*
+           * The cursor starts where the work does. Not on a touch device:
+           * autofocus there throws up the keyboard over half the screen
+           * before anyone has decided to type.
+           */
+          autoFocus={typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches}
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-describedby={errors.email ? 'email-error' : undefined}
           className={cn(
@@ -107,7 +140,7 @@ export function LoginForm() {
         )}
       </div>
 
-      <div>
+      <div data-auth-field>
         <label htmlFor="password" className={LABEL}>
           {t('auth.password')}
         </label>
@@ -136,6 +169,15 @@ export function LoginForm() {
               'pr-12',
               errors.password ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
             )}
+            /*
+             * Caps Lock is the quiet reason a correct password is refused,
+             * and the one thing a reader cannot see while typing blind.
+             * Read from the keyboard event's modifier state rather than
+             * tracked by hand, so it is right even when the key was pressed
+             * before this page was open.
+             */
+            onKeyUp={(event) => setCapsLock(event.getModifierState?.('CapsLock') ?? false)}
+            onBlur={() => setCapsLock(false)}
             {...register('password', { required: t('auth.passwordRequired') })}
           />
           {/*
@@ -159,6 +201,18 @@ export function LoginForm() {
             {errors.password.message}
           </p>
         )}
+
+        {/*
+          A warning, not an error: nothing has gone wrong yet, and saying so
+          before the attempt is the whole point. Announced politely so it does
+          not interrupt someone mid-word.
+        */}
+        {capsLock && (
+          <p role="status" className="mt-2 flex items-center gap-2 text-sm text-(--color-warning)">
+            <Icon name="alert" size={14} className="shrink-0" />
+            {t('auth.capsLock')}
+          </p>
+        )}
       </div>
 
       {/*
@@ -166,7 +220,7 @@ export function LoginForm() {
         the two things a person needs to decide, stated at the moment they
         decide. The whole row is the target, well past 44px wide.
       */}
-      <label className="flex cursor-pointer items-start gap-3">
+      <label data-auth-field className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
           className="mt-1 size-4 shrink-0 cursor-pointer accent-(--color-brand)"
@@ -183,7 +237,7 @@ export function LoginForm() {
         </span>
       </label>
 
-      <button type="submit" disabled={isSubmitting} className={SUBMIT}>
+      <button data-auth-field type="submit" disabled={isSubmitting} className={SUBMIT}>
         {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
         {!isSubmitting && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
       </button>

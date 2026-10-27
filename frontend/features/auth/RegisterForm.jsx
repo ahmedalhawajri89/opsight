@@ -64,7 +64,7 @@ export function RegisterForm() {
       .join(' ');
 
     return (
-      <div>
+      <div data-auth-field>
         <label htmlFor={name} className={LABEL}>
           {label}
         </label>
@@ -128,7 +128,7 @@ export function RegisterForm() {
         required: t('auth.emailRequired'),
       })}
 
-      <div>
+      <div data-auth-field>
         <label htmlFor="password" className={LABEL}>
           {t('auth.password')}
         </label>
@@ -172,7 +172,7 @@ export function RegisterForm() {
         )}
       </div>
 
-      <button type="submit" disabled={isSubmitting} className={SUBMIT}>
+      <button data-auth-field type="submit" disabled={isSubmitting} className={SUBMIT}>
         {isSubmitting ? t('register.creating') : t('register.submit')}
         {!isSubmitting && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
       </button>

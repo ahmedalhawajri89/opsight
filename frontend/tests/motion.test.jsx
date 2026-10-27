@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CountUp } from '@/components/data/CountUp';
+import { LedgerScene } from '@/features/auth/LedgerScene';
+import { toWords } from '@/features/auth/authMotion';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useGsap } from '@/hooks/useGsap';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
@@ -294,5 +296,66 @@ describe('useSeenOnce', () => {
     expect(getByRole('button')).toHaveTextContent('quiet');
 
     getItem.mockRestore();
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| The sign-in scene
+|--------------------------------------------------------------------------
+|
+| Its beats are a GSAP timeline, which means two things have to be true that
+| keyframes used to give for free: the markup must already BE the finished
+| figure, because a reader who asked for less motion never runs the timeline
+| at all; and the headline must be split in a way that survives Arabic.
+|
+*/
+
+describe('splitting a headline for a word-by-word reveal', () => {
+  it('never splits inside a word', () => {
+    // The whole reason this is by word and not by letter. Arabic letters
+    // change shape according to their neighbours, so a word broken into
+    // per-character spans renders as disconnected isolated forms — legible
+    // to a machine and wrong to a reader, in the first sentence anyone meets.
+    const arabic = 'كل رقم هنا يُحتسب من السجلات';
+
+    const words = toWords(arabic).filter((part) => part.trim() !== '');
+
+    expect(words).toEqual(['كل', 'رقم', 'هنا', 'يُحتسب', 'من', 'السجلات']);
+  });
+
+  it('keeps the spaces, so the sentence still reads as a sentence', () => {
+    // Dropped spaces would run the words together for a screen reader and
+    // remove every point the line is allowed to break at.
+    expect(toWords('two words').join('')).toBe('two words');
+  });
+});
+
+describe('LedgerScene', () => {
+  it('renders the finished figure, so reduced motion needs no second code path', () => {
+    stubPreference(true);
+
+    const { container } = render(<LedgerScene />);
+
+    // The end of the story: the rows have folded away, and the figure, the
+    // line and the point that marks "now" are all there to be seen.
+    container.querySelectorAll('.ledger-row').forEach((row) => {
+      expect(row).toHaveAttribute('opacity', '0');
+    });
+
+    expect(container.querySelectorAll('.ledger-col').length).toBeGreaterThan(0);
+    expect(container.querySelector('.ledger-line')).not.toBeNull();
+    expect(container.querySelector('.ledger-dot')).not.toBeNull();
+  });
+
+  it('leaves the pulsing ring invisible when nothing drives it', () => {
+    // The one element whose resting state is not its finished state: a ring
+    // frozen mid-pulse would read as a bug, so without the timeline there is
+    // simply the bronze point.
+    stubPreference(true);
+
+    const { container } = render(<LedgerScene />);
+
+    expect(container.querySelector('.ledger-ring')).toHaveAttribute('opacity', '0');
   });
 });

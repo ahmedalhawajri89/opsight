@@ -540,133 +540,27 @@ html[lang='ar'] [class*='tracking-'] {
  * Sign-in scene: records become a figure (features/auth/LedgerScene.jsx)
  * ---------------------------------------------------------------------------
  *
- * Three beats, about 2.6 seconds, played once:
- *   0.0s  six ledger rows slide in, staggered
- *   0.9s  they fold away as the figure's columns rise from the baseline
- *   1.7s  a line traces the columns, and the bronze point lands on "now"
+ * ITS MOTION IS NO LONGER HERE. The beats are a GSAP timeline in
+ * features/auth — not because keyframes could not draw them, but because the
+ * scene's captions NAME its beats: the drawing's delays lived in this file
+ * and the captions' delays lived in the component, and nothing made the two
+ * agree. Change a duration here and the caption naming that beat drifted off
+ * it, silently, on the one screen every visitor sees first. A timeline
+ * positions each beat relative to the one before, so it holds by
+ * construction.
  *
- * The point's ring is the ONE loop in the product — a slow pulse that says
- * the figure is live — and it exists only on this page. Everything else here
- * obeys "nothing loops". Under reduced motion the global rule above runs each
- * animation once, instantly, to its end: the finished figure, ring at rest.
+ * Under reduced motion useGsap never runs and the markup is already the
+ * finished figure, which is the same end state this file used to collapse to.
+ *
+ * What stays is the one thing GSAP needs from CSS: without `transform-box`,
+ * an SVG element's transform origin is the whole canvas, so a column scaling
+ * from its baseline would instead swing from the corner of the drawing.
  */
-@keyframes ledger-row-in {
-  from {
-    opacity: 0;
-    transform: translateX(-14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes ledger-row-out {
-  from {
-    opacity: 1;
-    transform: none;
-  }
-  to {
-    opacity: 0;
-    transform: scaleX(0.15);
-  }
-}
-
-@keyframes ledger-col-grow {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-@keyframes ledger-line-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes ledger-dot-land {
-  from {
-    opacity: 0;
-    transform: scale(0);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes ledger-ring-pulse {
-  0% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  70%,
-  100% {
-    opacity: 0;
-    transform: scale(2.6);
-  }
-}
-
-@keyframes ledger-step-lit {
-  to {
-    color: var(--text);
-  }
-}
-
-@keyframes ledger-step-dot-lit {
-  to {
-    background: var(--accent);
-  }
-}
-
-.ledger-row {
-  transform-box: fill-box;
-  transform-origin: left center;
-  animation:
-    ledger-row-in 420ms var(--ease-out) both,
-    ledger-row-out 380ms var(--ease-out) forwards;
-  animation-delay: calc(var(--i) * 80ms), calc(900ms + var(--i) * 40ms);
-}
-
-.ledger-col {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: ledger-col-grow 560ms var(--ease-out) both;
-  animation-delay: calc(1000ms + var(--i) * 70ms);
-}
-
-.ledger-line {
-  stroke-dasharray: 1;
-  animation: ledger-line-draw 800ms var(--ease-out) 1.7s both;
-}
-
-.ledger-dot {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: ledger-dot-land 360ms var(--ease-out) 2.4s both;
-}
-
+.ledger-col,
+.ledger-row,
+.ledger-dot,
 .ledger-ring {
-  opacity: 0;
   transform-box: fill-box;
-  transform-origin: center;
-  animation: ledger-ring-pulse 2.6s var(--ease-out) 2.7s infinite;
-}
-
-.ledger-step {
-  color: var(--muted);
-  animation: ledger-step-lit 300ms var(--ease-out) var(--d) forwards;
-}
-
-.ledger-step-dot {
-  background: var(--border-strong);
-  animation: ledger-step-dot-lit 300ms var(--ease-out) var(--d) forwards;
 }
 
 /*

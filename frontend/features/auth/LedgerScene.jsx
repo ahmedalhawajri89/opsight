@@ -1,6 +1,10 @@
 'use client';
 
+import { gsap } from 'gsap';
+
+import { AUTH_MOTION } from './authMotion';
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { useGsap } from '@/hooks/useGsap';
 
 /**
  * The sign-in page's one piece of motion: records becoming a figure.
@@ -16,10 +20,19 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * there is no data to show, and an invented figure on the door of an
  * analytics product would be a lie about the first thing it claims to do.
  *
+ * THE MARKUP IS THE FINISHED SCENE. Every element renders where it ends —
+ * the figure drawn, the rows already folded away — and the timeline sets the
+ * starting state before the first paint. So a reader who asked for less
+ * motion gets the finished figure rather than a fast replay, and there is no
+ * second code path to keep true: useGsap simply never runs.
+ *
+ * It is a timeline rather than keyframes because the captions name the beats.
+ * Each one lights as the drawing reaches the thing it describes, and a
+ * timeline is what keeps that true when a duration changes; the delays it
+ * replaced lived in two files and agreed only by hand.
+ *
  * The drawing is left to right in both languages, like every real chart in
- * Opsight. Motion lives in globals.css (`ledger-*`); under reduced motion the
- * global rule collapses every animation to its end, which is the finished
- * figure — so the static scene is the right scene, with no second code path.
+ * Opsight.
  */
 
 /* A record's kind decides its chip colour. Six rows, three kinds. */
@@ -48,17 +61,112 @@ const NOW = COLUMNS.at(-1);
 const NOW_X = NOW.x + COLUMN_WIDTH / 2;
 const NOW_Y = BASELINE - NOW.height - 12;
 
+/* Each caption lights at the beat it names — see the timeline's labels. */
 const STEPS = [
-  { key: 'records', delay: '0ms' },
-  { key: 'computed', delay: '1000ms' },
-  { key: 'figure', delay: '1900ms' },
+  { key: 'records', at: 'records' },
+  { key: 'computed', at: 'computed' },
+  { key: 'figure', at: 'figure' },
 ];
 
 export function LedgerScene() {
   const { t } = useI18n();
+  const { scene } = AUTH_MOTION;
+
+  const root = useGsap((self) => {
+    // Scoped by the context, so two auth scenes on one page could never
+    // animate each other's elements.
+    const q = self.selector;
+
+    const timeline = gsap.timeline({ delay: AUTH_MOTION.sceneStart });
+
+    timeline
+      .addLabel('records')
+      /*
+       * fromTo, not from: the rows' resting state is GONE — they have folded
+       * away by the end — so there is no natural state to animate from. A
+       * `from` here would leave them lying over the finished figure for any
+       * reader whose motion preference skips the timeline.
+       *
+       * `x` in SVG user units, not xPercent: these are drawing coordinates,
+       * not a box to be measured.
+       */
+      .fromTo(
+        q('.ledger-row'),
+        { opacity: 0, x: -14 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: scene.rowIn,
+          stagger: scene.rowStagger,
+          ease: 'power2.out',
+        },
+      )
+
+      .addLabel('computed')
+      // They fold away as the figure takes their place: both beats run
+      // together, because that overlap IS the claim being made.
+      .to(q('.ledger-row'), {
+        opacity: 0,
+        x: 10,
+        duration: scene.rowOut,
+        stagger: scene.rowStagger / 2,
+        ease: 'power2.in',
+      })
+      .from(
+        q('.ledger-col'),
+        {
+          scaleY: 0,
+          transformOrigin: 'center bottom',
+          duration: scene.column,
+          stagger: scene.columnStagger,
+          ease: 'power2.out',
+        },
+        '<0.1',
+      )
+
+      .addLabel('figure')
+      /*
+       * The line is drawn, not faded. `pathLength="1"` on the element makes
+       * the dash length one unit whatever the path's real length, so the
+       * offset animates from 1 to 0 without measuring anything.
+       */
+      .from(q('.ledger-line'), {
+        strokeDashoffset: 1,
+        duration: scene.line,
+        ease: 'power1.inOut',
+      })
+      .from(q('.ledger-dot'), { scale: 0, duration: scene.dot, ease: 'back.out(2)' }, '-=0.1');
+
+    /*
+     * Each caption brightens at the beat it NAMES — one tween per caption,
+     * positioned by that beat's label. A single tween over the shared class
+     * would light all three at once, three times over, which looks like a
+     * flicker and says nothing.
+     *
+     * Positioned by label, so changing any duration above carries the
+     * captions with it. That is the whole reason this is a timeline rather
+     * than the list of hand-written delays it replaced.
+     */
+    q('.ledger-step').forEach((step, index) => {
+      timeline.from(step, { opacity: 0.4, duration: 0.3 }, STEPS[index].at);
+    });
+
+    // The point that marks "now", breathing. A long gap between beats: this
+    // sits behind a form someone is typing into.
+    gsap.to('.ledger-ring', {
+      scale: 1.9,
+      opacity: 0,
+      duration: scene.pulse,
+      ease: 'power2.out',
+      repeat: -1,
+      repeatDelay: scene.pulseGap,
+      delay: AUTH_MOTION.sceneStart + 2.4,
+      transformOrigin: 'center center',
+    });
+  });
 
   return (
-    <figure className="mt-10">
+    <figure className="mt-10" ref={root}>
       <svg
         role="img"
         aria-label={t('login.scene.label')}
@@ -72,7 +180,12 @@ export function LedgerScene() {
 
         {/* 1 — records arrive. */}
         {ROWS.map((row, index) => (
-          <g key={index} className="ledger-row" style={{ '--i': index }}>
+          /*
+            Hidden at rest: by the end of the scene these have folded away,
+            and the markup renders the end. The timeline brings them in and
+            takes them out again.
+          */
+          <g key={index} className="ledger-row" opacity="0">
             <circle cx="46" cy={28 + index * 24} r="5" fill={`var(--${row.kind})`} />
             <rect
               x="60"
@@ -90,7 +203,6 @@ export function LedgerScene() {
           <rect
             key={index}
             className="ledger-col"
-            style={{ '--i': index }}
             x={column.x}
             y={BASELINE - column.height}
             width={COLUMN_WIDTH}
@@ -105,6 +217,7 @@ export function LedgerScene() {
           className="ledger-line"
           points={LINE}
           pathLength="1"
+          strokeDasharray="1"
           stroke="var(--brand)"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -117,6 +230,13 @@ export function LedgerScene() {
           r="7"
           stroke="var(--accent)"
           strokeWidth="2"
+          /*
+           * Invisible until the pulse drives it. It is the one element whose
+           * resting state is not its finished state — a ring frozen mid-pulse
+           * would read as a bug — so a reader with reduced motion sees the
+           * bronze point alone, which is the scene's end anyway.
+           */
+          opacity="0"
         />
         <circle className="ledger-dot" cx={NOW_X} cy={NOW_Y} r="5.5" fill="var(--accent)" />
       </svg>
@@ -126,11 +246,11 @@ export function LedgerScene() {
         {STEPS.map((step, index) => (
           <span key={step.key} className="inline-flex items-center gap-3">
             {index > 0 && <span aria-hidden="true" className="h-px w-6 bg-(--color-line-strong)" />}
-            <span
-              className="ledger-step inline-flex items-center gap-2"
-              style={{ '--d': step.delay }}
-            >
-              <span aria-hidden="true" className="ledger-step-dot size-2 rounded-(--radius-pill)" />
+            <span className="ledger-step inline-flex items-center gap-2 text-(--color-text-2)">
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-(--radius-pill) bg-(--color-brand)"
+              />
               {t(`login.scene.${step.key}`)}
             </span>
           </span>

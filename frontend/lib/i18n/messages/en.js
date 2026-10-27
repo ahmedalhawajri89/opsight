@@ -166,6 +166,7 @@ const en = {
     noSelfRegistration: 'Accounts are created by an owner. Self-registration is disabled.',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
+    capsLock: 'Caps Lock is on.',
     remember: 'Keep me signed in on this device',
     rememberHint: 'For {days} days. Leave it unticked on a shared computer.',
   },
