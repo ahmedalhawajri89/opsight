@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Integrations\Salla\SallaWebhooks;
+
 /*
  * Providers this installation accepts webhook deliveries from (ADR-027).
  *
@@ -17,13 +19,41 @@ declare(strict_types=1);
 return [
 
     /**
-     * Empty until Phase 6 adds Salla:
+     * Registered, and still inert until a secret is set.
      *
-     *     'salla' => \App\Domain\Integrations\Salla\SallaWebhooks::class,
+     * `WebhookProviders::secretFor()` returns null without
+     * `SALLA_WEBHOOK_SECRET`, and the controller answers 404 to a provider
+     * with no secret — so an installation that has not connected Salla has
+     * no webhook endpoint at all, exactly as before this line was added.
      *
      * @var array<string, class-string>
      */
-    'providers' => [],
+    'providers' => [
+        'salla' => SallaWebhooks::class,
+    ],
+
+    /*
+     * Salla's own endpoints and app credentials.
+     *
+     * The hosts are configurable so a test can point them at nothing and a
+     * fixture recorder can point them at a sandbox, not because they are
+     * expected to change.
+     */
+    'salla' => [
+        'client_id' => env('SALLA_CLIENT_ID'),
+        'client_secret' => env('SALLA_CLIENT_SECRET'),
+        'token_url' => env('SALLA_TOKEN_URL', 'https://accounts.salla.sa/oauth2/token'),
+        'api_base' => env('SALLA_API_BASE', 'https://api.salla.dev/admin/v2'),
+
+        /*
+         * How long before expiry a token is treated as due for refresh.
+         *
+         * Salla's access tokens last a fortnight, so five minutes is not
+         * caution about clock drift — it is about a token that passes the
+         * check and then expires during the request that used it.
+         */
+        'refresh_margin_minutes' => 5,
+    ],
 
     'secrets' => [
         'salla' => env('SALLA_WEBHOOK_SECRET'),

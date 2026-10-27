@@ -36,6 +36,7 @@ class FakeWebhookProvider implements WebhookProvider
     {
         self::$handled = [];
         self::$throws = null;
+        self::$acceptsUnmatched = false;
     }
 
     public static function sign(string $payload, string $secret): string
@@ -86,6 +87,14 @@ class FakeWebhookProvider implements WebhookProvider
             ->where('provider', 'fake')
             ->where('external_account_id', (string) $store)
             ->value('business_id');
+    }
+
+    /** Only what a test opts into, so the default stays today's behaviour. */
+    public static bool $acceptsUnmatched = false;
+
+    public function acceptsUnmatched(string $event): bool
+    {
+        return self::$acceptsUnmatched;
     }
 
     public function handle(WebhookReceipt $receipt): void

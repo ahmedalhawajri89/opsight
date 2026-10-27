@@ -23,6 +23,16 @@ return [
         'demo_account_protected' => 'The demo accounts stay as they are, so the next visitor can sign in too. Everything else is yours to try, and the data resets every night.',
     ],
 
+    /*
+     * One sentence for three different refusals — no such pending store, it
+     * expired, someone else has it — on purpose. Telling an owner which
+     * store ids exist, or which are already taken, turns the claim into a
+     * way to enumerate other people's shops.
+     */
+    'integrations' => [
+        'claim_not_found' => 'No store is waiting to be connected with that id. Install the app from your store again, then enter the id within the hour.',
+    ],
+
     'filter' => [
         'malformed' => 'Filters must be supplied as filter[key]=value.',
         'unknown' => 'Unknown filter: :unknown. Allowed: :allowed.',

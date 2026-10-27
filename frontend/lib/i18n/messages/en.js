@@ -316,7 +316,60 @@ const en = {
       gallery: 'Component gallery',
       activity: 'Activity Log',
       users: 'Users & Roles',
+      integrations: 'Connected stores',
       settings: 'Settings',
+    },
+  },
+
+  integrations: {
+    title: 'Connected stores',
+    description:
+      'Bring a store\u2019s orders into Opsight, so your figures cover everything you sell rather than what you enter by hand.',
+
+    connect: 'Connect a store',
+    steps: {
+      install: 'In your Salla dashboard, install the Opsight app.',
+      findId: 'Copy your store id \u2014 Salla shows it in your store settings.',
+      claim: 'Paste it below, and Opsight will connect the store to this business.',
+    },
+    deadline:
+      'A store can be connected for one hour after you install the app. After that, install it again and the hour starts over.',
+
+    storeId: 'Store id',
+    storeIdHint: 'Numbers only, as Salla shows it.',
+    claimAction: 'Connect',
+    claimFailed:
+      'No store is waiting to be connected with that id. Check the id, or install the app again and try within the hour.',
+
+    storeLabel: 'Store {id}',
+    connectedAt: 'Connected',
+    lastSynced: 'Last synced',
+    neverSynced: 'Not yet',
+    renewal: 'Access',
+    renews: 'Renews itself',
+    cannotRenew: 'Will stop in a fortnight \u2014 reconnect with offline access',
+    disconnect: 'Disconnect',
+
+    providers: {
+      salla: 'Salla',
+    },
+
+    status: {
+      connected: 'Connected',
+      expired: 'Expired',
+      revoked: 'Disconnected by the store',
+      error: 'Not working',
+    },
+
+    empty: {
+      title: 'No store is connected',
+      description: 'Connect one above, and its orders will appear in your figures as they are placed.',
+    },
+
+    confirm: {
+      title: 'Disconnect this store?',
+      consequence:
+        'No new orders will arrive from it. Everything already imported stays \u2014 it is your history now \u2014 and you can connect the store again at any time.',
     },
   },
 

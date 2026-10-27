@@ -113,6 +113,14 @@ class AppServiceProvider extends ServiceProvider
         // Changing one's own password: a few tries a minute, then wait.
         RateLimiter::for('password', static fn (Request $request): Limit => Limit::perMinute(5)->by($byUser($request)));
 
+        /*
+         * Claiming a store, which accepts an identifier rather than a secret.
+         * Ten an hour is far more than an owner connecting their own shop
+         * ever needs, and far too few to find a pending store by trying ids
+         * inside the hour one is claimable.
+         */
+        RateLimiter::for('integration-claim', static fn (Request $request): Limit => Limit::perHour(10)->by($byUser($request)));
+
         RateLimiter::for('health', static fn (Request $request): Limit => Limit::perMinute(30)->by((string) $request->ip()));
 
         /*

@@ -60,6 +60,10 @@ export const queryKeys = {
     all: ['users'],
     list: (filters) => ['users', 'list', filters],
   },
+  integrations: {
+    all: ['integrations'],
+    list: ['integrations', 'list'],
+  },
   settings: {
     all: ['settings'],
     detail: ['settings', 'detail'],

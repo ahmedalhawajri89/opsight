@@ -74,3 +74,26 @@ export function updateSettings(body) {
 export function listExpenseCategories() {
   return api.get('/settings/expense-categories');
 }
+
+/* -------------------------------------------------------------------------- */
+/* Integrations                                                                */
+/* -------------------------------------------------------------------------- */
+
+export function listIntegrations() {
+  return api.get('/integrations');
+}
+
+/**
+ * Claiming a store that has installed the app.
+ *
+ * The server answers 404 for all three refusals — no such store, expired,
+ * already connected — on purpose, so this passes the error through rather
+ * than translating it into a guess about which one happened.
+ */
+export function claimStore(body) {
+  return api.post('/integrations/claim', body);
+}
+
+export function disconnectIntegration(id) {
+  return api.delete(`/integrations/${id}`);
+}

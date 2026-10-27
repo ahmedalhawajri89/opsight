@@ -1171,6 +1171,132 @@ there are two orders.
   tests run against a fake that signs with HMAC-SHA256, which is what both Salla and Meta
   use — a fake shaped like the real thing, rather than a mock that returns true.
 
+## ADR-028 — Salla: a store arrives before it has an owner, and claims are weak on purpose
+
+**Status:** Accepted (2026-10)
+**Affects:** `app/Domain/Integrations/Salla/*`, `unclaimed_integrations`, `ClaimStore`,
+`WebhookProvider::acceptsUnmatched`, `ProcessUnclaimedDelivery`, `IntegrationController`,
+`integrations.manage`, `opsight:salla:reconcile`, `opsight:prune-unclaimed-integrations`
+**Builds on:** ADR-027 (integration plumbing)
+
+**Context.** ADR-027 shipped the plumbing and deliberately no provider, so that Salla's
+signature header, event names and payload shapes would be read from Salla's documentation
+rather than guessed. Reading it was the right call and more necessary than expected: the
+documentation contradicts itself in three places that each change the code.
+
+- The webhook signature is described in prose as "the request body's SHA256 hash" — a value
+  any caller could compute, which would authenticate nothing — while the code samples on the
+  same page use `hash_hmac` with the secret. The samples are right.
+- The install event is spelt `app.store.authorize` in one place and `app.store.authorized`
+  in another.
+- The access token's lifetime arrives as `expires` in the install payload and `expires_in`
+  in the refresh response, and the same page calls the value a unix timestamp in one
+  sentence and seconds in the next. Its own example, `1209599`, is plainly a duration.
+
+Two mistakes in Salla's own samples are not copied: the PHP one compares signatures with
+`===`, which leaks a signature one byte at a time to anyone willing to measure, and the Node
+one omits `return` after sending 401, so it answers 200 to a forged delivery as well.
+
+**Decision.**
+
+1. **Easy mode, not Custom mode.** Salla's documentation states that Easy mode is the only
+   method allowed for published App Store apps and that Custom mode is for testing. Building
+   against the mode that cannot ship would mean rewriting the connection layer on the day of
+   publication. The cost is paid immediately: Easy mode delivers tokens by webhook, so a
+   public tunnel is needed from the first live test rather than at the end.
+
+2. **A store can exist before a business owns it, in a table of its own.** Easy mode's
+   install delivery carries the tokens and nothing identifying the business it belongs to
+   here — no state parameter, no query string on the install URL, no redirect back. The only
+   source of the store's identity is an API call made with the token it just sent. So for up
+   to an hour a real connection exists that belongs to nobody.
+
+   It does not go in `integrations`. That table's `business_id` is NOT NULL, and that is what
+   makes every read of it safe; loosening it so one row could be ownerless would weaken the
+   guarantee for every other row, to model a state meant to last minutes.
+   `unclaimed_integrations` has no `business_id` at all — the same reasoning that left
+   `webhook_receipts` carrying neither tenancy trait — and is never read as though it were a
+   connection.
+
+3. **The contract gains `acceptsUnmatched($event)`.** `businessIdFor()` matches a delivery
+   against a connection that the install event is what *creates*, so it returns null and the
+   door discarded the one delivery that starts an integration. The new method asks about the
+   event name, not the payload, so a provider answers without trusting anything the delivery
+   claims; a provider that says false behaves exactly as before. The alternative — letting
+   every unmatched delivery through and having handlers sort it out — makes the door's job
+   ambiguous for the sake of one event.
+
+4. **Those deliveries run in a job with no business context, not in a job that tolerates
+   one.** `WithBusinessContext` refuses a job with no business because a job that ran "for
+   everyone" would read across the whole installation. The shortcut was to make it tolerate
+   null. `ProcessUnclaimedDelivery` is a separate job instead — one whose handler may only
+   touch rows that belong to nobody either — rather than a hole in a rule that protects every
+   other queued job.
+
+5. **The claim is weak, and the weakness is bounded rather than denied.** The merchant
+   tells us which store is theirs with the store id Salla shows them. A store id is an
+   identifier, not a secret. What makes it acceptable is the size of the opening:
+
+   - claimable only for the hour after install, swept hourly so the window is a fact and not
+     a rule;
+   - claimable once, because the pending row is deleted in the same transaction that creates
+     the connection, so the tokens exist in exactly one place at every moment;
+   - a store already connected cannot be taken by naming it — the one thing this must never
+     allow;
+   - the claimer is a signed-in Owner, rate limited to ten attempts an hour, and every
+     attempt is audited whether it succeeds or fails. A run of failures from one account is
+     somebody trying store ids, and that row is the only place it shows;
+   - all three refusals — absent, expired, taken — answer identically, because telling an
+     owner which ids exist or which are taken turns the claim into a way to enumerate other
+     people's shops;
+   - disconnecting is no harder to reach than claiming was, takes the tokens with it, and
+     frees the store to be claimed by its real owner.
+
+   **Rejected: matching the merchant's email against the owner's.** It reads as stronger and
+   is not — an authorisation decision made on an unverified string — and it fails for the
+   ordinary case of a merchant whose Salla account uses a different address.
+
+   **Residual risk, stated plainly:** inside that hour, someone who learns another merchant's
+   store id and is an Owner on this installation could claim it. The store's name is shown
+   back on the screen immediately so a wrong claim is visible rather than discovered later,
+   and the audit row names who did it. A stronger binding needs something Salla does not
+   currently offer; if it ever does, this is the decision to revisit.
+
+6. **The refresh token is single use, so the lock is not an optimisation.** Salla's
+   documentation is explicit: each refresh invalidates the previous refresh token, and using
+   one twice invalidates the access tokens too and forces the merchant to reinstall the app,
+   with no recovery an operator can perform. Salla itself recommends a mutex. `SallaOAuth`
+   takes a lock per connection **and re-reads the row inside it**: the second caller is a job
+   holding a copy loaded before the first one wrote, and the right thing for it to do is
+   nothing. A 4xx is final rather than retried, because asking again with a dead token is how
+   one bad refresh becomes four; a 5xx leaves the connection alone, because an outage must
+   not become a reinstall for every merchant.
+
+7. **Reconciliation may never report a false all-clear.** An importer that drops one order
+   in fifty does not fail — it produces figures that are plausible, slightly low and wrong,
+   and nothing else in this system would notice. `opsight:salla:reconcile` is the only thing
+   that would, so every shape it cannot read is an error rather than a zero: a missing `data`
+   array, a missing pagination block, an unreadable order total, an unreachable API. It exits
+   non-zero on any difference so a cron is an alarm rather than a log, and counts only orders
+   whose `source` is Salla so a business that also sells by hand does not learn to ignore it.
+
+**Consequences.**
+
+- Unclaimed tokens are discarded after an hour. A merchant who misses the window reinstalls,
+  which costs them a minute; the alternative is a live key to someone's shop sitting in a
+  table nothing reads.
+- `SALLA_CLIENT_ID` and `SALLA_CLIENT_SECRET` are deployment secrets. Without them a
+  connection cannot be refreshed and dies after a fortnight — which the connection screen
+  states as "will stop in a fortnight", rather than leaving it to be discovered.
+- Salla only issues a refresh token when the app requests the `offline_access` scope. An app
+  registered without it produces connections that cannot survive two weeks, and the screen
+  says so per connection.
+- **The List Orders query parameters (`from_date`, `to_date`, `page`, `per_page`) and the
+  pagination fields are the one part of this integration not read from a sentence Salla
+  wrote** — its own List Orders page did not render, so they come from the published OpenAPI
+  description. They are gathered in `SallaClient` so the first live run has one place to
+  correct. The reconciler fails loudly rather than guessing if the response does not match.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

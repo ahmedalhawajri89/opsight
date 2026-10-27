@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Console\Commands\PruneActivityLogCommand;
+use App\Console\Commands\PruneUnclaimedIntegrations;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -29,5 +30,18 @@ Artisan::command('inspire', function () {
  */
 Schedule::command(PruneActivityLogCommand::class)
     ->dailyAt('03:15')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Store tokens nobody claimed, discarded.
+ *
+ * Hourly rather than nightly, because the window they are usable for is one
+ * hour: a nightly sweep would leave a dead key lying in the table for most
+ * of a day. This is the sweep that makes the window a fact rather than a
+ * rule — and it is cheap, since in the normal case it deletes nothing.
+ */
+Schedule::command(PruneUnclaimedIntegrations::class)
+    ->hourly()
     ->withoutOverlapping()
     ->onOneServer();

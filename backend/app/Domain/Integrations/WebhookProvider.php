@@ -69,6 +69,29 @@ interface WebhookProvider
      */
     public function businessIdFor(array $payload): ?int;
 
-    /** Act on a delivery that has verified, inside its business's context. */
+    /**
+     * Whether this event can legitimately arrive before any business has
+     * connected the account it comes from.
+     *
+     * Added in phase 6, because Salla's install event is exactly that: it
+     * CARRIES the tokens that create the connection, so there is nothing for
+     * `businessIdFor()` to match on yet. Without this the one delivery that
+     * starts an integration would be the one the door throws away.
+     *
+     * It is a question about the event, not the payload, so a provider can
+     * answer it without trusting anything the delivery claims. Say false and
+     * nothing changes: an unmatched delivery is kept with its reason and goes
+     * no further.
+     */
+    public function acceptsUnmatched(string $event): bool;
+
+    /**
+     * Act on a delivery that has verified.
+     *
+     * Normally inside its business's context. The exception is a delivery
+     * `acceptsUnmatched()` allowed through, which has no business and is run
+     * with no context at all — such a handler may touch only what belongs to
+     * nobody yet.
+     */
     public function handle(WebhookReceipt $receipt): void;
 }

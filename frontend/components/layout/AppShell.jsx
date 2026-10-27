@@ -119,6 +119,12 @@ const NAV_GROUPS = [
         ability: 'activity.view',
       },
       {
+        href: '/settings/integrations',
+        label: 'nav.items.integrations',
+        icon: 'link',
+        ability: 'integrations.manage',
+      },
+      {
         href: '/settings',
         label: 'nav.items.settings',
         icon: 'settings',
