@@ -43,6 +43,24 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureFrontendRequestsAreStateful::class,
         ]);
 
+        /*
+         * NEVER REDIRECT A GUEST. This installation has no `login` route —
+         * signing in is a screen in another application — so Laravel's
+         * default answer to an unauthenticated request that does not ask for
+         * JSON was to look one up, fail, and turn a 401 into a 500 with a
+         * server-error reference in the logs.
+         *
+         * It was live on the public demo and invisible from the application,
+         * which always sends `Accept: application/json` and so always took
+         * the other branch. Anything else — a browser address bar, a health
+         * probe, curl — got "an unexpected error occurred" where the truth
+         * was "you are not signed in".
+         *
+         * Returning null makes the middleware throw AuthenticationException,
+         * which the handler below already renders as a 401.
+         */
+        $middleware->redirectGuestsTo(static fn (): ?string => null);
+
         // After the stateful middleware, so the session — and with it the
         // signed-in user's saved language — is available when it runs.
         $middleware->api(append: [
