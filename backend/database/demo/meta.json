@@ -1,5 +1,5 @@
 {
-    "taken_at": "2026-10-25T08:16:23+00:00",
+    "taken_at": "2026-10-27T11:00:11+00:00",
     "tables": [
         "activity_logs",
         "businesses",
@@ -8,6 +8,7 @@
         "customers",
         "expenses",
         "expense_categories",
+        "integrations",
         "inventory_items",
         "inventory_movements",
         "orders",
@@ -15,6 +16,8 @@
         "order_payments",
         "order_refunds",
         "products",
-        "users"
+        "unclaimed_integrations",
+        "users",
+        "webhook_receipts"
     ]
 }
