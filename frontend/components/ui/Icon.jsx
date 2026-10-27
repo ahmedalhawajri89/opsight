@@ -177,6 +177,13 @@ const PATHS = {
       <path d="M3.5 20c.8-3.6 3.3-6 6.5-6 1.6 0 3 .6 4.1 1.6M18 14v6M15 17h6" />
     </>
   ),
+  // Two links of a chain, joined: a connection to something outside.
+  link: (
+    <>
+      <path d="M10 13.5a3.5 3.5 0 0 0 5 0l3-3a3.54 3.54 0 0 0-5-5l-1.5 1.5" />
+      <path d="M14 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.54 3.54 0 0 0 5 5l1.5-1.5" />
+    </>
+  ),
   repeat: (
     <>
       <path d="M4.5 11V9.5a3 3 0 0 1 3-3h12M16.5 3.5l3 3-3 3" />

@@ -354,6 +354,9 @@ it('reaches business tables only through the tenancy layer', function (): void {
         // business context — TenantQuery would scope away the very rows it
         // exists to remove. Refuses to run on a production installation.
         str_replace('/', DIRECTORY_SEPARATOR, 'app/Console/Commands/PruneE2eData.php'),
+        // Walks every connected business in turn, from outside all of them,
+        // and enters each one's context before it reads anything.
+        str_replace('/', DIRECTORY_SEPARATOR, 'app/Console/Commands/ReconcileSalla.php'),
     ];
 
     $offenders = [];

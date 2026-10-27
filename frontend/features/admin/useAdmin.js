@@ -147,3 +147,39 @@ export function useExpenseCategories() {
 
   return { categories: query.data?.data ?? [], ...query };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Integrations                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The stores this business has connected.
+ *
+ * No filters and no paging: a business connects one store, or two. A list
+ * that will never need narrowing should not carry the machinery for it.
+ */
+export function useIntegrations() {
+  const query = useQuery({
+    queryKey: queryKeys.integrations.list,
+    queryFn: () => admin.listIntegrations(),
+  });
+
+  return { integrations: query.data?.data ?? [], ...query };
+}
+
+export function useIntegrationActions() {
+  const queryClient = useQueryClient();
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.integrations.all });
+    AUDITED_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+  };
+
+  return {
+    claim: useMutation({ mutationFn: (body) => admin.claimStore(body), onSuccess: invalidate }),
+    disconnect: useMutation({
+      mutationFn: (id) => admin.disconnectIntegration(id),
+      onSuccess: invalidate,
+    }),
+  };
+}
