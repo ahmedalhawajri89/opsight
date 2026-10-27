@@ -24,9 +24,9 @@ import { useGsap } from '@/hooks/useGsap';
  * transition").
  *
  * THE FORM DOES NOT WAIT FOR THE SHOW. Whoever opens this page came to type,
- * so the card and its fields are done inside a third of a second and the
- * illustration's argument unfolds afterwards. GSAP moves transforms and
- * opacity only, so a field takes a click and a keystroke mid-flight.
+ * so the card is done inside a third of a second and the illustration's
+ * argument unfolds afterwards. GSAP moves transforms and opacity only, so a
+ * field takes a click and a keystroke mid-flight.
  *
  * The headline arrives word by word — never letter by letter. Arabic letters
  * change shape according to their neighbours, so a word split into characters
@@ -49,13 +49,13 @@ export function AuthLayout({ title, subtitle, children, footer }) {
       const q = self.selector;
       const timeline = gsap.timeline();
 
+      /*
+       * The frame only: the card and the headline. The fields are animated
+       * by the form itself — it renders inside a Suspense boundary, so they
+       * do not exist when this effect runs (useFieldEntrance).
+       */
       timeline
         .from(q('[data-auth-rise]'), { ...AUTH_MOTION.card, opacity: 0, y: 12 })
-        .from(
-          q('[data-auth-field]'),
-          { ...AUTH_MOTION.field, opacity: 0, y: 8 },
-          AUTH_MOTION.card.duration * 0.4,
-        )
         .from(
           q('[data-auth-word]'),
           { ...AUTH_MOTION.word, opacity: 0, yPercent: 110 },

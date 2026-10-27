@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { gsap } from 'gsap';
 
 import { useAuth } from './AuthProvider';
+import { useFieldEntrance } from './useFieldEntrance';
 import { FIELD, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -26,6 +27,7 @@ export function LoginForm() {
   const [capsLock, setCapsLock] = useState(false);
 
   const reducedMotion = useReducedMotion();
+  const fields = useFieldEntrance();
 
   /*
    * One short shake, and only for a refusal the fields cannot explain —
@@ -83,7 +85,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+    <form ref={fields} onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       {sessionExpired && (
         <p
           role="status"

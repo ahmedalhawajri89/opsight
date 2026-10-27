@@ -18,6 +18,21 @@ const apiOrigin = process.env.API_ORIGIN?.replace(/\/+$/, '');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  /*
+   * Next's floating dev indicator, off.
+   *
+   * It is a development-only badge — it never ships — but it sits in the
+   * bottom corner of every screen while the application is being looked at,
+   * which is the one thing a design pass cannot have in the frame. It has
+   * also cost real time once already: it is a button labelled "Next", and it
+   * made `getByRole('button', { name: 'Next' })` ambiguous in the sign-up
+   * spec's wizard (TESTING_STRATEGY.md §5).
+   *
+   * Nothing is lost that is not a keystroke away: the same panel opens from
+   * the browser's own devtools.
+   */
+  devIndicators: false,
+
   async rewrites() {
     if (!apiOrigin) return [];
 
