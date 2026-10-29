@@ -1297,6 +1297,92 @@ one omits `return` after sending 401, so it answers 200 to a forged delivery as 
   description. They are gathered in `SallaClient` so the first live run has one place to
   correct. The reconciler fails loudly rather than guessing if the response does not match.
 
+## ADR-029 — The importer trusts Salla's totals, and refuses what it cannot read
+
+**Status:** Accepted (2026-10)
+**Affects:** `SallaMap`, `ImportSallaOrder`, `SallaWebhooks::handle`,
+`opsight:salla:import`
+**Builds on:** ADR-027 (integration plumbing), ADR-028 (the Salla connection)
+
+**Context.** ADR-028 built the connection and deliberately stopped there: the handler
+verified every delivery correctly and then threw `No importer handles '{event}' yet`. A
+merchant could connect their store and see nothing. This is the other half.
+
+**Decision.**
+
+1. **The status map is where this integration is most able to lie, so it is a file of its
+   own.** Salla's statuses were read from its List Order Statuses page, not inferred from a
+   test store: `payment_pending`, `waiting_for_payment_confirmation`, `payment_failed`,
+   `in_progress`, `under_review`, `completed`, `delivering`, `delivered`, `shipped`,
+   `canceled`, `restored`, `restoring`.
+
+   **The line is "has the merchant committed?", not "has the money arrived".** Opsight books
+   a confirmed order as revenue and tracks what is owed separately (ADR-022) — the same thing
+   it does for a hand-typed order with cash due on delivery — so an unpaid order is
+   confirmed-and-unpaid rather than invisible. The exception is the three states where the
+   merchant has not committed at all: a basket awaiting payment, one awaiting confirmation,
+   and one whose payment failed. Those are drafts, which count toward nothing.
+
+   Booking them as revenue would be **the most flattering mistake an importer can make, and
+   the hardest to notice, because the figures only ever look better.**
+
+   Note `canceled`, with one L. A typo there would file cancellations as sales.
+
+2. **An unknown status throws; an unknown payment method does not.** A merchant can define
+   custom statuses, and defaulting one would file real orders under whatever the default
+   happened to be — so the delivery is kept with the reason on it, which is a question
+   someone can answer in a minute. A payment method is a label on money that has already
+   changed hands: refusing the order because the wallet is unfamiliar would lose a real sale
+   over a word, so it becomes `other` and Salla's own word is kept in the payment's
+   reference.
+
+3. **Salla's totals are written as they arrived, not recomputed from the lines.** This looks
+   lazy and is the opposite. `opsight:salla:reconcile` exists to catch an importer that drops
+   one order in fifty — the failure that produces figures which are plausible, slightly low
+   and wrong. If the importer recalculated the totals, that reconciliation would be our
+   arithmetic compared against itself, and would never find anything.
+
+4. **It does not move stock, and does not go through `ConfirmOrder`.** The store is the
+   system of record for its own shelves and has already decremented them (ADR-027).
+   `ConfirmOrder` exists to price an order from the local catalogue and move stock, and both
+   are wrong for a record that arrives already priced. The ledger keeps its invariant because
+   nothing is claimed to have moved.
+
+5. **Idempotent on `(source, external_id)`, and it does not skip what it has seen.** Salla
+   retries, an order changes through its life, and a backfill covers ground a webhook already
+   covered — so every row is found before it is written. Re-reading an order is cheap;
+   skipping would mean an order edited in Salla after its first import stayed wrong here for
+   ever.
+
+6. **An erased customer is never repopulated.** An import that wrote the name back would undo
+   an erasure silently, on a schedule (ADR-026). The import updates the order and leaves the
+   person as they were left.
+
+7. **Cost is zero, and that is honest rather than lazy.** Salla's order payload carries no
+   cost, so margin on imported orders is unknown until the owner prices the products. A
+   guessed cost would produce a margin figure that looks authoritative and is invented.
+
+**Consequences.**
+
+- **Imported orders have no margin** until their products are given a cost here. The figures
+  that depend on cost are therefore understated for a store that has only ever imported,
+  which is visible rather than hidden: the products show a cost of zero.
+- **A custom order status stops that order importing** until it is mapped. The receipt names
+  the status and the order, and the rest of the store keeps importing.
+- **An order's lines are replaced wholesale on every import.** Safe only because an imported
+  order is never edited here — the store owns it.
+- **The backfill is a manual command**, not a step in the connection flow. A merchant with
+  three years of history should choose when to pull it, and the reconciler is how they check
+  it arrived.
+
+**A test-harness trap worth recording.** `Http::fake()` MERGES stubs rather than replacing
+them, and matches in registration order — so calling it twice in one test leaves the first
+stub in front, and an `Http::sequence` registered there is already exhausted when the second
+run reaches it. Two tests failed in a way that looked exactly like the importer duplicating
+work. The suite now registers one stub that answers from the request's own `page` parameter,
+which also makes the pagination test prove something: that the client asks for the pages it
+says it does.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

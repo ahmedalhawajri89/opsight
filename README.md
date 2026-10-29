@@ -13,8 +13,17 @@ actionable insights for owners and managers.
 > working week — and, since the tenancy work, many businesses on one
 > installation with self-service sign-up and a setup wizard.
 >
-> Not done: deployment hardening (Phase 06), and the P2 integrations — Salla
-> import and WhatsApp alerts. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Live demo:** [opsight-demo.vercel.app](https://opsight-demo.vercel.app) — sign in
+> with any of the four roles offered on the page and the data resets nightly.
+>
+> Salla is connected end to end: a store installs the app, an owner claims it, and
+> signed webhooks become orders, customers and products here —
+> `opsight:salla:import` backfills the history a store had before it connected
+> (ADR-028, ADR-029).
+>
+> Not done: deployment hardening (Phase 06), WhatsApp alerts, and the parts of the
+> Salla importer listed in ADR-029's consequences — imported orders carry no cost
+> until their products are priced here. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 

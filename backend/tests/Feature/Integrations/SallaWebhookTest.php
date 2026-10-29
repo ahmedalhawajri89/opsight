@@ -125,7 +125,7 @@ describe('recognising a retry', function (): void {
          * the update that collides is the one carrying the new status. The
          * id is a hash of the whole payload for exactly this case.
          */
-        $provider = new SallaWebhooks;
+        $provider = app(SallaWebhooks::class);
 
         $first = sallaPayload(['event' => 'order.updated', 'data' => ['id' => 987654, 'status' => ['slug' => 'under_review']]]);
         $second = sallaPayload(['event' => 'order.updated', 'data' => ['id' => 987654, 'status' => ['slug' => 'completed']]]);
@@ -134,7 +134,7 @@ describe('recognising a retry', function (): void {
     });
 
     it('gives one id to the same delivery however its keys are ordered', function (): void {
-        $provider = new SallaWebhooks;
+        $provider = app(SallaWebhooks::class);
 
         $ordered = ['event' => 'order.created', 'merchant' => SALLA_MERCHANT, 'data' => ['id' => 1, 'currency' => 'SAR']];
         $shuffled = ['data' => ['currency' => 'SAR', 'id' => 1], 'merchant' => SALLA_MERCHANT, 'event' => 'order.created'];
@@ -153,7 +153,7 @@ describe('finding the business', function (): void {
 
         $mine = CurrentBusiness::get()->id();
 
-        expect((new SallaWebhooks)->businessIdFor(sallaPayload()))->toBe($mine);
+        expect(app(SallaWebhooks::class)->businessIdFor(sallaPayload()))->toBe($mine);
     });
 
     it('finds it from outside any business context, where the scope would hide it', function (): void {
@@ -173,7 +173,7 @@ describe('finding the business', function (): void {
 
         CurrentBusiness::get()->forget();
 
-        expect((new SallaWebhooks)->businessIdFor(sallaPayload()))->toBe($mine);
+        expect(app(SallaWebhooks::class)->businessIdFor(sallaPayload()))->toBe($mine);
     });
 
     it('does not hand one business a delivery meant for another store', function (): void {
@@ -193,11 +193,11 @@ describe('finding the business', function (): void {
             'status' => Integration::STATUS_CONNECTED,
         ]);
 
-        expect((new SallaWebhooks)->businessIdFor(sallaPayload(['merchant' => 999999999])))->toBe($theirs->id);
+        expect(app(SallaWebhooks::class)->businessIdFor(sallaPayload(['merchant' => 999999999])))->toBe($theirs->id);
     });
 
     it('returns nothing for a store no business has connected', function (): void {
-        expect((new SallaWebhooks)->businessIdFor(sallaPayload()))->toBeNull();
+        expect(app(SallaWebhooks::class)->businessIdFor(sallaPayload()))->toBeNull();
     });
 
     it('keeps a genuine delivery from an unknown store, with its reason', function (): void {
@@ -215,11 +215,11 @@ describe('finding the business', function (): void {
 
 describe('the envelope', function (): void {
     it('reads the event name Salla sends', function (): void {
-        expect((new SallaWebhooks)->event(sallaPayload(['event' => 'order.status.updated'])))
+        expect(app(SallaWebhooks::class)->event(sallaPayload(['event' => 'order.status.updated'])))
             ->toBe('order.status.updated');
     });
 
     it('names a nameless event rather than storing an empty string', function (): void {
-        expect((new SallaWebhooks)->event(['merchant' => SALLA_MERCHANT]))->toBe('unknown');
+        expect(app(SallaWebhooks::class)->event(['merchant' => SALLA_MERCHANT]))->toBe('unknown');
     });
 });

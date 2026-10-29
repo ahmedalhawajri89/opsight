@@ -49,6 +49,31 @@ class SallaWebhooks implements WebhookProvider
      */
     public const INSTALL_EVENTS = ['app.store.authorize', 'app.store.authorized'];
 
+    /**
+     * The order events the importer acts on (ADR-029).
+     *
+     * All of them carry the whole order, not a diff, so each one is handled
+     * the same way: import what arrived. `order.created` and
+     * `order.updated` are the obvious two; `order.status.updated` is the one
+     * that matters most, because it is how a sale becomes a cancellation.
+     *
+     * Deliberately a list rather than a prefix match on `order.`: an event
+     * this importer has not been shown is refused loudly rather than
+     * half-handled.
+     *
+     * @var list<string>
+     */
+    public const ORDER_EVENTS = [
+        'order.created',
+        'order.updated',
+        'order.status.updated',
+        'order.payment.updated',
+        'order.refunded',
+        'order.deleted',
+    ];
+
+    public function __construct(private readonly ImportSallaOrder $import) {}
+
     public function name(): string
     {
         return self::PROVIDER;
@@ -164,15 +189,29 @@ class SallaWebhooks implements WebhookProvider
             return;
         }
 
+        if (in_array($receipt->event, self::ORDER_EVENTS, true)) {
+            /*
+             * `data` is the order. Salla sends its current state rather than
+             * a diff, so every one of these events is the same operation:
+             * import what arrived, over whatever is already here.
+             */
+            $order = is_array($payload['data'] ?? null) ? $payload['data'] : null;
+
+            if ($order === null) {
+                throw new RuntimeException("Salla's '{$receipt->event}' delivery carried no order.");
+            }
+
+            ($this->import)($order);
+
+            return;
+        }
+
         /*
-         * The importer is the next section. Until it exists, a verified
-         * delivery is stored and acknowledged and nothing is invented from
-         * it.
-         *
-         * It throws rather than returning quietly so the receipt is marked
-         * failed with a reason an operator can read, instead of being marked
-         * processed — which would be a lie, and the kind discovered only
-         * when someone asks why an order never arrived.
+         * Still refused loudly rather than quietly, for every event this
+         * importer has not been shown. The receipt is marked failed with a
+         * reason an operator can read, instead of marked processed — which
+         * would be a lie, and the kind discovered only when someone asks why
+         * an order never arrived.
          */
         throw new RuntimeException("No importer handles '{$receipt->event}' yet.");
     }
