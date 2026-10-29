@@ -192,6 +192,29 @@ the serverless demo, which sets `QUEUE_CONNECTION=sync` instead and accepts
 the consequence; docs/DEPLOYMENT.md says what that consequence is. On a development machine you only need
 it when exercising webhooks; everything else is synchronous.
 
+**Seeing the Salla integration work, without a Salla store.** The integration
+is covered by tests, but a test proves a claim and does not show you what it
+looks like. `opsight:salla:simulate` posts a genuinely signed delivery at this
+installation's own webhook endpoint — over HTTP, through the real route, the
+real signature check and the real queue:
+
+```bash
+cd backend
+# Set SALLA_WEBHOOK_SECRET in .env first; without it the endpoint is a 404.
+php artisan opsight:salla:simulate 2 --order=9001
+php artisan queue:work --stop-when-empty      # nothing imports until a worker runs
+php artisan opsight:salla:simulate 2 --undo   # remove everything it made
+```
+
+`--status=canceled` or `--status=payment_pending` show the lifecycle;
+`--tamper` signs with the wrong secret, so you can watch the 401 and find the
+refused delivery kept in `webhook_receipts`.
+
+**Point it at a business nothing asserts on, and undo afterwards.** The orders
+it makes are real orders: the browser suite checks that the second business has
+exactly its seeded twelve, and simulated ones break it. It refuses to run
+outside a local environment.
+
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly
 audit-log prune (ADR-026):
 

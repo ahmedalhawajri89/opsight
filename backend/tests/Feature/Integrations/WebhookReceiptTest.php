@@ -113,7 +113,13 @@ it('refuses a delivery with no signature at all', function (): void {
 it('is a 404 for a provider this installation does not accept', function (): void {
     Queue::fake();
 
-    deliver(delivery(), provider: 'salla')->assertNotFound();
+    /*
+     * `zid`, not `salla`. This used to name Salla, back when no provider was
+     * registered at all — and the day Salla shipped, the test started
+     * asserting that a provider this installation DOES accept is a 404, and
+     * failed for the right reason.
+     */
+    deliver(delivery(), provider: 'zid')->assertNotFound();
 
     // Nothing stored: an unknown name must not be a free write to the table.
     expect(WebhookReceipt::query()->count())->toBe(0);

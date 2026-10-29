@@ -52,6 +52,14 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <!--
+            Empty on purpose. A provider with no secret is a 404 (ADR-027), so
+            pinning this keeps the suite's answer the same whether or not the
+            developer has set a real one in .env — which it did not, until a
+            local secret made one test fail for a reason that had nothing to
+            do with the code. A test that asks about Salla sets its own.
+        -->
+        <env name="SALLA_WEBHOOK_SECRET" value=""/>
+        <!--
             NOT "array".
 
             The array driver discards session data at the end of each request,
