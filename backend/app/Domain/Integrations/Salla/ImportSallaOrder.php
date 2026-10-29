@@ -83,8 +83,8 @@ final class ImportSallaOrder
                 $order->forceFill(['source' => self::SOURCE, 'external_id' => $externalId])->save();
             }
 
-            $this->lines($order, $payload['items'] ?? []);
-            $this->totals($order, $payload, $status, $customer);
+            $cogs = $this->lines($order, $payload['items'] ?? []);
+            $this->totals($order, $payload, $status, $customer, $cogs);
             $this->payment($order, $payload);
 
             $this->recorder->record(
@@ -253,13 +253,14 @@ final class ImportSallaOrder
      * rewritten rather than reconciled one by one. Safe because an imported
      * order is never edited here — the store owns it.
      */
-    private function lines(Order $order, mixed $items): void
+    private function lines(Order $order, mixed $items): string
     {
         if (! is_array($items)) {
-            return;
+            return '0';
         }
 
         $order->items()->delete();
+        $cogs = '0';
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -286,12 +287,31 @@ final class ImportSallaOrder
                 'product_sku' => mb_substr((string) ($item['sku'] ?? $product->sku ?? ''), 0, 64),
                 'unit_price' => Money::round(bcdiv((string) $lineTotal, (string) $quantity, 4)),
                 // Unknown, as above: Salla does not send what the item cost.
-                'unit_cost' => '0',
+                /*
+                 * The product's cost at the moment of import, snapshotted
+                 * onto the line like every other order in the system.
+                 *
+                 * Salla's ORDER payload has no cost, so this is only ever
+                 * known because the catalogue pass fetched `cost_price`
+                 * first (ADR-030). A product it has not reached yet costs
+                 * zero, which reads as an unknown margin rather than a
+                 * hundred-percent one — and re-importing the order after
+                 * the catalogue catches up fills it in.
+                 */
+                'unit_cost' => Money::round((string) ($product->cost ?? '0'), 4),
                 'quantity' => $quantity,
                 'line_discount' => Money::round((string) $discount),
                 'line_total' => Money::round((string) $lineTotal),
             ]);
+
+            $cogs = bcadd(
+                $cogs,
+                bcmul((string) ($product->cost ?? '0'), (string) $quantity, 4),
+                4,
+            );
         }
+
+        return $cogs;
     }
 
     /**
@@ -303,8 +323,13 @@ final class ImportSallaOrder
      *
      * @param  array<string, mixed>  $payload
      */
-    private function totals(Order $order, array $payload, OrderStatus $status, ?Customer $customer): void
-    {
+    private function totals(
+        Order $order,
+        array $payload,
+        OrderStatus $status,
+        ?Customer $customer,
+        string $cogs,
+    ): void {
         $amounts = is_array($payload['amounts'] ?? null) ? $payload['amounts'] : [];
 
         $subtotal = SallaMap::money($amounts['sub_total'] ?? null, '0');
@@ -334,9 +359,13 @@ final class ImportSallaOrder
             'tax_amount' => Money::round((string) $tax),
             'shipping_amount' => Money::round((string) $shipping),
             'total_amount' => Money::round((string) $total),
-            // Unknown until the owner prices the products. Margin on an
-            // imported order is absent rather than invented.
-            'cogs_amount' => '0',
+            /*
+             * Summed from the lines, which took it from the catalogue. Zero
+             * when the products have no cost — an absent margin rather than
+             * an invented one. Unlike the other totals this is NOT Salla's
+             * figure, because Salla does not report one.
+             */
+            'cogs_amount' => Money::round($cogs),
         ])->save();
     }
 

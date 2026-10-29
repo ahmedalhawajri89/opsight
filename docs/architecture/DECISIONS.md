@@ -1362,6 +1362,10 @@ merchant could connect their store and see nothing. This is the other half.
    cost, so margin on imported orders is unknown until the owner prices the products. A
    guessed cost would produce a margin figure that looks authoritative and is invented.
 
+   **Superseded in part by ADR-030.** Salla holds the cost on the PRODUCT, as `cost_price`,
+   and the catalogue is now imported before the orders so the line can snapshot it. The
+   reasoning above still holds for a product the catalogue pass has not reached.
+
 **Consequences.**
 
 - **Imported orders have no margin** until their products are given a cost here. The figures
@@ -1382,6 +1386,72 @@ run reaches it. Two tests failed in a way that looked exactly like the importer 
 work. The suite now registers one stub that answers from the request's own `page` parameter,
 which also makes the pagination test prove something: that the client asks for the pages it
 says it does.
+
+## ADR-030 — The catalogue is imported first, because an order cannot carry a cost
+
+**Status:** Accepted (2026-10)
+**Affects:** `ImportSallaProduct`, `ImportSallaOrder`, `opsight:salla:import`
+**Builds on:** ADR-029 (the order importer)
+
+**Context.** ADR-029 shipped the order importer and accepted, explicitly, that imported
+orders would have no margin: *"Salla's order payload carries no cost, so margin on imported
+orders is unknown until the owner fills it in."* That was honest and it was not good enough.
+A merchant who connects their store sees revenue with a hole where the gross profit should
+be — in a product whose name is "business intelligence".
+
+Salla does hold it. `cost_price` sits on the **product**, not on the order, and it is a
+plain number rather than the `{amount, currency}` shape its prices use. Reading it therefore
+needs the Products API, which is why this is a pass of its own rather than something the
+order importer could do from a webhook payload.
+
+**Decision.**
+
+1. **`opsight:salla:import` walks the catalogue before the orders, and the order is the
+   whole point.** A product first seen through an order line is created at cost zero;
+   importing the catalogue first means every product an order mentions already has its
+   cost. Doing it the other way round would make the catalogue pass a correction rather
+   than a prevention, and corrections are the things that do not get run.
+
+2. **A cost Salla does not have never overwrites one the owner typed.** `cost_price` is
+   optional at Salla's end, and a merchant who has not filled it in sends null, zero or an
+   empty string. Writing that over a cost an owner had entered here would silently erase the
+   margin on exactly the products they had already priced — the harm this ADR exists to
+   undo, inflicted by the fix for it.
+
+   Zero is read as absent rather than free. Salla's field defaults to nothing, so a zero is
+   overwhelmingly "not filled in"; and the cost of guessing wrong the other way is a margin
+   of a hundred percent on a figure an owner will act on.
+
+3. **The line snapshots the product's cost at import, and the order's COGS is summed from
+   the lines.** Every other order in the system snapshots cost onto its lines at confirm
+   time, and an imported order is no different. **It is the one total not taken from Salla**
+   — Salla does not report a cost of goods — which is stated here because ADR-029's rule is
+   otherwise "write what arrived".
+
+4. **An unpriced product gives an unknown margin, not a total one.** Zero cost reads as "we
+   do not know yet", and a re-import once the catalogue has caught up fills it in — which
+   works because both importers are idempotent and neither skips what it has already seen.
+
+**Rejected: fetching each product inline while importing an order.** It would close the gap
+at the moment it opens, and it would put an HTTP call inside the webhook path — a page of
+orders becoming a page of API calls, each able to fail, inside a job the provider is waiting
+on. The order importer stays a pure function of its payload, which is also what lets it be
+tested without a network.
+
+**Rejected: a screen asking the owner to price imported products.** It was the fallback if
+Salla had no cost field. It does, and asking someone to type what we can fetch is work we
+invented for them.
+
+**Consequences.**
+
+- **A product first seen through a webhook still has no cost** until the next catalogue
+  pass. Its orders carry a zero COGS in the meantime, and re-importing them afterwards
+  corrects it. A scheduled catalogue sync would close that window and is not built.
+- **`--skip-products`** exists for a store whose catalogue is managed here rather than at
+  Salla, where the fetched cost would be the wrong one.
+- **The catalogue pass is a full walk every time**, not a delta. Salla's product list has no
+  "changed since" filter in the endpoint this uses, and a few hundred products is a handful
+  of pages.
 
 ## Open decisions
 

@@ -43,6 +43,21 @@ beforeEach(function (): void {
      */
     app()->instance('salla.fake', ['pages' => [[]], 'raw' => null]);
 
+    /*
+     * An empty catalogue, stubbed because the command walks products before
+     * orders (ADR-030). Without it the products call reaches no stub, comes
+     * back as a bare 200 with no `data`, and SallaClient refuses it — which
+     * is the client doing its job, and six order tests failing for a reason
+     * that has nothing to do with orders.
+     *
+     * Empty rather than populated: what this file tests is the order walk.
+     * The catalogue pass has its own suite.
+     */
+    Http::fake(['https://api.salla.dev/admin/v2/products*' => Http::response([
+        'data' => [],
+        'pagination' => ['currentPage' => 1, 'totalPages' => 1, 'total' => 0],
+    ])]);
+
     Http::fake([IMPORT_ORDERS_URL => function ($request) {
         $fake = app('salla.fake');
 

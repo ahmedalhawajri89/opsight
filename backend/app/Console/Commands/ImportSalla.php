@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Domain\Integrations\Salla\ImportSallaOrder;
+use App\Domain\Integrations\Salla\ImportSallaProduct;
 use App\Domain\Integrations\Salla\SallaClient;
 use App\Domain\Integrations\Salla\SallaWebhooks;
 use App\Models\Business;
@@ -38,11 +39,12 @@ class ImportSalla extends Command
         {from : First day to import, yyyy-mm-dd}
         {to : Last day, inclusive}
         {--business= : One business id; all connected businesses when omitted}
+        {--skip-products : Import orders only, leaving the catalogue as it is}
         {--dry-run : Count what would be imported, and write nothing}';
 
     protected $description = 'Import a date range of orders from each connected store';
 
-    public function handle(SallaClient $client, ImportSallaOrder $import): int
+    public function handle(SallaClient $client, ImportSallaOrder $import, ImportSallaProduct $importProduct): int
     {
         $from = (string) $this->argument('from');
         $to = (string) $this->argument('to');
@@ -72,12 +74,26 @@ class ImportSalla extends Command
             $name = Business::query()->whereKey($connection->business_id)->value('name') ?? $connection->business_id;
 
             try {
-                $imported = CurrentBusiness::get()->run(
+                [$products, $orders] = CurrentBusiness::get()->run(
                     (int) $connection->business_id,
-                    fn (): int => $this->importStore($client, $import, $connection, $from, $to, $dryRun),
+                    fn (): array => [
+                        /*
+                         * The catalogue FIRST, and this order matters.
+                         *
+                         * An order's payload carries no cost, so a product
+                         * first seen through an order is created with a cost
+                         * of zero — revenue with no margin. Importing the
+                         * catalogue first means every product an order
+                         * mentions already has its `cost_price` (ADR-030).
+                         */
+                        $this->option('skip-products')
+                            ? 0
+                            : $this->importProducts($client, $importProduct, $connection, $dryRun),
+                        $this->importStore($client, $import, $connection, $from, $to, $dryRun),
+                    ],
                 );
 
-                $this->components->twoColumnDetail((string) $name, "{$imported} orders");
+                $this->components->twoColumnDetail((string) $name, "{$products} products, {$orders} orders");
             } catch (Throwable $e) {
                 /*
                  * One store's outage must not stop the others, and the
@@ -93,6 +109,25 @@ class ImportSalla extends Command
         }
 
         return $failures === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    private function importProducts(
+        SallaClient $client,
+        ImportSallaProduct $import,
+        Integration $connection,
+        bool $dryRun,
+    ): int {
+        $count = 0;
+
+        foreach ($client->each($connection, 'products') as $product) {
+            $count++;
+
+            if (! $dryRun) {
+                $import($product);
+            }
+        }
+
+        return $count;
     }
 
     private function importStore(
