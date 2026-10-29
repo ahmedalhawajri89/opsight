@@ -1453,6 +1453,105 @@ invented for them.
   "changed since" filter in the endpoint this uses, and a few hundred products is a handful
   of pages.
 
+## ADR-031 — Motion plays the layout; a keyboard layer, in one listener
+
+**Status:** Accepted (2026-10)
+**Affects:** `hooks/useFlip.js`, `hooks/useShortcuts.js`, `AppShell`, `KpiPanel`, `GlobalSearch`
+**Amends:** `UI_UX_DIRECTION.md` §2, §5 and §7
+
+**Context.** The dashboard's craft pass found three things, and only one of them was missing
+code.
+
+The first: the application already fetched four time series — `orders_trend`, `aov_trend`,
+`profit_trend`, `margin_trend` — built them into a `trends` object on the dashboard page, and
+never read it. `components/charts/Sparkline.jsx` existed in full, with its own CSS reveal
+animation and a matching set of `--spark-*` tokens, and had **zero importers**. `KpiPanel`'s
+own docblock promised "the period's shape as a sparkline", and its loading skeleton reserved
+a 40px band for one. Four payloads crossed the network on every dashboard load and were
+dropped on the floor.
+
+The second: of GSAP, only the core was imported. GSAP is now free in full, and `Flip.js`
+ships inside the `gsap` package already in `package.json` — so the plugin that animates
+between two real layouts was installed, paid for, and unused.
+
+The third: the design document had drifted from the code. §2 banned "counting-up numbers"
+while `CountUp` shipped on four cards; §2 banned radii of 12px and above while §4 defined —
+and the code used — a 16px card. A document that contradicts the product is worse than no
+document, because it is still cited.
+
+**Decision.**
+
+1. **Flip is allowed, behind one hook, for layout changes only.** `useFlip` carries
+   `useGsap`'s three rules — reduced motion runs nothing, everything reverts, scoped to a
+   ref — plus a fourth it needs: **the caller captures before React commits**, because every
+   React effect runs after the DOM has already changed and the "before" is gone by then.
+
+   `capture()` takes no dependency list. It records the layout and schedules its own render,
+   so the hook never has to be told which state can move the page. A hook that took
+   `[collapsed]` would be wrong the first time someone added a fourth thing that moves — and
+   it could not have animated focus mode at all, whose state lives outside React in
+   `localStorage` behind `useSyncExternalStore`.
+
+   Three uses, and the test for each is the same: **is the page a different shape
+   afterwards?** Folding the sidebar, entering focus mode, opening a KPI card. Not hover,
+   not arrival, not a refetch.
+
+2. **Counting up survives, narrowly, and the ban is rewritten rather than ignored.** Four
+   figures, on first load, 900ms, with the final value given to assistive technology
+   throughout. It does not run on a refetch, which is the case the original rule was really
+   about: a figure that changed because the period changed must not be disguised by one
+   arriving.
+
+3. **The sparkline is wired, and stays decorative.** It is `aria-hidden`, it adds shape
+   rather than fact, and every number it hints at is already on the card. A sparkline that
+   were the only place a fact appeared would break the rule that a chart is never the only
+   route to its data.
+
+4. **A KPI card opens in place rather than navigating.** It takes the row, draws its own
+   series as a real chart with an axis, a tooltip and the frame's "view as table" toggle,
+   and the other three cards move down around it. This closes a gap that was a deliberate
+   hole: six of twelve metrics have no `DESTINATIONS` entry and so no way in at all.
+
+   `ChartFrame` gained a `bare` prop for it — the same word, and the same reason, as the one
+   `DataTable` already has. A card inside a card is two borders saying one thing.
+
+5. **One keyboard listener, and chords rather than bare letters.** There were three
+   independent `keydown` listeners on `window`, each deciding for itself what counts as "the
+   reader is typing"; a fourth was the point at which two would disagree. `g` then a letter
+   navigates — a bare letter would fire under the hands of anyone tabbing a table — `?`
+   lists everything, and no modified key is taken from the browser.
+
+6. **`Ctrl/⌘+K` opens a palette, not a text field.** It used to focus the field in the top
+   bar. That was right until the field grew commands: a dropdown hanging off the top-right
+   corner is the wrong shape for a list someone is reading and choosing from, and the wrong
+   corner entirely for a reader whose language starts at the other edge. The dialog already
+   existed for narrow screens; it is now the shortcut's target at every width, and the bar
+   keeps its field for the reader who reached for a mouse.
+
+**Rejected: per-widget error states on the three dashboard charts.** `ChartFrame` supports
+`error`/`onRetry` and the three dashboard charts do not forward them, which reads like an
+omission. It is not: all three are fed by one `/dashboard` request, so there is exactly one
+failure and the page-level state is where it belongs. Wiring three retry buttons that would
+always appear together, and always retry the same call, would be ceremony.
+
+**Rejected: a dark theme in this pass.** Every token has a dark value and `contrast.test.js`
+holds both to AA, but no reviewer has looked at the dark ground on a real screen. Shipping a
+toggle would hand readers a theme nobody has read a number on.
+
+**Consequences.**
+
+- **`gsap/Flip` may be imported in `hooks/useFlip.js` and nowhere else**, exactly as the core
+  may be imported only in `hooks/useGsap.js`.
+- **The palette's commands are built in `AppShell`**, because each acts on something the
+  shell holds — preferences, focus mode, the period in the URL. The search engine stays a
+  search engine.
+- **`e2e/shell.spec.js` changed deliberately.** `Ctrl+K` now opens a dialog, so the spec
+  scopes its combobox to it; at a wide width there are two fields named Search and only one
+  of them is the palette.
+- **A metric the server sends no series for draws no sparkline and cannot be opened.**
+  `units_sold` is the case today. The card keeps its height either way, so a row does not
+  become ragged because one metric has no history.
+
 ## Open decisions
 
 These need an answer from the project owner before the phase that depends on them.

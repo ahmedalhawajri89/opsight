@@ -26,9 +26,9 @@ These are common in dashboard templates and are prohibited in Opsight:
 | --- | --- |
 | Gradient backgrounds and gradient KPI cards | Decoration competing with data; also breaks number legibility |
 | Glassmorphism, blur, translucency | Reduces contrast, which is the one thing a data UI cannot spare |
-| Large corner radii (12px+, pill cards) | Wastes density and reads as consumer app, not instrument |
+| Pill-shaped cards and controls | Wastes density and reads as consumer app, not instrument. **Amended:** the blanket "12px+" ban was written before the redesign and the shipped panels are 16px — see §5 |
 | Heavy drop shadows and floating card stacks | Hierarchy should come from spacing, weight and rule lines |
-| Decorative entry animations, counting-up numbers | A number that animates is unreadable while it animates, and implies precision it does not have |
+| Decorative entry animations | Motion must say "this is new" or "these belong together". **Amended:** the original row also banned counting-up numbers outright; the shipped rule is narrower and is stated in §7 |
 | Full-colour icon sets, illustrations, mascots | Occupies space that data should hold |
 | Rainbow categorical palettes | Colour must encode meaning; when everything is coloured, nothing is |
 | Dark-purple "analytics SaaS" aesthetic | Generic; the direction here is neutral and quiet |
@@ -272,10 +272,22 @@ sign-in screen. Application screens carry none: no pattern, no wash, no gradient
 
 **Spacing.** 4px base scale: 4, 8, 12, 16, 24, 32, 48. Nothing off-scale.
 
-**Radii.** `sm` 4px (controls, badges), `md` 6px (icon tiles, dialogs), `lg` 8px (panels).
-Nothing larger. No pills except status badges, where the shape itself carries meaning.
-*Revised in the redesign* from 3/5px: on white panels over an off-white ground, 5px corners
-read as unfinished rather than as restraint.
+**Radii, by role rather than by size** — the same four tokens §4 defines, which are the ones
+`globals.css` actually ships:
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--radius-control` | 8px | Buttons, fields, badges, icon tiles — everything you click |
+| `--radius-card` | 16px | Panels and cards |
+| `--radius-pill` | 999px | Status badges only, where the shape itself carries meaning |
+
+`--radius-panel` (12px) is defined and used nowhere. It is kept as the half-step between a
+control and a card, for a surface that is neither; until something needs it, a reviewer
+finding it unused is finding the truth.
+
+*This paragraph used to read "sm 4px, md 6px, lg 8px. Nothing larger", which was the scale
+before the redesign and contradicted §4 for several months.* A card at 16px over an off-white
+ground reads as a panel; at 8px it read as a control that had grown.
 
 **Borders first, then one hairline.** Panels are a 1px border on `--surface` with
 `--shadow-card` — a 1px, 4%-opacity lift that separates white from the off-white ground
@@ -370,6 +382,24 @@ refunded   warning
   animates on a refetch (a changed figure must not be disguised by an arriving one), no
   number counting, and no hover lift on panels that are not clickable. `prefers-reduced-motion`
   removes all of it — CSS through a media query, Recharts through `useReducedMotion()`.
+- **One number counts, and only on arrival.** The four primary KPI figures count up over
+  900ms when the dashboard first loads (`components/data/CountUp.jsx`); the eight compact
+  ones print outright, because twelve figures counting at once is a slot machine. The count
+  never runs on a refetch — a changed figure must not be disguised by an arriving one — and
+  a screen reader is given the final value only, never the intermediate frames. This is the
+  narrow version of what §2 once banned outright.
+- **Layout moves are played, not jumped** (`hooks/useFlip.js`, GSAP's Flip plugin, which
+  ships inside the `gsap` package the project already depends on). Three places: folding the
+  sidebar, entering focus mode, and opening a KPI card. In each the page is a genuinely
+  different shape afterwards, and 420ms of the eye following one element there is the
+  difference between a layout that changed and a layout that was replaced. Flip measures two
+  real layouts, so nothing here invents a destination.
+- **A keyboard layer, in one listener** (`hooks/useShortcuts.js`). `Ctrl/⌘+K` opens the
+  palette — search and commands in one list, because a reader reaching for the keyboard is
+  not thinking about whether what they want is a noun or a verb. `g` then a letter goes to a
+  screen; a chord rather than a bare letter, which would fire under the hands of anyone
+  tabbing a table. `?` lists all of it. Nothing fires while the reader is typing, and no
+  modified key is taken from the browser.
 - **The sign-in scene** (`features/auth/LedgerScene.jsx`) is the product's thesis drawn in
   three beats, about 2.6 s, played once. Ledger rows arrive, each marked by its kind. They fold
   away as a single figure rises in their place, and a line traces the figure to a bronze

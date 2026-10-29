@@ -121,7 +121,6 @@ export function BreakdownChart({
                   className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-2.5 py-2 text-sm shadow-(--shadow-overlay)"
                 >
                   <p className="font-medium text-(--color-text)">{row.label}</p>
-                  {row.sublabel && <p className="text-(--color-muted)">{row.sublabel}</p>}
                   <p className="tabular text-(--color-text)">{formatValue(row.value)}</p>
                   <p className="tabular text-(--color-text-2)">
                     {t('charts.shareOfPeriod', { share: formatPercent(row.share) })}

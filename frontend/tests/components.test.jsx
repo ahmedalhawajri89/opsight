@@ -7,6 +7,7 @@ import { DataTable } from '@/components/data/DataTable';
 import { StatTile } from '@/components/data/StatTile';
 import { EmptyState, NoResultsState } from '@/components/data/States';
 import { CatalogPicker } from '@/features/orders/CatalogPicker';
+import { grossMargin } from '@/features/catalog/ProductFormDialog';
 import { Badge, OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
@@ -469,5 +470,45 @@ describe('CatalogPicker', () => {
     );
 
     expect(screen.getAllByRole('option', { name: /WIDGET-1/ })).toHaveLength(1);
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| The product form's margin preview
+|--------------------------------------------------------------------------
+|
+| The only arithmetic in that file, and the only mistake the form can make
+| that nothing downstream catches: a price at or below cost books happily,
+| and the loss turns up a month later in a figure nobody connects to the
+| moment it was typed.
+|
+*/
+
+describe('grossMargin', () => {
+  it('reports the profit and the ratio a price and cost describe', () => {
+    const margin = grossMargin('13.6606', '6.9256');
+
+    expect(margin.profit).toBeCloseTo(6.735, 3);
+    expect(margin.ratio).toBeCloseTo(0.493, 3);
+    expect(margin.atOrBelowCost).toBe(false);
+  });
+
+  it('flags a price that sells at a loss, and one that merely breaks even', () => {
+    expect(grossMargin('10', '12').atOrBelowCost).toBe(true);
+    expect(grossMargin('10', '10').atOrBelowCost).toBe(true);
+  });
+
+  it('says nothing at all until both fields have something in them', () => {
+    // A blank field is not a zero. Treating it as one would announce a
+    // hundred percent margin to someone who has typed a price and no cost.
+    expect(grossMargin('', '5')).toBeNull();
+    expect(grossMargin('10', '')).toBeNull();
+    expect(grossMargin('abc', '5')).toBeNull();
+  });
+
+  it('has no margin to report for a product given away', () => {
+    // Not minus infinity, which is what dividing by the price would give.
+    expect(grossMargin('0', '5')).toBeNull();
   });
 });

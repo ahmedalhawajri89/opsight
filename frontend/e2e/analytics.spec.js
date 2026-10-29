@@ -93,6 +93,47 @@ test.describe('dashboard, as an owner', () => {
     await expect(page.getByRole('table').first()).toBeVisible();
   });
 
+  test('opens a KPI in place to show its own trend, and closes on Escape', async ({ page }) => {
+    /*
+     * The disclosure exists because six of the twelve metrics have nowhere to
+     * go — no entry in DESTINATIONS, so no arrow and no way in at all. What
+     * it must prove is that the card ANSWERS rather than navigates: the URL
+     * does not change, and the series arrives inside the card it came from.
+     */
+    await page.goto('/dashboard');
+    await dashboardReady(page);
+
+    const card = page
+      .getByRole('heading', { name: 'Net revenue', level: 3 })
+      .locator('xpath=ancestor::div[2]');
+    const disclose = card.getByRole('button', { name: /trend for Net revenue/ });
+
+    await expect(disclose).toHaveAttribute('aria-expanded', 'false');
+    await disclose.click();
+
+    await expect(disclose).toHaveAttribute('aria-expanded', 'true');
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    // The chart arrives with its own route to the numbers, inside the card.
+    await expect(card.getByRole('button', { name: 'View as table' })).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(disclose).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('names the products closest to running out, not just how many', async ({ page }) => {
+    // The server already sends five by name; the panel used to show only counts.
+    await page.goto('/dashboard');
+    await dashboardReady(page);
+
+    const panel = page
+      .getByRole('heading', { name: 'Inventory Health' })
+      .locator('xpath=ancestor::section[1]');
+
+    await expect(panel.getByText('Lowest stock')).toBeVisible();
+    await expect(panel.getByRole('link').filter({ hasNotText: 'View all' }).first()).toBeVisible();
+  });
+
   test('labels low stock as a point-in-time figure, not a period one', async ({ page }) => {
     await page.goto('/dashboard');
 

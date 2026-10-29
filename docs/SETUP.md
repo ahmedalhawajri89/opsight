@@ -237,6 +237,16 @@ A tired dev server also costs real time. One run against servers that had been u
 for hours failed nine specs — including the notification bell, which no change had
 touched — and all nine passed from cold.
 
+**Clear the cache before a full run**, with `php artisan cache:clear`. The rate
+limiters keep their buckets in the `cache` table, and the coarse login backstop is
+ten a minute from one address (`AppServiceProvider`). A full suite signs in four
+times in `auth.setup.js` and several more in `auth.spec.js`, all from `127.0.0.1`
+and all inside the first minute, so a run that follows another closely can exhaust
+it — and the symptom is a sign-in that silently stays on `/login`, in a spec that
+has nothing to do with whatever you changed. The limit is right for production;
+what is wrong is asking one address to sign in nine times in a minute and
+expecting it not to notice.
+
 The owner account's interface language is Arabic in the seeded data if you have
 changed it; the specs read English labels, so switch it back before a run
 (`/settings` or the account menu) — CI starts from a fresh seed and is not

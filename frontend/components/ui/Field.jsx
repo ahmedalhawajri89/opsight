@@ -3,6 +3,7 @@
 import { forwardRef, useId } from 'react';
 
 import { cn } from '@/lib/cn';
+import { formatMoneyParts } from '@/lib/format';
 
 /**
  * Form controls.
@@ -118,6 +119,72 @@ export const NumberInput = forwardRef(function NumberInput({ invalid, className,
       className={controlClasses(invalid, cn('tabular h-8 px-2.5 text-end', className))}
       {...props}
     />
+  );
+});
+
+/**
+ * A money input, with the currency written on it.
+ *
+ * A bare number field asks the reader to remember which currency they are
+ * typing in — and this application runs two businesses on two currencies in
+ * the same browser, so the answer is not always the one they had in mind.
+ *
+ * The affix is an attached segment rather than text floating inside the box:
+ * an overlay needs padding that exactly matches the symbol's width, and
+ * `د.ب.‏` is not the width of `BHD`. Which side it sits on comes from
+ * `formatMoneyParts`, which asks Intl where the currency goes in this locale
+ * rather than assuming it leads — it leads in English and trails in Arabic.
+ * The number is aligned away from the affix so the two never meet.
+ *
+ * The VALUE is untouched. Prices are stored at four decimal places while most
+ * currencies here show three (ADR-015), and rounding what the reader sees
+ * would mean that opening a product and pressing Save silently changed its
+ * price. The symbol is decoration; the digits are the record.
+ */
+export const MoneyInput = forwardRef(function MoneyInput(
+  { invalid, currency, decimals, className, ...props },
+  ref,
+) {
+  // Zero is a throwaway: only the shape of the result is read, never its value.
+  const parts = formatMoneyParts(0, { currency, decimals });
+  const trailing = parts?.position === 'after';
+
+  const affix = parts?.currency ? (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'flex shrink-0 items-center self-stretch bg-(--color-ground) px-2.5 text-xs font-medium text-(--color-text-2)',
+        trailing ? 'border-s border-(--color-line)' : 'border-e border-(--color-line)',
+      )}
+    >
+      {parts.currency}
+    </span>
+  ) : null;
+
+  return (
+    <div
+      className={cn(
+        CONTROL_BASE,
+        'flex w-full overflow-hidden p-0',
+        invalid ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
+        'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-(--focus-ring)',
+        className,
+      )}
+    >
+      {!trailing && affix}
+      <input
+        ref={ref}
+        type="text"
+        inputMode="decimal"
+        aria-invalid={invalid || undefined}
+        className={cn(
+          'focus-on-container tabular h-8 w-full min-w-0 bg-transparent px-2.5',
+          trailing ? 'text-start' : 'text-end',
+        )}
+        {...props}
+      />
+      {trailing && affix}
+    </div>
   );
 });
 

@@ -275,6 +275,7 @@ export default function DashboardPage() {
 
           <KpiPanel
             metrics={metrics}
+            trends={trends}
             currency={currency}
             decimals={decimals}
             comparisonLabel={comparisonLabel}
@@ -371,6 +372,7 @@ export default function DashboardPage() {
 
           <InventoryStatusCard
             status={dashboard?.inventory_status}
+            lowStock={dashboard?.low_stock}
             loading={isLoading}
             className="rise"
             style={{ '--rise-index': 8 }}

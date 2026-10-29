@@ -55,6 +55,7 @@ export function TrendChart({
   height = 260,
   weekendDays = [],
   icon,
+  bare = false,
   className,
   style,
 }) {
@@ -106,6 +107,7 @@ export function TrendChart({
       onRetry={onRetry}
       height={height}
       icon={icon}
+      bare={bare}
       className={className}
       style={style}
       emptyDescription={t('charts.trendEmpty')}
@@ -223,7 +225,18 @@ export function TrendChart({
   );
 }
 
-/** A comparison line, drawn muted and dashed behind the primary series. */
+/**
+ * A comparison line, drawn muted and dashed behind the primary series.
+ *
+ * **Not used anywhere, and cannot be until the API changes.** It needs a
+ * `previous` value on each bucket; every trend payload carries only
+ * `{ bucket, bucket_end, label, value, is_partial }`, and the comparison
+ * exists solely as the scalars in `metrics[*].previous` and `change_pct`.
+ *
+ * Kept rather than deleted because UI_UX_DIRECTION.md §6 requires this line
+ * and this is the shape it will take; what is missing is the data. Drop it if
+ * the requirement is dropped.
+ */
 export function ComparisonLine({ dataKey = 'previous' }) {
   return (
     <Line

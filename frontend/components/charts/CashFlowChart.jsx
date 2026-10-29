@@ -15,7 +15,7 @@ import { ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { formatMoney, formatMoneyCompact } from '@/lib/format';
-import { formatBucketLabel, formatMonthLabel } from '@/lib/periods';
+import { describePeriod, formatBucketLabel, formatMonthLabel } from '@/lib/periods';
 
 /**
  * "Business performance": net revenue against operating expenses, month by
@@ -70,6 +70,15 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
   return (
     <ChartFrame
       title={t('dashboard.cashFlow.title')}
+      /*
+       * Which six months, in words. The series is a trailing window the
+       * server chooses and states in `data.period` — NOT the period the rest
+       * of the dashboard is showing — and a reader comparing this panel with
+       * the figures above it has no way to know that unless it is written.
+       */
+      description={
+        data?.period ? describePeriod(data.period.from, data.period.to) : undefined
+      }
       icon="trendUp"
       columns={columns}
       rows={hasData ? rows : []}

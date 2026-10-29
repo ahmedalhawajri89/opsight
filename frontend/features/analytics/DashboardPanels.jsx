@@ -452,9 +452,15 @@ const STOCK_TONES = {
   },
 };
 
-export function InventoryStatusCard({ status, loading, className, style }) {
+export function InventoryStatusCard({ status, lowStock, loading, className, style }) {
   const { t } = useI18n();
   const total = status?.total ?? 0;
+  /*
+   * The five the server already names, lowest first. The three counts above
+   * answer "how many"; a reader looking at "7 low" wants to know WHICH, and
+   * until now the only way to find out was to leave the page.
+   */
+  const atRisk = lowStock?.items ?? [];
 
   return (
     <Card
@@ -513,6 +519,61 @@ export function InventoryStatusCard({ status, loading, className, style }) {
             );
           })}
         </ul>
+      )}
+
+      {!loading && atRisk.length > 0 && (
+        <div className="border-t border-(--color-line-subtle) px-5 pt-4 pb-5">
+          <h3 className="text-xs font-medium tracking-[0.1em] text-(--color-muted) uppercase">
+            {t('dashboard.inventory.atRisk')}
+          </h3>
+
+          <ul className="mt-3 space-y-2">
+            {atRisk.map((item) => (
+              <li key={item.product_id} className="flex items-baseline justify-between gap-3">
+                {/*
+                  dir="auto": a product name may be Arabic on an English page
+                  or the reverse, and it is the name that decides, not the UI.
+                */}
+                <Link
+                  href={`/products?search=${encodeURIComponent(item.product?.sku ?? '')}`}
+                  dir="auto"
+                  className="min-w-0 truncate text-sm text-(--color-text) hover:text-(--color-brand-text) hover:underline"
+                >
+                  {item.product?.display_name ?? item.product?.sku}
+                </Link>
+
+                <span
+                  className="tabular shrink-0 text-xs text-(--color-text-2)"
+                  title={t('dashboard.inventory.stockOf', {
+                    count: formatNumber(item.stock_on_hand),
+                    threshold: formatNumber(item.threshold),
+                  })}
+                >
+                  <span className="sr-only">
+                    {t('dashboard.inventory.stockOf', {
+                      count: formatNumber(item.stock_on_hand),
+                      threshold: formatNumber(item.threshold),
+                    })}
+                  </span>
+                  <span aria-hidden="true" dir="ltr">
+                    <span
+                      className={cn(
+                        'font-semibold',
+                        item.stock_on_hand === 0
+                          ? 'text-(--color-danger)'
+                          : 'text-(--color-warning)',
+                      )}
+                    >
+                      {formatNumber(item.stock_on_hand)}
+                    </span>
+                    {' / '}
+                    {formatNumber(item.threshold)}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </Card>
   );

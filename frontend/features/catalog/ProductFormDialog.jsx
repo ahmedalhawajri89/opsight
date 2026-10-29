@@ -6,8 +6,11 @@ import { useProductActions } from './useCatalog';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 import { Dialog } from '@/components/ui/Dialog';
-import { Field, Input, NumberInput } from '@/components/ui/Field';
+import { Field, Input, MoneyInput, NumberInput } from '@/components/ui/Field';
+import { Icon } from '@/components/ui/Icon';
+import { formatMoney, formatPercent } from '@/lib/format';
 
 /**
  * Adding a product, from the screen rather than the API (ADR-024).
@@ -42,6 +45,26 @@ function initialValues(product) {
   };
 }
 
+/**
+ * The margin two typed fields describe, or null when they do not describe one.
+ *
+ * Exported for its test. The guards are the point: a blank field is not a
+ * zero, and a price of zero has no margin to report rather than a margin of
+ * minus infinity.
+ */
+export function grossMargin(price, cost) {
+  const sell = Number(price);
+  const buy = Number(cost);
+
+  if (!Number.isFinite(sell) || !Number.isFinite(buy) || price === '' || cost === '') return null;
+  // A product given away has no margin to report, not a margin of nothing.
+  if (sell <= 0) return null;
+
+  const profit = sell - buy;
+
+  return { profit, ratio: profit / sell, atOrBelowCost: profit <= 0 };
+}
+
 export function ProductFormDialog({ open, onClose, product = null, onCreated }) {
   const { t } = useI18n();
   const { can } = useAuth();
@@ -56,6 +79,18 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
   const [failure, setFailure] = useState(null);
 
   const canSeeCost = can('products.view_cost');
+  /*
+   * What this product earns, as the two fields are typed.
+   *
+   * A PREVIEW, and the only arithmetic in this file. Every margin the product
+   * reports is computed by the server from the cost snapshotted onto an order
+   * line (ADR-015), and this one is thrown away the moment the dialog closes —
+   * so Number() here cannot drift into a stored figure. It exists because
+   * margin is the reason a cost field is on this form at all, and asking
+   * someone to price a product without showing them what they just priced it
+   * at is asking them to do the sum in their head.
+   */
+  const margin = grossMargin(values.price, values.cost);
 
   function set(key, value) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -113,7 +148,7 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
               catalogue — past orders keep their snapshot either way. */}
           {editing && can('products.deactivate') && (
             <Button
-              variant="ghost"
+              variant="danger"
               className="me-auto"
               loading={setActive.isPending}
               onClick={async () => {
@@ -163,6 +198,13 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
               readOnly={editing}
               value={values.sku}
               onChange={(event) => set('sku', event.target.value)}
+              /*
+               * A field that cannot be edited should not look like one that
+               * can. `readOnly` alone changes nothing visually, so the hint
+               * underneath was the only clue — and a hint is read after the
+               * click that did nothing.
+               */
+              className={cn(editing && 'bg-(--color-ground) text-(--color-text-2)')}
               {...props}
             />
           )}
@@ -197,31 +239,78 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
           )}
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('products.columns.price')} error={fieldErrors.price} required>
-            {(props) => (
-              <NumberInput
-                min="0"
-                step="0.0001"
-                value={values.price}
-                onChange={(event) => set('price', event.target.value)}
-                {...props}
-              />
-            )}
-          </Field>
-
-          {canSeeCost && (
-            <Field label={t('products.columns.cost')} error={fieldErrors.cost} required>
+        {/*
+          A rule, not a frame. The fields above say what the product IS; from
+          here down they say what it earns, and the two are read differently.
+        */}
+        <div className="border-t border-(--color-line-subtle) pt-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t('products.columns.price')} error={fieldErrors.price} required>
               {(props) => (
-                <NumberInput
-                  min="0"
-                  step="0.0001"
-                  value={values.cost}
-                  onChange={(event) => set('cost', event.target.value)}
+                <MoneyInput
+                  value={values.price}
+                  onChange={(event) => set('price', event.target.value)}
                   {...props}
                 />
               )}
             </Field>
+
+            {canSeeCost && (
+              <Field label={t('products.columns.cost')} error={fieldErrors.cost} required>
+                {(props) => (
+                  <MoneyInput
+                    value={values.cost}
+                    onChange={(event) => set('cost', event.target.value)}
+                    {...props}
+                  />
+                )}
+              </Field>
+            )}
+          </div>
+
+          {/*
+            The answer to the two fields above, while they are still being
+            typed. Selling at or below cost is the one mistake this form can
+            make that nothing downstream will catch — the order will book,
+            the revenue will look fine, and the loss appears a month later in
+            a margin figure nobody connected to this moment.
+          */}
+          {canSeeCost && (
+            <div
+              aria-live="polite"
+              className="mt-4 rounded-(--radius-control) border border-(--color-line) bg-(--color-surface-subtle) px-3.5 py-3"
+            >
+              {margin === null ? (
+                <p className="text-sm text-(--color-muted)">{t('products.new.marginPending')}</p>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="text-xs font-medium tracking-wide text-(--color-text-2) uppercase">
+                      {t('products.new.margin')}
+                    </span>
+                    <span
+                      className={cn(
+                        'tabular text-base font-semibold',
+                        margin.atOrBelowCost ? 'text-(--color-danger)' : 'text-(--color-text)',
+                      )}
+                    >
+                      {formatPercent(margin.ratio)}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-sm text-(--color-text-2)">
+                    {t('products.new.marginPerUnit', { amount: formatMoney(margin.profit) })}
+                  </p>
+
+                  {margin.atOrBelowCost && (
+                    <p className="mt-2 flex items-start gap-1.5 text-sm text-(--color-danger)">
+                      <Icon name="alert" size={15} className="mt-0.5 shrink-0" />
+                      <span>{t('products.new.belowCost')}</span>
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
           )}
         </div>
 

@@ -130,7 +130,20 @@ test.describe('as the second business', () => {
     // Order lines snapshot the SKU, so it is fixed once the product exists.
     await expect(dialog.getByRole('textbox', { name: /^SKU/ })).toHaveAttribute('readonly', '');
 
+    /*
+     * The margin answers the two fields while they are still being typed.
+     * A price under cost is the one mistake this form can make that nothing
+     * downstream catches: the order books, the revenue reads fine, and the
+     * loss appears a month later in a figure nobody ties back to this moment.
+     */
+    await dialog.getByLabel('Price').fill('0.001');
+    await expect(dialog.getByText('At this price the product sells at a loss.')).toBeVisible();
+
     await dialog.getByLabel('Price').fill('1.850');
+    await expect(dialog.getByText('At this price the product sells at a loss.')).toHaveCount(0);
+    await expect(dialog.getByText('Margin', { exact: true })).toBeVisible();
+    await expect(dialog.getByText(/per unit/)).toBeVisible();
+
     await dialog.getByRole('button', { name: 'Save' }).click();
 
     await expect(table).toContainText('KWD 1.850');

@@ -38,6 +38,7 @@ export function ChartFrame({
   legend,
   icon,
   height = 280,
+  bare = false,
   className,
   style,
   children,
@@ -51,12 +52,29 @@ export function ChartFrame({
     <section
       style={style}
       className={cn(
-        'flex min-w-0 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
+        'flex min-w-0 flex-col',
+        /*
+         * `bare` drops the frame, the same way DataTable's does and for the
+         * same reason: this section is already inside something that drew a
+         * card, and a card inside a card is two borders saying one thing.
+         */
+        !bare &&
+          'rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-2">
-        <PanelTitle title={title} description={description} icon={icon} />
+      <div
+        className={cn(
+          'flex items-start justify-between gap-3 pb-2',
+          bare ? 'px-0 pt-0' : 'px-5 pt-4',
+        )}
+      >
+        {/*
+          An empty heading is worse than no heading, so a frame with no title
+          renders none — and the spacer keeps the controls at the end edge,
+          which justify-between would otherwise hand to the start.
+        */}
+        {title ? <PanelTitle title={title} description={description} icon={icon} /> : <span />}
 
         <div className="flex shrink-0 items-center gap-2">
           {actions}
@@ -80,9 +98,11 @@ export function ChartFrame({
         </div>
       </div>
 
-      {legend && !loading && hasData && !asTable && <div className="px-5 pt-1">{legend}</div>}
+      {legend && !loading && hasData && !asTable && (
+        <div className={cn('pt-1', bare ? 'px-0' : 'px-5')}>{legend}</div>
+      )}
 
-      <div className="flex-1 px-5 pt-2 pb-5">
+      <div className={cn('flex-1 pt-2', bare ? 'px-0 pb-0' : 'px-5 pb-5')}>
         {loading ? (
           <div aria-busy="true" style={{ height: height === 'auto' ? 200 : height }}>
             <Skeleton className="size-full" />

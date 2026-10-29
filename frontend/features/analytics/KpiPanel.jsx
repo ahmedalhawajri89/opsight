@@ -1,8 +1,12 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
 import { CountUp } from '@/components/data/CountUp';
+import { Sparkline } from '@/components/charts/Sparkline';
+import { useFlip } from '@/hooks/useFlip';
 import { Icon } from '@/components/ui/Icon';
 import { InfoTip } from '@/components/ui/Tooltip';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -26,6 +30,18 @@ import { metricDefinition, metricLabel, presentMetric } from './MetricTile';
  *
  * Every figure, change and series is the server's. Nothing here computes.
  */
+/*
+ * The expanded card's chart, loaded only when a card is opened.
+ *
+ * Recharts is ~114KB gzipped and this panel is on the first screen after
+ * sign-in. The dashboard already code-splits its three charts for exactly
+ * this reason; pulling the library in here through a plain import would undo
+ * that for a view most readers never open.
+ */
+const TrendChart = dynamic(() => import('@/components/charts/TrendChart').then((m) => m.TrendChart), {
+  ssr: false,
+});
+
 const PRIMARY_ORDER = [
   'net_revenue',
   'orders_count',
@@ -97,6 +113,29 @@ const TINTS = {
   red: 'bg-(--color-danger-soft) text-(--color-danger)',
 };
 
+/*
+ * The sparkline's stroke, per accent.
+ *
+ * Written out rather than composed from the accent at runtime, because an
+ * assembled token cannot be checked: tests/tokens.test.js reads the source
+ * for CSS variable references and fails on any name globals.css does not
+ * define. An interpolated one sails past that check and then draws nothing.
+ *
+ * The four spark tokens exist for exactly these four accents — they are a
+ * touch brighter than the icon tints, because a 2px line needs more weight
+ * than a filled chip to read at the same strength. Amber and red belong to
+ * compact metrics, which carry no sparkline; they fall back to chart colours
+ * so the map is total rather than nearly so.
+ */
+const SPARKS = {
+  green: 'var(--spark-green)',
+  blue: 'var(--spark-blue)',
+  cyan: 'var(--spark-cyan)',
+  teal: 'var(--spark-teal)',
+  amber: 'var(--chart-2)',
+  red: 'var(--chart-4)',
+};
+
 
 /** Splits the metrics that arrived into the two rows, with no key in both. */
 export function tierMetrics(metrics = {}) {
@@ -109,8 +148,43 @@ export function tierMetrics(metrics = {}) {
 const CARD =
   'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
 
-export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading }) {
+export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
   const { t } = useI18n();
+
+  /*
+   * One card open at a time. Two would halve the width each and defeat the
+   * point, which is room for a chart the small card cannot hold.
+   */
+  const [opened, setOpened] = useState(null);
+  const [gridScope, captureGrid] = useFlip('[data-kpi]');
+
+  const toggle = useCallback(
+    (key) => {
+      captureGrid();
+      setOpened((current) => (current === key ? null : key));
+    },
+    [captureGrid],
+  );
+
+  /*
+   * Escape closes it, because it behaves like something opened even though
+   * it is a disclosure rather than a dialog — it does not trap focus and the
+   * page behind it stays usable, so the platform will not do this for us.
+   */
+  useEffect(() => {
+    if (opened === null) return undefined;
+
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
+        captureGrid();
+        setOpened(null);
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+
+    return () => window.removeEventListener('keydown', onKey);
+  }, [opened, captureGrid]);
 
   if (loading) {
     return (
@@ -150,13 +224,16 @@ export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading
         {t('dashboard.keyMetrics')}
       </h2>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div ref={gridScope} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {primary.map((key, index) => (
           <PrimaryKpi
             key={key}
             index={index}
             metricKey={key}
             metric={metrics[key]}
+            trend={trends[key]}
+            expanded={opened === key}
+            onToggle={() => toggle(key)}
             {...context}
           />
         ))}
@@ -194,17 +271,47 @@ export function KpiPanel({ metrics, currency, decimals, comparisonLabel, loading
   );
 }
 
-function PrimaryKpi({ index, metricKey, metric, currency, decimals, comparisonLabel }) {
+/**
+ * A bucket series down to the bare numbers a sparkline draws.
+ *
+ * Money arrives as a decimal string (ADR-015) and Sparkline casts; what it
+ * cannot do is know that a bucket is an object. A missing series is an empty
+ * array rather than undefined, so the component below never has to ask.
+ */
+function seriesValues(series) {
+  return Array.isArray(series) ? series.map((bucket) => bucket.value) : [];
+}
+
+function PrimaryKpi({
+  index,
+  metricKey,
+  metric,
+  trend,
+  expanded,
+  onToggle,
+  currency,
+  decimals,
+  comparisonLabel,
+}) {
   const { t } = useI18n();
   const label = metricLabel(t, metricKey);
   const definition = metricDefinition(t, metricKey);
   const shown = presentMetric(metric, { currency, decimals });
   const visual = VISUALS[metricKey] ?? { icon: 'analytics', accent: 'blue' };
   const destination = DESTINATIONS[metricKey];
+  const series = seriesValues(trend);
+  // Nothing to open for a metric the server sends no history for.
+  const canExpand = series.length > 1;
 
   return (
     <div
-      className={cn(CARD, 'rise @container flex flex-col p-5')}
+      data-kpi=""
+      className={cn(
+        CARD,
+        'rise @container flex flex-col p-5',
+        // Opened, the card takes the whole row and the others move down.
+        expanded && 'sm:col-span-2 lg:col-span-4',
+      )}
       style={{ '--rise-index': index }}
     >
       {/*
@@ -223,11 +330,27 @@ function PrimaryKpi({ index, metricKey, metric, currency, decimals, comparisonLa
           <Icon name={visual.icon} size={20} strokeWidth={1.75} />
         </span>
         <h3 className="min-w-0 truncate text-sm font-semibold text-(--color-text)">{label}</h3>
-        {definition && (
-          <span className="ms-auto">
-            <InfoTip label={label} content={definition} />
-          </span>
-        )}
+        <span className="ms-auto flex shrink-0 items-center gap-1">
+          {definition && <InfoTip label={label} content={definition} />}
+          {/*
+            A disclosure, not a link: the figure stays where it is and grows
+            room for its own history. The arrow in the footer still goes to
+            the screen that explains the metric — this answers the smaller
+            question, "what shape was the period?", without leaving the page.
+          */}
+          {canExpand && (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={expanded}
+              aria-label={expanded ? t('dashboard.kpi.collapse', { metric: label }) : t('dashboard.kpi.expand', { metric: label })}
+              title={expanded ? t('dashboard.kpi.collapse', { metric: label }) : t('dashboard.kpi.expand', { metric: label })}
+              className="inline-flex size-7 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+            >
+              <Icon name={expanded ? 'collapse' : 'expand'} size={15} />
+            </button>
+          )}
+        </span>
       </div>
 
       {/*
@@ -270,6 +393,44 @@ function PrimaryKpi({ index, metricKey, metric, currency, decimals, comparisonLa
       */}
       {comparisonLabel && (
         <p className="mt-2 truncate text-xs text-(--color-muted)">{comparisonLabel}</p>
+      )}
+
+      {/*
+        The period's shape, which the figure and the percentage above cannot
+        give: the same 9.6% rise is a steady climb or a collapse and a
+        recovery, and those are different businesses.
+
+        Decorative, and hidden from assistive technology — every fact it
+        hints at is already stated on the card, and the full series is a
+        table away on the chart below. A metric the server sends no series
+        for draws nothing and keeps its space, so four cards stay the same
+        height whether or not all four have history.
+      */}
+      {expanded ? (
+        /*
+          The same series the sparkline hinted at, drawn properly: an axis, a
+          tooltip with exact values, and the frame's "view as table" toggle,
+          which is how this stays inside the rule that a chart is never the
+          only route to its numbers.
+
+          `bare`, because this is already inside a card. A second border here
+          would say "a different thing" about the same figure.
+        */
+        <div className="mt-4">
+          <TrendChart
+            series={trend}
+            format={metric.format === 'money' ? 'money' : 'count'}
+            currency={currency}
+            decimals={decimals}
+            colour={SPARKS[visual.accent]}
+            height={220}
+            bare
+          />
+        </div>
+      ) : (
+        <div className="mt-4">
+          <Sparkline values={series} colour={SPARKS[visual.accent]} height={40} />
+        </div>
       )}
 
       <div className="mt-auto" />
