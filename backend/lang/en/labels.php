@@ -84,6 +84,8 @@ return [
 
     'breakdown' => [
         'other' => 'Other',
+        'uncategorised' => 'Uncategorised',
+        'walk_in' => 'Walk-in',
         'more' => '{1} :count more|[2,*] :count more',
     ],
 

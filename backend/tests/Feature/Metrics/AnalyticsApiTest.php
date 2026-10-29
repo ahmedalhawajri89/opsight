@@ -259,6 +259,19 @@ it('groups walk-in trade as itself rather than dropping the revenue', function (
         ->and($walkIn['value'])->toBe('100.000');
 });
 
+it('names walk-in trade in the reader\'s language', function (): void {
+    // The name used to be written into the SQL, so it was English on an
+    // Arabic screen.
+    $this->actingAs(User::factory()->owner()->create(['locale' => 'ar']));
+
+    $labels = collect($this->getJson("/api/v1/analytics/breakdown{$this->range}&dimension=customer&metric=net_revenue")
+        ->assertOk()
+        ->json('data'))->pluck('label');
+
+    expect($labels)->toContain('بيع مباشر')
+        ->and($labels)->not->toContain('Walk-in');
+});
+
 it('refuses a cost-bearing breakdown for a role without cost visibility', function (): void {
     // Analyst holds metrics.view_cost, so this must succeed.
     $this->actingAs(User::factory()->analyst()->create());

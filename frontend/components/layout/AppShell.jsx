@@ -553,7 +553,7 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
             aria-controls="app-sidebar"
             title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
             className={cn(
-              'flex h-9 w-full items-center rounded-(--radius-control) text-sm font-medium text-(--color-text-2) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+              'flex h-9 w-full items-center rounded-(--radius-control) text-start text-sm font-medium whitespace-nowrap text-(--color-text-2) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
               style.toggle,
             )}
           >

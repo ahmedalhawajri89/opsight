@@ -285,8 +285,8 @@ const en = {
 
   nav: {
     main: 'Main',
-    collapseSidebar: 'Collapse the navigation',
-    expandSidebar: 'Expand the navigation',
+    collapseSidebar: 'Collapse menu',
+    expandSidebar: 'Expand menu',
     skipToContent: 'Skip to content',
     openNavigation: 'Open navigation',
     closeNavigation: 'Close navigation',

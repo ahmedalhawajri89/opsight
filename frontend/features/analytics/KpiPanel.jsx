@@ -238,9 +238,11 @@ function PrimaryKpi({ index, metricKey, metric, currency, decimals, comparisonLa
         The figure shrinks with the card rather than truncating — a money
         figure cut to "BHD 69,54…" is a different number — and the pill never
         shrinks, so a narrow card squeezes the figure and keeps the verdict
-        legible.
+        legible. Where the figure and the pill do not fit side by side (four
+        cards beside the insights column on a 1440px laptop), the pill drops
+        under the figure: drawn over it, it hid the figure's last digits.
       */}
-      <div className="mt-5 flex items-end justify-between gap-3">
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
       <p
         className="tabular min-w-0 text-[clamp(1.125rem,8.5cqi,1.625rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
         title={shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined}

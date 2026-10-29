@@ -127,14 +127,14 @@ final class Breakdown
             'category' => $query
                 ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
                 ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
-                ->selectRaw("COALESCE(categories.slug, 'uncategorised') AS `key`, COALESCE(MAX(".LocalizedName::sql('categories.name', 'categories.name_ar')."), 'Uncategorised') AS label, {$value} AS value")
+                ->selectRaw("COALESCE(categories.slug, 'uncategorised') AS `key`, MAX(".LocalizedName::sql('categories.name', 'categories.name_ar').") AS label, {$value} AS value")
                 ->groupBy('key'),
 
             default => $query
                 ->leftJoin('customers', 'customers.id', '=', 'orders.customer_id')
                 // Walk-in trade has no customer row; it is grouped as itself
                 // rather than dropped, because the revenue is real.
-                ->selectRaw("COALESCE(CAST(customers.id AS CHAR), 'walk-in') AS `key`, COALESCE(MAX(".LocalizedName::sql('customers.name', 'customers.name_ar')."), 'Walk-in') AS label, {$value} AS value")
+                ->selectRaw("COALESCE(CAST(customers.id AS CHAR), 'walk-in') AS `key`, MAX(".LocalizedName::sql('customers.name', 'customers.name_ar').") AS label, {$value} AS value")
                 ->groupBy('key'),
         };
 
@@ -143,7 +143,12 @@ final class Breakdown
             ->get()
             ->map(fn ($row): array => [
                 'key' => (string) $row->key,
-                'label' => (string) $row->label,
+                // The rows with no record behind them are named in the
+                // reader's language here: a name written into the SQL was
+                // English on an Arabic screen.
+                'label' => $row->label !== null
+                    ? (string) $row->label
+                    : __($row->key === 'walk-in' ? 'labels.breakdown.walk_in' : 'labels.breakdown.uncategorised'),
                 'value' => (string) $row->value,
             ])
             ->all();
