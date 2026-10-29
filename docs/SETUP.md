@@ -237,6 +237,14 @@ A tired dev server also costs real time. One run against servers that had been u
 for hours failed nine specs — including the notification bell, which no change had
 touched — and all nine passed from cold.
 
+**Check the port, not the terminal.** Killing `npm run dev` does not necessarily stop
+`next dev`: npm spawns it as a child, and the child can outlive the parent and keep
+listening on 3000. The suite then reuses it and looks like it passed from cold. One run
+lost seven specs that way — every one of them a click through to `/orders/{id}`, because
+a dev server compiles a route the first time it is asked for and the others had already
+been compiled by earlier specs. Confirm with `netstat -ano | grep ":3000 "` and stop the
+process it names, rather than trusting that the terminal is quiet.
+
 **Clear the cache before a full run**, with `php artisan cache:clear`. The rate
 limiters keep their buckets in the `cache` table, and the coarse login backstop is
 ten a minute from one address (`AppServiceProvider`). A full suite signs in four

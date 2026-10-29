@@ -267,8 +267,17 @@ sign-in screen. Application screens carry none: no pattern, no wash, no gradient
   dashboard, analytics and most tables. Making it per-page would have users setting the
   same range repeatedly.
 - The filter bar is sticky, so filters stay reachable while scrolling a long table.
-- Content max-width 1600px. Data tables are permitted the full width — constraining a
-  wide table to a reading measure helps nobody.
+- **No reading measure on the shell.** The page and the top bar share one inline inset —
+  `px-4`, `sm:px-6`, `min-[120rem]:px-8` — and both run to the edges of the content column.
+  This paragraph used to read "content max-width 1600px"; the code shipped 1760px, and on
+  any screen wider than that `<main>` centred itself inside its own column while the
+  uncapped top bar ran edge to edge, so the search field sat 24px from the edge and the
+  first card 136px from it. Two left margins on one screen.
+- The argument the old rule already made for tables — "constraining a wide table to a
+  reading measure helps nobody" — is the same argument for a grid of panels. What genuinely
+  needs a measure carries its own: `PageHeader` caps its description at `3xl`, the settings
+  form at `xl`, `FocusColumn` at `110`. A measure belongs to the content that needs it, not
+  to every screen in the application.
 
 **Spacing.** 4px base scale: 4, 8, 12, 16, 24, 32, 48. Nothing off-scale.
 

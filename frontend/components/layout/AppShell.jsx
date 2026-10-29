@@ -178,6 +178,20 @@ function activeHref(pathname, groups) {
 }
 
 /*
+ * One inline inset for the bar and the page beneath it.
+ *
+ * Written once rather than twice because the two drifting apart is exactly
+ * what went wrong before: the bar had `px-4 sm:px-6` and the page had those
+ * plus a centred cap, so they shared an edge on a laptop and disagreed on
+ * anything wider.
+ *
+ * The step at 120rem is the only concession to a very wide screen — 24px of
+ * air reads as a hairline against 1900px of content — and it is a step, not
+ * a cap: the content still reaches both edges.
+ */
+const CONTENT_INSET = 'px-4 sm:px-6 min-[120rem]:px-8';
+
+/*
  * The top bar's page slot.
  *
  * A screen can place its own controls in the shared top bar — the dashboard
@@ -490,7 +504,12 @@ export function AppShell({ children }) {
 
       <div data-shell-flip="" className="flex min-w-0 flex-1 flex-col">
         <TopBarContext.Provider value={slot}>
-          <header className="sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 px-4 backdrop-blur-sm sm:px-6 [view-transition-name:app-topbar]">
+          <header
+            className={cn(
+              CONTENT_INSET,
+              'sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 backdrop-blur-sm [view-transition-name:app-topbar]',
+            )}
+          >
             <button
               type="button"
               onClick={() => {
@@ -554,11 +573,25 @@ export function AppShell({ children }) {
             tabIndex -1 lets the skip link move focus here. The outline is
             suppressed on THIS element only: <main> is a landing point, not a
             control.
+
+            No reading measure, and the same inline inset as the bar above.
+            This used to be `mx-auto max-w-[1760px]`, which on a screen wider
+            than that centred the page inside its own column and left a dead
+            band down each side — while the top bar, which has no cap, ran to
+            both edges. So the search field sat 24px from the edge and the
+            first card 136px from it: two left margins on one screen.
+
+            A reading measure is for prose. §5 of UI_UX_DIRECTION already says
+            a wide table may have the full width because "constraining a wide
+            table to a reading measure helps nobody"; a grid of panels is the
+            same argument. The long-form text that does need a measure carries
+            its own — PageHeader caps its description at 3xl, the settings
+            forms at xl, FocusColumn at 110.
           */}
           <main
             id="main-content"
             tabIndex={-1}
-            className="mx-auto w-full max-w-[1760px] flex-1 px-4 py-5 focus:outline-none sm:px-6 lg:py-6"
+            className={cn(CONTENT_INSET, 'w-full min-w-0 flex-1 py-5 focus:outline-none lg:py-6')}
           >
             {/*
               Above the content and in its flow, so it takes a line of its

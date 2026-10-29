@@ -258,7 +258,12 @@ export default function DashboardPage() {
     <div className="space-y-5">
       {header}
 
-      <div className="grid items-start gap-5 min-[90rem]:grid-cols-[minmax(0,1fr)_17.5rem] min-[100rem]:grid-cols-[minmax(0,1fr)_19.5rem]">
+      {/*
+        The side column widens with the screen rather than staying put while
+        the charts take everything: at 120rem the page is about 1900px across,
+        and a 312px rail beside 1550px of charts reads as a leftover strip.
+      */}
+      <div className="grid items-start gap-5 min-[90rem]:grid-cols-[minmax(0,1fr)_17.5rem] min-[100rem]:grid-cols-[minmax(0,1fr)_19.5rem] min-[120rem]:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-4">
           {tradedElsewhere && (
             <EmptyPeriodNotice
