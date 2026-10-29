@@ -22,8 +22,15 @@ import { listOrders } from '@/services/orders';
  * Staff member's search never even asks about expenses.
  *
  * Two faces over one engine: the field in the top bar, whose results drop down
- * beneath it (Ctrl/⌘+K focuses it), and on a narrow screen an icon that opens
- * the same field in a dialog. Arrow keys move, Enter opens, Escape closes.
+ * beneath it, and the palette — the same field in a centred dialog, opened by
+ * Ctrl/⌘+K at any width and by an icon where the bar has no room for a field.
+ * Arrow keys move, Enter opens, Escape closes.
+ *
+ * A result is a record to open OR a command to run. The two are the same shape
+ * and sit in one keyboard order, because a reader reaching for the keyboard is
+ * not thinking "is what I want a noun or a verb". The shell supplies the
+ * commands, since they act on things — focus mode, the reader's language, the
+ * period in the URL — that the search engine has no business knowing about.
  */
 const MIN_QUERY = 2;
 const LIMIT = 5;
@@ -56,7 +63,7 @@ function useSource(term, allowed, key, fetcher) {
   });
 }
 
-function useSearch(query, pages) {
+function useSearch(query, pages, commands) {
   const { t } = useI18n();
   const { can } = useAuth();
   const debounced = useDebouncedValue(query.trim());
@@ -75,6 +82,25 @@ function useSearch(query, pages) {
   const needle = query.trim().toLowerCase();
 
   const groups = [
+    {
+      key: 'commands',
+      label: t('search.groups.commands'),
+      /*
+       * Commands are matched on their keywords as well as their title, so
+       * "dark", "rtl" or "logout" find the thing the interface calls
+       * something else. They are never shown unprompted: an empty field
+       * offers screens, which are places, not actions taken by mistake.
+       */
+      items: !needle
+        ? []
+        : commands
+            .filter(
+              (command) =>
+                command.title.toLowerCase().includes(needle) ||
+                (command.keywords ?? '').toLowerCase().includes(needle),
+            )
+            .slice(0, 6),
+    },
     {
       key: 'pages',
       label: t('search.groups.pages'),
@@ -144,7 +170,7 @@ function useSearch(query, pages) {
  * results are shown; the field is always there.
  */
 const SearchField = forwardRef(function SearchField(
-  { pages, open, onOpenChange, variant, autoFocus = false },
+  { pages, commands = [], open, onOpenChange, variant, autoFocus = false },
   ref,
 ) {
   const { t } = useI18n();
@@ -153,7 +179,7 @@ const SearchField = forwardRef(function SearchField(
   const listId = useId();
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
-  const { groups, flat, term, loading } = useSearch(query, pages);
+  const { groups, flat, term, loading } = useSearch(query, pages, commands);
   const current = Math.min(active, Math.max(flat.length - 1, 0));
 
   useImperativeHandle(ref, () => ({ focus: () => input.current?.focus() }), []);
@@ -167,7 +193,10 @@ const SearchField = forwardRef(function SearchField(
   function go(item) {
     close();
     input.current?.blur();
-    router.push(item.href);
+
+    // A command acts here; everything else is a place to go.
+    if (item.run) item.run();
+    else router.push(item.href);
   }
 
   function onKeyDown(event) {
@@ -315,15 +344,24 @@ const SearchField = forwardRef(function SearchField(
 /* Faces                                                                       */
 /* -------------------------------------------------------------------------- */
 
-/** The field in the top bar. Ctrl/⌘+K focuses it. */
-export const TopBarSearch = forwardRef(function TopBarSearch({ pages }, ref) {
+/** The field in the top bar, for a reader who reached for the mouse. */
+export const TopBarSearch = forwardRef(function TopBarSearch({ pages, commands }, ref) {
   const [open, setOpen] = useState(false);
 
-  return <SearchField ref={ref} pages={pages} open={open} onOpenChange={setOpen} variant="bar" />;
+  return (
+    <SearchField
+      ref={ref}
+      pages={pages}
+      commands={commands}
+      open={open}
+      onOpenChange={setOpen}
+      variant="bar"
+    />
+  );
 });
 
-/** On a narrow screen: the same field in a dialog, opened from an icon. */
-export function SearchDialog({ open, onClose, pages }) {
+/** The palette: the same field, centred, opened by Ctrl/⌘+K. */
+export function SearchDialog({ open, onClose, pages, commands }) {
   const dialog = useRef(null);
   const returnFocus = useRef(null);
 
@@ -355,6 +393,7 @@ export function SearchDialog({ open, onClose, pages }) {
       {open && (
         <SearchField
           pages={pages}
+          commands={commands}
           open
           onOpenChange={(next) => !next && onClose()}
           variant="dialog"

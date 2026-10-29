@@ -80,7 +80,15 @@ function subscribeToFullscreen(onChange) {
   return () => document.removeEventListener('fullscreenchange', onChange);
 }
 
-export function useFocusMode() {
+/**
+ * @param {() => void} [onBeforeChange]  Run synchronously before the
+ *   preference is written, whichever path writes it — the button or the
+ *   shortcut. The shell uses it to measure the layout it is about to lose.
+ *   **It must be stable**, or the shortcut's listener re-subscribes on every
+ *   render; wrap it in useCallback.
+ */
+export function useFocusMode(onBeforeChange) {
+
   /*
    * Focus is off on the server and on the first client render. Reading
    * localStorage during render would make the server's HTML disagree with
@@ -102,7 +110,10 @@ export function useFocusMode() {
     () => false,
   );
 
-  const toggleFocus = useCallback(() => writePreference(!readPreference()), []);
+  const toggleFocus = useCallback(() => {
+    onBeforeChange?.();
+    writePreference(!readPreference());
+  }, [onBeforeChange]);
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -113,7 +124,14 @@ export function useFocusMode() {
       }
 
       await document.documentElement.requestFullscreen();
-      // Asked for the whole screen: the sidebar is not part of that.
+      /*
+       * Asked for the whole screen: the sidebar is not part of that.
+       *
+       * No onBeforeChange here, unlike the two paths above. The browser is
+       * already animating the viewport into fullscreen, and a layout tween
+       * measured against the pre-fullscreen window would be playing against
+       * a box that no longer exists.
+       */
       writePreference(true);
     } catch {
       /*
@@ -144,13 +162,14 @@ export function useFocusMode() {
       if (typing) return;
 
       event.preventDefault();
+      onBeforeChange?.();
       writePreference(!readPreference());
     };
 
     window.addEventListener('keydown', onKey);
 
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [onBeforeChange]);
 
   return { focused, fullscreen, supported, toggleFocus, toggleFullscreen };
 }

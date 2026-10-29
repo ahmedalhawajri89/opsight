@@ -17,14 +17,18 @@ import packageInfo from '@/package.json';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { FocusControls } from '@/components/layout/FocusControls';
 import { FocusHint } from '@/components/layout/FocusHint';
+import { ShortcutsSheet } from '@/components/layout/ShortcutsSheet';
 import { InstallPrompt } from '@/features/pwa/InstallPrompt';
 import { Icon } from '@/components/ui/Icon';
 import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
 import { cn } from '@/lib/cn';
+import { PRESETS, PRESET_LABEL_COUNTS } from '@/lib/periods';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
 import { SearchDialog, TopBarSearch, useSearchShortcut } from '@/features/search/GlobalSearch';
+import { useFlip } from '@/hooks/useFlip';
+import { useShortcuts } from '@/hooks/useShortcuts';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
@@ -137,6 +141,28 @@ const NAV_GROUPS = [
   },
 ];
 
+/*
+ * The letter that follows `g` for each destination.
+ *
+ * Chosen from the English name, not the Arabic one: a chord is muscle memory
+ * on a physical keyboard, and a reader who switches language mid-session
+ * should not have to relearn where things are. The activity log takes `l`
+ * because `a` is already analytics, and users takes `u` because `s` is
+ * settings — the two cases where the obvious initial was taken.
+ */
+const SHORTCUT_KEYS = {
+  '/dashboard': 'd',
+  '/orders': 'o',
+  '/customers': 'c',
+  '/products': 'p',
+  '/inventory': 'i',
+  '/expenses': 'e',
+  '/analytics': 'a',
+  '/activity': 'l',
+  '/settings/users': 'u',
+  '/settings': 's',
+};
+
 /**
  * The most specific matching entry is active, so /settings/users highlights
  * Users and not also Settings, while /orders/41 still highlights Orders.
@@ -169,22 +195,24 @@ export function TopBarPortal({ children }) {
 
 export function AppShell({ children }) {
   const { user, can, logout } = useAuth();
-  const { t } = useI18n();
+  const { t, locale, numerals, setPreferences } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [slot, setSlot] = useState(null);
-  const barSearch = useRef(null);
   const wideSearch = useMediaQuery('(min-width: 768px)');
 
-  // Ctrl/⌘+K focuses the field in the bar; where the bar has only an icon,
-  // it opens the same field in a dialog.
-  const focusSearch = useCallback(() => {
-    if (wideSearch) barSearch.current?.focus();
-    else setSearchOpen(true);
-  }, [wideSearch]);
-  useSearchShortcut(focusSearch);
+  /*
+   * Ctrl/⌘+K opens the palette, at every width.
+   *
+   * It used to focus the field in the bar instead, which was fine until the
+   * field grew commands: a dropdown hanging off the top-right corner is the
+   * wrong shape for a list someone is reading and choosing from, and it is
+   * the wrong shape for a reader whose language puts that corner at the
+   * other end. The bar's field stays for the reader who reached for a mouse.
+   */
+  useSearchShortcut(useCallback(() => setSearchOpen(true), []));
 
   /*
    * Navigate explicitly rather than waiting for the layout's auth guard to
@@ -245,13 +273,147 @@ export function AppShell({ children }) {
    * application's furniture; a reader studying a month of figures can have
    * the room back.
    */
-  const focus = useFocusMode();
+  const [shellScope, captureShell] = useFlip('[data-shell-flip]', { absolute: false });
+  const focus = useFocusMode(captureShell);
   const [sidebarCollapsed, toggleSidebar] = useSidebarCollapsed();
+
+  /*
+   * The two widths the shell has, and the move between them.
+   *
+   * Folding the sidebar takes it from 216px to 72px and hands the difference
+   * to the content; entering focus mode takes it away entirely. Both used to
+   * be a single frame in which the whole page was suddenly a different shape,
+   * which is the most violent thing this interface did — and it did it on the
+   * two controls a reader presses most.
+   *
+   * `absolute: false`: these are the top-level flex children. Lifting them out
+   * of flow for the tween would leave the row with nothing in it, and the
+   * layout would collapse for 420ms before snapping back.
+   *
+   * Leaving focus mode re-inserts the sidebar, so Flip has no 'before' for it
+   * and it simply appears — the content gliding aside is what carries the
+   * change. Entering, it is React that removes the node, so there is nothing
+   * left to animate out. Flip reports both as entering/leaving and skips them;
+   * the content column is mounted either way and is the element that moves.
+   */
+
 
   /*
    * One sentence, once, so the feature is findable. It also ends the moment
    * focus mode is first used: a reader who found it does not need telling.
    */
+  /*
+   * The commands the palette can run.
+   *
+   * Each one acts on something the shell already holds — the reader's
+   * preferences, focus mode, the period in the URL — which is why they are
+   * built here and handed down, rather than the search engine reaching for
+   * a provider it has no other reason to know about.
+   *
+   * `keywords` are never shown. They are what somebody types when they think
+   * of the thing by a different name: "logout" for sign out, "rtl" for
+   * Arabic, "zen" for focus mode.
+   */
+  const onAnalyticalScreen = pathname === '/dashboard' || pathname === '/analytics';
+
+  const commands = useMemo(() => {
+    const items = [
+      {
+        key: 'command-focus',
+        icon: 'focus',
+        title: focus.focused ? t('shell.focus.leave') : t('shell.focus.enter'),
+        detail: 'Shift + F',
+        keywords: 'focus zen distraction sidebar hide تركيز',
+        run: () => focus.toggleFocus(),
+      },
+      {
+        key: 'command-language',
+        icon: 'globe',
+        title: locale === 'ar' ? 'English' : 'العربية',
+        detail: t('preferences.language'),
+        keywords: 'language locale arabic english rtl عربي لغة',
+        run: () => setPreferences({ locale: locale === 'ar' ? 'en' : 'ar' }),
+      },
+    ];
+
+    // Only ever offered in Arabic: the choice does not exist in English.
+    if (locale === 'ar') {
+      items.push({
+        key: 'command-numerals',
+        icon: 'analytics',
+        title: numerals === 'arab' ? t('preferences.western') : t('preferences.arabicIndic'),
+        detail: t('preferences.numerals'),
+        keywords: 'numerals digits أرقام',
+        run: () => setPreferences({ numerals: numerals === 'arab' ? 'latn' : 'arab' }),
+      });
+    }
+
+    /*
+     * The period lives in the URL, so setting it is a navigation — and it is
+     * only offered on the two screens that read it. Offering it elsewhere
+     * would push a parameter nothing on that page looks at.
+     */
+    if (onAnalyticalScreen) {
+      for (const preset of [PRESETS.Last7, PRESETS.Last30, PRESETS.Last90, PRESETS.YearToDate]) {
+        items.push({
+          key: `command-period-${preset}`,
+          icon: 'calendar',
+          title: t(`period.presets.${preset}`, { count: PRESET_LABEL_COUNTS[preset] }),
+          detail: t('period.selector.period'),
+          keywords: `period range date ${preset} فترة مدة`,
+          run: () => router.push(`${pathname}?preset=${preset}`),
+        });
+      }
+    }
+
+    items.push({
+      key: 'command-shortcuts',
+      icon: 'info',
+      title: t('shell.shortcuts.title'),
+      detail: '?',
+      keywords: 'keyboard shortcuts keys help اختصارات',
+      run: () => setShortcutsOpen(true),
+    });
+
+    items.push({
+      key: 'command-sign-out',
+      icon: 'signOut',
+      title: t('nav.signOut'),
+      keywords: 'sign out logout leave exit خروج',
+      run: handleSignOut,
+    });
+
+    return items;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, locale, numerals, focus.focused, onAnalyticalScreen, pathname]);
+
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  /*
+   * Only the destinations this role can actually open get a chord. A reader
+   * whose account has no analytics screen should not learn `g a` from the
+   * sheet and then press it into nothing.
+   */
+  const destinations = useMemo(
+    () =>
+      pages
+        .filter((page) => SHORTCUT_KEYS[page.href])
+        .map((page) => ({ ...page, key: SHORTCUT_KEYS[page.href] })),
+    [pages],
+  );
+
+  const chords = useMemo(
+    () =>
+      Object.fromEntries(
+        destinations.map((destination) => [destination.key, () => router.push(destination.href)]),
+      ),
+    [destinations, router],
+  );
+
+  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+
+  useShortcuts({ onHelp: openShortcuts, chords });
+
   const [showFocusHint, dismissFocusHint] = useSeenOnce('focus-mode');
 
   // Per session, not per navigation — see recordVisit.
@@ -260,7 +422,7 @@ export function AppShell({ children }) {
   }, []);
 
   return (
-    <div className="flex min-h-dvh">
+    <div ref={shellScope} className="flex min-h-dvh">
       {/*
         Skip link: first in the tab order, visible only when focused. Without it
         a keyboard user tabs through every navigation entry on every page
@@ -287,6 +449,7 @@ export function AppShell({ children }) {
       {!focus.focused && (
         <aside
           id="app-sidebar"
+          data-shell-flip=""
           className={cn(
             'sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex [view-transition-name:app-sidebar]',
             /*
@@ -303,7 +466,10 @@ export function AppShell({ children }) {
             canAnalyse={can('analytics.view')}
             variant={sidebarCollapsed ? 'rail' : 'auto'}
             collapsed={sidebarCollapsed}
-            onToggle={toggleSidebar}
+            onToggle={() => {
+              captureShell();
+              toggleSidebar();
+            }}
           />
         </aside>
       )}
@@ -322,7 +488,7 @@ export function AppShell({ children }) {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div data-shell-flip="" className="flex min-w-0 flex-1 flex-col">
         <TopBarContext.Provider value={slot}>
           <header className="sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 px-4 backdrop-blur-sm sm:px-6 [view-transition-name:app-topbar]">
             <button
@@ -339,7 +505,7 @@ export function AppShell({ children }) {
             </button>
 
             {wideSearch ? (
-              <TopBarSearch ref={barSearch} pages={pages} />
+              <TopBarSearch pages={pages} commands={commands} />
             ) : (
               <button
                 type="button"
@@ -377,9 +543,12 @@ export function AppShell({ children }) {
             </div>
           </header>
 
-          {!wideSearch && (
-            <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} pages={pages} />
-          )}
+          <SearchDialog
+            open={searchOpen}
+            onClose={() => setSearchOpen(false)}
+            pages={pages}
+            commands={commands}
+          />
 
           {/*
             tabIndex -1 lets the skip link move focus here. The outline is
@@ -399,6 +568,12 @@ export function AppShell({ children }) {
 
             {children}
           </main>
+
+          <ShortcutsSheet
+            open={shortcutsOpen}
+            onClose={() => setShortcutsOpen(false)}
+            destinations={destinations}
+          />
 
           <InstallPrompt />
         </TopBarContext.Provider>

@@ -1,13 +1,18 @@
+import { useMemo, useState } from 'react';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CountUp } from '@/components/data/CountUp';
 import { LedgerScene } from '@/features/auth/LedgerScene';
 import { toWords } from '@/features/auth/authMotion';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
+import { Flip } from 'gsap/Flip';
+
+import { useFlip } from '@/hooks/useFlip';
 import { useGsap } from '@/hooks/useGsap';
+import { useShortcuts } from '@/hooks/useShortcuts';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 
 /*
@@ -23,6 +28,14 @@ import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 | readers who asked not to be moved.
 |
 */
+
+vi.mock('gsap/Flip', () => ({
+  Flip: {
+    name: 'flip',
+    getState: vi.fn(() => ({ recorded: true })),
+    from: vi.fn(() => ({ kill: vi.fn() })),
+  },
+}));
 
 function stubPreference(reduced) {
   window.matchMedia = vi.fn().mockImplementation((query) => ({
@@ -93,6 +106,175 @@ describe('useGsap', () => {
     unmount();
 
     expect(container.querySelector('.item')).toBeNull();
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| useFlip
+|--------------------------------------------------------------------------
+|
+| Flip measures two real layouts and plays the difference. jsdom reports
+| every box as zero, so what is worth asserting here is not how it moves but
+| WHEN it is asked to — and, above all, that `capture` keeps its identity.
+| The shell hands that function to useFocusMode, whose keydown listener lists
+| it as a dependency; an unstable one would tear down and re-attach a window
+| listener on every single render.
+|
+*/
+
+function Folding({ onCapture }) {
+  const [scope, capture] = useFlip('[data-flip]');
+  const [folded, setFolded] = useState(false);
+
+  onCapture?.(capture);
+
+  return (
+    <div ref={scope}>
+      <div data-flip="" style={{ inlineSize: folded ? 60 : 200 }} />
+      <button
+        type="button"
+        onClick={() => {
+          capture();
+          setFolded((value) => !value);
+        }}
+      >
+        Fold
+      </button>
+    </div>
+  );
+}
+
+describe('useFlip', () => {
+  beforeEach(() => {
+    Flip.getState.mockClear();
+    Flip.from.mockClear();
+  });
+
+  it('measures nothing for a reader who asked for less motion', async () => {
+    stubPreference(true);
+
+    const { getByRole } = render(<Folding />);
+    await userEvent.click(getByRole('button', { name: 'Fold' }));
+
+    // Not "moves instantly" — never measured, so the layout simply changes.
+    expect(Flip.getState).not.toHaveBeenCalled();
+    expect(Flip.from).not.toHaveBeenCalled();
+  });
+
+  it('plays the move on the commit after a capture', async () => {
+    stubPreference(false);
+
+    const { getByRole } = render(<Folding />);
+
+    // Rendering alone captures nothing, so nothing is played.
+    expect(Flip.from).not.toHaveBeenCalled();
+
+    await userEvent.click(getByRole('button', { name: 'Fold' }));
+
+    expect(Flip.getState).toHaveBeenCalledOnce();
+    expect(Flip.from).toHaveBeenCalledOnce();
+  });
+
+  it('spends a captured state once, so a later render cannot replay it', async () => {
+    /*
+     * A state left behind would be measured against a layout it no longer
+     * describes, and the elements would fly in from wherever they used to be.
+     */
+    stubPreference(false);
+
+    const { getByRole } = render(<Folding />);
+    await userEvent.click(getByRole('button', { name: 'Fold' }));
+    await userEvent.click(getByRole('button', { name: 'Fold' }));
+
+    expect(Flip.from).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps one capture across renders, so a hook given it does not resubscribe', async () => {
+    stubPreference(false);
+    const seen = [];
+
+    const { getByRole } = render(<Folding onCapture={(capture) => seen.push(capture)} />);
+    await userEvent.click(getByRole('button', { name: 'Fold' }));
+
+    expect(seen.length).toBeGreaterThan(1);
+    expect(new Set(seen).size).toBe(1);
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| useShortcuts
+|--------------------------------------------------------------------------
+|
+| A keyboard layer earns its keep by what it does NOT do. Firing a chord
+| while somebody is halfway through typing an SKU, or swallowing a key a
+| modifier already claimed, makes an application feel like it is fighting
+| the reader — so those are the cases worth holding down with a test.
+|
+*/
+
+function Shortcuts({ onHelp, onOrders }) {
+  const chords = useMemo(() => ({ o: onOrders }), [onOrders]);
+
+  useShortcuts({ onHelp, chords });
+
+  return <input aria-label="A search field" />;
+}
+
+describe('useShortcuts', () => {
+  it('runs a chord: the prefix, then the letter', async () => {
+    const onOrders = vi.fn();
+    render(<Shortcuts onHelp={vi.fn()} onOrders={onOrders} />);
+
+    await userEvent.keyboard('go');
+
+    expect(onOrders).toHaveBeenCalledOnce();
+  });
+
+  it('ignores the letter on its own', async () => {
+    /*
+     * The whole reason for the prefix. A reader tabbing a table has their
+     * hands over the letters, and a bare `o` would move the page under them.
+     */
+    const onOrders = vi.fn();
+    render(<Shortcuts onHelp={vi.fn()} onOrders={onOrders} />);
+
+    await userEvent.keyboard('o');
+
+    expect(onOrders).not.toHaveBeenCalled();
+  });
+
+  it('stays out of the way while the reader is typing', async () => {
+    const onOrders = vi.fn();
+    const onHelp = vi.fn();
+    const { getByLabelText } = render(<Shortcuts onHelp={onHelp} onOrders={onOrders} />);
+
+    await userEvent.click(getByLabelText('A search field'));
+    await userEvent.keyboard('go?');
+
+    expect(onOrders).not.toHaveBeenCalled();
+    // `?` too: it is a character somebody may genuinely want in a field.
+    expect(onHelp).not.toHaveBeenCalled();
+    expect(getByLabelText('A search field')).toHaveValue('go?');
+  });
+
+  it('leaves a modified key to the browser', async () => {
+    const onOrders = vi.fn();
+    render(<Shortcuts onHelp={vi.fn()} onOrders={onOrders} />);
+
+    await userEvent.keyboard('{Control>}g{/Control}o');
+
+    expect(onOrders).not.toHaveBeenCalled();
+  });
+
+  it('opens the list on ?', async () => {
+    const onHelp = vi.fn();
+    render(<Shortcuts onHelp={onHelp} onOrders={vi.fn()} />);
+
+    await userEvent.keyboard('?');
+
+    expect(onHelp).toHaveBeenCalledOnce();
   });
 });
 

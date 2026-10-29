@@ -38,6 +38,13 @@ const en = {
   shell: {
     account: 'Account: {name}',
     profile: 'Profile',
+    shortcuts: {
+      title: 'Keyboard shortcuts',
+      general: 'General',
+      goTo: 'Go to',
+      search: 'Search and commands',
+      help: 'This list',
+    },
     focus: {
       enter: 'Focus mode',
       leave: 'Leave focus mode',
@@ -97,6 +104,7 @@ const en = {
     searching: 'Searching…',
     noResults: 'Nothing found for “{query}”.',
     groups: {
+      commands: 'Commands',
       pages: 'Screens',
       orders: 'Orders',
       customers: 'Customers',
@@ -528,6 +536,10 @@ const en = {
   },
 
   dashboard: {
+    kpi: {
+      expand: 'Show the trend for {metric}',
+      collapse: 'Hide the trend for {metric}',
+    },
     emptyPeriod: {
       body: 'Nothing was traded in this period. The most recent order was on {date}.',
       action: 'Go to that month',
@@ -629,6 +641,8 @@ const en = {
       partialFootnote: 'The lighter bars are the current month, which is still in progress.',
     },
     inventory: {
+      atRisk: 'Lowest stock',
+      stockOf: '{count} left, against a threshold of {threshold}',
       title: 'Inventory Health',
       inStock: 'In Stock',
       low: 'Low Stock',
@@ -839,6 +853,10 @@ const en = {
       description: 'Products supply the price and cost used at the moment of sale.',
     },
     new: {
+      margin: 'Margin',
+      marginPerUnit: '{amount} per unit',
+      marginPending: 'Enter a price and a cost to see the margin.',
+      belowCost: 'At this price the product sells at a loss.',
       action: 'New product',
       title: 'New product',
       description: 'Price and cost are read at the moment of sale and kept on the order.',

@@ -49,6 +49,13 @@ const ar = {
   shell: {
     account: 'الحساب: {name}',
     profile: 'الملف الشخصي',
+    shortcuts: {
+      title: 'اختصارات لوحة المفاتيح',
+      general: 'عامة',
+      goTo: 'الانتقال إلى',
+      search: 'البحث والأوامر',
+      help: 'هذه القائمة',
+    },
     focus: {
       enter: 'وضع التركيز',
       leave: 'الخروج من وضع التركيز',
@@ -108,6 +115,7 @@ const ar = {
     searching: 'جارٍ البحث…',
     noResults: 'لا توجد نتائج لـ«{query}».',
     groups: {
+      commands: 'الأوامر',
       pages: 'الشاشات',
       orders: 'الطلبات',
       customers: 'العملاء',
@@ -535,6 +543,10 @@ const ar = {
   },
 
   dashboard: {
+    kpi: {
+      expand: 'أظهر اتجاه {metric}',
+      collapse: 'أخفِ اتجاه {metric}',
+    },
     emptyPeriod: {
       body: 'لم تُسجَّل أي حركة في هذه الفترة. آخر طلب كان في {date}.',
       action: 'انتقل إلى ذلك الشهر',
@@ -639,6 +651,8 @@ const ar = {
       partialFootnote: 'الأعمدة الأفتح تمثّل الشهر الحالي، ولم ينتهِ بعد.',
     },
     inventory: {
+      atRisk: 'الأقل مخزونًا',
+      stockOf: 'بقي {count}، والحدّ {threshold}',
       title: 'صحة المخزون',
       inStock: 'متوفر',
       low: 'منخفض',
@@ -863,6 +877,10 @@ const ar = {
       description: 'توفّر المنتجات السعر والتكلفة المعتمدَين لحظة البيع.',
     },
     new: {
+      margin: 'الهامش',
+      marginPerUnit: '{amount} لكل وحدة',
+      marginPending: 'أدخل السعر والتكلفة ليظهر الهامش.',
+      belowCost: 'بهذا السعر يُباع المنتج بخسارة.',
       action: 'منتج جديد',
       title: 'منتج جديد',
       description: 'يُقرأ السعر والتكلفة لحظة البيع ويُحفظان مع الطلب.',
