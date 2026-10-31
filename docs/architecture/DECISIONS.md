@@ -1638,3 +1638,64 @@ competing for one visitor, with nothing to say which was meant for them.
 **Not done here.** The focus ring (`--focus-ring`, a dark bronze) sits on the autofocused
 email field at first paint and reads as a validation warning rather than a cursor. It is the
 house focus colour on every screen, so changing it is a palette decision, not a login one.
+
+---
+
+## ADR-033 — The sign-up fields say what they are for
+
+**Status:** Accepted (2026-10)
+**Affects:** `features/auth/RegisterForm.jsx`, `AccountPreview.jsx`, `PasswordMeter.jsx`,
+`lib/person.js`, `AppShell`, the dashboard page
+
+**Context.** Sign-up was four bordered boxes that said nothing until they said no. Submitted
+empty, all four turned red at once — the first time a reader learned any of them was
+required.
+
+Two of the rules behind them were invisible rather than merely unstated.
+
+The first is the password. `Password::defaults()` is `min(12)->uncompromised()` outside the
+test environment, so a password long enough to pass the only rule on screen is still refused
+if it has appeared in a known breach — after a round trip, for a reason nothing prepared
+anyone for. The passwords most likely to be in a breach corpus are exactly the ones someone
+has used for years and reaches for first.
+
+The second is quieter. The product takes the first letter of the first two words for an
+avatar, and greets a person by their first name alone. Someone typing "Ahmed Al Hawajri" has
+no way of knowing the product will call them "Ahmed" until they are already inside it.
+
+**Decision.**
+
+1. **The form previews the account it is about to create.** As the two names are typed, it
+   draws the top bar's chip and the dashboard's greeting — built from `lib/person.js`, the
+   same functions those screens call. `initials` and `greeting` moved out of `AppShell` and
+   the dashboard page for this, because **a preview that imitates the rules instead of
+   running them is a promise the product can break silently**: change the greeting to use a
+   full name and a copied preview goes on cheerfully showing a first name. The browser suite
+   asserts the first-name rule on both screens in one run, which is the only place that
+   promise can actually be tested.
+
+2. **The password meter measures length and nothing else.** Not a strength meter: scoring a
+   password out of four means inventing rules the client does not own, which ADR-012 forbids
+   precisely because the client then either contradicts the server or agrees with it until
+   one of them changes. The bar measures the one rule already stated on screen, and the form
+   now also *states* the breach check instead of letting it arrive as a refusal. The check
+   itself stays on the server.
+
+3. **"All four are needed" is said once, before anything is typed.** Every field here is
+   required, so marking each label repeats one word down the form and still leaves the rule
+   to be inferred from its absence elsewhere.
+
+4. **No icons inside the fields.** §2 bans decorative icon sets, and the default answer to a
+   visual effect is no. Everything added here is information: a preview, a measure, a
+   sentence about a rule. The only two icons are a status tick and the chip's house glyph.
+
+**Missing from the API.** The server does not publish its password policy, so `12` is
+restated in `RegisterForm` as a constant that names `AppServiceProvider::definePasswordPolicy`
+— stated, never enforced, there. A short password still fails on the server. If the policy
+changes, the two drift silently; an endpoint returning the minimum, or the rule's own message,
+would remove the duplication.
+
+**Not done here.** `initials` on an Arabic name yields two isolated letters, and Arabic
+letters are cursive — "أحمد الحواجري" becomes "أا", which reads as a broken word rather than
+a monogram. The preview surfaced it; it is the shell's avatar on every screen, so it is a
+product-wide question, not a sign-up one.

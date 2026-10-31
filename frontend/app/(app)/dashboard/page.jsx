@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 
 import { getMoneyDefaults } from '@/lib/format';
+import { greeting } from '@/lib/person';
 import { useDashboard } from '@/features/analytics/useAnalytics';
 import { KpiPanel } from '@/features/analytics/KpiPanel';
 import {
@@ -392,21 +393,3 @@ export default function DashboardPage() {
   );
 }
 
-/**
- * "Good morning, Ahmed" — by the reader's own clock, with their first name.
- *
- * The reader's local hour rather than the business timezone: a greeting is
- * about the person reading, and "good evening" at their breakfast is wrong
- * whatever the business's books say.
- */
-function greeting(t, name) {
-  const hour = new Date().getHours();
-  const part = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-  const first = String(name ?? '')
-    .trim()
-    .split(/\s+/)[0];
-
-  return first
-    ? t(`dashboard.greeting.${part}`, { name: first })
-    : t(`dashboard.greeting.${part}Anonymous`);
-}

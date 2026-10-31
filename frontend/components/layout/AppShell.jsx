@@ -23,6 +23,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
 import { cn } from '@/lib/cn';
+import { initials } from '@/lib/person';
 import { PRESETS, PRESET_LABEL_COUNTS } from '@/lib/periods';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
@@ -990,13 +991,3 @@ function UserMenu({ user, onSignOut }) {
   );
 }
 
-function initials(name = '') {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join('') || '·'
-  );
-}

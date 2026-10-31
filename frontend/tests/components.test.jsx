@@ -11,6 +11,9 @@ import { grossMargin } from '@/features/catalog/ProductFormDialog';
 import { Badge, OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
+import { AccountPreview } from '@/features/auth/AccountPreview';
+import { PasswordMeter } from '@/features/auth/PasswordMeter';
+import { greeting, initials } from '@/lib/person';
 import { EMPTY } from '@/lib/format';
 
 /*
@@ -510,5 +513,120 @@ describe('grossMargin', () => {
   it('has no margin to report for a product given away', () => {
     // Not minus infinity, which is what dividing by the price would give.
     expect(grossMargin('0', '5')).toBeNull();
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| The sign-up fields
+|--------------------------------------------------------------------------
+|
+| Two of them make a promise about what the product will do with what was
+| typed, which is a promise only worth making if it cannot drift.
+|
+*/
+
+describe('lib/person', () => {
+  it('takes the first letter of the first two words, and no more', () => {
+    expect(initials('Ahmed Al Hawajri')).toBe('AA');
+    expect(initials('Ahmed')).toBe('A');
+  });
+
+  it('gives a mark rather than an empty circle for an empty name', () => {
+    // A chip with nothing in it reads as an image that failed to load.
+    expect(initials('')).toBe('·');
+    expect(initials('   ')).toBe('·');
+  });
+
+  it('greets by the first name alone', () => {
+    // The rule the sign-up preview exists to make visible: someone who types
+    // their full name will be called by the first part of it.
+    const t = vi.fn((key, values) => `${key}:${values?.name ?? ''}`);
+
+    expect(greeting(t, 'Ahmed Al Hawajri')).toMatch(/:Ahmed$/);
+    expect(greeting(t, '  Ahmed  Al  Hawajri ')).toMatch(/:Ahmed$/);
+  });
+
+  it('falls back to a greeting with no name in it', () => {
+    const t = vi.fn((key) => key);
+
+    expect(greeting(t, '')).toMatch(/Anonymous$/);
+    expect(greeting(t, undefined)).toMatch(/Anonymous$/);
+  });
+});
+
+describe('AccountPreview', () => {
+  it('shows nothing at all until there is something to preview', () => {
+    const { container } = render(<AccountPreview businessName="" name="" roleLabel="Owner" />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('is hidden from a screen reader, because it only echoes what was just typed', () => {
+    // Read aloud it would repeat the reader's own input back at them on every
+    // keystroke. The two fields are the accessible interface.
+    const { container } = render(
+      <AccountPreview businessName="Al Hawajri Trading" name="Ahmed Al Hawajri" roleLabel="Owner" />,
+    );
+
+    expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('draws the chip with the same rules the top bar uses', () => {
+    const { container } = render(
+      <AccountPreview businessName="Al Hawajri Trading" name="Ahmed Al Hawajri" roleLabel="Owner" />,
+    );
+
+    expect(container.textContent).toContain(initials('Ahmed Al Hawajri'));
+    expect(container.textContent).toContain('Ahmed Al Hawajri');
+    expect(container.textContent).toContain('Al Hawajri Trading');
+  });
+});
+
+describe('PasswordMeter', () => {
+  it('names the breach rule before anyone can fail it', () => {
+    /*
+     * The server's policy is min(12)->uncompromised(), so a long password
+     * that has appeared in a known breach is refused after a round trip.
+     * Saying so only in the error would mean the form never mentioned the
+     * rule until it had already been broken.
+     */
+    const { container } = render(<PasswordMeter value="" minimum={12} />);
+
+    expect(container.textContent).toContain('breach');
+  });
+
+  it('measures nothing before anything is typed', () => {
+    // An empty bar beside an empty field is a progress indicator for a task
+    // nobody has started.
+    const { container } = render(<PasswordMeter value="" minimum={12} />);
+
+    expect(container.querySelector('[aria-hidden="true"]')).toBeNull();
+  });
+
+  it('reports only length, never a verdict on the password', () => {
+    /*
+     * Not a strength meter. The server owns validation truth (ADR-012), and
+     * a client that scores a password out of four is inventing rules it does
+     * not own. The only claim made here is the one already on screen.
+     */
+    const short = render(<PasswordMeter value="short" minimum={12} />);
+
+    expect(short.container.textContent).not.toMatch(/weak|strong|medium/i);
+    expect(short.container.textContent).toContain('At least');
+
+    short.unmount();
+
+    const long = render(<PasswordMeter value="a much longer passphrase" minimum={12} />);
+
+    expect(long.container.textContent).toContain('Long enough');
+  });
+
+  it('announces the threshold politely, and the bar not at all', () => {
+    const { container } = render(<PasswordMeter value="short" minimum={12} />);
+
+    // The bar is decorative; a live region firing per keystroke is unusable.
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(container.querySelector('[role="status"]')).not.toBeNull();
   });
 });

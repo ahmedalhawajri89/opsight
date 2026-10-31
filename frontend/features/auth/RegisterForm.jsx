@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from './AuthProvider';
+import { AccountPreview } from './AccountPreview';
+import { PasswordMeter } from './PasswordMeter';
 import { useFieldEntrance } from './useFieldEntrance';
 import { FIELD, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
@@ -13,6 +15,15 @@ import { cn } from '@/lib/cn';
 
 // The server's names for each field, where they differ from the form's.
 const SERVER_FIELDS = { business_name: 'businessName' };
+
+/*
+ * Mirrors `Password::min(12)` in AppServiceProvider::definePasswordPolicy().
+ * Stated here, never enforced here: the server owns every rule (ADR-012), and
+ * submitting a shorter password still fails on the server rather than in the
+ * browser. The API does not publish its password policy, so this is the one
+ * number the client has to restate — see the missing-field note in ADR-033.
+ */
+const PASSWORD_MINIMUM = 12;
 
 /**
  * A business signs itself up, and its owner lands in the setup wizard
@@ -32,10 +43,26 @@ export function RegisterForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { businessName: '', name: '', email: '', password: '' } });
+
+  /*
+   * `useWatch` rather than the `watch` function `useForm` also returns: that
+   * one is a fresh closure on every render, which React Compiler cannot
+   * memoize and therefore refuses to optimise the whole component around.
+   * This is a subscription, and it re-renders only this component.
+   *
+   * Four fields, so a render per keystroke costs nothing on a form that has
+   * nothing else to do. The preview and the meter are the only reason any of
+   * it is read back.
+   */
+  const [businessName, name, password] = useWatch({
+    control,
+    name: ['businessName', 'name', 'password'],
+  });
 
   async function onSubmit(values) {
     setFormError(null);
@@ -110,6 +137,16 @@ export function RegisterForm() {
         </p>
       )}
 
+      {/*
+        Said once, before anything is typed, rather than discovered four
+        times at once. Every field here is required, so marking each label
+        would repeat the same word down the form and still leave a reader to
+        infer the rule from its absence elsewhere.
+      */}
+      <p data-auth-field className="text-sm text-(--color-muted)">
+        {t('register.allRequired')}
+      </p>
+
       {field('businessName', {
         label: t('register.businessName'),
         autoComplete: 'organization',
@@ -122,12 +159,23 @@ export function RegisterForm() {
         required: t('register.nameRequired'),
       })}
 
+      {/*
+        Directly under the two names, because it is what they produce. Below
+        the email and password it would read as a summary of the whole form.
+      */}
+      <AccountPreview
+        businessName={businessName}
+        name={name}
+        roleLabel={t('roles.owner')}
+      />
+
       {field('email', {
         label: t('auth.email'),
         type: 'email',
         autoComplete: 'email',
         ltr: true,
         required: t('auth.emailRequired'),
+        hint: t('register.emailHint'),
       })}
 
       <div data-auth-field>
@@ -168,9 +216,7 @@ export function RegisterForm() {
             {errors.password.message}
           </p>
         ) : (
-          <p id="password-hint" className="mt-2 text-sm text-(--color-muted)">
-            {t('register.passwordHint', { min: 12 })}
-          </p>
+          <PasswordMeter value={password} minimum={PASSWORD_MINIMUM} />
         )}
       </div>
 

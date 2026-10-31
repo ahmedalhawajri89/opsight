@@ -39,6 +39,23 @@ test.describe('a new business', () => {
 
     await page.getByLabel('Business name').fill(businessName);
     await page.getByLabel('Your name').fill('Maryam Al Khalifa');
+
+    /*
+     * The form shows the account it is about to create, and the only reason
+     * that is worth showing is that it tells the truth about a rule nobody
+     * could guess: the product greets you by your FIRST name. Asserted on
+     * both screens, because the preview is a promise and the dashboard is
+     * where it comes due — a preview that drifts from the real greeting is
+     * worse than no preview.
+     *
+     * By name rather than by the whole sentence: "good morning" turns into
+     * "good afternoon" at noon, and a test that fails once a day at lunch is
+     * a test nobody trusts.
+     */
+    const preview = page.getByText('How this will read').locator('..');
+    await expect(preview).toContainText('Maryam');
+    await expect(preview).not.toContainText('Good morning, Maryam Al Khalifa');
+
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Password', { exact: true }).fill('a-long-enough-passphrase');
     await page.getByRole('button', { name: 'Create business' }).click();
@@ -119,5 +136,10 @@ test.describe('a new business', () => {
     await page.goto('/dashboard');
     await expect(page.getByRole('heading', { name: businessName })).toHaveCount(0);
     await expect(page.getByText('KWD', { exact: false }).first()).toBeVisible();
+
+    // The promise the sign-up preview made, come due: the first name alone.
+    const heading = page.getByRole('heading', { level: 1 }).first();
+    await expect(heading).toContainText('Maryam');
+    await expect(heading).not.toContainText('Al Khalifa');
   });
 });
