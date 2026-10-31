@@ -175,7 +175,10 @@ const en = {
     title: 'Try it with a demo account',
     body: 'Each role sees a different Opsight, decided by the server. The business and its figures are invented, and everything goes back to how it was every night.',
     secondBusiness: 'Owner of a second business, in Kuwaiti dinars',
-    signIn: 'Sign in',
+    secondBusinessShort: 'Second business',
+    enterAsOwner: 'Enter as the owner',
+    orAnotherRole: 'Or look around as someone else:',
+    signInAs: 'Sign in as {role}',
   },
 
   login: {
@@ -186,11 +189,11 @@ const en = {
     createBusiness: 'Set up your business',
     help: 'Working for a business already on Opsight? Its owner creates your account, and resets your password.',
     switchLanguage: 'Switch the interface to {language}',
+    emailInstead: 'Sign in with an email address instead',
     lockoutNote:
       'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
     scene: {
-      label:
-        'An illustration: individual records arriving and folding into a single rising figure.',
+      label: 'An illustration: the single rising figure that the records above it add up to.',
       records: 'Records',
       computed: 'Computed on request',
       figure: 'The figure',

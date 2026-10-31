@@ -409,13 +409,21 @@ refunded   warning
   screen; a chord rather than a bare letter, which would fire under the hands of anyone
   tabbing a table. `?` lists all of it. Nothing fires while the reader is typing, and no
   modified key is taken from the browser.
-- **The sign-in scene** (`features/auth/LedgerScene.jsx`) is the product's thesis drawn in
-  three beats, about 2.6 s, played once. Ledger rows arrive, each marked by its kind. They fold
-  away as a single figure rises in their place, and a line traces the figure to a bronze
-  point that marks "now". It carries no number, axis or label, because nobody is signed in to
-  have data. The point's slow ring is the product's only loop, and it exists only on that
-  page. Under reduced motion every animation runs instantly to its end, so the scene is simply
-  the finished figure.
+- **The sign-in panel** is the product's thesis laid out top to bottom — mark, sentence,
+  records, figure — and it reads standing still. Records drift down the band between the
+  tagline and the figure and dissolve into it (`features/auth/RecordStream.jsx`); the figure
+  they add up to is drawn once in about 1.8 s and then rests
+  (`features/auth/LedgerScene.jsx`), traced by a line to a bronze point that marks "now".
+  Neither carries a number, axis or label, because nobody is signed in to have data.
+  - **The stream and the point's ring are the product's only loops**, and they exist only on
+    that page. The stream is deliberately slow and faint: it sits behind a password field,
+    and the test of it is that someone typing never looks up.
+  - The stream is pinned left in both languages, like the figure beneath it — see ADR-032,
+    and §10 for why that is a deliberate exception rather than an oversight.
+  - Under reduced motion the figure renders finished and the records render at the opacity
+    they hold for most of their life. A looping element has no end state to fall back on, so
+    it must author a resting one; starting it at `opacity: 0` would leave an empty band for
+    exactly the readers who asked not to be moved.
 - **Changing language mirrors the page instead of jumping it.** The switch runs inside a
   native View Transition (`runLanguageTransition` in `I18nProvider.jsx`):
   - the named panes (the sign-in form and scene, the app's sidebar and top bar) glide 450 ms

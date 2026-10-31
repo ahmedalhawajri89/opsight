@@ -4,6 +4,7 @@ import { gsap } from 'gsap';
 
 import { AUTH_MOTION, toWords } from './authMotion';
 import { LedgerScene } from '@/features/auth/LedgerScene';
+import { RecordStream } from '@/features/auth/RecordStream';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { FocusColumn } from '@/components/layout/FocusColumn';
 import { Logo } from '@/components/layout/Logo';
@@ -29,6 +30,18 @@ import { useGsap } from '@/hooks/useGsap';
  * comes here comes to type, not to read. It is a bare column rather than a
  * card: with a solid panel beside it, a bordered box on the light side is
  * one frame too many.
+ *
+ * ONE COMPOSITION, NOT THREE BLOCKS. The panel was a mark, a sentence and a
+ * figure with a void between each pair — about 120px under the logo and
+ * 240px under the tagline on a screen 980px tall. The voids are now the
+ * argument: records drift through the upper one (RecordStream) and the
+ * figure they became fills the lower one, with the sentence that explains
+ * both sitting between them. Top to bottom the panel reads records →
+ * sentence → figure, which is the product in one glance.
+ *
+ * It also means the thesis is legible standing still. It used to live
+ * entirely inside a three-second animation, so anyone who reloaded, or
+ * looked up a moment late, met a bar chart.
  *
  * THE FORM DOES NOT WAIT FOR THE SHOW. The task is done inside a third of a
  * second and the panel's argument unfolds afterwards. GSAP moves transforms
@@ -116,10 +129,22 @@ export function AuthLayout({ title, subtitle, children, footer }) {
         The gradient stays inside one hue — ink to deeper ink. A second hue
         would be the launch-page wash this palette spent a version removing.
       */}
-      <section className="order-1 flex flex-col justify-between bg-[linear-gradient(180deg,var(--color-brand-panel),var(--color-brand-panel-deep))] px-6 py-10 text-(--color-on-brand) sm:px-10 lg:order-2 lg:px-14 lg:py-12 [view-transition-name:login-scene]">
-        <Logo tone="onBrand" />
+      <section className="relative order-1 flex flex-col justify-between overflow-hidden bg-[linear-gradient(180deg,var(--color-brand-panel),var(--color-brand-panel-deep))] px-6 py-10 text-(--color-on-brand) sm:px-10 lg:order-2 lg:px-14 lg:py-12 [view-transition-name:login-scene]">
+        {/*
+          Behind everything. Everything after it is lifted onto
+          `relative z-10`, because an absolutely positioned sibling paints
+          over static ones whatever the source order.
 
-        <div className="mt-10 lg:mt-0">
+          `overflow-hidden` on the section keeps a record that drifts past the
+          foot of the panel from lengthening the page.
+        */}
+        <RecordStream />
+
+        <div className="relative z-10">
+          <Logo tone="onBrand" />
+        </div>
+
+        <div className="relative z-10 mt-10 lg:mt-0">
           {/*
             One <p> with the words wrapped, not a list: it is a sentence, and
             a screen reader must still read it as one. The inner span is what
@@ -144,12 +169,12 @@ export function AuthLayout({ title, subtitle, children, footer }) {
         </div>
 
         {/*
-          The scene is the argument, so it is given the foot of the panel
+          The figure is the argument, so it is given the foot of the panel
           rather than squeezed under the text. Below lg it goes entirely:
           on a phone the panel is a band above the form, and a band is no
           place for a three-beat story nobody will scroll back to.
         */}
-        <div className="hidden lg:block">
+        <div className="relative z-10 hidden lg:block">
           <LedgerScene />
         </div>
       </section>

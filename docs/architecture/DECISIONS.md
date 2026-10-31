@@ -1565,3 +1565,76 @@ These need an answer from the project owner before the phase that depends on the
 | **OD-5** | Should Staff see any analytics at all, or none? Currently none (ROLES_AND_PERMISSIONS.md §3.1). A revenue-only analytics view is a separate surface with its own design and tests. | Staff get no analytics module | Phase 04 |
 | **OD-6** | Order reference format. `ORD-2026-000418` is assumed; some businesses require a specific scheme. | `ORD-{year}-{6-digit sequence}` | Phase 02 |
 | **OD-7** | Does the business profit on shipping (ADR-013)? If so, Net Revenue's definition changes. | Shipping excluded from revenue | Phase 04 |
+
+---
+
+## ADR-032 — The door argues standing still
+
+**Status:** Accepted (2026-10)
+**Affects:** `features/auth/AuthLayout.jsx`, `RecordStream.jsx`, `LedgerScene.jsx`,
+`DemoAccounts.jsx`, `app/(auth)/login/page.jsx`
+**Amends:** `UI_UX_DIRECTION.md` §5
+
+**Context.** The sign-in panel was built as three stacked blocks — mark, sentence, figure —
+distributed by `justify-between`. Measured at 1600×980 that left roughly 120px of empty ink
+under the logo and 240px under the tagline: about a third of the panel was nothing.
+
+Worse, the product's thesis lived entirely inside a three-second animation. `LedgerScene`
+opened with ledger rows arriving, folded them away, and raised a figure in their place —
+a good argument, told once. Anyone who reloaded, switched back to the tab, or simply looked
+up a moment late met the state the animation ends in: a bar chart. Every analytics product
+on the market has one of those, and it is the single screen a visitor from a portfolio sees
+first.
+
+The demo build had a second problem of the same kind. Five equal buttons in a bordered box,
+each repeating the words "Sign in", sat above a complete email form — two full paths
+competing for one visitor, with nothing to say which was meant for them.
+
+**Decision.**
+
+1. **The voids become the argument.** Records now drift down the band between the tagline
+   and the figure and dissolve into it (`RecordStream`), so top to bottom the panel reads
+   mark → sentence → records → figure. The claim is legible without watching anything; the
+   motion only makes it move.
+
+2. **Only the stream loops. The figure is drawn once and rests.** That split is the claim,
+   not a performance budget: records are what keep arriving, the figure is the standing
+   answer. A panel where everything cycled forever is a screensaver behind a password field.
+
+3. **The stream is HTML, and it is pinned left in both languages.** HTML because an SVG
+   covering a panel whose aspect ratio runs from about 0.75 to 1.1 must either crop or
+   distort, and these are rounded bars. Pinned left — `left`, not `inset-inline-start`,
+   the codebase's second deliberate physical side after the password reveal button —
+   because the stream and the figure are one drawing and that drawing is left to right in
+   both languages, like every real chart in Opsight. Mirrored with the page, the records
+   landed on the figure's tallest columns in Arabic and its shortest in English: the same
+   picture reading as two different ones.
+
+4. **A looping element still renders its resting state.** Everything else on the page
+   animates *in* to a final state, so markup with no timeline run is the finished thing.
+   A loop has no final state, and the obvious implementation — start at `opacity: 0`, let
+   the loop raise it — leaves a reader who asked for less motion looking at an empty band
+   where the argument should be. Each record therefore renders at the opacity it holds for
+   most of its life and the tween drives it from there. Tested, because it fails silently.
+
+5. **The demo has one door, and it is wider than the others.** Almost everyone arriving
+   from a portfolio wants the owner's view: it is the only role that can see cost and
+   margin. So the owner is the page's primary action, the other four roles are a quiet row
+   beneath it named by role alone — the repeated verb carried no information once the first
+   button had said it — and the email form folds behind a disclosure. **Only on the demo:**
+   a build without `NEXT_PUBLIC_DEMO_MODE` has no shortcuts to compete with the form, and a
+   disclosure there would charge a click to everyone who signs in each morning.
+
+**Rejected.**
+
+- **Dashboard fragments behind the door** — a real KPI card with its figures withheld until
+  sign-in. The most literal version of the claim, and the one most likely to read as a page
+  stuck loading.
+- **Gridlines carried the full height of the panel.** Tried, and one of them ruled a line
+  through the middle of the headline. They belong to the figure and scale with it.
+- **Tying the stream to the form** — a record landing per field filled. Clever once, and a
+  cost every morning for the staff who sign in daily.
+
+**Not done here.** The focus ring (`--focus-ring`, a dark bronze) sits on the autofocused
+email field at first paint and reads as a validation warning rather than a cursor. It is the
+house focus colour on every screen, so changing it is a palette decision, not a login one.

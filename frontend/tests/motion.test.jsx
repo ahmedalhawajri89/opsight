@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CountUp } from '@/components/data/CountUp';
 import { LedgerScene } from '@/features/auth/LedgerScene';
-import { toWords } from '@/features/auth/authMotion';
+import { RecordStream } from '@/features/auth/RecordStream';
+import { AUTH_MOTION, toWords } from '@/features/auth/authMotion';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
 import { Flip } from 'gsap/Flip';
@@ -520,15 +521,22 @@ describe('LedgerScene', () => {
 
     const { container } = render(<LedgerScene />);
 
-    // The end of the story: the rows have folded away, and the figure, the
-    // line and the point that marks "now" are all there to be seen.
-    container.querySelectorAll('.ledger-row').forEach((row) => {
-      expect(row).toHaveAttribute('opacity', '0');
-    });
-
+    // The figure, the line and the point that marks "now" are all there to
+    // be seen without a timeline ever running.
     expect(container.querySelectorAll('.ledger-col').length).toBeGreaterThan(0);
     expect(container.querySelector('.ledger-line')).not.toBeNull();
     expect(container.querySelector('.ledger-dot')).not.toBeNull();
+  });
+
+  it('draws no records of its own — those belong to the stream above it', () => {
+    // The division is the claim the panel makes: records are what keep
+    // arriving, the figure is the standing answer. If rows reappear here
+    // they will be drawn twice, in two components that nothing keeps in step.
+    stubPreference(false);
+
+    const { container } = render(<LedgerScene />);
+
+    expect(container.querySelectorAll('.ledger-row')).toHaveLength(0);
   });
 
   it('leaves the pulsing ring invisible when nothing drives it', () => {
@@ -540,6 +548,62 @@ describe('LedgerScene', () => {
     const { container } = render(<LedgerScene />);
 
     expect(container.querySelector('.ledger-ring')).toHaveAttribute('opacity', '0');
+  });
+});
+
+describe('RecordStream', () => {
+  it('shows a still field of records when the reader asked for less motion', () => {
+    /*
+     * The trap this guards. Everything else on the panel animates IN to a
+     * resting state, so markup rendered without a timeline is the finished
+     * thing. A looping stream has no finished state — each record spends its
+     * life fading in and out — so the obvious implementation starts them at
+     * opacity 0 and lets the loop raise them. With the loop never run, that
+     * leaves a reader who asked for less motion looking at an empty band
+     * where the argument should be.
+     *
+     * So the markup renders each record at the opacity it holds for most of
+     * its life, and the tween drives it from there.
+     */
+    stubPreference(true);
+
+    const { container } = render(<RecordStream />);
+    const records = container.querySelectorAll('[data-record]');
+
+    expect(records.length).toBeGreaterThan(0);
+
+    records.forEach((record) => {
+      expect(Number(record.style.opacity)).toBe(AUTH_MOTION.stream.rest);
+      expect(Number(record.style.opacity)).toBeGreaterThan(0);
+    });
+  });
+
+  it('is hidden from a screen reader, because the sentence beside it says the same thing', () => {
+    stubPreference(false);
+
+    const { container } = render(<RecordStream />);
+
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    // No role, no label, nothing to stop on: it is texture.
+    expect(container.querySelector('[role="img"]')).toBeNull();
+  });
+
+  it('lays every record out left to right, whatever way the page runs', () => {
+    /*
+     * The stream and the figure below it are one drawing, and that drawing
+     * is left to right in both languages. Mirrored with the page, the
+     * records landed on the figure's tallest columns in Arabic and its
+     * shortest in English — the same picture reading as two different ones.
+     */
+    stubPreference(false);
+
+    const { container } = render(<RecordStream />);
+
+    container.querySelectorAll('[data-record]').forEach((record) => {
+      expect(record).toHaveAttribute('dir', 'ltr');
+      expect(record.style.left).not.toBe('');
+      expect(record.style.insetInlineStart).toBe('');
+    });
   });
 });
 

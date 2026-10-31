@@ -7,68 +7,59 @@ import { useI18n } from '@/features/i18n/I18nProvider';
 import { useGsap } from '@/hooks/useGsap';
 
 /**
- * The sign-in page's one piece of motion: records becoming a figure.
+ * The figure the records became.
  *
- * It is the product's thesis drawn in three beats. Ledger rows arrive — an
- * order, an expense, a stock movement, each marked by the colour of its kind —
- * then fold away as a single figure rises in their place, and a line traces
- * across it to a bronze point that marks "now". The individual colours do not
- * survive into the figure; once a record has been computed into it, what it
- * was stops mattering.
+ * It used to tell the whole three-beat story by itself — rows arriving, rows
+ * folding, a figure rising in their place — which meant the story existed
+ * only while the animation ran. The records now live above it and keep
+ * arriving (RecordStream), so what is left here is the thing they add up to,
+ * and this draws once and then rests. That division is the claim: records are
+ * what keep coming, the figure is the standing answer.
  *
  * There is no number, axis or label anywhere in it. Nobody is signed in, so
  * there is no data to show, and an invented figure on the door of an
  * analytics product would be a lie about the first thing it claims to do.
  *
- * THE MARKUP IS THE FINISHED SCENE. Every element renders where it ends —
- * the figure drawn, the rows already folded away — and the timeline sets the
- * starting state before the first paint. So a reader who asked for less
- * motion gets the finished figure rather than a fast replay, and there is no
- * second code path to keep true: useGsap simply never runs.
+ * THE MARKUP IS THE FINISHED SCENE. Every element renders where it ends, and
+ * the timeline sets the starting state before the first paint. So a reader
+ * who asked for less motion gets the finished figure rather than a fast
+ * replay, and there is no second code path to keep true: useGsap simply never
+ * runs.
  *
  * It is a timeline rather than keyframes because the captions name the beats.
  * Each one lights as the drawing reaches the thing it describes, and a
- * timeline is what keeps that true when a duration changes; the delays it
- * replaced lived in two files and agreed only by hand.
+ * timeline is what keeps that true when a duration changes.
+ *
+ * The gridlines belong to the field behind it now, not to this: one set of
+ * rules carried the whole height of the panel reads as a single instrument,
+ * where two sets read as a chart pasted onto a background.
  *
  * The drawing is left to right in both languages, like every real chart in
  * Opsight.
  */
 
 /*
- * A record's kind decides its chip colour. Six rows, three kinds.
+ * The figure's columns: shapes, not values. Rising, with one honest dip.
  *
- * Three VALUES of light rather than three saturated hues: the chart palette
- * is tuned for a white ground and goes muddy on ink, and three bright dots
- * on a dark panel read as a toy. These three are already contrast-checked
- * against the panel (tests/contrast.test.js), and the claim the scene makes
- * — records of different kinds becoming one figure — needs them to be
- * distinguishable, not colourful.
+ * Taller against its baseline than the drawing this replaced, and in a taller
+ * box. The panel distributes its three blocks with `justify-between`, so the
+ * height of this one decides how much air is left above it — the old figure
+ * reached barely half its baseline and left a 240px void under the tagline.
  */
-const ROWS = [
-  { kind: 'on-brand', width: 196 },
-  { kind: 'accent-on-brand', width: 148 },
-  { kind: 'on-brand', width: 172 },
-  { kind: 'on-brand-2', width: 124 },
-  { kind: 'on-brand', width: 184 },
-  { kind: 'accent-on-brand', width: 136 },
-];
-
-/* The figure's columns: shapes, not values. Rising, with one honest dip. */
-const BASELINE = 196;
-const COLUMN_WIDTH = 36;
-const COLUMNS = [52, 66, 58, 84, 78, 110].map((height, index) => ({
-  x: 58 + index * 66,
+const BASELINE = 230;
+const COLUMN_WIDTH = 44;
+const COLUMNS = [70, 96, 82, 128, 112, 170].map((height, index) => ({
+  x: 40 + index * 70,
   height,
 }));
 
 const LINE = COLUMNS.map(
-  ({ x, height }) => `${x + COLUMN_WIDTH / 2},${BASELINE - height - 12}`,
+  ({ x, height }) => `${x + COLUMN_WIDTH / 2},${BASELINE - height - 14}`,
 ).join(' ');
 
 const NOW = COLUMNS.at(-1);
 const NOW_X = NOW.x + COLUMN_WIDTH / 2;
-const NOW_Y = BASELINE - NOW.height - 12;
+const NOW_Y = BASELINE - NOW.height - 14;
 
 /* Each caption lights at the beat it names — see the timeline's labels. */
 const STEPS = [
@@ -89,49 +80,21 @@ export function LedgerScene() {
     const timeline = gsap.timeline({ delay: AUTH_MOTION.sceneStart });
 
     timeline
-      .addLabel('records')
       /*
-       * fromTo, not from: the rows' resting state is GONE — they have folded
-       * away by the end — so there is no natural state to animate from. A
-       * `from` here would leave them lying over the finished figure for any
-       * reader whose motion preference skips the timeline.
-       *
-       * `x` in SVG user units, not xPercent: these are drawing coordinates,
-       * not a box to be measured.
+       * The records are already on the panel and already moving when this
+       * starts, so the first beat has nothing of its own to animate — it is a
+       * label the caption hangs on, naming what the reader can see above.
        */
-      .fromTo(
-        q('.ledger-row'),
-        { opacity: 0, x: -14 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: scene.rowIn,
-          stagger: scene.rowStagger,
-          ease: 'power2.out',
-        },
-      )
+      .addLabel('records')
 
       .addLabel('computed')
-      // They fold away as the figure takes their place: both beats run
-      // together, because that overlap IS the claim being made.
-      .to(q('.ledger-row'), {
-        opacity: 0,
-        x: 10,
-        duration: scene.rowOut,
-        stagger: scene.rowStagger / 2,
-        ease: 'power2.in',
+      .from(q('.ledger-col'), {
+        scaleY: 0,
+        transformOrigin: 'center bottom',
+        duration: scene.column,
+        stagger: scene.columnStagger,
+        ease: 'power2.out',
       })
-      .from(
-        q('.ledger-col'),
-        {
-          scaleY: 0,
-          transformOrigin: 'center bottom',
-          duration: scene.column,
-          stagger: scene.columnStagger,
-          ease: 'power2.out',
-        },
-        '<0.1',
-      )
 
       .addLabel('figure')
       /*
@@ -151,10 +114,6 @@ export function LedgerScene() {
      * positioned by that beat's label. A single tween over the shared class
      * would light all three at once, three times over, which looks like a
      * flicker and says nothing.
-     *
-     * Positioned by label, so changing any duration above carries the
-     * captions with it. That is the whole reason this is a timeline rather
-     * than the list of hand-written delays it replaced.
      */
     q('.ledger-step').forEach((step, index) => {
       timeline.from(step, { opacity: 0.4, duration: 0.3 }, STEPS[index].at);
@@ -162,7 +121,7 @@ export function LedgerScene() {
 
     // The point that marks "now", breathing. A long gap between beats: this
     // sits behind a form someone is typing into.
-    gsap.to('.ledger-ring', {
+    gsap.to(q('.ledger-ring'), {
       scale: 1.9,
       opacity: 0,
       duration: scene.pulse,
@@ -175,11 +134,11 @@ export function LedgerScene() {
   });
 
   return (
-    <figure className="mt-12" ref={root}>
+    <figure ref={root}>
       <svg
         role="img"
         aria-label={t('login.scene.label')}
-        viewBox="0 0 480 220"
+        viewBox="0 0 480 244"
         dir="ltr"
         className="h-auto w-full"
         fill="none"
@@ -187,14 +146,15 @@ export function LedgerScene() {
         {/*
           The rules a figure is read against — the same dashed gridlines the
           real charts use, so the door is drawn in the product's own hand.
-          Faint enough to sit behind everything: a frame of reference, not
-          content.
+          They belong to the figure and scale with it: carried across the
+          whole panel instead, one of them ruled a line through the middle of
+          the headline.
         */}
-        {[0.28, 0.52, 0.76].map((fraction) => (
+        {[0.3, 0.55, 0.8].map((fraction) => (
           <line
             key={fraction}
-            x1="36"
-            x2="444"
+            x1="20"
+            x2="460"
             y1={BASELINE - BASELINE * fraction}
             y2={BASELINE - BASELINE * fraction}
             stroke="var(--on-brand-line)"
@@ -206,8 +166,8 @@ export function LedgerScene() {
 
         {/* The rule every figure stands on. */}
         <line
-          x1="36"
-          x2="444"
+          x1="20"
+          x2="460"
           y1={BASELINE}
           y2={BASELINE}
           stroke="var(--on-brand-line)"
@@ -215,28 +175,6 @@ export function LedgerScene() {
           opacity="0.7"
         />
 
-        {/* 1 — records arrive. */}
-        {ROWS.map((row, index) => (
-          /*
-            Hidden at rest: by the end of the scene these have folded away,
-            and the markup renders the end. The timeline brings them in and
-            takes them out again.
-          */
-          <g key={index} className="ledger-row" opacity="0">
-            <circle cx="46" cy={28 + index * 24} r="5" fill={`var(--${row.kind})`} />
-            <rect
-              x="60"
-              y={23 + index * 24}
-              width={row.width}
-              height="10"
-              rx="5"
-              fill="var(--on-brand)"
-              opacity="0.18"
-            />
-          </g>
-        ))}
-
-        {/* 2 — a figure rises where they were. */}
         {COLUMNS.map((column, index) => (
           <rect
             key={index}
@@ -245,13 +183,13 @@ export function LedgerScene() {
             y={BASELINE - column.height}
             width={COLUMN_WIDTH}
             height={column.height}
-            rx="6"
+            rx="7"
             fill="var(--on-brand)"
             opacity="0.26"
           />
         ))}
 
-        {/* 3 — the line reads it, and the point marks now. */}
+        {/* The line reads it, and the point marks now. */}
         <polyline
           className="ledger-line"
           points={LINE}

@@ -242,8 +242,23 @@ touched — and all nine passed from cold.
 listening on 3000. The suite then reuses it and looks like it passed from cold. One run
 lost seven specs that way — every one of them a click through to `/orders/{id}`, because
 a dev server compiles a route the first time it is asked for and the others had already
-been compiled by earlier specs. Confirm with `netstat -ano | grep ":3000 "` and stop the
-process it names, rather than trusting that the terminal is quiet.
+been compiled by earlier specs.
+
+**And killing the listener is not enough either.** `next dev` runs as several processes —
+a launcher, a server and a Turbopack worker pool — so stopping whichever one `netstat`
+names can leave the others to carry on serving. A later run was reused by a dev server
+started with `NEXT_PUBLIC_DEMO_MODE=true`, which folds the email form away behind a
+disclosure: all four sign-ins failed on `getByLabel('Email')`, against code that was
+perfectly correct. Stop them by what they are, not by which one holds the socket:
+
+```powershell
+Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+  Where-Object { $_.CommandLine -match 'opsight' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+```
+
+Then confirm nothing answers — `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000`
+should print `000`, not a status code.
 
 **Clear the cache before a full run**, with `php artisan cache:clear`. The rate
 limiters keep their buckets in the `cache` table, and the coarse login backstop is

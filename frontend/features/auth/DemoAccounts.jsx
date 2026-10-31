@@ -13,13 +13,19 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * printed in the README; on the demo it is a fact about the demo, not a secret.
  */
 const PASSWORD = 'password';
-const ACCOUNTS = [
-  { email: 'owner@opsight.test', role: 'owner' },
+
+/** The one almost everybody wants, kept apart from the rest on purpose. */
+const PRIMARY = { email: 'owner@opsight.test', role: 'owner' };
+
+const OTHERS = [
   { email: 'manager@opsight.test', role: 'manager' },
   { email: 'analyst@opsight.test', role: 'analyst' },
   { email: 'staff@opsight.test', role: 'staff' },
   { email: 'owner@alnoor.test', role: 'owner', second: true },
 ];
+
+/** Whether this build is the public demo. Inlined by Next at build time. */
+export const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 /**
  * One-click sign-in for the public demo, shown only where
@@ -29,6 +35,19 @@ const ACCOUNTS = [
  * password. Each role is offered by name because the difference between them
  * is the point: the Staff view and the Owner view are not the same Opsight,
  * and the server, not the browser, decides which is which.
+ *
+ * ONE DOOR IS WIDER THAN THE OTHERS. This used to be five equal buttons in a
+ * bordered box, each repeating the words "Sign in", above a full email form —
+ * two complete paths competing for the same visitor, and no answer to "which
+ * one should I press?". Almost everyone arriving from a portfolio wants the
+ * owner's view, because it is the only one that can see cost and margin. So
+ * the owner is the page's primary action and the other four are a quiet row
+ * beneath it, named by role alone: the repeated verb carried no information
+ * once the first button had said it.
+ *
+ * The email form is not gone, only folded away behind a disclosure, and only
+ * here — a build that is not the demo has no shortcuts to compete with it and
+ * shows the form directly (login/page.jsx).
  */
 export function DemoAccounts() {
   const { login } = useAuth();
@@ -37,7 +56,7 @@ export function DemoAccounts() {
   const [pending, setPending] = useState(null);
   const [error, setError] = useState(null);
 
-  if (process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') return null;
+  if (!IS_DEMO) return null;
 
   async function signIn(account) {
     setError(null);
@@ -52,11 +71,21 @@ export function DemoAccounts() {
     }
   }
 
+  const busy = pending !== null;
+
+  /*
+   * Two names per account, because the chip and the screen reader need
+   * different lengths. "Owner of a second business, in Kuwaiti dinars" is the
+   * useful sentence and a hopeless button label; "Second business" is the
+   * label and tells a listener nothing about why it is there.
+   */
+  const nameOf = (account) =>
+    account.second ? t('demo.secondBusinessShort') : t(`roles.${account.role}`);
+  const fullNameOf = (account) =>
+    account.second ? t('demo.secondBusiness') : t(`roles.${account.role}`);
+
   return (
-    <section
-      aria-labelledby="demo-title"
-      className="mb-6 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface-subtle) p-4"
-    >
+    <section aria-labelledby="demo-title" className="mb-7">
       <h2 id="demo-title" className="text-sm font-semibold text-(--color-text)">
         {t('demo.title')}
       </h2>
@@ -69,21 +98,44 @@ export function DemoAccounts() {
         </p>
       )}
 
-      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-        {ACCOUNTS.map((account) => (
-          <li key={account.email} className={account.second ? 'sm:col-span-2' : undefined}>
+      {/*
+        The primary action of the whole page, and it looks like one: the same
+        height and weight as the real submit button below, so the eye does not
+        have to decide which of two sign-ins is the sign-in.
+      */}
+      <button
+        type="button"
+        onClick={() => signIn(PRIMARY)}
+        disabled={busy}
+        className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-control) bg-(--color-brand) px-4 text-sm font-semibold text-(--color-on-brand) transition-colors duration-(--duration-fast) hover:bg-(--color-brand-hover) disabled:opacity-60"
+      >
+        {pending === PRIMARY.email ? t('auth.signingIn') : t('demo.enterAsOwner')}
+        {!busy && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
+      </button>
+
+      <p className="mt-4 text-sm text-(--color-muted)">{t('demo.orAnotherRole')}</p>
+
+      {/*
+        A row of four, not a grid of equals: these are alternatives to the
+        action above, and they are sized like alternatives.
+      */}
+      <ul className="mt-2 flex flex-wrap gap-2">
+        {OTHERS.map((account) => (
+          <li key={account.email}>
             <button
               type="button"
               onClick={() => signIn(account)}
-              disabled={pending !== null}
-              className="flex h-11 w-full items-center justify-between gap-3 rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-4 text-start text-sm font-medium text-(--color-text) transition-colors duration-(--duration-fast) hover:border-(--color-brand) disabled:opacity-60"
+              disabled={busy}
+              /*
+               * The visible text is the role alone; the accessible name says
+               * what pressing it does. A screen reader hearing "Manager"
+               * learns nothing about whether it is a button that signs in or
+               * a label on something else.
+               */
+              aria-label={t('demo.signInAs', { role: fullNameOf(account) })}
+              className="inline-flex h-9 items-center rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-3 text-sm font-medium text-(--color-text-2) transition-colors duration-(--duration-fast) hover:border-(--color-brand) hover:text-(--color-text) disabled:opacity-60"
             >
-              <span>
-                {account.second ? t('demo.secondBusiness') : t(`roles.${account.role}`)}
-              </span>
-              <span className="shrink-0 whitespace-nowrap text-(--color-muted)">
-                {pending === account.email ? t('auth.signingIn') : t('demo.signIn')}
-              </span>
+              {pending === account.email ? t('auth.signingIn') : nameOf(account)}
             </button>
           </li>
         ))}

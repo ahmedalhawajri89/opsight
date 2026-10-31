@@ -29,10 +29,30 @@ export const AUTH_MOTION = {
   /** The scene starts once the task is in place, not before. */
   sceneStart: 0.45,
 
+  /*
+   * The ambient record field (RecordStream) — the one thing on the page that
+   * never stops. Deliberately slow and faint: it sits behind a password
+   * field, and the test of it is that someone typing never looks up.
+   *
+   * `gap` is under half the `cycle`, so several records are always in flight
+   * and the field never empties.
+   */
+  stream: {
+    /*
+     * Pixels a record drifts over its life, half above its resting line and
+     * half below. Kept under the gap between two records, so one never
+     * overtakes the line of the next.
+     */
+    travel: 30,
+    /** Seconds from a record appearing to it dissolving. */
+    cycle: 11,
+    /** Seconds between one record starting and the next. */
+    gap: 1.3,
+    /** The opacity a record holds for most of its life. */
+    rest: 0.65,
+  },
+
   scene: {
-    rowIn: 0.42,
-    rowStagger: 0.07,
-    rowOut: 0.34,
     column: 0.5,
     columnStagger: 0.06,
     line: 0.8,

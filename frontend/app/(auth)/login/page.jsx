@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { AuthLayout } from '@/features/auth/AuthLayout';
-import { DemoAccounts } from '@/features/auth/DemoAccounts';
+import { DemoAccounts, IS_DEMO } from '@/features/auth/DemoAccounts';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -62,9 +62,41 @@ export default function LoginPage() {
       ) : (
         <Suspense fallback={null}>
           <DemoAccounts />
-          <LoginForm />
+          <EmailSignIn />
         </Suspense>
       )}
     </AuthLayout>
+  );
+}
+
+/**
+ * The real form — shown outright, or folded away on the public demo.
+ *
+ * On the demo the one-click roles are the point, and a full email form under
+ * them gave a visitor two complete paths and no reason to prefer either. On
+ * every other build there are no shortcuts to compete with, so the form is
+ * the page and a disclosure in front of it would be a click charged to
+ * everyone who signs in each morning.
+ *
+ * `IS_DEMO` is inlined at build time, so the initial state is the same on the
+ * server and in the browser and there is nothing for hydration to disagree
+ * about. Revealing it mounts the form fresh, which means its own autofocus
+ * puts the cursor in the email field — the disclosure costs a click, not a
+ * click and a reach for the mouse.
+ */
+function EmailSignIn() {
+  const { t } = useI18n();
+  const [shown, setShown] = useState(!IS_DEMO);
+
+  if (shown) return <LoginForm />;
+
+  return (
+    <button
+      type="button"
+      onClick={() => setShown(true)}
+      className="flex h-11 w-full items-center justify-center rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-4 text-sm font-medium text-(--color-text) transition-colors duration-(--duration-fast) hover:border-(--color-brand)"
+    >
+      {t('login.emailInstead')}
+    </button>
   );
 }
