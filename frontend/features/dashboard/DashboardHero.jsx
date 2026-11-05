@@ -123,7 +123,7 @@ export function DashboardHero({
           <QuickActions can={can} />
         </div>
 
-        <dl className="mt-8 grid gap-6 sm:grid-cols-3 sm:gap-0">
+        <div className="mt-8 grid gap-6 sm:grid-cols-3 sm:gap-0">
           {loading && keys.length === 0
             ? [0, 1, 2].map((index) => <FigureSkeleton key={index} first={index === 0} />)
             : keys.map((key, index) => (
@@ -137,7 +137,7 @@ export function DashboardHero({
                   comparisonLabel={comparisonLabel}
                 />
               ))}
-        </dl>
+        </div>
       </div>
     </section>
   );
@@ -200,14 +200,19 @@ function Figure({ metricKey, metric, first, currency, decimals, comparisonLabel 
 
   const body = (
     <>
-      <dt className="flex items-center gap-2 text-sm font-medium text-(--color-on-brand-2)">
+      {/*
+        The label is an h3, as a figure's label is on every card in the
+        product: the heading outline then reads "Dashboard, Net revenue,
+        Orders…", and a chart titled the same (an h2) stays distinguishable.
+      */}
+      <div className="flex items-center gap-2 text-sm font-medium text-(--color-on-brand-2)">
         <span
           aria-hidden="true"
           className="inline-flex size-7 items-center justify-center rounded-(--radius-control) bg-(--color-accent-on-brand)/15 text-(--color-accent-on-brand)"
         >
           <Icon name={GLYPHS[metricKey] ?? 'analytics'} size={15} />
         </span>
-        {label}
+        <h3 className="min-w-0 truncate">{label}</h3>
         {destination && (
           <Icon
             name="arrowRight"
@@ -215,8 +220,8 @@ function Figure({ metricKey, metric, first, currency, decimals, comparisonLabel 
             className="ms-auto opacity-0 transition-[opacity,transform] duration-(--duration-base) group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
           />
         )}
-      </dt>
-      <dd className="mt-3">
+      </div>
+      <div className="mt-3">
         <span className="tabular block text-3xl leading-none font-bold tracking-tight">
           {shown.raw === null ? EMPTY : <CountUp value={shown.raw} format={shown.format} />}
         </span>
@@ -224,7 +229,7 @@ function Figure({ metricKey, metric, first, currency, decimals, comparisonLabel 
           <InkChange metric={metric} shown={shown} />
           {comparisonLabel && <span>{comparisonLabel}</span>}
         </span>
-      </dd>
+      </div>
     </>
   );
 

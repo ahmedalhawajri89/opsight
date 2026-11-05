@@ -54,8 +54,10 @@ test('an owner signs in, sees the dashboard, and signs out', async ({ page }) =>
   await dashboardReady(page);
 
   // The signed-in identity is on screen, named as the server named it.
-  await expect(page.getByText(user.name, { exact: true })).toBeVisible();
-  await expect(page.getByText(user.role_label, { exact: true })).toBeVisible();
+  // In the account menu: the sidebar also names the role, under the business.
+  const account = page.getByRole('button', { name: /^Account:/ });
+  await expect(account).toContainText(user.name);
+  await expect(account).toContainText(user.role_label);
 
   // Sign out lives in the account menu in the top bar.
   await page.getByRole('button', { name: /^Account:/ }).click();
@@ -118,7 +120,10 @@ test('an owner does receive the cost surfaces staff do not', async ({ page }) =>
   await expect(nav.getByRole('link', { name: 'Analytics' })).toBeVisible();
   await expect(nav.getByText('Users')).toBeVisible();
 
-  // The same dashboard, same period, now with the cost-bearing tiles present.
+  // The same dashboard, same period, now with a cost-bearing figure on its band…
   await expect(page.getByRole('heading', { name: 'Gross profit', level: 3 })).toBeVisible();
+
+  // …and the margin among the full set on Analytics, which staff cannot open.
+  await page.goto('/analytics');
   await expect(page.getByRole('heading', { name: 'Gross margin', level: 3 })).toBeVisible();
 });

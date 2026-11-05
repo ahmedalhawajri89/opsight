@@ -1,7 +1,16 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { getMoneyDefaults } from '@/lib/format';
-import { useBreakdown, useSummary, useTimeseries, useVat } from '@/features/analytics/useAnalytics';
+import {
+  useBreakdown,
+  useDashboard,
+  useSummary,
+  useTimeseries,
+  useVat,
+} from '@/features/analytics/useAnalytics';
+import { QuickStatsCard } from '@/features/analytics/DashboardPanels';
 import { VatCard } from '@/features/analytics/VatCard';
 import { SeasonNotice } from '@/features/analytics/SeasonNotice';
 import { MetricTile } from '@/features/analytics/MetricTile';
@@ -17,6 +26,16 @@ import { TrendChart } from '@/components/charts/TrendChart';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
 import { PeriodSelector } from '@/components/layout/PeriodSelector';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
+
+/*
+ * Business performance came here from the dashboard (with quick stats), when
+ * the dashboard became a page for the first minute of the day. Loaded on
+ * demand for the same reason it was there: Recharts measures the DOM.
+ */
+const CashFlowChart = dynamic(
+  () => import('@/components/charts/CashFlowChart').then((module) => module.CashFlowChart),
+  { ssr: false },
+);
 
 const FILTER_CONFIG = {
   defaults: {
@@ -66,6 +85,8 @@ export default function AnalyticsPage() {
   const trend = useTimeseries(period, filters.metric, filters.grain || undefined);
   const breakdown = useBreakdown(period, filters.dimension, 'net_revenue', 10);
   const vat = useVat(period);
+  // Monthly performance and the standing counts: the dashboard endpoint's.
+  const overview = useDashboard(period);
 
   // A direct URL hit by a role without the ability. Navigation hides the link,
   // but a bookmark still has to be refused.
@@ -234,6 +255,29 @@ export default function AnalyticsPage() {
         onRetry={breakdown.refetch}
         height={380}
       />
+
+      {/*
+        The business at a glance: months of revenue against costs, and the
+        standing counts. Cost-blind roles receive no cash flow, and the row
+        closes up around it.
+      */}
+      <div className="grid gap-4 lg:grid-cols-12">
+        {overview.dashboard?.cash_flow && (
+          <CashFlowChart
+            data={overview.dashboard.cash_flow}
+            currency={currency}
+            decimals={decimals}
+            loading={overview.isLoading}
+            className="lg:col-span-8"
+          />
+        )}
+        <QuickStatsCard
+          stats={overview.dashboard?.quick_stats}
+          currency={currency}
+          loading={overview.isLoading}
+          className={overview.dashboard?.cash_flow ? 'lg:col-span-4' : 'lg:col-span-12'}
+        />
+      </div>
 
       {/* Only while VAT is switched on for the business (ADR-018). */}
       <VatCard
