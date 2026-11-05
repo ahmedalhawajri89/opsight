@@ -10,6 +10,8 @@
  * translator working through a screen finds its strings together.
  */
 
+import { brand } from '@/brand.config';
+
 const en = {
   format: {
     // Percentage points: the unit after a change between two ratios.
@@ -17,7 +19,7 @@ const en = {
   },
 
   common: {
-    appName: 'Opsight',
+    appName: brand.name,
     tagline: 'Operations & Business Intelligence',
     cancel: 'Cancel',
     confirm: 'Confirm',

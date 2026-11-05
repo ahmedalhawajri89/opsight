@@ -12,6 +12,7 @@ import {
   normaliseNumerals,
 } from '@/lib/i18n/config';
 import './globals.css';
+import { brand } from '@/brand.config';
 
 // Self-hosted by next/font — no render-blocking request to a third party.
 const inter = Inter({
@@ -86,8 +87,8 @@ const FONT_STACK = [interFace, arabicFace, interFallback, arabicFallback]
   .join(', ');
 
 export const metadata = {
-  title: 'Opsight',
-  description: 'Operations & Business Intelligence',
+  title: brand.name,
+  description: brand.description,
   // The icons the browser tab and an iOS home screen use. The installed
   // application's own icons are declared in app/manifest.js (ADR-028).
   icons: {
@@ -102,7 +103,7 @@ export const metadata = {
  * in a white frame it did not choose.
  */
 export const viewport = {
-  themeColor: '#0f2a47',
+  themeColor: brand.themeColor,
 };
 
 export default async function RootLayout({ children }) {

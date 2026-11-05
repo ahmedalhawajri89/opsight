@@ -86,6 +86,9 @@ class DemoDataSeeder extends Seeder
         $this->command->info('Seeding expenses...');
         $this->seedExpenses($expenseCategories);
 
+        $this->command->info('Settling stock...');
+        $this->leaveSomeStockNeedingReorder($products);
+
         $this->command->info('Done.');
     }
 
@@ -594,6 +597,59 @@ class DemoDataSeeder extends Seeder
     /**
      * @param  Collection<int, ExpenseCategory>  $categories
      */
+    /**
+     * Leave a few products below their reorder point, and one at nothing.
+     *
+     * WHY THIS IS NOT AN ACCIDENT OF THE HISTORY. Stock is restocked every
+     * other month for fifteen random products, forty to a hundred and sixty
+     * units at a time, so demand never catches up with supply and the
+     * catalogue ends three years of trading with every line comfortably
+     * stocked. That is not what a catalogue looks like. It also leaves the
+     * inventory panel reading "low stock: none, out of stock: none", which
+     * demonstrates a feature by showing it with nothing to say, and leaves
+     * the reorder insight with nothing to fire on.
+     *
+     * So four products are brought down deliberately, through the same
+     * adjustment path a manager would use — a signed movement with a stated
+     * reason, which the ledger records like any other (ADR-014). Nothing is
+     * written behind the ledger's back: these read as real corrections
+     * because they are real corrections.
+     *
+     * @param  Collection<int, Product>  $products
+     */
+    private function leaveSomeStockNeedingReorder(Collection $products): void
+    {
+        $adjust = app(AdjustStock::class);
+        $owner = User::where('email', 'owner@opsight.test')->first();
+
+        $chosen = $products->random(4)->values();
+
+        foreach ($chosen as $index => $product) {
+            $onHand = (int) DB::table('inventory_items')
+                ->where('product_id', $product->id)
+                ->value('stock_on_hand');
+
+            $threshold = (int) $product->low_stock_threshold;
+
+            // Three land just under the reorder point; the fourth runs out.
+            $target = $index === 0 ? 0 : max(0, $threshold - mt_rand(1, 3));
+            $delta = $target - $onHand;
+
+            if ($delta >= 0) {
+                continue;
+            }
+
+            // The reason defaults to a plain adjustment, which is what these
+            // are; naming it again would only add an import.
+            $adjust->adjust(
+                $product,
+                $delta,
+                $index === 0 ? 'Stocktake: shortfall written off' : 'Stocktake correction',
+                actorId: $owner?->id,
+            );
+        }
+    }
+
     private function seedExpenses(Collection $categories): void
     {
         $owner = User::where('role', 'owner')->first();

@@ -21,6 +21,8 @@
  *  - «» for quoted names, the Arabic comma ، and question mark ؟.
  */
 
+import { brand } from '@/brand.config';
+
 const ar = {
   format: {
     // نقطة مئوية — the unit after a change between two ratios.
@@ -28,7 +30,7 @@ const ar = {
   },
 
   common: {
-    appName: 'Opsight',
+    appName: brand.name,
     tagline: 'العمليات وذكاء الأعمال',
     cancel: 'إلغاء',
     confirm: 'تأكيد',

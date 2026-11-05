@@ -16,12 +16,18 @@
  * the interface language later cannot rename a shortcut the operating
  * system already made. A product name that is the same in both languages is
  * the honest answer; the description is in English for the same reason.
+ *
+ * The name, the description and the two colours come from brand.config.js,
+ * because an install under a stale name is the one rename mistake an
+ * operating system makes permanent.
  */
+import { brand } from '@/brand.config';
+
 export default function manifest() {
   return {
-    name: 'Opsight',
-    short_name: 'Opsight',
-    description: 'Operations and business intelligence for small trading businesses.',
+    name: brand.name,
+    short_name: brand.shortName,
+    description: brand.description,
     start_url: '/dashboard',
     scope: '/',
     display: 'standalone',
@@ -32,8 +38,8 @@ export default function manifest() {
      * surface behind it. Navy matches the sidebar, so an install opens
      * looking like itself rather than flashing white.
      */
-    theme_color: '#0f2a47',
-    background_color: '#f5f7fb',
+    theme_color: brand.themeColor,
+    background_color: brand.backgroundColor,
 
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

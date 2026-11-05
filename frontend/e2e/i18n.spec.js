@@ -79,7 +79,35 @@ test.describe('a signed-in user choosing Arabic', () => {
 
       await expect(page.getByRole('heading', { name: 'لوحة المعلومات' })).toBeVisible();
       await expect(page.getByRole('heading', { name: 'الطلبات', level: 3 })).toBeVisible();
-      await expect(page.locator('main')).not.toContainText(/[٠-٩]/);
+
+      /*
+       * The figures this application formats — not everything on the screen.
+       *
+       * This used to assert on the whole of `main`, which made it a test of
+       * the seed data as much as of the preference. A catalogue in Arabic
+       * contains names like "قهوة عربية ٥٠٠ غرام", where the numeral is part
+       * of the product's name as its seller wrote it; the reader's choice of
+       * digits has nothing to say about it, and rewriting that name to pass a
+       * test would be the test dictating the data.
+       *
+       * `.tabular` is the house marker for a formatted figure, so this asks
+       * exactly the question the test is named for.
+       */
+      const figures = page.locator('main .tabular');
+
+      // Guard against a vacuous pass: if the marker ever disappears, the
+      // assertion below would hold over an empty set and prove nothing.
+      expect(await figures.count()).toBeGreaterThan(0);
+
+      /*
+       * `filter(...).toHaveCount(0)` rather than `not.toContainText(...)`:
+       * the latter takes one pattern for one element, and this locator
+       * matches every figure on the dashboard — about ninety of them — so it
+       * fails as a strict-mode violation before it ever looks at a digit.
+       * Counting the offenders asks the question of all of them at once, and
+       * names them when it fails.
+       */
+      await expect(figures.filter({ hasText: /[٠-٩]/ })).toHaveCount(0);
     } finally {
       expect(await savePreferences(page, { locale: 'en', numerals: 'latn' })).toBe(200);
     }
