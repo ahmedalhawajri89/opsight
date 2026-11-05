@@ -323,7 +323,6 @@ export function AppShell({ children }) {
    * the content column is mounted either way and is the element that moves.
    */
 
-
   /*
    * One sentence, once, so the feature is findable. It also ends the moment
    * focus mode is first used: a reader who found it does not need telling.
@@ -495,7 +494,7 @@ export function AppShell({ children }) {
           id="app-sidebar"
           data-shell-flip=""
           className={cn(
-            'sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-e border-(--color-line) bg-(--color-sidebar) md:flex [view-transition-name:app-sidebar]',
+            'sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) md:flex [view-transition-name:app-sidebar]',
             /*
              * Collapsed means a rail at every width. Not collapsed leaves
              * the decision to the layout, which is where it belonged before
@@ -526,7 +525,7 @@ export function AppShell({ children }) {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 size-full bg-(--color-text)/25"
           />
-          <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col border-e border-(--color-line) bg-(--color-sidebar) shadow-(--shadow-overlay)">
+          <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) shadow-(--shadow-overlay)">
             {sidebar}
           </aside>
         </div>
@@ -714,10 +713,10 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
         >
           {/* The wordmark needs room; the rail shows the mark alone. */}
           <span className={style.markSmall}>
-            <Logo compact />
+            <Logo compact tone="onBrand" />
           </span>
           <span className={style.markFull}>
-            <Logo />
+            <Logo tone="onBrand" />
           </span>
         </Link>
       </div>
@@ -727,7 +726,7 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
           const id = group.label ? `nav-${group.label.replaceAll('.', '-')}` : `nav-group-${index}`;
 
           return (
-            <div key={id} className={cn(index > 0 && 'mt-6')}>
+            <div key={id} className={cn(index > 0 && 'mt-5')}>
               {/*
                 A label, not a heading: as <h2>s these put headings in the
                 outline BEFORE the page's <h1>.
@@ -736,7 +735,7 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
                 <p
                   id={id}
                   className={cn(
-                    'px-3 pb-2 text-xs font-medium tracking-[0.1em] text-(--color-muted) uppercase',
+                    'px-3 pb-2 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase',
                     // On the rail the group is shown by a rule instead of a word.
                     style.group,
                   )}
@@ -747,7 +746,7 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
               {group.label && compact && (
                 <div
                   aria-hidden="true"
-                  className={cn('mx-2 mb-2 h-px bg-(--color-line)', style.rule)}
+                  className={cn('mx-2 mb-2 h-px bg-(--color-on-brand-line)/25', style.rule)}
                 />
               )}
 
@@ -793,11 +792,11 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
             aria-controls="app-sidebar"
             title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
             className={cn(
-              'flex h-9 w-full items-center rounded-(--radius-control) text-start text-sm font-medium whitespace-nowrap text-(--color-text-2) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+              'flex h-9 w-full items-center rounded-(--radius-control) text-start text-sm font-medium whitespace-nowrap text-(--color-on-brand-2) transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
               style.toggle,
             )}
           >
-            <Icon name="panel" size={18} className="text-(--color-muted)" />
+            <Icon name="panel" size={18} />
             <span className={style.label}>
               {collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
             </span>
@@ -807,23 +806,30 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
 
       {/* The promo card and version line need width; the rail omits them. */}
       <div className={cn('shrink-0 px-3 pb-4', style.foot)}>
-        <div className="rounded-(--radius-card) bg-(--color-brand-soft) p-4">
+        {/*
+          Gone on a short screen: the navigation is the sidebar's job, and at
+          900px tall this card pushed the last group's links below the fold,
+          where nothing said they were there.
+        */}
+        <div className="relative overflow-hidden rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/6 p-4 [@media(max-height:960px)]:hidden">
           <span
             aria-hidden="true"
-            className="inline-flex size-8 items-center justify-center rounded-(--radius-control) bg-(--color-brand-text) text-(--color-text-inverse)"
+            className="inline-flex size-8 items-center justify-center rounded-(--radius-control) bg-(--color-accent-on-brand) text-(--color-brand-panel)"
           >
             <Icon name="chart" size={16} strokeWidth={2} />
           </span>
-          <p className="mt-3 text-sm leading-snug font-semibold text-(--color-text)">
+          <p className="mt-3 text-sm leading-snug font-semibold text-(--color-on-brand)">
             {t('shell.promo.title')}
           </p>
           <div className="mt-1.5 flex items-end justify-between gap-2">
-            <p className="text-xs leading-relaxed text-(--color-text-2)">{t('shell.promo.body')}</p>
+            <p className="text-xs leading-relaxed text-(--color-on-brand-2)">
+              {t('shell.promo.body')}
+            </p>
             {canAnalyse && (
               <Link
                 href="/analytics"
                 aria-label={t('nav.items.analytics')}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--color-surface) text-(--color-brand-text) shadow-(--shadow-card) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover)"
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--color-accent-on-brand) text-(--color-brand-panel) transition-colors duration-(--duration-fast) hover:bg-(--color-accent-on-brand-strong)"
               >
                 <Icon name="arrowRight" size={14} className="rtl:-scale-x-100" />
               </Link>
@@ -831,7 +837,7 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
           </div>
         </div>
 
-        <p className="mt-4 px-2 text-xs text-(--color-muted)">v{packageInfo.version}</p>
+        <p className="mt-4 px-2 text-xs text-(--color-on-brand-2)">v{packageInfo.version}</p>
       </div>
     </>
   );
@@ -847,17 +853,17 @@ function NavLink({ item, active, style, compact = false }) {
       aria-current={active ? 'page' : undefined}
       title={compact ? label : undefined}
       className={cn(
-        'flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out)',
+        'relative flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out)',
         style.item,
         active
-          ? 'bg-(--color-brand-soft) font-semibold text-(--color-brand-text)'
-          : 'font-medium text-(--color-text-2) hover:bg-(--color-surface-hover) hover:text-(--color-text)',
+          ? 'bg-(--color-on-brand)/10 font-semibold text-(--color-on-brand) before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-(--radius-pill) before:bg-(--color-accent-on-brand)'
+          : 'font-medium text-(--color-on-brand-2) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
       )}
     >
       <Icon
         name={item.icon}
         size={18}
-        className={active ? 'text-(--color-brand-text)' : 'text-(--color-muted)'}
+        className={active ? 'text-(--color-accent-on-brand)' : 'text-(--color-on-brand-2)'}
       />
       {/* On the rail the name is the tooltip and the accessible name. */}
       <span className={style.label}>{label}</span>
@@ -873,7 +879,7 @@ function DisabledNavItem({ item, style, compact = false }) {
       aria-disabled="true"
       title={`${t(item.label)} — ${t('nav.comingLater')}`}
       className={cn(
-        'flex h-9 cursor-not-allowed items-center rounded-(--radius-control) text-sm font-medium text-(--color-muted)',
+        'flex h-9 cursor-not-allowed items-center rounded-(--radius-control) text-sm font-medium text-(--color-on-brand-line)',
         style.item,
       )}
     >
@@ -1021,4 +1027,3 @@ function UserMenu({ user, onSignOut }) {
     </Popover>
   );
 }
-
