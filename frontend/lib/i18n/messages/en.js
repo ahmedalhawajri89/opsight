@@ -194,6 +194,17 @@ const en = {
     emailInstead: 'Sign in with an email address instead',
     lockoutNote:
       'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
+
+    welcome: 'Welcome to {name}',
+    welcomeAccent: 'where every unit adds up',
+    heroLabel: 'About {name}',
+    featureLiveTitle: 'Live stock',
+    featureLiveBody: 'Every movement, as it is recorded',
+    featureExactTitle: 'Exact reports',
+    featureExactBody: 'Computed from the records themselves',
+    featureIsolatedTitle: 'Walled-off data',
+    featureIsolatedBody: 'Each business sees only its own',
+    copyright: '© {year} {name}. All rights reserved.',
   },
 
   register: {

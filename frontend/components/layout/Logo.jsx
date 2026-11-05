@@ -38,8 +38,10 @@ const TONES = {
 /**
  * @param {boolean} compact  The mark alone, without the name.
  * @param {'brand'|'onBrand'} tone  Which ground it is standing on.
+ * @param {'md'|'lg'} size  `lg` is the front door's, where the mark is the
+ *   first thing on the card; everywhere else it is a sidebar's.
  */
-export function Logo({ compact = false, tone = 'brand' }) {
+export function Logo({ compact = false, tone = 'brand', size = 'md' }) {
   const { t } = useI18n();
   const colours = TONES[tone] ?? TONES.brand;
 
@@ -48,8 +50,8 @@ export function Logo({ compact = false, tone = 'brand' }) {
       <svg
         aria-hidden="true"
         viewBox="0 0 32 32"
-        width="30"
-        height="30"
+        width={size === 'lg' ? 44 : 30}
+        height={size === 'lg' ? 44 : 30}
         fill="none"
         focusable="false"
       >
@@ -83,7 +85,13 @@ export function Logo({ compact = false, tone = 'brand' }) {
       </svg>
 
       {!compact && (
-        <span className={cn('text-xl font-bold tracking-tight', colours.word)}>
+        <span
+          className={cn(
+            'font-bold tracking-tight',
+            size === 'lg' ? 'text-3xl' : 'text-xl',
+            colours.word,
+          )}
+        >
           {t('common.appName')}
         </span>
       )}

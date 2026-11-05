@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { AuthLayout } from '@/features/auth/AuthLayout';
 import { RegisterForm } from '@/features/auth/RegisterForm';
+import { LINK } from '@/features/auth/formStyles';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 
@@ -27,12 +28,9 @@ export default function RegisterPage() {
       title={t('register.title')}
       subtitle={t('register.subtitle')}
       footer={
-        <p className="text-sm text-(--color-on-brand-2)">
+        <p className="text-sm text-(--color-muted)">
           {t('register.haveAccount')}{' '}
-          <Link
-            href="/login"
-            className="font-medium text-(--color-accent-on-brand) underline-offset-4 hover:underline"
-          >
+          <Link href="/login" className={LINK}>
             {t('auth.signIn')}
           </Link>
         </p>

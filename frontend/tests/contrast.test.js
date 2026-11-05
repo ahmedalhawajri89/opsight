@@ -186,14 +186,17 @@ const TEXT_PAIRS = [
   ['on-brand-2', 'brand-panel-deep', 4.5, 'secondary text over the deep edge'],
   ['success-on-brand', 'brand-panel', 4.5, '"long enough" in the password meter'],
 
+  // The accented line of the welcome on the panel, across its gradient.
+  ['accent-on-brand', 'brand-panel', 4.5, 'the accented line of the welcome'],
+  ['accent-on-brand', 'brand-panel-deep', 4.5, 'that line over the deep edge'],
+
   /*
-   * The sign-in card. It is not the panel: it is one opaque step lighter,
-   * so every pair that passes on the ink has to be checked again on it.
+   * The sign-in card is a light surface now (AuthLayout), so its text uses
+   * the application's own pairs, which are checked above. What is left
+   * specific to it is the link colour beside a muted sentence.
    */
-  ['on-brand', 'on-brand-raise', 4.5, 'the title on the sign-in card'],
-  ['on-brand-2', 'on-brand-raise', 4.5, 'the subtitle and the field labels on it'],
-  ['accent-on-brand', 'on-brand-raise', 4.5, 'a link inside the card'],
-  ['success-on-brand', 'on-brand-raise', 4.5, '"long enough" in the password meter'],
+  ['brand-text', 'surface', 4.5, 'a link on the sign-in card'],
+  ['muted', 'surface', 4.5, 'a hint on the sign-in card'],
 
   /*
    * The submit button, which reads the other way round: a dark label on the

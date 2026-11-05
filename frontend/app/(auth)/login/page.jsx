@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { AuthLayout } from '@/features/auth/AuthLayout';
 import { DemoAccounts, IS_DEMO } from '@/features/auth/DemoAccounts';
 import { LoginForm } from '@/features/auth/LoginForm';
+import { LINK } from '@/features/auth/formStyles';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 
@@ -34,31 +35,13 @@ export default function LoginPage() {
             business is not on Baydar yet, who can sign it up, and a member of
             staff, whose account an owner creates. Each is told what to do.
           */}
-          <p className="text-(--color-on-brand-2)">
+          <p className="text-(--color-muted)">
             {t('login.newBusiness')}{' '}
-            <Link
-              href="/register"
-              className="font-medium text-(--color-accent-on-brand) underline-offset-4 hover:underline"
-            >
+            <Link href="/register" className={LINK}>
               {t('login.createBusiness')}
             </Link>
           </p>
-          <p className="text-(--color-on-brand-2)">{t('login.help')}</p>
-
-          {/*
-            Its own line. Appended to the sentence above it with nothing but a
-            space, the link read as the last word of that sentence — "…resets
-            your password. Privacy" — which is a typo as far as anyone can
-            tell. It is readable without an account, which is the point of it.
-          */}
-          <p>
-            <Link
-              href="/privacy"
-              className="text-(--color-on-brand-2) underline-offset-4 hover:text-(--color-on-brand) hover:underline"
-            >
-              {t('privacy.title')}
-            </Link>
-          </p>
+          <p className="measure mx-auto text-(--color-muted)">{t('login.help')}</p>
         </div>
       }
     >

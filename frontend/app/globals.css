@@ -381,6 +381,8 @@
   --radius-control: 8px;
   --radius-panel: 12px;
   --radius-card: 16px;
+  /* The sign-in card: the one card meant to be looked at rather than read past. */
+  --radius-auth: 24px;
   --radius-pill: 999px;
 
   /*
@@ -400,6 +402,13 @@
    * how a dark surface separates from a dark ground.
    */
   --shadow-ink: 0 32px 64px -24px rgb(0 0 0 / 0.75), 0 2px 10px -4px rgb(0 0 0 / 0.5);
+
+  /*
+   * The sign-in card, standing on the light half of the door. Tinted with the
+   * panel's navy rather than neutral black, so the card and the ink beside it
+   * read as one composition instead of two pages pushed together.
+   */
+  --shadow-auth: 0 30px 70px -30px rgb(15 42 71 / 0.35), 0 2px 8px -2px rgb(15 42 71 / 0.08);
 
   /* Motion: hover and focus transitions. */
   --duration-fast: 150ms;
@@ -621,27 +630,17 @@ html[lang='ar'] [class*='tracking-'] {
 
 /*
  * ---------------------------------------------------------------------------
- * Sign-in scene: records become a figure (features/auth/LedgerScene.jsx)
+ * Sign-in scene (features/auth/WarehouseScene.jsx)
  * ---------------------------------------------------------------------------
  *
- * ITS MOTION IS NO LONGER HERE. The beats are a GSAP timeline in
- * features/auth — not because keyframes could not draw them, but because the
- * scene's captions NAME its beats: the drawing's delays lived in this file
- * and the captions' delays lived in the component, and nothing made the two
- * agree. Change a duration here and the caption naming that beat drifted off
- * it, silently, on the one screen every visitor sees first. A timeline
- * positions each beat relative to the one before, so it holds by
- * construction.
+ * ITS MOTION IS NOT HERE: the beats are a GSAP timeline, and under reduced
+ * motion the markup is already the finished picture.
  *
- * Under reduced motion useGsap never runs and the markup is already the
- * finished figure, which is the same end state this file used to collapse to.
- *
- * NOTHING FOR IT IS LEFT HERE, and the one rule that was is the reason:
- * `transform-box: fill-box` was a leftover from the keyframes, and with it
- * GSAP resolved the columns' origin to 0 0 — the top-left of each bar — so
- * they grew DOWNWARD through the baseline instead of rising from it. GSAP
- * computes SVG transform origins itself, in the element's own user units,
- * and does it correctly when CSS is not also asserting a box.
+ * One trap worth keeping in writing: do NOT add `transform-box: fill-box` to
+ * anything in the scene. With it GSAP resolved bars' origin to the top-left
+ * of each bar, so they grew DOWNWARD through the baseline instead of rising
+ * from it. GSAP computes SVG transform origins itself, correctly, when CSS is
+ * not also asserting a box.
  */
 
 /*

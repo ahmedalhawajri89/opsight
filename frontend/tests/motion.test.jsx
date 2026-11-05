@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CountUp } from '@/components/data/CountUp';
-import { LedgerScene } from '@/features/auth/LedgerScene';
-import { AuthField } from '@/features/auth/AuthField';
+import { WarehouseScene } from '@/features/auth/WarehouseScene';
 import { AUTH_MOTION, toWords } from '@/features/auth/authMotion';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
+import { gsap } from 'gsap';
 import { Flip } from 'gsap/Flip';
 
 import { useFlip } from '@/hooks/useFlip';
@@ -515,143 +515,57 @@ describe('splitting a headline for a word-by-word reveal', () => {
   });
 });
 
-describe('LedgerScene', () => {
-  it('renders the finished figure, so reduced motion needs no second code path', () => {
+describe('WarehouseScene', () => {
+  it('renders the finished picture, so reduced motion needs no second code path', () => {
     stubPreference(true);
 
-    const { container } = render(<LedgerScene />);
+    const { container } = render(<WarehouseScene />);
 
-    // The strip, the trace read across it and the point that marks "now" are
-    // all there to be seen without a timeline ever running.
-    expect(container.querySelectorAll('.ledger-col').length).toBeGreaterThan(0);
-    expect(container.querySelector('.ledger-line')).not.toBeNull();
-    expect(container.querySelector('.ledger-dot')).not.toBeNull();
+    // Every box, every bar, the trend line, the ring and the point marking
+    // "now" are on the page without a timeline ever having run.
+    expect(container.querySelectorAll('[data-scene-box]').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('[data-scene-bar]')).toHaveLength(6);
+    expect(container.querySelector('[data-scene-trend]')).not.toBeNull();
+    expect(container.querySelector('[data-scene-donut]')).not.toBeNull();
+    expect(container.querySelector('[data-scene-now]')).not.toBeNull();
   });
 
-  it('draws no rules of its own — those belong to the sheet behind it', () => {
-    // The division is the claim the screen makes: the sheet is what the
-    // business is written on, the figure is what it adds up to. If rules
-    // reappear here they will be drawn twice, at two different scales, in two
-    // components that nothing keeps in step.
-    stubPreference(false);
-
-    const { container } = render(<LedgerScene />);
-
-    expect(container.querySelectorAll('.ledger-row')).toHaveLength(0);
-  });
-
-  it('marks now with a point that does not breathe', () => {
-    /*
-     * The ring was this page's second loop. The sheet behind the card is the
-     * page's one piece of ambient life and it is over in three seconds; a
-     * point breathing underneath it would be the only thing on the screen
-     * that never settles, on a page somebody opens every morning to type two
-     * fields.
-     */
-    stubPreference(false);
-
-    const { container } = render(<LedgerScene />);
-
-    expect(container.querySelector('.ledger-ring')).toBeNull();
-    expect(container.querySelector('.ledger-dot')).not.toBeNull();
-  });
-
-  it('fits the whole trace inside the band, so its last point is never cropped', () => {
-    /*
-     * It used to be stretched across the screen with `slice`, which crops to
-     * cover — and the first thing cropped at a wide viewport was the right
-     * hand end of the line, which is the point the whole figure rises
-     * towards. `meet` fits the drawing instead.
-     */
+  it('leaves the scanner dark at rest, so the finished picture carries no stray light', () => {
+    // The sweep is the one beat that ends invisible. Its resting markup has to
+    // say so, or a reader without motion sees a glowing bar stuck on the rack.
     stubPreference(true);
 
-    const { container } = render(<LedgerScene />);
-    const svg = container.querySelector('svg');
+    const { container } = render(<WarehouseScene />);
 
-    expect(svg.getAttribute('preserveAspectRatio')).toBe('xMidYMax meet');
+    expect(container.querySelector('[data-scene-scan]').getAttribute('opacity')).toBe('0');
   });
-});
 
-describe('AuthField', () => {
-  it('shows a drawn sheet when the reader asked for less motion', () => {
-    /*
-     * The trap this guards. Everything on this screen animates IN to a
-     * resting state, so markup rendered without a timeline is the finished
-     * thing — but the obvious implementation of a reveal starts each element
-     * at opacity 0 and lets the timeline raise it. With the timeline never
-     * run, that leaves a reader who asked for less motion looking at a bare
-     * rectangle where the ground should be.
-     *
-     * So the markup renders every rule at the opacity it keeps, and the tween
-     * drives it from there.
-     */
+  it('is hidden from assistive technology', () => {
+    // The welcome and the form carry everything a reader needs; a drawing of
+    // a shelf read aloud is noise in front of a password field.
     stubPreference(true);
 
-    const { container } = render(<AuthField />);
-    const rules = container.querySelectorAll('[data-rule], [data-column]');
+    const { container } = render(<WarehouseScene />);
 
-    expect(rules.length).toBeGreaterThan(0);
-
-    rules.forEach((rule) => {
-      expect(Number(rule.style.opacity)).toBe(AUTH_MOTION.grid.rest);
-      expect(Number(rule.style.opacity)).toBeGreaterThan(0);
-    });
+    expect(container.firstElementChild.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('draws nothing that could be mistaken for a control still loading', () => {
+  it('builds nothing that repeats', () => {
     /*
-     * What this layer used to be: fourteen records, each a small dot beside a
-     * rounded grey bar. That is pixel for pixel the skeleton placeholder the
-     * rest of this application shows while a screen is still fetching — and
-     * the first thing the front door said to anyone who opened it was "not
-     * ready yet". No measurement catches that; it was simply the wrong shape
-     * to draw. A rule is one pixel tall and has no such twin.
-     */
-    stubPreference(true);
-
-    const { container } = render(<AuthField />);
-
-    container.querySelectorAll('[data-rule], [data-column]').forEach((rule) => {
-      const box = rule.className.split(' ');
-
-      // One pixel in one dimension, and no corner radius anywhere: the two
-      // things a skeleton bar has that a rule does not.
-      expect(box.includes('h-px') || box.includes('w-px')).toBe(true);
-      expect(box.some((name) => name.startsWith('rounded'))).toBe(false);
-    });
-  });
-
-  it('is hidden from a screen reader, because the sentence beside it says the same thing', () => {
-    stubPreference(false);
-
-    const { container } = render(<AuthField />);
-
-    // The whole layer, figure included: one `aria-hidden` covers everything
-    // inside it, so nothing in here needs a role or a label of its own — and
-    // anything that had one would be describing itself to no one.
-    expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelector('[role="img"]')).toBeNull();
-  });
-
-  it('rules the sheet left to right, whatever way the page runs', () => {
-    /*
-     * The sheet and the figure at its foot are one drawing, and that drawing
-     * is left to right in both languages. Mirrored with the page, the ledger's
-     * wide description column landed on the opposite side in Arabic from the
-     * figure it was ruling — the same picture reading as two different ones.
+     * An endless loop behind a password field keeps a phone's compositor
+     * awake and, past five seconds, needs a pause control (WCAG 2.2.2). The
+     * scene arrives and stops; only the pointer moves it afterwards.
      */
     stubPreference(false);
+    const spy = vi.spyOn(gsap, 'timeline');
 
-    const { container } = render(<AuthField />);
-    const columns = container.querySelectorAll('[data-column]');
+    render(<WarehouseScene />);
 
-    expect(columns.length).toBeGreaterThan(0);
+    for (const [config] of spy.mock.calls) {
+      expect(config?.repeat ?? 0).toBe(0);
+    }
 
-    columns.forEach((column) => {
-      expect(column).toHaveAttribute('dir', 'ltr');
-      expect(column.style.left).not.toBe('');
-      expect(column.style.insetInlineStart).toBe('');
-    });
+    spy.mockRestore();
   });
 });
 

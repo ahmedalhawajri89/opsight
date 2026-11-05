@@ -208,6 +208,16 @@ const ar = {
     emailInstead: 'سجّل الدخول ببريد إلكتروني بدلًا من ذلك',
     lockoutNote:
       'خمس محاولات فاشلة خلال دقيقة توقف تسجيل الدخول لدقيقة. وكل محاولة تُكتب في سجل النشاط.',
+    welcome: 'مرحباً بك في {name}',
+    welcomeAccent: 'تجارتك محسوبة بدقة',
+    heroLabel: 'عن {name}',
+    featureLiveTitle: 'مخزون لحظي',
+    featureLiveBody: 'كل حركة لحظة تسجيلها',
+    featureExactTitle: 'تقارير دقيقة',
+    featureExactBody: 'محسوبة من السجلات نفسها',
+    featureIsolatedTitle: 'بياناتك معزولة',
+    featureIsolatedBody: 'كل شركة لا ترى إلا بياناتها',
+    copyright: '© {year} {name}. جميع الحقوق محفوظة.',
   },
 
   register: {

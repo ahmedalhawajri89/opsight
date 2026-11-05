@@ -108,7 +108,7 @@ export function RegisterForm() {
           {...register(name, { required })}
         />
         {hint && !error && (
-          <p id={`${name}-hint`} className="mt-2 text-sm text-(--color-on-brand-2)">
+          <p id={`${name}-hint`} className="mt-2 text-sm text-(--color-muted)">
             {hint}
           </p>
         )}
@@ -139,7 +139,7 @@ export function RegisterForm() {
         would repeat the same word down the form and still leave a reader to
         infer the rule from its absence elsewhere.
       */}
-      <p data-auth-field className="text-sm text-(--color-on-brand-2)">
+      <p data-auth-field className="text-sm text-(--color-muted)">
         {t('register.allRequired')}
       </p>
 

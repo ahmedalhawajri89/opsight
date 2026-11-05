@@ -335,6 +335,24 @@ const PATHS = {
       <path d="M20.5 9.5h-6v-6M3.5 14.5h6v6M14.5 9.5 21 3M9.5 14.5 3 21" />
     </>
   ),
+  mail: (
+    <>
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="m3.5 7 8.5 6 8.5-6" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M12 3.5 19 6v5.5c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9V6l7-2.5Z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 16, label, className, strokeWidth = 1.75 }) {

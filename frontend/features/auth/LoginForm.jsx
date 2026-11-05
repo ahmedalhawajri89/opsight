@@ -7,7 +7,7 @@ import { gsap } from 'gsap';
 
 import { useAuth } from './AuthProvider';
 import { useFieldEntrance } from './useFieldEntrance';
-import { FIELD, FIELD_BORDER, LABEL, MESSAGE, SUBMIT } from './formStyles';
+import { FIELD, FIELD_BORDER, FIELD_ICON, HINT, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -112,25 +112,34 @@ export function LoginForm() {
         <label htmlFor="email" className={LABEL}>
           {t('auth.email')}
         </label>
-        <input
-          id="email"
-          type="email"
-          // An address is left-to-right in every language; typed into a
-          // right-to-left field its "@" and "." visibly jump around.
-          dir="ltr"
-          autoComplete="username"
-          /*
-           * The cursor starts where the work does. Not on a touch device:
-           * autofocus there throws up the keyboard over half the screen
-           * before anyone has decided to type.
-           */
-          autoFocus={typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches}
-          aria-invalid={errors.email ? 'true' : 'false'}
-          aria-describedby={errors.email ? 'email-error' : undefined}
-          className={cn(FIELD, 'mt-2', errors.email ? 'border-(--color-danger)' : FIELD_BORDER)}
-          placeholder={t('auth.emailPlaceholder')}
-          {...register('email', { required: t('auth.emailRequired') })}
-        />
+        <div className="relative mt-2">
+          <FieldGlyph name="mail" />
+          <input
+            id="email"
+            type="email"
+            // An address is left-to-right in every language; typed into a
+            // right-to-left field its "@" and "." visibly jump around.
+            dir="ltr"
+            autoComplete="username"
+            /*
+             * The cursor starts where the work does. Not on a touch device:
+             * autofocus there throws up the keyboard over half the screen
+             * before anyone has decided to type.
+             */
+            autoFocus={
+              typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches
+            }
+            aria-invalid={errors.email ? 'true' : 'false'}
+            aria-describedby={errors.email ? 'email-error' : undefined}
+            className={cn(
+              FIELD,
+              FIELD_ICON,
+              errors.email ? 'border-(--color-danger)' : FIELD_BORDER,
+            )}
+            placeholder={t('auth.emailPlaceholder')}
+            {...register('email', { required: t('auth.emailRequired') })}
+          />
+        </div>
         {errors.email && (
           <p id="email-error" className={MESSAGE}>
             {errors.email.message}
@@ -143,6 +152,7 @@ export function LoginForm() {
           {t('auth.password')}
         </label>
         <div className="relative mt-2">
+          <FieldGlyph name="lock" />
           <input
             id="password"
             type={revealed ? 'text' : 'password'}
@@ -163,6 +173,7 @@ export function LoginForm() {
              */
             className={cn(
               FIELD,
+              FIELD_ICON,
               // eslint-disable-next-line no-restricted-syntax -- deliberate, see above
               'pr-12',
               errors.password ? 'border-(--color-danger)' : FIELD_BORDER,
@@ -189,7 +200,7 @@ export function LoginForm() {
             aria-pressed={revealed}
             aria-controls="password"
             aria-label={revealed ? t('auth.hidePassword') : t('auth.showPassword')}
-            className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors duration-(--duration-fast) hover:text-(--color-text)"
+            className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors duration-(--duration-fast) hover:text-(--color-brand-text)"
           >
             <Icon name={revealed ? 'eyeOff' : 'eye'} size={18} />
           </button>
@@ -221,15 +232,15 @@ export function LoginForm() {
       <label data-auth-field className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
-          className="mt-1 size-4 shrink-0 cursor-pointer accent-(--color-brand)"
+          className="mt-1 size-4 shrink-0 cursor-pointer rounded accent-(--color-brand)"
           aria-describedby="remember-hint"
           {...register('remember')}
         />
         <span>
-          <span className="block text-sm font-medium text-(--color-on-brand)">
+          <span className="block text-sm font-semibold text-(--color-text)">
             {t('auth.remember')}
           </span>
-          <span id="remember-hint" className="block text-sm text-(--color-on-brand-2)">
+          <span id="remember-hint" className={cn('block', HINT)}>
             {t('auth.rememberHint', { days: REMEMBER_DAYS })}
           </span>
         </span>
@@ -237,7 +248,13 @@ export function LoginForm() {
 
       <button data-auth-field type="submit" disabled={isSubmitting} className={SUBMIT}>
         {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
-        {!isSubmitting && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
+        {!isSubmitting && (
+          <Icon
+            name="arrowRight"
+            size={18}
+            className="transition-transform duration-(--duration-base) group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1"
+          />
+        )}
       </button>
 
       {/*
@@ -246,10 +263,26 @@ export function LoginForm() {
         does, before they spend the remaining three.
       */}
       {failures > 0 && (
-        <p role="status" className="measure text-sm text-(--color-on-brand-2)">
+        <p role="status" className={cn('measure', HINT)}>
           {t('login.lockoutNote')}
         </p>
       )}
     </form>
+  );
+}
+
+/**
+ * The glyph at the start of a field. Decorative — the label names the field —
+ * and it lets clicks through to the input beneath it. Physical left, with the
+ * left-to-right content it introduces (formStyles.js).
+ */
+function FieldGlyph({ name }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-y-0 left-0 inline-flex w-11 items-center justify-center text-(--color-muted)"
+    >
+      <Icon name={name} size={18} />
+    </span>
   );
 }

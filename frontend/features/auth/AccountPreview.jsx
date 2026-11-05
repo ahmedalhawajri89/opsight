@@ -40,14 +40,11 @@ export function AccountPreview({ businessName, name, roleLabel }) {
   if (!business && !person) return null;
 
   return (
-    <div
-      aria-hidden="true"
-      className="mt-5 border-t border-(--color-on-brand-line)/30 pt-4 select-none"
-    >
+    <div aria-hidden="true" className="mt-5 border-t border-(--color-line) pt-4 select-none">
       {/* The house eyebrow label: 12px, 0.1em, uppercase — and the tracking
           is neutralised under Arabic by globals.css, where it would break the
           cursive join (UI_UX_DIRECTION §10). */}
-      <p className="text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase">
+      <p className="text-xs font-medium tracking-[0.1em] text-(--color-muted) uppercase">
         {t('register.preview')}
       </p>
 
@@ -57,16 +54,16 @@ export function AccountPreview({ businessName, name, roleLabel }) {
           {initials(person)}
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-(--color-on-brand)" dir="auto">
+          <span className="block truncate text-sm font-semibold text-(--color-text)" dir="auto">
             {person || t('register.previewNamePlaceholder')}
           </span>
-          <span className="block text-xs text-(--color-on-brand-2)">{roleLabel}</span>
+          <span className="block text-xs text-(--color-muted)">{roleLabel}</span>
         </span>
       </div>
 
       {business && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-(--color-on-brand-2)">
-          <Icon name="home" size={12} className="shrink-0 text-(--color-on-brand-2)" />
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-(--color-muted)">
+          <Icon name="home" size={12} className="shrink-0 text-(--color-muted)" />
           <span className="truncate" dir="auto">
             {business}
           </span>
@@ -78,7 +75,7 @@ export function AccountPreview({ businessName, name, roleLabel }) {
         because it is the one place the first-name rule becomes visible.
       */}
       {person && (
-        <p className="mt-3 text-sm text-(--color-on-brand-2)" dir="auto">
+        <p className="mt-3 text-sm text-(--color-muted)" dir="auto">
           {greeting(t, person)}
         </p>
       )}
