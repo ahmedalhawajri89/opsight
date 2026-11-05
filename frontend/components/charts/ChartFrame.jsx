@@ -139,30 +139,40 @@ export function ChartFrame({
             {/*
               The same rows, available to assistive technology without the
               reader having to find and press the toggle first.
+
+              IN A DIV, NOT ON THE TABLE. `sr-only` shrinks a box to 1px, but
+              a table's height is a minimum that its rows override: a 30-day
+              table stayed 739px tall, invisible, and lengthened the page past
+              its own column. That broke the sidebar's `sticky`, which can
+              only hold within its parent, so the sidebar scrolled away and
+              left an empty strip. The div clips; the table inside keeps every
+              row and its table semantics.
             */}
-            <table className="sr-only">
-              <caption>{title}</caption>
-              <thead>
-                <tr>
-                  {columns.map((column) => (
-                    <th key={column.key} scope="col">
-                      {column.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={row.key ?? row.bucket ?? index}>
+            <div className="sr-only">
+              <table>
+                <caption>{title}</caption>
+                <thead>
+                  <tr>
                     {columns.map((column) => (
-                      <td key={column.key}>
-                        {column.cell ? column.cell(row) : (row[column.key] ?? '—')}
-                      </td>
+                      <th key={column.key} scope="col">
+                        {column.header}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr key={row.key ?? row.bucket ?? index}>
+                      {columns.map((column) => (
+                        <td key={column.key}>
+                          {column.cell ? column.cell(row) : (row[column.key] ?? '—')}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
 
