@@ -49,7 +49,7 @@ export function FilterBar({ onClear, activeCount = 0, className, children }) {
     <div
       className={cn(
         'sticky top-13 z-20 -mx-4 mb-4 flex flex-wrap items-end gap-2 border-b border-(--color-line) lg:top-0',
-        'bg-(--color-ground)/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
+        'bg-(--color-ground)/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 min-[120rem]:-mx-8 min-[120rem]:px-8',
         className,
       )}
     >

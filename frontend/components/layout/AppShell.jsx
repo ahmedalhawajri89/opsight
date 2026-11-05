@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { gsap } from 'gsap';
 
 import packageInfo from '@/package.json';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -34,6 +36,7 @@ import { useFocusMode } from '@/hooks/useFocusMode';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 /**
  * Navigation is filtered by ability, so a user never sees a link that would
@@ -291,7 +294,14 @@ export function AppShell({ children }) {
   );
 
   const sidebar = (
-    <Sidebar groups={groups} current={current} canAnalyse={can('analytics.view')} variant="full" />
+    <Sidebar
+      groups={groups}
+      current={current}
+      canAnalyse={can('analytics.view')}
+      business={user?.business?.name}
+      role={user?.role_label}
+      variant="full"
+    />
   );
 
   /*
@@ -494,26 +504,38 @@ export function AppShell({ children }) {
           id="app-sidebar"
           data-shell-flip=""
           className={cn(
-            'sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) md:flex [view-transition-name:app-sidebar]',
+            // Above the content and on the page's own ground: a full-bleed
+            // toolbar in a page reaches past its column, and the margin
+            // around the floating panel would otherwise show it.
+            'sticky top-0 z-10 hidden h-dvh w-[80px] shrink-0 flex-col bg-(--color-ground) p-3 pe-0 md:flex [view-transition-name:app-sidebar]',
             /*
              * Collapsed means a rail at every width. Not collapsed leaves
              * the decision to the layout, which is where it belonged before
              * anyone was asked.
              */
-            !sidebarCollapsed && 'lg:w-[216px]',
+            !sidebarCollapsed && 'lg:w-[236px]',
           )}
         >
-          <Sidebar
-            groups={groups}
-            current={current}
-            canAnalyse={can('analytics.view')}
-            variant={sidebarCollapsed ? 'rail' : 'auto'}
-            collapsed={sidebarCollapsed}
-            onToggle={() => {
-              captureShell();
-              toggleSidebar();
-            }}
-          />
+          {/*
+            A panel standing off the edge of the screen rather than a strip
+            fastened to it: the same rounded ink as the dashboard's band, so
+            the two read as one family of surfaces.
+          */}
+          <div className="relative isolate flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-(--radius-auth) bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) shadow-(--shadow-auth)">
+            <Sidebar
+              groups={groups}
+              current={current}
+              canAnalyse={can('analytics.view')}
+              business={user?.business?.name}
+              role={user?.role_label}
+              variant={sidebarCollapsed ? 'rail' : 'auto'}
+              collapsed={sidebarCollapsed}
+              onToggle={() => {
+                captureShell();
+                toggleSidebar();
+              }}
+            />
+          </div>
         </aside>
       )}
 
@@ -525,7 +547,7 @@ export function AppShell({ children }) {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 size-full bg-(--color-text)/25"
           />
-          <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) shadow-(--shadow-overlay)">
+          <aside className="absolute inset-y-0 start-0 isolate flex w-64 max-w-[85vw] flex-col overflow-hidden bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) shadow-(--shadow-overlay)">
             {sidebar}
           </aside>
         </div>
@@ -670,6 +692,7 @@ const SIDEBAR = {
     markSmall: 'hidden',
     markFull: 'block',
     foot: '',
+    card: '',
     toggle: 'hidden',
   },
   auto: {
@@ -682,6 +705,7 @@ const SIDEBAR = {
     markSmall: 'lg:hidden',
     markFull: 'hidden lg:block',
     foot: 'hidden lg:block',
+    card: 'hidden lg:flex',
     toggle: 'justify-center lg:justify-start lg:gap-3 lg:px-3',
   },
   rail: {
@@ -694,18 +718,80 @@ const SIDEBAR = {
     markSmall: '',
     markFull: 'hidden',
     foot: 'hidden',
+    card: 'hidden',
     toggle: 'justify-center',
   },
 };
 
-function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = false, onToggle }) {
-  const { t } = useI18n();
+function Sidebar({
+  groups,
+  current,
+  canAnalyse,
+  business,
+  role,
+  variant = 'full',
+  collapsed = false,
+  onToggle,
+}) {
+  const { t, dir } = useI18n();
   const style = SIDEBAR[variant] ?? SIDEBAR.full;
   const compact = variant !== 'full';
+  const reduced = useReducedMotion();
+  const track = useRef(null);
+  const marker = useRef(null);
+  const placed = useRef(false);
+
+  /*
+   * THE LIT BLOCK IS ONE ELEMENT THAT MOVES, not a background on each link.
+   * Changing page slides it from the old link to the new, so the eye follows
+   * where it went instead of hunting for which row changed colour. Measured
+   * from the DOM after layout, so it is right in either direction, folded or
+   * open, and after the fonts arrive (the observer re-measures on any resize).
+   * A page with no link of its own, such as the profile, simply has none.
+   */
+  useLayoutEffect(() => {
+    const wrapper = track.current;
+    const block = marker.current;
+
+    if (!wrapper || !block) return undefined;
+
+    function place(animate) {
+      const link = wrapper.querySelector('a[aria-current="page"]');
+
+      if (!link) {
+        gsap.set(block, { autoAlpha: 0 });
+
+        return;
+      }
+
+      const target = {
+        y: link.getBoundingClientRect().top - wrapper.getBoundingClientRect().top,
+        height: link.offsetHeight,
+        autoAlpha: 1,
+      };
+
+      if (animate && placed.current && !reduced) {
+        gsap.to(block, { ...target, duration: 0.5, ease: 'power3.out' });
+      } else {
+        gsap.set(block, target);
+      }
+
+      placed.current = true;
+    }
+
+    place(true);
+
+    const observer = new ResizeObserver(() => place(false));
+    observer.observe(wrapper);
+
+    return () => observer.disconnect();
+  }, [current, variant, reduced, dir]);
 
   return (
     <>
-      <div className={cn('flex h-16 shrink-0 items-center', style.header)}>
+      <SidebarArt />
+
+      <div className={cn('flex h-14 shrink-0 items-center', style.header)}>
         <Link
           href="/dashboard"
           className="rounded-(--radius-control)"
@@ -721,54 +807,94 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
         </Link>
       </div>
 
-      <nav aria-label={t('nav.main')} className={cn('flex-1 overflow-y-auto pt-1 pb-4', style.nav)}>
-        {groups.map((group, index) => {
-          const id = group.label ? `nav-${group.label.replaceAll('.', '-')}` : `nav-group-${index}`;
+      {business && (
+        <div
+          className={cn(
+            'mx-3 mb-3 shrink-0 items-center gap-3 rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/5 p-2.5',
+            style.card,
+          )}
+        >
+          <span
+            aria-hidden="true"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-(--radius-control) bg-linear-to-br from-(--color-accent-on-brand-strong) to-(--color-accent-on-brand) text-sm font-bold text-(--color-brand-panel)"
+          >
+            {initials(business).slice(0, 2)}
+          </span>
+          <span className="min-w-0">
+            <span
+              className="block truncate text-sm font-semibold text-(--color-on-brand)"
+              dir="auto"
+            >
+              {business}
+            </span>
+            {role && (
+              <span className="block truncate text-xs text-(--color-on-brand-2)">{role}</span>
+            )}
+          </span>
+        </div>
+      )}
 
-          return (
-            <div key={id} className={cn(index > 0 && 'mt-5')}>
-              {/*
+      <nav aria-label={t('nav.main')} className={cn('flex-1 overflow-y-auto pt-1 pb-4', style.nav)}>
+        <div ref={track} className="relative">
+          {/*
+          The lit block. Painted under the links (they sit above it), with a
+          bar of the accent at the start of the line.
+        */}
+          <span
+            ref={marker}
+            aria-hidden="true"
+            className="pointer-events-none invisible absolute inset-x-0 top-0 rounded-(--radius-control) bg-(--color-on-brand)/10 before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-(--radius-pill) before:bg-(--color-accent-on-brand)"
+          />
+          {groups.map((group, index) => {
+            const id = group.label
+              ? `nav-${group.label.replaceAll('.', '-')}`
+              : `nav-group-${index}`;
+
+            return (
+              <div key={id} className={cn(index > 0 && 'mt-3.5')}>
+                {/*
                 A label, not a heading: as <h2>s these put headings in the
                 outline BEFORE the page's <h1>.
               */}
-              {group.label && (
-                <p
-                  id={id}
-                  className={cn(
-                    'px-3 pb-2 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase',
-                    // On the rail the group is shown by a rule instead of a word.
-                    style.group,
-                  )}
-                >
-                  {t(group.label)}
-                </p>
-              )}
-              {group.label && compact && (
-                <div
-                  aria-hidden="true"
-                  className={cn('mx-2 mb-2 h-px bg-(--color-on-brand-line)/25', style.rule)}
-                />
-              )}
-
-              <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
-                {group.items.map((item) => (
-                  <li key={item.href}>
-                    {item.ready === false ? (
-                      <DisabledNavItem item={item} style={style} compact={compact} />
-                    ) : (
-                      <NavLink
-                        item={item}
-                        active={current === item.href}
-                        style={style}
-                        compact={compact}
-                      />
+                {group.label && (
+                  <p
+                    id={id}
+                    className={cn(
+                      'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase',
+                      // On the rail the group is shown by a rule instead of a word.
+                      style.group,
                     )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
+                  >
+                    {t(group.label)}
+                  </p>
+                )}
+                {group.label && compact && (
+                  <div
+                    aria-hidden="true"
+                    className={cn('mx-2 mb-2 h-px bg-(--color-on-brand-line)/25', style.rule)}
+                  />
+                )}
+
+                <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
+                  {group.items.map((item) => (
+                    <li key={item.href}>
+                      {item.ready === false ? (
+                        <DisabledNavItem item={item} style={style} compact={compact} />
+                      ) : (
+                        <NavLink
+                          item={item}
+                          active={current === item.href}
+                          style={style}
+                          compact={compact}
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       </nav>
 
       {/*
@@ -843,6 +969,29 @@ function Sidebar({ groups, current, canAnalyse, variant = 'full', collapsed = fa
   );
 }
 
+/**
+ * The sidebar's ground: a faint grid of points, a warm glow low down, and the
+ * accent curve from the sign-in panel sweeping across the foot. Behind
+ * everything and `aria-hidden`; nothing to read and nothing to press.
+ */
+function SidebarArt() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+      <div className="absolute inset-0 bg-[radial-gradient(var(--color-on-brand-line)_1px,transparent_1px)] bg-size-[18px_18px] opacity-[0.1] [mask-image:linear-gradient(to_bottom,black,transparent_60%)]" />
+      <div className="absolute -bottom-24 start-1/2 size-64 -translate-x-1/2 rounded-full bg-(--color-accent-on-brand)/15 blur-3xl rtl:translate-x-1/2" />
+      <svg
+        viewBox="0 0 100 60"
+        preserveAspectRatio="none"
+        className="absolute inset-x-0 bottom-0 h-8 w-full rtl:-scale-x-100"
+        focusable="false"
+      >
+        <path d="M0 38C26 20 52 54 100 26V60H0Z" className="fill-(--color-accent-on-brand)/80" />
+        <path d="M0 44C28 28 54 60 100 32V60H0Z" className="fill-(--color-brand-panel-deep)" />
+      </svg>
+    </div>
+  );
+}
+
 function NavLink({ item, active, style, compact = false }) {
   const { t } = useI18n();
   const label = t(item.label);
@@ -856,7 +1005,7 @@ function NavLink({ item, active, style, compact = false }) {
         'relative flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out)',
         style.item,
         active
-          ? 'bg-(--color-on-brand)/10 font-semibold text-(--color-on-brand) before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-(--radius-pill) before:bg-(--color-accent-on-brand)'
+          ? 'font-semibold text-(--color-on-brand)'
           : 'font-medium text-(--color-on-brand-2) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
       )}
     >

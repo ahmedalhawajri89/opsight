@@ -16,7 +16,13 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * label changes with it, so a screen reader hears "leave focus mode, pressed"
  * rather than a button whose name no longer matches what it does.
  */
-export function FocusControls({ focused, fullscreen, supported, onToggleFocus, onToggleFullscreen }) {
+export function FocusControls({
+  focused,
+  fullscreen,
+  supported,
+  onToggleFocus,
+  onToggleFullscreen,
+}) {
   const { t } = useI18n();
 
   const focusLabel = focused ? t('shell.focus.leave') : t('shell.focus.enter');
