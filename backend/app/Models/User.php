@@ -8,6 +8,7 @@ use App\Authorization\Ability;
 use App\Authorization\AbilityRegistry;
 use App\Authorization\Role;
 use App\Domain\Audit\RecordsActivity;
+use App\Notifications\ResetPasswordNotification;
 use App\Observers\AuditObserver;
 use App\Support\Tenancy\ScopedToBusiness;
 use Database\Factories\UserFactory;
@@ -139,5 +140,16 @@ class User extends Authenticatable
     public function isOwner(): bool
     {
         return $this->role === Role::Owner;
+    }
+
+    /**
+     * The reset link, in the account's own language rather than whatever
+     * language the forgot-password screen happened to be in.
+     *
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify((new ResetPasswordNotification($token))->locale($this->locale ?? 'en'));
     }
 }

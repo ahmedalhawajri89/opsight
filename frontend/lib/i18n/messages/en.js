@@ -183,13 +183,37 @@ const en = {
     signInAs: 'Sign in as {role}',
   },
 
+  reset: {
+    forgotLink: 'Forgot password?',
+    forgotTitle: 'Forgot your password?',
+    forgotSubtitle:
+      'Enter the address you sign in with, and we will email you a link to choose a new one.',
+    send: 'Email me a link',
+    sending: 'Sending…',
+    sentTitle: 'Check your inbox',
+    sent: 'If an account uses this address, a link to choose a new password is on its way:',
+    sentExpiry:
+      'It works for an hour, and only once. Look in spam if it has not arrived in a few minutes.',
+    differentAddress: 'Use a different address',
+    backToSignIn: 'Back to sign in',
+    title: 'Choose a new password',
+    subtitle: 'Pick one you have not used here before.',
+    forAccount: 'For the account',
+    newPassword: 'New password',
+    save: 'Save the new password',
+    saving: 'Saving…',
+    incomplete: 'This link is incomplete. Open it again from the email, or ask for a new one.',
+    askAgain: 'Ask for a new link',
+    done: 'Your password is changed. Sign in with the new one.',
+  },
+
   login: {
     headline:
       'Every figure here is computed from the records it came from, the moment you ask for it.',
     formSubtitle: 'Use the account your owner created for you.',
     newBusiness: 'New to Baydar?',
     createBusiness: 'Set up your business',
-    help: 'Working for a business already on Baydar? Its owner creates your account, and resets your password.',
+    help: 'Working for a business already on Baydar? Its owner creates your account.',
     switchLanguage: 'Switch the interface to {language}',
     emailInstead: 'Sign in with an email address instead',
     lockoutNote:
@@ -618,6 +642,7 @@ const en = {
         deactivated: 'deactivated',
         role_changed: 'role changed',
         password_changed: 'password changed',
+        password_reset: 'password reset by email',
       },
     },
     explore: {
@@ -1081,6 +1106,7 @@ const en = {
       deactivated: 'deactivated',
       role_changed: 'role changed',
       password_changed: 'password changed',
+      password_reset: 'password reset by email',
     },
     fields: {
       name: 'name',

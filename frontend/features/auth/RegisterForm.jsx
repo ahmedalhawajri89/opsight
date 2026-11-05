@@ -23,7 +23,7 @@ const SERVER_FIELDS = { business_name: 'businessName' };
  * browser. The API does not publish its password policy, so this is the one
  * number the client has to restate — see the missing-field note in ADR-033.
  */
-const PASSWORD_MINIMUM = 12;
+export const PASSWORD_MINIMUM = 12;
 
 /**
  * A business signs itself up, and its owner lands in the setup wizard

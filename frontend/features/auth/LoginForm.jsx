@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { gsap } from 'gsap';
 
 import { useAuth } from './AuthProvider';
 import { useFieldEntrance } from './useFieldEntrance';
-import { FIELD, FIELD_BORDER, FIELD_ICON, HINT, LABEL, MESSAGE, SUBMIT } from './formStyles';
+import { FieldGlyph } from './FieldGlyph';
+import { FIELD, FIELD_BORDER, FIELD_ICON, HINT, LABEL, LINK, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -57,6 +59,8 @@ export function LoginForm() {
   } = useForm({ defaultValues: { email: '', password: '', remember: false } });
 
   const sessionExpired = searchParams.get('expired') === '1';
+  // Back from choosing a new password (ResetPasswordForm).
+  const passwordReset = searchParams.get('reset') === '1';
 
   async function onSubmit(values) {
     setFormError(null);
@@ -86,6 +90,16 @@ export function LoginForm() {
 
   return (
     <form ref={fields} onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      {passwordReset && (
+        <p
+          role="status"
+          className="flex items-start gap-3 rounded-(--radius-control) bg-(--color-success-soft) px-4 py-3 text-sm text-(--color-success)"
+        >
+          <Icon name="check" size={16} className="mt-1 shrink-0" />
+          {t('reset.done')}
+        </p>
+      )}
+
       {sessionExpired && (
         <p
           role="status"
@@ -229,22 +243,33 @@ export function LoginForm() {
         the two things a person needs to decide, stated at the moment they
         decide. The whole row is the target, well past 44px wide.
       */}
-      <label data-auth-field className="flex cursor-pointer items-start gap-3">
-        <input
-          type="checkbox"
-          className="mt-1 size-4 shrink-0 cursor-pointer rounded accent-(--color-brand)"
-          aria-describedby="remember-hint"
-          {...register('remember')}
-        />
-        <span>
-          <span className="block text-sm font-semibold text-(--color-text)">
-            {t('auth.remember')}
+      <div data-auth-field className="flex items-start justify-between gap-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 shrink-0 cursor-pointer rounded accent-(--color-brand)"
+            aria-describedby="remember-hint"
+            {...register('remember')}
+          />
+          <span>
+            <span className="block text-sm font-semibold text-(--color-text)">
+              {t('auth.remember')}
+            </span>
+            <span id="remember-hint" className={cn('block', HINT)}>
+              {t('auth.rememberHint', { days: REMEMBER_DAYS })}
+            </span>
           </span>
-          <span id="remember-hint" className={cn('block', HINT)}>
-            {t('auth.rememberHint', { days: REMEMBER_DAYS })}
-          </span>
-        </span>
-      </label>
+        </label>
+
+        {/*
+          Beside the choice it sits next to in every sign-in form a reader
+          has met, and out of the tab order's way: it comes after the
+          checkbox, before the button.
+        */}
+        <Link href="/forgot-password" className={cn(LINK, 'shrink-0 text-sm leading-6')}>
+          {t('reset.forgotLink')}
+        </Link>
+      </div>
 
       <button data-auth-field type="submit" disabled={isSubmitting} className={SUBMIT}>
         {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
@@ -268,21 +293,5 @@ export function LoginForm() {
         </p>
       )}
     </form>
-  );
-}
-
-/**
- * The glyph at the start of a field. Decorative — the label names the field —
- * and it lets clicks through to the input beneath it. Physical left, with the
- * left-to-right content it introduces (formStyles.js).
- */
-function FieldGlyph({ name }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-y-0 left-0 inline-flex w-11 items-center justify-center text-(--color-muted)"
-    >
-      <Icon name={name} size={18} />
-    </span>
   );
 }

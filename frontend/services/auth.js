@@ -24,6 +24,19 @@ export function completeOnboarding({ country }) {
   return api.post('/onboarding/complete', { country });
 }
 
+/**
+ * Asks for a link to choose a new password. The server answers 202 with the
+ * same sentence whether or not the address has an account.
+ */
+export function forgotPassword({ email }) {
+  return api.post('/auth/forgot-password', { email });
+}
+
+/** A new password from an emailed link. Not signed in afterwards. */
+export function resetPassword({ token, email, password }) {
+  return api.post('/auth/reset-password', { token, email, password });
+}
+
 export function logout() {
   return api.post('/auth/logout');
 }

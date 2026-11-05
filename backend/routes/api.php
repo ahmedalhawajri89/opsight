@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -49,6 +50,16 @@ Route::prefix('v1')->group(function (): void {
     Route::post('auth/register', [AuthController::class, 'register'])
         ->middleware('throttle:register')
         ->name('auth.register');
+
+    // A forgotten password: a link by email, then a new one from that link.
+    // Both answer the same way whether or not the address has an account.
+    Route::post('auth/forgot-password', [PasswordResetController::class, 'forgot'])
+        ->middleware('throttle:password-reset')
+        ->name('auth.password.forgot');
+
+    Route::post('auth/reset-password', [PasswordResetController::class, 'reset'])
+        ->middleware('throttle:password-reset')
+        ->name('auth.password.reset');
 
     /*
      * Webhook deliveries (ADR-027). Unauthenticated by necessity — a provider
