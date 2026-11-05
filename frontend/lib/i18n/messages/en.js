@@ -578,6 +578,25 @@ const en = {
   },
 
   dashboard: {
+    band: {
+      subtitle: 'How the business is doing, and what to do next.',
+      actions: 'Quick actions',
+      newOrder: 'New order',
+      inventory: 'Inventory',
+      analytics: 'Analytics',
+    },
+    attention: {
+      title: 'Needs your attention',
+      subtitle: 'Checks on these figures and on current stock, with the next step for each.',
+      more: '{count} more',
+    },
+    tabs: {
+      label: 'Latest activity',
+      orders: 'Latest orders',
+      products: 'Best sellers',
+      inventory: 'Stock',
+      activity: 'Activity',
+    },
     kpi: {
       expand: 'Show the trend for {metric}',
       collapse: 'Hide the trend for {metric}',

@@ -185,6 +185,10 @@ const TEXT_PAIRS = [
   ['on-brand', 'brand-panel-deep', 4.5, 'headline over the deep edge of the panel'],
   ['on-brand-2', 'brand-panel-deep', 4.5, 'secondary text over the deep edge'],
   ['success-on-brand', 'brand-panel', 4.5, '"long enough" in the password meter'],
+  // The dashboard's band of ink: a figure's change, rising or falling.
+  ['success-on-brand', 'brand-panel-deep', 4.5, 'a rise on the dashboard band'],
+  ['danger-on-brand', 'brand-panel', 4.5, 'a fall on the dashboard band'],
+  ['danger-on-brand', 'brand-panel-deep', 4.5, 'a fall over the deep edge of the band'],
 
   // The accented line of the welcome on the panel, across its gradient.
   ['accent-on-brand', 'brand-panel', 4.5, 'the accented line of the welcome'],

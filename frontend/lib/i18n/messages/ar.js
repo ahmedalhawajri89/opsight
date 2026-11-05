@@ -583,6 +583,25 @@ const ar = {
   },
 
   dashboard: {
+    band: {
+      subtitle: 'كيف يسير عملك، وما الخطوة التالية.',
+      actions: 'إجراءات سريعة',
+      newOrder: 'طلب جديد',
+      inventory: 'المخزون',
+      analytics: 'التحليلات',
+    },
+    attention: {
+      title: 'يحتاج انتباهك',
+      subtitle: 'فحوصات على هذه الأرقام وعلى المخزون الحالي، ومعها الخطوة التالية لكل منها.',
+      more: '{count} أخرى',
+    },
+    tabs: {
+      label: 'آخر النشاط',
+      orders: 'أحدث الطلبات',
+      products: 'الأكثر مبيعًا',
+      inventory: 'المخزون',
+      activity: 'النشاط',
+    },
     kpi: {
       expand: 'أظهر اتجاه {metric}',
       collapse: 'أخفِ اتجاه {metric}',

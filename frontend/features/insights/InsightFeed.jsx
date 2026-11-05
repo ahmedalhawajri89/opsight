@@ -23,7 +23,7 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * an icon shape, a word, and a tone — so no reader depends on colour to tell a
  * warning from good news (UI_UX_DIRECTION.md §6).
  */
-const SEVERITY = {
+export const SEVERITY = {
   warning: {
     label: 'insights.severity.warning',
     icon: 'alert',
@@ -173,7 +173,7 @@ function InsightRow({ insight }) {
  * is what is actually true, and it is the state most readers will meet most
  * often.
  */
-function EmptyFeed({ suppressed }) {
+export function EmptyFeed({ suppressed }) {
   const { t } = useI18n();
 
   if (suppressed?.message) {
@@ -218,7 +218,7 @@ const DESTINATION_LABELS = {
  * server, so the rule decides where its evidence lives rather than this
  * component guessing from the id.
  */
-function linkFor(link) {
+export function linkFor(link) {
   if (!link || typeof link !== 'object') return null;
 
   const { href, ...params } = link;

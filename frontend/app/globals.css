@@ -130,6 +130,8 @@
    * same value, because the panel is the same ink in both.
    */
   --success-on-brand: #4ade80;
+  /* A fall on the ink: `--danger` is tuned for white and turns to mud on navy. */
+  --danger-on-brand: #fca5a5;
 
   /*
    * SEMANTIC — meaning only, never decoration. Each has a soft tint for the
@@ -242,6 +244,8 @@
    * same value, because the panel is the same ink in both.
    */
   --success-on-brand: #4ade80;
+  /* A fall on the ink: `--danger` is tuned for white and turns to mud on navy. */
+  --danger-on-brand: #fca5a5;
 
   --success: #4ade80;
   --success-soft: #10281a;
@@ -303,6 +307,7 @@
   --color-accent-on-brand-strong: var(--accent-on-brand-strong);
   --color-on-brand-raise: var(--on-brand-raise);
   --color-success-on-brand: var(--success-on-brand);
+  --color-danger-on-brand: var(--danger-on-brand);
 
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
