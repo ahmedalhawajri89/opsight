@@ -26,6 +26,19 @@ import en from '@/lib/i18n/messages/en';
 const root = process.cwd();
 const read = (...parts) => readFileSync(join(root, ...parts), 'utf8');
 
+/** Every message in a dictionary, keyed by its dotted path. */
+function flatten(node, prefix = '', out = {}) {
+  for (const [key, value] of Object.entries(node)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    if (typeof value === 'string') out[path] = value;
+    else if (value && typeof value === 'object') flatten(value, path, out);
+  }
+
+  return out;
+}
+
+
 describe('the brand', () => {
   it('gives each language the wordmark it should draw', () => {
     /*
@@ -38,6 +51,25 @@ describe('the brand', () => {
     expect(en.common.appName).toBe(brand.name);
     expect(ar.common.appName).toBe(brand.nameAr);
     expect(brand.nameAr).not.toBe(brand.name);
+  });
+
+  it('leaves no Latin wordmark stranded in an Arabic sentence', () => {
+    /*
+     * The rename put "Baydar" inside thirteen Arabic sentences — "جديد على
+     * Baydar؟" — because a find and replace does not know which script it is
+     * standing in. An Arabic reader should meet the product in their own
+     * script, and an English one in theirs; this is what catches the next
+     * rename doing the same thing.
+     */
+    const strandedInArabic = Object.entries(flatten(ar)).filter(([, value]) =>
+      String(value).includes(brand.name),
+    );
+    const strandedInEnglish = Object.entries(flatten(en)).filter(([, value]) =>
+      String(value).includes(brand.nameAr),
+    );
+
+    expect(strandedInArabic.map(([key]) => key)).toEqual([]);
+    expect(strandedInEnglish.map(([key]) => key)).toEqual([]);
   });
 
   it('reaches the offline page, which cannot import it', () => {

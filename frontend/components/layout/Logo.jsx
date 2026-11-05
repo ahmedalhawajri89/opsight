@@ -53,26 +53,33 @@ export function Logo({ compact = false, tone = 'brand' }) {
         fill="none"
         focusable="false"
       >
-        {/* The floor, seen from above. */}
-        <circle cx="16" cy="16" r="13.2" stroke="currentColor" strokeWidth="2.4" />
-
         {/*
-          The wind line, where the chaff goes. It is the one element that
-          keeps its own colour at every size: below about 20px the bars close
-          up into a block and this line is what still reads as sorting rather
-          than as a filled circle.
+          An open shape, not a ring.
+
+          The first mark put a ring, a line and three bars inside 32 units,
+          and at the 30px it is actually drawn at they closed into a dark
+          blob. What is left is the gathered yield alone — a floor swept to
+          a level, the line where the wind took the chaff above it, and one
+          grain still in the air so the line reads as sorting rather than as
+          a rim.
+
+          Two attempts in between were made against the wrong evidence: the
+          selector taking the screenshot was grabbing the language button’s
+          globe instead of this, so the mark was redrawn twice to fix a fault
+          it never had. The lesson is in the method, not the shape — crop a
+          mark by what it IS, never by what comes first on the page.
         */}
+        <path d="M28.6 18.6 A12.6 12.6 0 0 1 3.4 18.6 Z" fill="currentColor" />
+
         <path
-          d="M6.4 17.4h19.2"
+          d="M3.4 18.6h25.2"
           stroke="var(--color-accent-on-brand, currentColor)"
-          strokeWidth="2.4"
+          strokeWidth="2.8"
           strokeLinecap="round"
         />
 
-        {/* The grain beneath it, counted — a measure that is also a figure. */}
-        <rect x="9.6" y="19.8" width="3" height="4.2" rx="1.1" fill="currentColor" />
-        <rect x="14.5" y="18.4" width="3" height="5.6" rx="1.1" fill="currentColor" />
-        <rect x="19.4" y="21" width="3" height="3" rx="1.1" fill="currentColor" />
+        {/* One grain still in the air, so the line reads as sorting. */}
+        <circle cx="21.5" cy="11.5" r="1.9" fill="currentColor" opacity="0.55" />
       </svg>
 
       {!compact && (
