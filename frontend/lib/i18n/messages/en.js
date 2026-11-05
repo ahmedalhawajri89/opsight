@@ -208,6 +208,7 @@ const en = {
   },
 
   login: {
+    orContinue: 'or continue with',
     headline:
       'Every figure here is computed from the records it came from, the moment you ask for it.',
     formSubtitle: 'Use the account your owner created for you.',

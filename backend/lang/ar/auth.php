@@ -15,6 +15,9 @@ return [
     'password' => 'كلمة المرور غير صحيحة.',
     'throttle' => 'محاولات دخول كثيرة. يُرجى المحاولة مجددًا بعد :seconds ثانية.',
 
+    'google_failed' => 'تعذّر على Google تأكيد تسجيل الدخول هذا. حاول مجددًا، أو سجّل الدخول بكلمة المرور.',
+    'google_no_account' => 'لا يوجد حساب نشط في بيدر بعنوان Google هذا. سجّل الدخول بكلمة المرور، أو اطلب من المالك إضافة هذا العنوان.',
+
     /*
      * A forgotten password. `reset_link_sent` is the same sentence whether or
      * not the address has an account (PasswordResetController).

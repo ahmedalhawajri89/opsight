@@ -8,6 +8,14 @@ export function login({ email, password, remember = false }) {
   return api.post('/auth/login', { email, password, remember });
 }
 
+/**
+ * Signing in with a Google ID token (Google Identity Services). Signs in an
+ * account that already exists; the server never creates one from Google.
+ */
+export function loginWithGoogle({ credential }) {
+  return api.post('/auth/google', { credential });
+}
+
 /** A new business and its owner; the owner comes back signed in (ADR-024). */
 export function register({ businessName, name, email, password, locale }) {
   return api.post('/auth/register', {

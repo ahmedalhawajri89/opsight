@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { AuthLayout } from '@/features/auth/AuthLayout';
 import { DemoAccounts, IS_DEMO } from '@/features/auth/DemoAccounts';
+import { GoogleSignIn } from '@/features/auth/GoogleSignIn';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { LINK } from '@/features/auth/formStyles';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -55,6 +56,7 @@ export default function LoginPage() {
         <Suspense fallback={null}>
           <DemoAccounts />
           <EmailSignIn />
+          <GoogleSignIn />
         </Suspense>
       )}
     </AuthLayout>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\GoogleSignInController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\IntegrationController;
@@ -50,6 +51,11 @@ Route::prefix('v1')->group(function (): void {
     Route::post('auth/register', [AuthController::class, 'register'])
         ->middleware('throttle:register')
         ->name('auth.register');
+
+    // Google, for an account that already exists; 404 until it is configured.
+    Route::post('auth/google', GoogleSignInController::class)
+        ->middleware('throttle:login')
+        ->name('auth.google');
 
     // A forgotten password: a link by email, then a new one from that link.
     // Both answer the same way whether or not the address has an account.

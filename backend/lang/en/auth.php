@@ -19,6 +19,9 @@ return [
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
+    'google_failed' => 'Google could not confirm that sign-in. Try again, or sign in with your password.',
+    'google_no_account' => 'No active Baydar account uses this Google address. Sign in with your password, or ask your owner to add this address.',
+
     /*
      * A forgotten password. `reset_link_sent` is the same sentence whether or
      * not the address has an account (PasswordResetController).

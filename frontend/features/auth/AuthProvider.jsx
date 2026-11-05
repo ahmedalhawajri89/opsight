@@ -89,6 +89,18 @@ export function AuthProvider({ children }) {
     [queryClient],
   );
 
+  // Google answers with the user too, exactly as a password sign-in does.
+  const loginWithGoogle = useCallback(
+    async (credential) => {
+      const response = await authService.loginWithGoogle({ credential });
+
+      queryClient.setQueryData(AUTH_QUERY_KEY, response.data);
+
+      return response.data;
+    },
+    [queryClient],
+  );
+
   // Sign-up signs the new owner in: the response is the user, as for login.
   const register = useCallback(
     async (details) => {
@@ -146,11 +158,12 @@ export function AuthProvider({ children }) {
       isAuthenticated,
       can: (ability) => canAbility(user?.abilities, ability),
       login,
+      loginWithGoogle,
       register,
       replaceUser,
       logout,
     }),
-    [user, isPending, isAuthenticated, login, register, replaceUser, logout],
+    [user, isPending, isAuthenticated, login, loginWithGoogle, register, replaceUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

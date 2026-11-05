@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Listeners\RecordAuthActivity;
 use App\Models\User;
+use App\Support\Auth\GoogleIdTokens;
 use App\Support\Localization\Localizer;
 use App\Support\Tenancy\BusinessAgnosticUserProvider;
 use App\Support\Tenancy\CurrentBusiness;
@@ -65,6 +66,10 @@ class AppServiceProvider extends ServiceProvider
          * test. That is before route model binding, so {order} is looked up
          * inside the right business from the start (ADR-023).
          */
+        $this->app->singleton(GoogleIdTokens::class, static fn (): GoogleIdTokens => new GoogleIdTokens(
+            config('services.google.client_id') !== null ? (string) config('services.google.client_id') : null,
+        ));
+
         Auth::provider('business-agnostic', static fn ($app, array $config): BusinessAgnosticUserProvider => new BusinessAgnosticUserProvider($app['hash'], $config['model']));
 
         Event::listen(Authenticated::class, static function (Authenticated $event): void {

@@ -30,6 +30,16 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+     * Signing in with Google (GoogleSignInController). The OAuth client ID
+     * from Google Cloud Console; no secret is needed, because the browser gets
+     * an ID token directly and the server only checks it. Unset, the endpoint
+     * is a 404 and the sign-in page shows no Google button.
+     */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

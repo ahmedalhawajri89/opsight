@@ -81,6 +81,29 @@ The seeder creates one account per role. All use the password `password`.
 Sign in as Staff and then as Owner to see the authorization boundary: the
 difference is produced entirely server-side, not hidden in the browser.
 
+### Forgotten passwords
+
+"Forgot password?" on the sign-in screen emails a link to `/reset-password`.
+Locally `MAIL_MAILER=log`, so nothing is sent: the email, link included, is
+written to `backend/storage/logs/laravel.log`. In production set a real
+mailer and `FRONTEND_URL`, which the link is built from. Links last an hour
+and work once; the demo's shared accounts are never sent one.
+
+### Sign in with Google (optional)
+
+Off until configured, and then it only signs in accounts that already exist,
+matched by the address Google has verified. It never creates an account.
+
+1. In Google Cloud Console, create an OAuth 2.0 Client ID of type
+   **Web application**, and add the frontend's address (for example
+   `http://localhost:3000`) under **Authorised JavaScript origins**. No
+   redirect URI and no client secret are needed.
+2. Put the Client ID in both apps, and restart them:
+   - `backend/.env`: `GOOGLE_CLIENT_ID=…`
+   - `frontend/.env.local`: `NEXT_PUBLIC_GOOGLE_CLIENT_ID=…`
+
+Without both, the API answers 404 and the sign-in page shows no Google button.
+
 ## No hosts-file entries needed
 
 Sanctum's SPA cookie mode needs the frontend and API to share a cookie domain.
