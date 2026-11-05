@@ -106,7 +106,26 @@ export function AuthLayout({ title, subtitle, children, footer }) {
         described above; `py-12` keeps a focused field's ring — which sits
         2px outside its border — clear of the column's own clipped edge.
       */}
-      <div className="relative z-10 max-h-dvh w-full max-w-110 overflow-y-auto px-5 py-12">
+      <div className="relative z-10 max-h-dvh w-full max-w-110 overflow-y-auto px-5 py-12 [@media(max-height:660px)]:py-5">
+        {/*
+          The scrim, and it is the column’s shape rather than the screen’s.
+
+          This began as a radial clearing sized to the viewport — 44% by 48%
+          of it — which is a shape the content column never has. Audited
+          across ten sizes, the submit button, the remember row and both
+          footer links were sitting on the figure’s columns at almost every
+          one of them. A mask for text has to be measured from the text.
+
+          Tied to the column with negative insets, it covers whatever the
+          column turns out to be at any width, and feathers out so it reads
+          as the page darkening behind the form rather than as a card on
+          top of it.
+        */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-x-10 -inset-y-8 -z-10 bg-[radial-gradient(ellipse_at_center,rgb(8_22_38/0.92)_0%,rgb(8_22_38/0.88)_55%,transparent_88%)]"
+        />
+
         <div data-auth-rise>
           <Logo tone="onBrand" />
 
@@ -131,7 +150,7 @@ export function AuthLayout({ title, subtitle, children, footer }) {
             )}
           </p>
 
-          <div className="mt-8 border-t border-(--color-on-brand-line)/30 pt-7">
+          <div className="mt-8 border-t border-(--color-on-brand-line)/30 pt-7 [@media(max-height:660px)]:mt-5 [@media(max-height:660px)]:pt-5">
             <h1 className="text-xl font-semibold tracking-tight text-(--color-on-brand)">
               {title}
             </h1>

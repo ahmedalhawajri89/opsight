@@ -137,15 +137,6 @@ export function AuthField() {
         <LedgerScene fill />
       </div>
 
-      {/*
-        The clearing, and it has to come LAST.
-
-        A radial wash of the panel’s own ink over the middle, so everything
-        behind the form fades out instead of being read through it. Painted
-        before the figure it masked only the records, and the figure’s trace
-        ran across the fields regardless.
-      */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_62%_46%_at_50%_50%,var(--brand-panel)_42%,transparent_82%)] sm:bg-[radial-gradient(ellipse_44%_48%_at_50%_50%,var(--brand-panel)_40%,transparent_80%)]" />
     </div>
   );
 }
