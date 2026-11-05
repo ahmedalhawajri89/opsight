@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CountUp } from '@/components/data/CountUp';
 import { LedgerScene } from '@/features/auth/LedgerScene';
-import { RecordStream } from '@/features/auth/RecordStream';
+import { AuthField } from '@/features/auth/AuthField';
 import { AUTH_MOTION, toWords } from '@/features/auth/authMotion';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
@@ -539,19 +539,22 @@ describe('LedgerScene', () => {
     expect(container.querySelectorAll('.ledger-row')).toHaveLength(0);
   });
 
-  it('leaves the pulsing ring invisible when nothing drives it', () => {
-    // The one element whose resting state is not its finished state: a ring
-    // frozen mid-pulse would read as a bug, so without the timeline there is
-    // simply the bronze point.
-    stubPreference(true);
+  it('marks now with a point that does not breathe', () => {
+    /*
+     * The ring was this page's second loop, on a figure that is now a small
+     * block in the margin of a sheet somebody opens every morning. One
+     * ambient element is the budget, and the drifting records spend it.
+     */
+    stubPreference(false);
 
     const { container } = render(<LedgerScene />);
 
-    expect(container.querySelector('.ledger-ring')).toHaveAttribute('opacity', '0');
+    expect(container.querySelector('.ledger-ring')).toBeNull();
+    expect(container.querySelector('.ledger-dot')).not.toBeNull();
   });
 });
 
-describe('RecordStream', () => {
+describe('AuthField', () => {
   it('shows a still field of records when the reader asked for less motion', () => {
     /*
      * The trap this guards. Everything else on the panel animates IN to a
@@ -567,7 +570,7 @@ describe('RecordStream', () => {
      */
     stubPreference(true);
 
-    const { container } = render(<RecordStream />);
+    const { container } = render(<AuthField />);
     const records = container.querySelectorAll('[data-record]');
 
     expect(records.length).toBeGreaterThan(0);
@@ -581,10 +584,12 @@ describe('RecordStream', () => {
   it('is hidden from a screen reader, because the sentence beside it says the same thing', () => {
     stubPreference(false);
 
-    const { container } = render(<RecordStream />);
+    const { container } = render(<AuthField />);
 
-    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
-    // No role, no label, nothing to stop on: it is texture.
+    // The whole layer, figure included: one `aria-hidden` covers everything
+    // inside it, so nothing in here needs a role or a label of its own — and
+    // anything that had one would be describing itself to no one.
+    expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
     expect(container.querySelector('[role="img"]')).toBeNull();
   });
 
@@ -597,7 +602,7 @@ describe('RecordStream', () => {
      */
     stubPreference(false);
 
-    const { container } = render(<RecordStream />);
+    const { container } = render(<AuthField />);
 
     container.querySelectorAll('[data-record]').forEach((record) => {
       expect(record).toHaveAttribute('dir', 'ltr');

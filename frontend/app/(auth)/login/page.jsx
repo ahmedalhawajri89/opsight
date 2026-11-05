@@ -34,16 +34,16 @@ export default function LoginPage() {
             business is not on Baydar yet, who can sign it up, and a member of
             staff, whose account an owner creates. Each is told what to do.
           */}
-          <p className="text-(--color-text-2)">
+          <p className="text-(--color-on-brand-2)">
             {t('login.newBusiness')}{' '}
             <Link
               href="/register"
-              className="font-medium text-(--color-brand-text) underline-offset-4 hover:underline"
+              className="font-medium text-(--color-accent-on-brand) underline-offset-4 hover:underline"
             >
               {t('login.createBusiness')}
             </Link>
           </p>
-          <p className="text-(--color-muted)">
+          <p className="text-(--color-on-brand-2)">
             {t('login.help')}{' '}
             {/* Readable without an account, which is the point of it. */}
             <Link href="/privacy" className="underline-offset-4 hover:underline">

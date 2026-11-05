@@ -8,7 +8,7 @@ import { useAuth } from './AuthProvider';
 import { AccountPreview } from './AccountPreview';
 import { PasswordMeter } from './PasswordMeter';
 import { useFieldEntrance } from './useFieldEntrance';
-import { FIELD, LABEL, MESSAGE, SUBMIT } from './formStyles';
+import { FIELD, FIELD_BORDER, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { cn } from '@/lib/cn';
@@ -107,12 +107,12 @@ export function RegisterForm() {
           className={cn(
             FIELD,
             'mt-2',
-            error ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
+            error ? 'border-(--color-danger)' : FIELD_BORDER,
           )}
           {...register(name, { required })}
         />
         {hint && !error && (
-          <p id={`${name}-hint`} className="mt-2 text-sm text-(--color-muted)">
+          <p id={`${name}-hint`} className="mt-2 text-sm text-(--color-on-brand-2)">
             {hint}
           </p>
         )}
@@ -143,7 +143,7 @@ export function RegisterForm() {
         would repeat the same word down the form and still leave a reader to
         infer the rule from its absence elsewhere.
       */}
-      <p data-auth-field className="text-sm text-(--color-muted)">
+      <p data-auth-field className="text-sm text-(--color-on-brand-2)">
         {t('register.allRequired')}
       </p>
 
@@ -196,7 +196,7 @@ export function RegisterForm() {
               FIELD,
               // eslint-disable-next-line no-restricted-syntax -- deliberate, see LoginForm
               'pr-12',
-              errors.password ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
+              errors.password ? 'border-(--color-danger)' : FIELD_BORDER,
             )}
             {...register('password', { required: t('auth.passwordRequired') })}
           />

@@ -194,8 +194,7 @@ const en = {
     emailInstead: 'Sign in with an email address instead',
     lockoutNote:
       'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
-    scene: {
-      label: 'An illustration: the single rising figure that the records above it add up to.',
+    scene: {
       records: 'Records',
       computed: 'Computed on request',
       figure: 'The figure',

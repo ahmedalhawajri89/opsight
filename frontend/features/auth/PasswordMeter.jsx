@@ -40,7 +40,7 @@ export function PasswordMeter({ value, minimum }) {
    */
   if (length === 0) {
     return (
-      <p id="password-hint" className="mt-2 space-y-1 text-sm text-(--color-muted)">
+      <p id="password-hint" className="mt-2 space-y-1 text-sm text-(--color-on-brand-2)">
         <span className="block">{t('register.passwordHint', { min: minimum })}</span>
         <span className="block">{t('register.passwordBreached')}</span>
       </p>
@@ -56,12 +56,12 @@ export function PasswordMeter({ value, minimum }) {
     <div id="password-hint" className="mt-3">
       <span
         aria-hidden="true"
-        className="block h-1 w-full overflow-hidden rounded-(--radius-pill) bg-(--color-line)"
+        className="block h-1 w-full overflow-hidden rounded-(--radius-pill) bg-(--color-on-brand)/20"
       >
         <span
           className={cn(
             'block h-full rounded-(--radius-pill) transition-[width,background-color] duration-(--duration-fast)',
-            met ? 'bg-(--color-success)' : 'bg-(--color-muted)',
+            met ? 'bg-(--color-success-on-brand)' : 'bg-(--color-on-brand-2)',
           )}
           style={{ width: `${Math.min(100, (length / minimum) * 100)}%` }}
         />
@@ -75,7 +75,7 @@ export function PasswordMeter({ value, minimum }) {
         role="status"
         className={cn(
           'mt-2 flex items-start gap-2 text-sm',
-          met ? 'text-(--color-success)' : 'text-(--color-muted)',
+          met ? 'text-(--color-success-on-brand)' : 'text-(--color-on-brand-2)',
         )}
       >
         {met && <Icon name="check" size={15} className="mt-0.5 shrink-0" />}
@@ -84,7 +84,7 @@ export function PasswordMeter({ value, minimum }) {
         </span>
       </p>
 
-      <p className="mt-1 text-sm text-(--color-muted)">{t('register.passwordBreached')}</p>
+      <p className="mt-1 text-sm text-(--color-on-brand-2)">{t('register.passwordBreached')}</p>
     </div>
   );
 }

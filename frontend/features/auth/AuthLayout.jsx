@@ -3,61 +3,53 @@
 import { gsap } from 'gsap';
 
 import { AUTH_MOTION, toWords } from './authMotion';
-import { LedgerScene } from '@/features/auth/LedgerScene';
-import { RecordStream } from '@/features/auth/RecordStream';
+import { AuthField } from './AuthField';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { FocusColumn } from '@/components/layout/FocusColumn';
 import { Logo } from '@/components/layout/Logo';
 import { Icon } from '@/components/ui/Icon';
 import { useGsap } from '@/hooks/useGsap';
 
 /**
- * The frame shared by signing in and signing up.
+ * The frame shared by signing in and signing up: one screen, one field.
  *
- * TWO HALVES, AND ONE OF THEM IS SOLID. The page that came before this was
- * two pale cards floating on a pale ground: nothing anchored the eye, the
- * brand colour appeared only inside one button, and half the height was
- * empty. A door seen for ten seconds by someone who does not yet know what
- * this product is has to say something in that time.
+ * TWO LAYOUTS CAME BEFORE THIS. The first was two panes — the form on light
+ * ground, a panel of brand ink beside it — which is the front door of almost
+ * every business product: Stripe, Linear, Notion, Vercel. The second was a
+ * ledger sheet, which escaped that shape but scrolled, and a page that
+ * scrolls before anyone has typed anything is a page that did not decide what
+ * mattered.
  *
- * So the end edge is a full-height panel of brand ink, and the task sits on
- * light ground beside it. This is the ONE page-sized wash of brand colour in
- * the product, and the exception is written into globals.css beside the rule
- * it breaks: a dashboard flooded with navy fights its own figures all day,
- * and a door has no figures of its own to fight.
+ * This one fills the viewport exactly and never scrolls. The field behind it
+ * is the product's own argument at wallpaper scale (AuthField), and the form
+ * stands in a clearing at the centre of it.
  *
- * The form is at the START edge — the right in Arabic — because whoever
- * comes here comes to type, not to read. It is a bare column rather than a
- * card: with a solid panel beside it, a bordered box on the light side is
- * one frame too many.
+ * HOW NOTHING SCROLLS, AND WHY THE INNER COLUMN STILL CAN.
  *
- * ONE COMPOSITION, NOT THREE BLOCKS. The panel was a mark, a sentence and a
- * figure with a void between each pair — about 120px under the logo and
- * 240px under the tagline on a screen 980px tall. The voids are now the
- * argument: records drift through the upper one (RecordStream) and the
- * figure they became fills the lower one, with the sentence that explains
- * both sitting between them. Top to bottom the panel reads records →
- * sentence → figure, which is the product in one glance.
+ * `h-dvh` + `overflow-hidden` on this element means the page itself has no
+ * scrollbar at any size — that is the whole point. But a 360px phone with the
+ * keyboard open has perhaps 300px of usable height, and clipping a password
+ * field out of reach is worse than a scrollbar. So the inner column carries
+ * `overflow-y-auto`: at every ordinary size it never engages, and in the one
+ * case where the form genuinely cannot fit it is still reachable.
  *
- * It also means the thesis is legible standing still. It used to live
- * entirely inside a three-second animation, so anyone who reloaded, or
- * looked up a moment late, met a bar chart.
+ * ONE `h1`, AND IT IS THE FORM'S TITLE. The font test reads the FIRST `h1` in
+ * the document and asserts it is drawn in IBM Plex Sans Arabic rather than a
+ * system fallback (e2e/i18n.spec.js). A headline promoted to `h1` for visual
+ * weight would silently move that assertion onto the wrong element. The
+ * sentence above the form is a `<p>` that happens to be large.
  *
- * THE FORM DOES NOT WAIT FOR THE SHOW. The task is done inside a third of a
- * second and the panel's argument unfolds afterwards. GSAP moves transforms
- * and opacity only, so a field takes a click and a keystroke mid-flight. The
- * fields are animated by the form itself, which knows when they exist
- * (useFieldEntrance).
+ * THE FORM STAYS ON LIGHT FIELDS, ON PURPOSE. Everything else here is ink,
+ * but the inputs keep `--color-surface`. A browser paints its own background
+ * into an autofilled field and cannot be overridden from the page, so a
+ * transparent input on ink arrives as a pale rectangle the moment a password
+ * manager fills it. Labels and helper text take the on-brand tokens instead
+ * (formStyles.js).
  *
  * The headline arrives word by word — never letter by letter. Arabic letters
  * change shape according to their neighbours, so a word split into
  * per-character spans renders as disconnected isolated forms, and the first
  * sentence a reader meets would be subtly wrong in one of the two languages
  * (authMotion.js).
- *
- * The two panes carry view-transition names, so switching language lets them
- * glide to their mirrored sides instead of jumping (globals.css, "Language
- * transition").
  */
 export function AuthLayout({ title, subtitle, children, footer }) {
   const { t, locale, setPreferences } = useI18n();
@@ -87,71 +79,45 @@ export function AuthLayout({ title, subtitle, children, footer }) {
   );
 
   return (
-    <main ref={root} className="grid min-h-dvh bg-(--color-ground) lg:grid-cols-[46fr_54fr]">
-      {/* ---- The task ---------------------------------------------------- */}
-      <section className="order-2 flex flex-col px-6 pb-12 sm:px-8 lg:order-1 lg:py-10 [view-transition-name:login-form]">
-        {/*
-          Before sign-in there is no account to save to, so this switches the
-          page and is remembered in a cookie; the choice stored on the account
-          takes over once the reader signs in. It names the language it will
-          switch TO, in that language's own script.
-        */}
-        <FocusColumn className="flex justify-end pt-6 lg:pt-0">
-          <button
-            type="button"
-            onClick={() => setPreferences({ locale: other })}
-            aria-label={t('login.switchLanguage', { language: otherName })}
-            className="inline-flex h-10 items-center gap-2 rounded-(--radius-control) px-3 text-sm font-medium text-(--color-text-2) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)"
-          >
-            <Icon name="globe" size={15} />
-            <span lang={other}>{otherName}</span>
-          </button>
-        </FocusColumn>
+    <main
+      ref={root}
+      className="relative grid h-dvh place-items-center overflow-hidden bg-[linear-gradient(165deg,var(--color-brand-panel),var(--color-brand-panel-deep))] [view-transition-name:login-form]"
+    >
+      <AuthField />
 
-        <FocusColumn className="flex flex-1 flex-col justify-center py-10">
-          <div data-auth-rise>
-            <h1 className="text-3xl font-semibold tracking-tight text-(--color-text)">{title}</h1>
-            <p className="measure mt-2 text-base text-(--color-text-2)">{subtitle}</p>
-
-            <div className="mt-8">{children}</div>
-          </div>
-
-          {footer}
-        </FocusColumn>
-      </section>
-
-      {/* ---- What it is -------------------------------------------------- */}
       {/*
-        Full-bleed to three edges, with no radius and no margin. A rounded
-        card here would read as a picture OF the product placed on a page;
-        running it to the edge makes it the page's own spine.
-
-        The gradient stays inside one hue — ink to deeper ink. A second hue
-        would be the launch-page wash this palette spent a version removing.
+        Before sign-in there is no account to save to, so this switches the
+        page and is remembered in a cookie; the choice stored on the account
+        takes over once the reader signs in. It names the language it will
+        switch TO, in that language's own script.
       */}
-      <section className="relative order-1 flex flex-col justify-between overflow-hidden bg-[linear-gradient(180deg,var(--color-brand-panel),var(--color-brand-panel-deep))] px-6 py-10 text-(--color-on-brand) sm:px-10 lg:order-2 lg:px-14 lg:py-12 [view-transition-name:login-scene]">
-        {/*
-          Behind everything. Everything after it is lifted onto
-          `relative z-10`, because an absolutely positioned sibling paints
-          over static ones whatever the source order.
+      <button
+        type="button"
+        onClick={() => setPreferences({ locale: other })}
+        aria-label={t('login.switchLanguage', { language: otherName })}
+        className="absolute top-4 end-4 z-20 inline-flex h-11 items-center gap-2 rounded-(--radius-control) px-3 text-sm font-medium text-(--color-on-brand-2) transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/10 hover:text-(--color-on-brand) md:h-9"
+      >
+        <Icon name="globe" size={15} />
+        <span lang={other}>{otherName}</span>
+      </button>
 
-          `overflow-hidden` on the section keeps a record that drifts past the
-          foot of the panel from lengthening the page.
-        */}
-        <RecordStream />
-
-        <div className="relative z-10">
+      {/*
+        The clearing. `max-h-dvh` with its own scroll is the safety valve
+        described above; `py-12` keeps a focused field's ring — which sits
+        2px outside its border — clear of the column's own clipped edge.
+      */}
+      <div className="relative z-10 max-h-dvh w-full max-w-110 overflow-y-auto px-5 py-12">
+        <div data-auth-rise>
           <Logo tone="onBrand" />
-        </div>
 
-        <div className="relative z-10 mt-10 lg:mt-0">
           {/*
-            One <p> with the words wrapped, not a list: it is a sentence, and
-            a screen reader must still read it as one. The inner span is what
-            moves; the outer clips it, so each word rises out of the line
-            rather than sliding over the one above.
+            Large, and still a paragraph. See the note about the first `h1`.
+            It goes on a short screen: at that height the form is the page,
+            and a sentence above it would push the submit button off. The threshold is
+            740px because 720 is where the inner column first had to scroll
+            — and 720 is also the height the browser suite runs at.
           */}
-          <p className="max-w-2xl text-3xl leading-[1.25] font-semibold text-balance lg:text-[2.6rem]">
+          <p className="mt-7 text-xl leading-[1.35] font-semibold text-balance text-(--color-on-brand) sm:text-2xl [@media(max-height:740px)]:hidden">
             {toWords(t('login.headline')).map((word, index) =>
               word.trim() === '' ? (
                 word
@@ -165,19 +131,18 @@ export function AuthLayout({ title, subtitle, children, footer }) {
             )}
           </p>
 
-          <p className="measure mt-5 text-lg text-(--color-on-brand-2)">{t('common.tagline')}</p>
+          <div className="mt-8 border-t border-(--color-on-brand-line)/30 pt-7">
+            <h1 className="text-xl font-semibold tracking-tight text-(--color-on-brand)">
+              {title}
+            </h1>
+            <p className="measure mt-1.5 text-base text-(--color-on-brand-2)">{subtitle}</p>
+
+            <div className="mt-7">{children}</div>
+          </div>
         </div>
 
-        {/*
-          The figure is the argument, so it is given the foot of the panel
-          rather than squeezed under the text. Below lg it goes entirely:
-          on a phone the panel is a band above the form, and a band is no
-          place for a three-beat story nobody will scroll back to.
-        */}
-        <div className="relative z-10 hidden lg:block">
-          <LedgerScene />
-        </div>
-      </section>
+        {footer}
+      </div>
     </main>
   );
 }

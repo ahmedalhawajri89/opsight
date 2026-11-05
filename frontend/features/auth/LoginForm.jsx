@@ -7,7 +7,7 @@ import { gsap } from 'gsap';
 
 import { useAuth } from './AuthProvider';
 import { useFieldEntrance } from './useFieldEntrance';
-import { FIELD, LABEL, MESSAGE, SUBMIT } from './formStyles';
+import { FIELD, FIELD_BORDER, LABEL, MESSAGE, SUBMIT } from './formStyles';
 import { Icon } from '@/components/ui/Icon';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -130,7 +130,7 @@ export function LoginForm() {
           className={cn(
             FIELD,
             'mt-2',
-            errors.email ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
+            errors.email ? 'border-(--color-danger)' : FIELD_BORDER,
           )}
           placeholder={t('auth.emailPlaceholder')}
           {...register('email', { required: t('auth.emailRequired') })}
@@ -169,7 +169,7 @@ export function LoginForm() {
               FIELD,
               // eslint-disable-next-line no-restricted-syntax -- deliberate, see above
               'pr-12',
-              errors.password ? 'border-(--color-danger)' : 'border-(--color-line-strong)',
+              errors.password ? 'border-(--color-danger)' : FIELD_BORDER,
             )}
             /*
              * Caps Lock is the quiet reason a correct password is refused,
@@ -230,10 +230,10 @@ export function LoginForm() {
           {...register('remember')}
         />
         <span>
-          <span className="block text-sm font-medium text-(--color-text)">
+          <span className="block text-sm font-medium text-(--color-on-brand)">
             {t('auth.remember')}
           </span>
-          <span id="remember-hint" className="block text-sm text-(--color-muted)">
+          <span id="remember-hint" className="block text-sm text-(--color-on-brand-2)">
             {t('auth.rememberHint', { days: REMEMBER_DAYS })}
           </span>
         </span>
@@ -250,7 +250,7 @@ export function LoginForm() {
         does, before they spend the remaining three.
       */}
       {failures > 0 && (
-        <p role="status" className="measure text-sm text-(--color-muted)">
+        <p role="status" className="measure text-sm text-(--color-on-brand-2)">
           {t('login.lockoutNote')}
         </p>
       )}

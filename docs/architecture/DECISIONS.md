@@ -1754,3 +1754,73 @@ KPI was a 14x14 button.
 judgement about which of its columns a reader can live without, and the one dropped is
 always the one somebody wanted. Only `RecentOrdersCard` drops a column — the date, from a
 list already ordered by date and captioned as such.
+
+---
+
+## ADR-035 — The sign-in page is one screen, and the graphic is the argument
+
+**Status:** Accepted (2026-11)
+**Affects:** `features/auth/AuthLayout.jsx`, `AuthField.jsx`, `LedgerScene.jsx`,
+`formStyles.js`, both auth forms, `AccountPreview`, `PasswordMeter`, `DemoAccounts`
+**Amends:** `UI_UX_DIRECTION.md` §5 (the form is no longer on light ground)
+
+**Context.** Two layouts came before this one. The first was two panes — the form on light
+ground, a panel of brand ink beside it — which is the front door of almost every business
+product: Stripe, Linear, Notion, Vercel. The second was a ledger sheet, which escaped that
+shape but scrolled, and a page that scrolls before anyone has typed anything is a page that
+did not decide what mattered.
+
+Reviewing the published galleries of login design was useful mostly as a negative result:
+they repeat the same two shapes, and what they name as current is full-bleed imagery behind
+the form, dark mode, and micro-animation. None of it differentiates anything, because all of
+it is available to everyone. What is not available to anyone else is this product's own
+argument.
+
+**Decision.**
+
+1. **One viewport, and it never scrolls.** `h-dvh` + `overflow-hidden` on the page. The
+   inner column carries `overflow-y-auto` as a valve, not a layout: measured at six sizes
+   from 1920×1080 to 360×640, it never engages and the submit button is fully on screen at
+   every one. It exists because a 360px phone with the keyboard open has perhaps 300px of
+   height, and clipping a password field out of reach is worse than a scrollbar.
+
+2. **The graphic is the thesis at wallpaper scale.** Records fall across the field and the
+   figure they add up to stands on a horizon at the foot — the same claim the sentence
+   makes, drawn. A stock illustration would have been the thing everyone else does.
+
+3. **It arrives and then it stops.** No `repeat` anywhere. An endless loop behind a password
+   field keeps a phone's compositor awake for as long as the page is open, and WCAG 2.2.2
+   asks for a visible pause control once moving content runs past five seconds — a control
+   this screen should not have to carry. Everything settles in about 2.5 seconds.
+
+4. **The clearing is painted last, and that is not a detail.** Drawn before the figure it
+   masked only the records, and the figure's trace ran straight across the email field. Text
+   is never read over a graphic.
+
+5. **The inputs stay light on the ink, deliberately.** A browser paints its own background
+   into a field it has autofilled and no stylesheet can override it, so a transparent input
+   on ink becomes a pale rectangle the moment a password manager fills it. Labels, hints and
+   rules take the on-brand tokens; the submit button turns white, because the brand navy it
+   used to be is now the page it stands on.
+
+6. **One `h1`, and it is the form's title.** The font test reads the FIRST `h1` in the
+   document and asserts it is drawn in IBM Plex Sans Arabic. A headline promoted to `h1` for
+   visual weight would silently move that assertion onto the wrong element. The sentence is
+   a `<p>` that happens to be large.
+
+7. **The figure is decorative and says so.** It carried `role="img"` and a description, and
+   now sits inside an `aria-hidden` layer — a description nobody can reach, and a key kept
+   alive in two dictionaries for no reader. Both are gone.
+
+**New token.** `--success-on-brand` (#4ade80, both themes): `--success` is a dark green
+chosen to read on white and it disappears into navy. It is the one green the password meter
+can use while standing on ink, and `contrast.test.js` now verifies the pair.
+
+**Rejected.** A light ground with a faint field, which is what §5 prescribed — it keeps the
+form safe but cannot carry a screen-sized graphic without the graphic becoming wallpaper
+texture rather than an argument. The owner chose the ink.
+
+**Measured, not assumed.** Three faults in this work were found by screenshot and
+measurement rather than by looking at the code: the trace crossing the email field, a figure
+730px tall on a 900px screen, and a short-screen threshold set at 700px that missed 720 —
+which is the height the browser suite itself runs at.

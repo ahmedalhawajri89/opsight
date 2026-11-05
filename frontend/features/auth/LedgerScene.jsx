@@ -26,6 +26,13 @@ import { useGsap } from '@/hooks/useGsap';
  * replay, and there is no second code path to keep true: useGsap simply never
  * runs.
  *
+ * NO SECOND LOOP. The point that marks "now" used to pulse. On a panel of
+ * its own that was the page’s one piece of ambient life; on a ledger sheet
+ * it became the sixth thing moving, and the second thing looping, on a page
+ * somebody opens every morning to type two fields. The records above still
+ * drift, because they are the argument — a bronze point marks now well
+ * enough without breathing.
+ *
  * It is a timeline rather than keyframes because the captions name the beats.
  * Each one lights as the drawing reaches the thing it describes, and a
  * timeline is what keeps that true when a duration changes.
@@ -68,7 +75,7 @@ const STEPS = [
   { key: 'figure', at: 'figure' },
 ];
 
-export function LedgerScene() {
+export function LedgerScene({ fill = false }) {
   const { t } = useI18n();
   const { scene } = AUTH_MOTION;
 
@@ -118,29 +125,24 @@ export function LedgerScene() {
     q('.ledger-step').forEach((step, index) => {
       timeline.from(step, { opacity: 0.4, duration: 0.3 }, STEPS[index].at);
     });
-
-    // The point that marks "now", breathing. A long gap between beats: this
-    // sits behind a form someone is typing into.
-    gsap.to(q('.ledger-ring'), {
-      scale: 1.9,
-      opacity: 0,
-      duration: scene.pulse,
-      ease: 'power2.out',
-      repeat: -1,
-      repeatDelay: scene.pulseGap,
-      delay: AUTH_MOTION.sceneStart + 2.4,
-      transformOrigin: 'center center',
-    });
   });
 
   return (
     <figure ref={root}>
       <svg
-        role="img"
-        aria-label={t('login.scene.label')}
+        aria-hidden="true"
         viewBox="0 0 480 244"
         dir="ltr"
-        className="h-auto w-full"
+        /*
+         * `fill` is for the sign-in field, where this is a horizon across
+         * the whole screen rather than a figure in a box. `xMidYMax slice`
+         * fills the width and crops from the top, which is the right way
+         * round for a drawing that stands on a baseline: a bar running off
+         * the top of the frame reads as continuing, where a cropped
+         * baseline would read as broken.
+         */
+        preserveAspectRatio={fill ? 'xMidYMax slice' : 'xMidYMid meet'}
+        className={fill ? 'h-full w-full' : 'h-auto w-full'}
         fill="none"
       >
         {/*
@@ -201,21 +203,6 @@ export function LedgerScene() {
           strokeLinejoin="round"
         />
         <circle
-          className="ledger-ring"
-          cx={NOW_X}
-          cy={NOW_Y}
-          r="7"
-          stroke="var(--accent-on-brand)"
-          strokeWidth="2"
-          /*
-           * Invisible until the pulse drives it. It is the one element whose
-           * resting state is not its finished state — a ring frozen mid-pulse
-           * would read as a bug — so a reader with reduced motion sees the
-           * bronze point alone, which is the scene's end anyway.
-           */
-          opacity="0"
-        />
-        <circle
           className="ledger-dot"
           cx={NOW_X}
           cy={NOW_Y}
@@ -225,11 +212,11 @@ export function LedgerScene() {
       </svg>
 
       {/* The three beats, named — lit in turn as the drawing reaches each one. */}
-      <figcaption className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-(--color-on-brand-line)/25 pt-5 text-sm text-(--color-on-brand-2)">
+      <figcaption className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-(--color-on-brand-line)/30 pt-5 text-sm text-(--color-on-brand-2)">
         {STEPS.map((step, index) => (
           <span key={step.key} className="inline-flex items-center gap-3">
             {index > 0 && (
-              <span aria-hidden="true" className="h-px w-6 bg-(--color-on-brand-line)/40" />
+              <span aria-hidden="true" className="h-px w-6 bg-(--color-on-brand-line)/50" />
             )}
             <span className="ledger-step inline-flex items-center gap-2">
               <span

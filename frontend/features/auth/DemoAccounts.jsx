@@ -86,10 +86,10 @@ export function DemoAccounts() {
 
   return (
     <section aria-labelledby="demo-title" className="mb-7">
-      <h2 id="demo-title" className="text-sm font-semibold text-(--color-text)">
+      <h2 id="demo-title" className="text-sm font-semibold text-(--color-on-brand)">
         {t('demo.title')}
       </h2>
-      <p className="measure mt-1 text-sm text-(--color-muted)">{t('demo.body')}</p>
+      <p className="measure mt-1 text-sm text-(--color-on-brand-2)">{t('demo.body')}</p>
 
       {error && (
         <p role="alert" className="mt-3 flex items-start gap-2 text-sm text-(--color-danger)">
@@ -107,13 +107,13 @@ export function DemoAccounts() {
         type="button"
         onClick={() => signIn(PRIMARY)}
         disabled={busy}
-        className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-control) bg-(--color-brand) px-4 text-sm font-semibold text-(--color-on-brand) transition-colors duration-(--duration-fast) hover:bg-(--color-brand-hover) disabled:opacity-60"
+        className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-control) bg-(--color-on-brand) px-4 text-sm font-semibold text-(--color-brand-panel) transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand-2) disabled:opacity-60"
       >
         {pending === PRIMARY.email ? t('auth.signingIn') : t('demo.enterAsOwner')}
         {!busy && <Icon name="arrowRight" size={16} className="rtl:-scale-x-100" />}
       </button>
 
-      <p className="mt-4 text-sm text-(--color-muted)">{t('demo.orAnotherRole')}</p>
+      <p className="mt-4 text-sm text-(--color-on-brand-2)">{t('demo.orAnotherRole')}</p>
 
       {/*
         A row of four, not a grid of equals: these are alternatives to the
@@ -133,7 +133,7 @@ export function DemoAccounts() {
                * a label on something else.
                */
               aria-label={t('demo.signInAs', { role: fullNameOf(account) })}
-              className="inline-flex h-9 items-center rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-3 text-sm font-medium text-(--color-text-2) transition-colors duration-(--duration-fast) hover:border-(--color-brand) hover:text-(--color-text) disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-(--radius-control) border border-(--color-on-brand-line)/45 px-3 text-sm font-medium text-(--color-on-brand-2) transition-colors duration-(--duration-fast) hover:border-(--color-on-brand) hover:text-(--color-on-brand) disabled:opacity-60"
             >
               {pending === account.email ? t('auth.signingIn') : nameOf(account)}
             </button>

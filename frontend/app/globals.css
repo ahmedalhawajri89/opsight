@@ -112,6 +112,13 @@
   --on-brand-2: #9fb3cc;
   --on-brand-line: #7e96b3;
   --accent-on-brand: #e0a44c;
+  /*
+   * "Met" on the sign-in panel. `--success` is a dark green chosen to read
+   * on white, and it disappears into navy; this is the one green the
+   * password meter can use while it stands on ink. Both themes carry the
+   * same value, because the panel is the same ink in both.
+   */
+  --success-on-brand: #4ade80;
 
   /*
    * SEMANTIC — meaning only, never decoration. Each has a soft tint for the
@@ -206,6 +213,13 @@
   --on-brand-2: #9fb3cc;
   --on-brand-line: #7e96b3;
   --accent-on-brand: #e0a44c;
+  /*
+   * "Met" on the sign-in panel. `--success` is a dark green chosen to read
+   * on white, and it disappears into navy; this is the one green the
+   * password meter can use while it stands on ink. Both themes carry the
+   * same value, because the panel is the same ink in both.
+   */
+  --success-on-brand: #4ade80;
 
   --success: #4ade80;
   --success-soft: #10281a;
@@ -264,6 +278,7 @@
   --color-on-brand-2: var(--on-brand-2);
   --color-on-brand-line: var(--on-brand-line);
   --color-accent-on-brand: var(--accent-on-brand);
+  --color-success-on-brand: var(--success-on-brand);
 
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);

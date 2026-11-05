@@ -184,6 +184,7 @@ const TEXT_PAIRS = [
   ['on-brand-2', 'brand-panel', 4.5, 'secondary text on the sign-in panel'],
   ['on-brand', 'brand-panel-deep', 4.5, 'headline over the deep edge of the panel'],
   ['on-brand-2', 'brand-panel-deep', 4.5, 'secondary text over the deep edge'],
+  ['success-on-brand', 'brand-panel', 4.5, '"long enough" in the password meter'],
 ];
 
 /** Non-text elements: 3:1 is the requirement for a meaningful boundary. */

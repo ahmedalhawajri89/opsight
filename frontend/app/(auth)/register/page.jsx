@@ -27,11 +27,11 @@ export default function RegisterPage() {
       title={t('register.title')}
       subtitle={t('register.subtitle')}
       footer={
-        <p className="measure mt-4 text-sm text-(--color-text-2)">
+        <p className="measure mt-4 text-sm text-(--color-on-brand-2)">
           {t('register.haveAccount')}{' '}
           <Link
             href="/login"
-            className="font-medium text-(--color-brand-text) underline-offset-4 hover:underline"
+            className="font-medium text-(--color-accent-on-brand) underline-offset-4 hover:underline"
           >
             {t('auth.signIn')}
           </Link>
