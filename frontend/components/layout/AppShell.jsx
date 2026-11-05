@@ -216,7 +216,18 @@ export function AppShell({ children }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [slot, setSlot] = useState(null);
-  const wideSearch = useMediaQuery('(min-width: 768px)');
+  /*
+   * Tailwind's `md`, read in JavaScript.
+   *
+   * Two things on this bar are desktop ideas rather than responsive ones.
+   * The search field becomes a dialog below it, and focus mode stops meaning
+   * anything at all: its whole job is to take the sidebar away, and below
+   * `md` the sidebar is already a drawer. Left on a phone it removed the
+   * notification bell and nothing else, in exchange for a button and a
+   * one-time hint that both named a keyboard shortcut to a reader holding a
+   * touchscreen.
+   */
+  const wide = useMediaQuery('(min-width: 768px)');
 
   /*
    * Ctrl/⌘+K opens the palette, at every width.
@@ -334,14 +345,6 @@ export function AppShell({ children }) {
   const commands = useMemo(() => {
     const items = [
       {
-        key: 'command-focus',
-        icon: 'focus',
-        title: focus.focused ? t('shell.focus.leave') : t('shell.focus.enter'),
-        detail: 'Shift + F',
-        keywords: 'focus zen distraction sidebar hide تركيز',
-        run: () => focus.toggleFocus(),
-      },
-      {
         key: 'command-language',
         icon: 'globe',
         title: locale === 'ar' ? 'English' : 'العربية',
@@ -350,6 +353,22 @@ export function AppShell({ children }) {
         run: () => setPreferences({ locale: locale === 'ar' ? 'en' : 'ar' }),
       },
     ];
+
+    /*
+     * The two commands that only mean something with a keyboard and a wide
+     * screen. Offered on a phone they are a toggle with no visible effect
+     * and a list of chords nobody can press.
+     */
+    if (wide) {
+      items.unshift({
+        key: 'command-focus',
+        icon: 'focus',
+        title: focus.focused ? t('shell.focus.leave') : t('shell.focus.enter'),
+        detail: 'Shift + F',
+        keywords: 'focus zen distraction sidebar hide تركيز',
+        run: () => focus.toggleFocus(),
+      });
+    }
 
     // Only ever offered in Arabic: the choice does not exist in English.
     if (locale === 'ar') {
@@ -381,14 +400,16 @@ export function AppShell({ children }) {
       }
     }
 
-    items.push({
-      key: 'command-shortcuts',
-      icon: 'info',
-      title: t('shell.shortcuts.title'),
-      detail: '?',
-      keywords: 'keyboard shortcuts keys help اختصارات',
-      run: () => setShortcutsOpen(true),
-    });
+    if (wide) {
+      items.push({
+        key: 'command-shortcuts',
+        icon: 'info',
+        title: t('shell.shortcuts.title'),
+        detail: '?',
+        keywords: 'keyboard shortcuts keys help اختصارات',
+        run: () => setShortcutsOpen(true),
+      });
+    }
 
     items.push({
       key: 'command-sign-out',
@@ -400,7 +421,7 @@ export function AppShell({ children }) {
 
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, locale, numerals, focus.focused, onAnalyticalScreen, pathname]);
+  }, [t, locale, numerals, focus.focused, onAnalyticalScreen, pathname, wide]);
 
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -430,6 +451,14 @@ export function AppShell({ children }) {
   useShortcuts({ onHelp: openShortcuts, chords });
 
   const [showFocusHint, dismissFocusHint] = useSeenOnce('focus-mode');
+
+  /*
+   * The state says focused; this says whether that means anything here. It
+   * is deliberately not the same as clearing the stored preference: someone
+   * who turns focus on at a desk and then opens the same account on a phone
+   * should find it still on when they are back at the desk.
+   */
+  const focused = focus.focused && wide;
 
   // Per session, not per navigation — see recordVisit.
   useEffect(() => {
@@ -461,7 +490,7 @@ export function AppShell({ children }) {
         so a keyboard or screen-reader user would tab through twelve
         invisible links to reach the content they asked to focus on.
       */}
-      {!focus.focused && (
+      {!focused && (
         <aside
           id="app-sidebar"
           data-shell-flip=""
@@ -519,19 +548,19 @@ export function AppShell({ children }) {
               }}
               aria-expanded={drawerOpen}
               aria-label={t('nav.openNavigation')}
-              className="-ms-1.5 inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) md:hidden"
+              className="-ms-1.5 inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) md:hidden"
             >
               <Icon name="menu" size={20} />
             </button>
 
-            {wideSearch ? (
+            {wide ? (
               <TopBarSearch pages={pages} commands={commands} />
             ) : (
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 aria-label={t('search.label')}
-                className="inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover)"
+                className="inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover)"
               >
                 <Icon name="search" size={19} />
               </button>
@@ -539,26 +568,28 @@ export function AppShell({ children }) {
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
               <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
-              <FocusControls
-                focused={focus.focused}
-                fullscreen={focus.fullscreen}
-                supported={focus.supported}
-                onToggleFocus={() => {
-                  dismissFocusHint();
-                  focus.toggleFocus();
-                }}
-                onToggleFullscreen={() => {
-                  dismissFocusHint();
-                  focus.toggleFullscreen();
-                }}
-              />
+              {wide && (
+                <FocusControls
+                  focused={focus.focused}
+                  fullscreen={focus.fullscreen}
+                  supported={focus.supported}
+                  onToggleFocus={() => {
+                    dismissFocusHint();
+                    focus.toggleFocus();
+                  }}
+                  onToggleFullscreen={() => {
+                    dismissFocusHint();
+                    focus.toggleFullscreen();
+                  }}
+                />
+              )}
               {/*
                 The account menu is the way out of focus mode for a reader who
                 does not know the shortcut and cannot see the sidebar, so it
                 stays. Notifications do not: they are an interruption, which
                 is the one thing focus mode exists to remove.
               */}
-              {!focus.focused && <NotificationsMenu />}
+              {!focused && <NotificationsMenu />}
               <UserMenu user={user} onSignOut={handleSignOut} />
             </div>
           </header>
@@ -598,7 +629,7 @@ export function AppShell({ children }) {
               Above the content and in its flow, so it takes a line of its
               own rather than landing on top of what the reader came for.
             */}
-            <FocusHint show={showFocusHint} onDismiss={dismissFocusHint} />
+            <FocusHint show={showFocusHint && wide} onDismiss={dismissFocusHint} />
 
             {children}
           </main>

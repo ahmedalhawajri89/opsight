@@ -66,7 +66,13 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
                 <th scope="col" className="px-2 pb-2 text-start font-medium">
                   {t('dashboard.recentOrders.customer')}
                 </th>
-                <th scope="col" className="px-2 pb-2 text-start font-medium">
+                {/*
+                  The date goes on a phone. Five columns made this 427px wide
+                  inside a 390px screen, and of the five it is the one a
+                  reader glancing at "the latest orders" needs least — the
+                  list is already in date order, and the card says so.
+                */}
+                <th scope="col" className="hidden px-2 pb-2 text-start font-medium sm:table-cell">
                   {t('dashboard.recentOrders.date')}
                 </th>
                 <th scope="col" className="px-2 pb-2 text-start font-medium">
@@ -104,7 +110,7 @@ export function RecentOrdersCard({ currency, decimals, className, style }) {
                       )}
                     </span>
                   </td>
-                  <td className="tabular px-2 py-2.5 whitespace-nowrap text-(--color-text-2)">
+                  <td className="tabular hidden px-2 py-2.5 whitespace-nowrap text-(--color-text-2) sm:table-cell">
                     {order.placed_at ? formatShortDate(order.placed_at) : '—'}
                   </td>
                   <td className="px-2 py-2.5">

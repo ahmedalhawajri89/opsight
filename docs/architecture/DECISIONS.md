@@ -1699,3 +1699,58 @@ would remove the duplication.
 letters are cursive — "أحمد الحواجري" becomes "أا", which reads as a broken word rather than
 a monogram. The preview surfaced it; it is the shell's avatar on every screen, so it is a
 product-wide question, not a sign-up one.
+
+---
+
+## ADR-034 — A phone gets cards; the table is a desk instrument
+
+**Status:** Accepted (2026-11)
+**Affects:** `components/data/DataTable.jsx`, `AppShell`, `Button`, `Field`, `Tooltip`,
+`KpiPanel`, `RecentOrdersCard`, the four list screens that name a primary column
+
+**Context.** Measured at 390px, no page scrolled sideways — so nothing looked broken — but
+every table inside one did: orders 732px, users 755px, activity 952px. An order reference
+wrapped onto three lines, the customer name onto two, and the total sat off-screen. You could
+not see who an order was for and what it came to at the same time.
+
+Two more things gave the same impression for less reason. The first thing a phone user met
+was a one-time hint saying to press `Shift + F`, with a focus-mode button beside it — and
+focus mode's whole job is hiding the sidebar, which below `md` is already a drawer, so on a
+phone it removed the notification bell and nothing else. And the house control scale, 28 /
+32 / 40px, is right at a desk and under every touch-target minimum: the info dot beside a
+KPI was a 14x14 button.
+
+**Decision.**
+
+1. **Below `md`, each row is a card.** Same cells, same `cell` renderers, stacked: the first
+   column titles it, the primary figure sits opposite, the rest become labelled rows. A
+   different arrangement of the table, not a second table.
+
+2. **The table names its own headline figure (`primary`), because convention failed twice.**
+   The *last* numeric column put gross profit at the head of an order card with the order's
+   own total three rows down. The *first* numeric column put the **date** there — `numeric`
+   on this table means "tabular, end-aligned, never wrapped", which a date also is. Nothing
+   in a column's config separates money from a timestamp, so nothing in the component can.
+   Customers, activity and users name none and correctly show no figure.
+
+3. **Card click does what row click does, and no more.** The desktop `<tr>` carries a bare
+   `onClick` with no role and no tabindex — a mouse convenience, with the first cell's link
+   as the keyboard path. The card keeps exactly that bargain rather than dressing a div up
+   as a button and inheriting a promise the table never made.
+
+4. **Focus mode is a desktop concept, stated as one.** Not a hidden button: `focused` is the
+   stored preference *and* a wide screen, so nothing can be stuck on from another device,
+   and the hint, the controls and the two keyboard-only palette commands all go with it.
+   The preference itself is untouched — someone who turns it on at a desk finds it on when
+   they return.
+
+5. **44px minimum below `md`, desk density unchanged.** `min-h-11 md:min-h-0` on buttons and
+   controls, `size-11 md:size-9` on the bar's icons. The 14px info dot grows through a
+   pseudo-element instead, so not a pixel of layout moves — and only on a narrow screen,
+   because an invisible 46px box around it would start swallowing clicks meant for its
+   neighbours.
+
+**Rejected.** Hiding columns per screen on a phone: seven screens would each need a
+judgement about which of its columns a reader can live without, and the one dropped is
+always the one somebody wanted. Only `RecentOrdersCard` drops a column — the date, from a
+list already ordered by date and captioned as such.

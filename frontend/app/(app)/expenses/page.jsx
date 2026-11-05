@@ -107,6 +107,7 @@ export default function ExpensesPage() {
       header: t('expenses.columns.amount'),
       sortable: true,
       numeric: true,
+      primary: true,
       width: '10rem',
       cell: (row) => formatMoney(row.amount),
     },

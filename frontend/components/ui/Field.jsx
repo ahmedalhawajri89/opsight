@@ -15,6 +15,8 @@ import { formatMoneyParts } from '@/lib/format';
  */
 
 const CONTROL_BASE =
+  // 32px is a desk density and under every touch minimum; see Button.jsx.
+  'min-h-11 md:min-h-0 ' +
   'rounded-(--radius-control) border bg-(--color-surface) text-base text-(--color-text) ' +
   'placeholder:text-(--color-muted) transition-colors duration-150 ' +
   'hover:border-(--color-muted) ' +
@@ -260,7 +262,16 @@ export const Checkbox = forwardRef(function Checkbox({ label, className, id, ...
         {...props}
       />
       {label && (
-        <label htmlFor={inputId} className="select-none text-base text-(--color-text)">
+        <label
+          htmlFor={inputId}
+          /*
+           * The padding is the tap target. A 14px box with a label beside it
+           * is a 14px target plus one line of text; on touch the label grows
+           * to about 48px tall so the whole row answers a finger, and on a
+           * desk it collapses back so a column of weekdays stays a column.
+           */
+          className="max-md:py-3 select-none text-base text-(--color-text)"
+        >
           {label}
         </label>
       )}
@@ -282,7 +293,7 @@ export const Radio = forwardRef(function Radio({ label, className, id, ...props 
         {...props}
       />
       {label && (
-        <label htmlFor={inputId} className="select-none text-base text-(--color-text)">
+        <label htmlFor={inputId} className="max-md:py-3 select-none text-base text-(--color-text)">
           {label}
         </label>
       )}

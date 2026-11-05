@@ -98,6 +98,7 @@ export default function ProductsPage() {
       header: t('products.columns.price'),
       sortable: true,
       numeric: true,
+      primary: true,
       width: '9rem',
       cell: (row) => formatMoney(row.price, { decimals: 4 }),
     },

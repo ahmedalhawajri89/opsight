@@ -76,7 +76,16 @@ export function InfoTip({ label, content }) {
       <button
         type="button"
         aria-label={t('comparison.whatIs', { label })}
-        className="rounded-full text-(--color-muted) transition-colors hover:text-(--color-text-2)"
+        /*
+         * The icon is 14px, and so was the tap target — the smallest thing
+         * on the dashboard and the one most often beside a figure somebody
+         * wants explained. The hit area grows to about 46px on a narrow
+         * screen through a pseudo-element rather than padding, so not a
+         * pixel of the layout moves, and only there: on a desk a 14px dot
+         * under a mouse pointer is fine, and an invisible 46px box around it
+         * would start swallowing clicks meant for its neighbours.
+         */
+        className="relative rounded-full text-(--color-muted) transition-colors hover:text-(--color-text-2) max-md:after:absolute max-md:after:-inset-4 max-md:after:content-['']"
       >
         <svg viewBox="0 0 16 16" className="size-3.5" fill="none" aria-hidden="true">
           <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.25" />

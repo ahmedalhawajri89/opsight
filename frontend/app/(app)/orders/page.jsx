@@ -124,6 +124,7 @@ export default function OrdersPage() {
       header: t('orders.columns.total'),
       sortable: true,
       numeric: true,
+      primary: true,
       width: '10rem',
       cell: (row) => formatMoney(row.total_amount),
     },

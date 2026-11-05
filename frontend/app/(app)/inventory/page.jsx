@@ -71,6 +71,7 @@ export default function InventoryPage() {
       header: t('inventory.columns.onHand'),
       sortable: true,
       numeric: true,
+      primary: true,
       width: '8rem',
       cell: (row) => (
         <span className={row.is_low ? 'font-medium text-(--color-warning)' : undefined}>

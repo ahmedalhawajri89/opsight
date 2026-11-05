@@ -54,6 +54,17 @@ export const Button = forwardRef(function Button(
       className={cn(
         'inline-flex select-none items-center justify-center rounded-(--radius-control) font-medium',
         'transition-colors duration-150',
+        /*
+         * A finger is not a mouse pointer.
+         *
+         * The scale here is 28 / 32 / 40px, which is right for an instrument
+         * read at a desk and under every touch-target minimum there is — the
+         * export button measured 79x28 on a phone. `min-h` rather than a
+         * second scale, so a button grows to 44px on a narrow screen and the
+         * desk keeps its density unchanged from `md` up. It is reset rather
+         * than merely overridden, because `min-height` beats `height`.
+         */
+        'min-h-11 md:min-h-0',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANTS[variant] ?? VARIANTS.secondary,
         SIZES[size] ?? SIZES.md,

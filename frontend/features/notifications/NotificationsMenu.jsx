@@ -53,7 +53,7 @@ export function NotificationsMenu() {
           type="button"
           {...props}
           aria-label={t('notifications.label', { count })}
-          className="relative inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+          className="relative inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
         >
           <Icon name="bell" size={20} />
           {count > 0 && (

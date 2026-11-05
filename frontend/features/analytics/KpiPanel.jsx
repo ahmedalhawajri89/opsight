@@ -345,7 +345,7 @@ function PrimaryKpi({
               aria-expanded={expanded}
               aria-label={expanded ? t('dashboard.kpi.collapse', { metric: label }) : t('dashboard.kpi.expand', { metric: label })}
               title={expanded ? t('dashboard.kpi.collapse', { metric: label }) : t('dashboard.kpi.expand', { metric: label })}
-              className="inline-flex size-7 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+              className="inline-flex size-11 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text) md:size-7"
             >
               <Icon name={expanded ? 'collapse' : 'expand'} size={15} />
             </button>
@@ -469,7 +469,7 @@ function PrimaryKpi({
           <Link
             href={destination}
             aria-label={t('dashboard.investigate', { metric: label })}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-(--color-line) text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:bg-(--color-brand-soft) hover:text-(--color-brand-text)"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-(--color-line) text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:bg-(--color-brand-soft) hover:text-(--color-brand-text) md:size-7"
           >
             {/* Logical: the arrow points the way reading runs, so it flips
                 with the page rather than pointing back in Arabic. */}
