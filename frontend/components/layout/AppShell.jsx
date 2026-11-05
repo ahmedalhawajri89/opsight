@@ -297,7 +297,6 @@ export function AppShell({ children }) {
     <Sidebar
       groups={groups}
       current={current}
-      canAnalyse={can('analytics.view')}
       business={user?.business?.name}
       role={user?.role_label}
       variant="full"
@@ -525,7 +524,6 @@ export function AppShell({ children }) {
             <Sidebar
               groups={groups}
               current={current}
-              canAnalyse={can('analytics.view')}
               business={user?.business?.name}
               role={user?.role_label}
               variant={sidebarCollapsed ? 'rail' : 'auto'}
@@ -726,7 +724,6 @@ const SIDEBAR = {
 function Sidebar({
   groups,
   current,
-  canAnalyse,
   business,
   role,
   variant = 'full',
@@ -810,7 +807,7 @@ function Sidebar({
       {business && (
         <div
           className={cn(
-            'mx-3 mb-3 shrink-0 items-center gap-3 rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/5 p-2.5',
+            'mx-3 mb-3 shrink-0 items-center gap-3 rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/5 p-2.5 [@media(max-height:820px)]:hidden',
             style.card,
           )}
         >
@@ -834,7 +831,20 @@ function Sidebar({
         </div>
       )}
 
-      <nav aria-label={t('nav.main')} className={cn('flex-1 overflow-y-auto pt-1 pb-4', style.nav)}>
+      {/*
+        No scrollbar. Every link fits at any ordinary height; on a very short
+        screen the list still scrolls by wheel, touch and keyboard focus,
+        without a grey system bar across the ink, and the soft fade at its
+        top and foot says there is more.
+      */}
+      <nav
+        aria-label={t('nav.main')}
+        className={cn(
+          'min-h-0 flex-1 overflow-y-auto pt-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          '[mask-image:linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-20px),transparent)]',
+          style.nav,
+        )}
+      >
         <div ref={track} className="relative">
           {/*
           The lit block. Painted under the links (they sit above it), with a
@@ -851,7 +861,7 @@ function Sidebar({
               : `nav-group-${index}`;
 
             return (
-              <div key={id} className={cn(index > 0 && 'mt-3.5')}>
+              <div key={id} className={cn(index > 0 && 'mt-3.5 [@media(max-height:760px)]:mt-2')}>
                 {/*
                 A label, not a heading: as <h2>s these put headings in the
                 outline BEFORE the page's <h1>.
@@ -860,13 +870,29 @@ function Sidebar({
                   <p
                     id={id}
                     className={cn(
-                      'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase',
+                      'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase [@media(max-height:760px)]:hidden',
                       // On the rail the group is shown by a rule instead of a word.
                       style.group,
                     )}
                   >
                     {t(group.label)}
                   </p>
+                )}
+                {/*
+                  On a short screen the group names give way to a rule, so
+                  the links keep their room and nothing has to scroll. The
+                  rail already draws its own rule; this is for the open list.
+                */}
+                {group.label && index > 0 && variant !== 'rail' && (
+                  <div
+                    aria-hidden="true"
+                    className={cn(
+                      'mx-3 mb-2 hidden h-px bg-(--color-on-brand-line)/25',
+                      variant === 'auto'
+                        ? 'lg:[@media(max-height:760px)]:block'
+                        : '[@media(max-height:760px)]:block',
+                    )}
+                  />
                 )}
                 {group.label && compact && (
                   <div
@@ -930,40 +956,15 @@ function Sidebar({
         </div>
       )}
 
-      {/* The promo card and version line need width; the rail omits them. */}
-      <div className={cn('shrink-0 px-3 pb-4', style.foot)}>
-        {/*
-          Gone on a short screen: the navigation is the sidebar's job, and at
-          900px tall this card pushed the last group's links below the fold,
-          where nothing said they were there.
-        */}
-        <div className="relative overflow-hidden rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/6 p-4 [@media(max-height:960px)]:hidden">
-          <span
-            aria-hidden="true"
-            className="inline-flex size-8 items-center justify-center rounded-(--radius-control) bg-(--color-accent-on-brand) text-(--color-brand-panel)"
-          >
-            <Icon name="chart" size={16} strokeWidth={2} />
-          </span>
-          <p className="mt-3 text-sm leading-snug font-semibold text-(--color-on-brand)">
-            {t('shell.promo.title')}
-          </p>
-          <div className="mt-1.5 flex items-end justify-between gap-2">
-            <p className="text-xs leading-relaxed text-(--color-on-brand-2)">
-              {t('shell.promo.body')}
-            </p>
-            {canAnalyse && (
-              <Link
-                href="/analytics"
-                aria-label={t('nav.items.analytics')}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--color-accent-on-brand) text-(--color-brand-panel) transition-colors duration-(--duration-fast) hover:bg-(--color-accent-on-brand-strong)"
-              >
-                <Icon name="arrowRight" size={14} className="rtl:-scale-x-100" />
-              </Link>
-            )}
-          </div>
-        </div>
+      {/*
+        The version line, on the rail too it is omitted for width.
 
-        <p className="mt-4 px-2 text-xs text-(--color-on-brand-2)">v{packageInfo.version}</p>
+        THERE IS NO PROMO CARD HERE ANY MORE. It pointed at Analytics, which
+        is a link in this very list and a quick action on the dashboard, and
+        on a tall screen it was the reason the links scrolled.
+      */}
+      <div className={cn('shrink-0 px-3 pb-4', style.foot)}>
+        <p className="px-2 text-xs text-(--color-on-brand-2)">v{packageInfo.version}</p>
       </div>
     </>
   );
@@ -1002,7 +1003,7 @@ function NavLink({ item, active, style, compact = false }) {
       aria-current={active ? 'page' : undefined}
       title={compact ? label : undefined}
       className={cn(
-        'relative flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out)',
+        'relative flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out) [@media(max-height:820px)]:h-8',
         style.item,
         active
           ? 'font-semibold text-(--color-on-brand)'
