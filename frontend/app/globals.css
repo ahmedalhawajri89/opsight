@@ -112,6 +112,17 @@
   --on-brand-2: #9fb3cc;
   --on-brand-line: #7e96b3;
   --accent-on-brand: #e0a44c;
+  /* The same bronze, lifted — hover on ink brightens, it does not darken. */
+  --accent-on-brand-strong: #f0bd74;
+  /*
+   * The panel the sign-in form stands on, lifted off the ink behind it.
+   * A card on ink cannot use the light theme's `--surface` without becoming
+   * a white slab, and a translucent white would change value with whatever
+   * the gradient happens to be doing behind it. This is one opaque step
+   * lighter than `--brand-panel`, so the card reads as raised at every point
+   * across the gradient and carries the same text contrast everywhere.
+   */
+  --on-brand-raise: #16304d;
   /*
    * "Met" on the sign-in panel. `--success` is a dark green chosen to read
    * on white, and it disappears into navy; this is the one green the
@@ -213,6 +224,17 @@
   --on-brand-2: #9fb3cc;
   --on-brand-line: #7e96b3;
   --accent-on-brand: #e0a44c;
+  /* The same bronze, lifted — hover on ink brightens, it does not darken. */
+  --accent-on-brand-strong: #f0bd74;
+  /*
+   * The panel the sign-in form stands on, lifted off the ink behind it.
+   * A card on ink cannot use the light theme's `--surface` without becoming
+   * a white slab, and a translucent white would change value with whatever
+   * the gradient happens to be doing behind it. This is one opaque step
+   * lighter than `--brand-panel`, so the card reads as raised at every point
+   * across the gradient and carries the same text contrast everywhere.
+   */
+  --on-brand-raise: #11243c;
   /*
    * "Met" on the sign-in panel. `--success` is a dark green chosen to read
    * on white, and it disappears into navy; this is the one green the
@@ -278,6 +300,8 @@
   --color-on-brand-2: var(--on-brand-2);
   --color-on-brand-line: var(--on-brand-line);
   --color-accent-on-brand: var(--accent-on-brand);
+  --color-accent-on-brand-strong: var(--accent-on-brand-strong);
+  --color-on-brand-raise: var(--on-brand-raise);
   --color-success-on-brand: var(--success-on-brand);
 
   --color-accent: var(--accent);
@@ -368,6 +392,14 @@
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04);
   --shadow-card-hover: 0 4px 14px -4px rgb(16 24 40 / 0.1);
   --shadow-overlay: 0 16px 40px -12px rgb(16 24 40 / 0.22), 0 4px 10px -4px rgb(16 24 40 / 0.08);
+
+  /*
+   * The one shadow cast on ink. The light-ground shadows above are tuned
+   * against an off-white page and vanish on navy, so the sign-in card would
+   * have had no lift at all; this is deep, wide and nearly black, which is
+   * how a dark surface separates from a dark ground.
+   */
+  --shadow-ink: 0 32px 64px -24px rgb(0 0 0 / 0.75), 0 2px 10px -4px rgb(0 0 0 / 0.5);
 
   /* Motion: hover and focus transitions. */
   --duration-fast: 150ms;

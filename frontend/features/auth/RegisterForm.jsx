@@ -104,11 +104,7 @@ export function RegisterForm() {
           autoComplete={autoComplete}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={describedBy || undefined}
-          className={cn(
-            FIELD,
-            'mt-2',
-            error ? 'border-(--color-danger)' : FIELD_BORDER,
-          )}
+          className={cn(FIELD, 'mt-2', error ? 'border-(--color-danger)' : FIELD_BORDER)}
           {...register(name, { required })}
         />
         {hint && !error && (
@@ -163,11 +159,7 @@ export function RegisterForm() {
         Directly under the two names, because it is what they produce. Below
         the email and password it would read as a summary of the whole form.
       */}
-      <AccountPreview
-        businessName={businessName}
-        name={name}
-        roleLabel={t('roles.owner')}
-      />
+      <AccountPreview businessName={businessName} name={name} roleLabel={t('roles.owner')} />
 
       {field('email', {
         label: t('auth.email'),

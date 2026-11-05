@@ -127,11 +127,7 @@ export function LoginForm() {
           autoFocus={typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches}
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-describedby={errors.email ? 'email-error' : undefined}
-          className={cn(
-            FIELD,
-            'mt-2',
-            errors.email ? 'border-(--color-danger)' : FIELD_BORDER,
-          )}
+          className={cn(FIELD, 'mt-2', errors.email ? 'border-(--color-danger)' : FIELD_BORDER)}
           placeholder={t('auth.emailPlaceholder')}
           {...register('email', { required: t('auth.emailRequired') })}
         />

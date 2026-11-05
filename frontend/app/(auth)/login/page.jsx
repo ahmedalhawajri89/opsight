@@ -28,7 +28,7 @@ export default function LoginPage() {
       title={t('auth.signIn')}
       subtitle={t('login.formSubtitle')}
       footer={
-        <div className="measure mt-4 space-y-2 text-sm">
+        <div className="space-y-2 text-sm">
           {/*
             Two different people arrive here without an account: an owner whose
             business is not on Baydar yet, who can sign it up, and a member of
@@ -43,10 +43,19 @@ export default function LoginPage() {
               {t('login.createBusiness')}
             </Link>
           </p>
-          <p className="text-(--color-on-brand-2)">
-            {t('login.help')}{' '}
-            {/* Readable without an account, which is the point of it. */}
-            <Link href="/privacy" className="underline-offset-4 hover:underline">
+          <p className="text-(--color-on-brand-2)">{t('login.help')}</p>
+
+          {/*
+            Its own line. Appended to the sentence above it with nothing but a
+            space, the link read as the last word of that sentence — "…resets
+            your password. Privacy" — which is a typo as far as anyone can
+            tell. It is readable without an account, which is the point of it.
+          */}
+          <p>
+            <Link
+              href="/privacy"
+              className="text-(--color-on-brand-2) underline-offset-4 hover:text-(--color-on-brand) hover:underline"
+            >
               {t('privacy.title')}
             </Link>
           </p>

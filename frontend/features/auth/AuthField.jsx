@@ -7,136 +7,149 @@ import { LedgerScene } from './LedgerScene';
 import { useGsap } from '@/hooks/useGsap';
 
 /**
- * The floor, at the size of the screen.
+ * The ground the sign-in card stands on: ruled paper, lit from behind.
  *
- * WHAT THIS IS FOR. The sign-in page is one field of brand ink with the form
- * standing in the middle of it. This is the field: records falling across the
- * whole width, and the figure they add up to standing on a horizon at the
- * foot. It is the product's own argument at wallpaper scale — which is the
- * only reason a graphic belongs on a login page at all. A stock illustration
- * or a photograph would be the thing every other product does.
+ * WHAT THIS REPLACED, AND WHY. This layer used to scatter fourteen records
+ * across the screen — a dot beside a rounded grey bar, drifting in. Rendered,
+ * that is pixel for pixel the skeleton placeholder every product on the web
+ * shows while it is still loading, so the first thing the page said to anyone
+ * who opened it was "not ready yet". No measurement catches that: contrast
+ * passed, nothing scrolled, every target was reachable. It was simply the
+ * wrong shape to draw.
+ *
+ * Rules do not have that problem. A ledger is ruled paper, so the lines are
+ * the product's own material rather than a picture of it; and a grid is a
+ * flat texture — it has no object in it that could be mistaken for a control
+ * or for a thing still loading.
+ *
+ * MASKED TO AN ELLIPSE, not faded at the edges. A grid that runs to the
+ * corners reads as a background image; one that gathers around the centre and
+ * dissolves outward reads as light falling on a surface, and it puts the
+ * densest part of the texture exactly where the card is — which is where the
+ * eye is going anyway.
  *
  * IT ARRIVES AND THEN IT STOPS. There is no `repeat` anywhere in here. An
  * endless loop behind a password field is a screensaver, it keeps a phone's
  * compositor awake for as long as the page is open, and WCAG 2.2.2 asks for a
  * visible pause control once moving content runs past five seconds — a
- * control this screen should not have to carry. Everything is in place about
- * two and a half seconds after load and then the page is still.
- *
- * A CLEARING IN THE MIDDLE. The form sits over this, so the records are
- * masked away from the centre with a radial fade. Text is never read over
- * moving texture; that mistake was made once already on the old panel, where
- * a record ran straight through the wordmark.
- *
- * HTML for the records, SVG for the figure. The records are a dot and a
- * rounded bar repeated, which a percentage-positioned span does exactly; an
- * SVG stretched from a 360px phone to a 1920px desk would crop or distort
- * them. The figure is a drawing with a traced line, which is SVG's job.
+ * control this screen should not have to carry.
  *
  * Decorative throughout, so the whole layer is `aria-hidden`: the sentence
  * and the form in front of it carry everything a reader needs.
  */
 
 /*
- * The records, as percentages of the viewport.
+ * The rules, as percentages of the viewport.
  *
- * Spread across the full width and down the upper two thirds, thinning as
- * they approach the horizon. `left`, not `inset-inline-start`: this and the
- * figure below are one drawing, and that drawing runs left to right in both
- * languages like every real chart in the product. Mirrored with the page, the
- * same picture read as two different ones.
+ * Horizontals are evenly spaced, like a sheet. Verticals are not: a ledger is
+ * ruled into columns of different widths — a wide one for the description,
+ * narrow ones for the figures — and evenly spaced verticals would have made
+ * graph paper instead, which is a different object with a different meaning.
+ *
+ * `left`, not `inset-inline-start`: this and the figure at the foot are one
+ * drawing, and that drawing runs left to right in both languages like every
+ * real chart in the product. Mirrored with the page, the same picture read as
+ * two different ones.
  */
-const RECORDS = [
-  { top: 6, left: 4, width: 17, kind: 'ink' },
-  { top: 10, left: 70, width: 20, kind: 'accent' },
-  { top: 15, left: 24, width: 14, kind: 'ink' },
-  { top: 19, left: 51, width: 12, kind: 'muted' },
-  { top: 23, left: 2, width: 19, kind: 'ink' },
-  { top: 28, left: 79, width: 16, kind: 'ink' },
-  { top: 33, left: 30, width: 11, kind: 'accent' },
-  { top: 38, left: 62, width: 18, kind: 'ink' },
-  { top: 44, left: 5, width: 15, kind: 'muted' },
-  { top: 50, left: 84, width: 13, kind: 'ink' },
-  { top: 56, left: 12, width: 17, kind: 'ink' },
-  { top: 62, left: 72, width: 14, kind: 'accent' },
-  { top: 68, left: 25, width: 12, kind: 'ink' },
-  { top: 74, left: 88, width: 10, kind: 'muted' },
-];
-
-/* Three values of light, not three hues. The chart palette is tuned for a
- * white ground and goes muddy on ink; these are already contrast-checked
- * against the panel (tests/contrast.test.js). */
-const DOT = {
-  ink: 'bg-(--color-on-brand)',
-  muted: 'bg-(--color-on-brand-2)',
-  accent: 'bg-(--color-accent-on-brand)',
-};
+const ROWS = Array.from({ length: 13 }, (_, index) => 8 + index * 7);
+const COLUMNS = [9, 26, 38, 50, 62, 74, 86, 94];
 
 export function AuthField() {
-  const { stream } = AUTH_MOTION;
+  const { grid } = AUTH_MOTION;
 
   const root = useGsap((self) => {
+    const q = self.selector;
+
     /*
      * One timeline, one pass. `from` rather than `to`, so the markup already
      * holds the resting state and a reader who asked for less motion sees the
      * finished field — `useGsap` never runs this callback for them, and there
      * is no second code path to keep true.
      */
-    gsap.timeline({ delay: AUTH_MOTION.sceneStart }).from(self.selector('[data-record]'), {
-      opacity: 0,
-      y: -stream.travel,
-      duration: stream.cycle,
-      stagger: { each: stream.gap, from: 'start' },
-      ease: 'power2.out',
-    });
+    gsap
+      .timeline({ delay: AUTH_MOTION.sceneStart })
+      .from(q('[data-glow]'), { opacity: 0, duration: grid.glow, ease: 'power1.out' }, 0)
+      .from(
+        q('[data-rule]'),
+        {
+          opacity: 0,
+          scaleX: 0,
+          duration: grid.draw,
+          stagger: { each: grid.stagger, from: 'start' },
+          ease: 'power2.out',
+        },
+        0,
+      )
+      .from(
+        q('[data-column]'),
+        {
+          opacity: 0,
+          scaleY: 0,
+          duration: grid.draw,
+          stagger: { each: grid.stagger, from: 'center' },
+          ease: 'power2.out',
+        },
+        grid.stagger * 4,
+      );
   });
 
   return (
     <div ref={root} aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
       {/*
-        The records. On a phone too: this layer is absolutely positioned and
-        costs no height, so hiding it there bought nothing and left the one
-        screen with the least character as a form on a dark rectangle. The
-        clearing behind the form is widened instead, because at 390px the
-        form is most of the width and needs more of it kept clear.
+        The light. One soft pool, warm, well above the card's top edge so the
+        card is lit rather than haloed — a glow centred on the card would have
+        drawn a ring around it, which is the look of a selected element.
       */}
-      <div className="absolute inset-0">
-        {RECORDS.map((record) => (
+      <div
+        data-glow
+        className="absolute start-1/2 top-[-28%] h-[85vh] w-[150vw] max-w-[1400px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgb(224_164_76/0.16)_0%,rgb(224_164_76/0.06)_40%,transparent_70%)] rtl:translate-x-1/2"
+      />
+
+      {/*
+        The sheet. Masked to an ellipse around the card rather than fading at
+        the frame's edges — see the note above.
+      */}
+      <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_78%_66%_at_50%_44%,#000_0%,rgb(0_0_0/0.55)_55%,transparent_100%)]">
+        {ROWS.map((top) => (
           <span
-            key={`${record.top}-${record.left}`}
-            data-record
-            // Physical, deliberately — see the note above the record table.
+            key={`r${top}`}
+            data-rule
             dir="ltr"
-            style={{
-              top: `${record.top}%`,
-              left: `${record.left}%`,
-              width: `${record.width}%`,
-              opacity: stream.rest,
-            }}
-            className="absolute flex items-center gap-2"
-          >
-            <span className={`size-1.5 shrink-0 rounded-(--radius-pill) ${DOT[record.kind]}`} />
-            <span className="h-1.5 w-full rounded-(--radius-pill) bg-(--color-on-brand)/25" />
-          </span>
+            style={{ top: `${top}%`, opacity: grid.rest }}
+            className="absolute inset-x-0 block h-px origin-left bg-(--color-on-brand-line)"
+          />
+        ))}
+
+        {COLUMNS.map((left) => (
+          <span
+            key={`c${left}`}
+            data-column
+            // Physical, deliberately — see the note above the rule tables.
+            dir="ltr"
+            style={{ left: `${left}%`, opacity: grid.rest }}
+            className="absolute inset-y-0 block w-px origin-top bg-(--color-on-brand-line)"
+          />
         ))}
       </div>
 
       {/*
-        The horizon: the figure the records add up to, standing on the foot of
-        the screen.
+        The figure the sheet adds up to, standing on the foot of the screen.
 
-        Sized in `vh` and faint. Left to its own width it drew a chart 730px
-        tall across a 900px screen with its trace running straight through the
-        email field — a graphic competing with the one thing the page is for.
+        Faint and thin on purpose. Stretched to the full width it was drawn
+        with a seven-pixel stroke and a circle the size of a thumbnail, which
+        read as clip-art pasted behind a form; the figure is laid out wide now and
+        drawn at the size it is seen at, so its strokes land as strokes.
 
-        It stays at every size: it is absolutely positioned, so it never
-        pushes the form anywhere, and the clearing above it is what keeps it
-        off the fields.
+        It is absolutely positioned, so it never pushes the card anywhere —
+        which is exactly why it has to be kept out of the column's way by
+        hand. At its first height the trace ran straight through the two
+        lines of help text under the card. The band is shallower now and
+        dissolves well before its top edge, so the only part of the figure at
+        full strength is the part below everything the page has to say.
       */}
-      <div className="absolute inset-x-0 bottom-0 h-[38vh] opacity-40">
-        <LedgerScene fill />
+      <div className="absolute inset-x-0 bottom-0 h-[26vh] opacity-25 [mask-image:linear-gradient(to_top,#000_0%,rgb(0_0_0/0.45)_42%,transparent_82%)]">
+        <LedgerScene />
       </div>
-
     </div>
   );
 }

@@ -3,22 +3,30 @@
 import { gsap } from 'gsap';
 
 import { AUTH_MOTION } from './authMotion';
-import { useI18n } from '@/features/i18n/I18nProvider';
 import { useGsap } from '@/hooks/useGsap';
 
 /**
- * The figure the records became.
+ * The figure at the foot of the sign-in screen: a volume strip with a trend
+ * read across it, drawn once and then still.
  *
- * It used to tell the whole three-beat story by itself — rows arriving, rows
- * folding, a figure rising in their place — which meant the story existed
- * only while the animation ran. The records now live above it and keep
- * arriving (RecordStream), so what is left here is the thing they add up to,
- * and this draws once and then rests. That division is the claim: records are
- * what keep coming, the figure is the standing answer.
+ * WHY IT IS DRAWN SMALL AND WIDE. It used to be a six-bar figure in a 480-unit
+ * box, stretched across the whole viewport with `slice`. That scales the
+ * drawing uniformly, so at 1512px every bar came out 138px wide, the trace
+ * came out at a seven-pixel stroke and the point marking "now" came out the
+ * size of a thumbnail — a chart blown up until it read as clip-art pasted
+ * behind a form. The box is wide now and the drawing is laid out across it at
+ * the size it is actually seen at, so a 2.5-unit stroke lands as roughly two
+ * and a half pixels, which is what a chart's line is.
+ *
+ * `meet`, not `slice`. `slice` crops to cover, and what it cropped first was
+ * the right-hand end of the trace — the point the whole line is rising
+ * towards. `meet` fits the drawing inside the band and anchors it to the
+ * bottom, so the figure is whole at every width.
  *
  * There is no number, axis or label anywhere in it. Nobody is signed in, so
  * there is no data to show, and an invented figure on the door of an
  * analytics product would be a lie about the first thing it claims to do.
+ * The shapes rise because that is a shape; they do not say by how much.
  *
  * THE MARKUP IS THE FINISHED SCENE. Every element renders where it ends, and
  * the timeline sets the starting state before the first paint. So a reader
@@ -26,57 +34,56 @@ import { useGsap } from '@/hooks/useGsap';
  * replay, and there is no second code path to keep true: useGsap simply never
  * runs.
  *
- * NO SECOND LOOP. The point that marks "now" used to pulse. On a panel of
- * its own that was the page’s one piece of ambient life; on a ledger sheet
- * it became the sixth thing moving, and the second thing looping, on a page
- * somebody opens every morning to type two fields. The records above still
- * drift, because they are the argument — a bronze point marks now well
- * enough without breathing.
+ * NO SECOND LOOP. The point that marks "now" used to pulse. The ruled sheet
+ * behind the card is the page's one piece of ambient life and it is over in
+ * three seconds; a point breathing underneath it for as long as the tab is
+ * open would be the one thing on the screen that never settles.
  *
- * It is a timeline rather than keyframes because the captions name the beats.
- * Each one lights as the drawing reaches the thing it describes, and a
- * timeline is what keeps that true when a duration changes.
- *
- * The gridlines belong to the field behind it now, not to this: one set of
- * rules carried the whole height of the panel reads as a single instrument,
+ * The gridlines belong to the sheet behind it (AuthField), not to this: one
+ * set of rules carried across the whole screen reads as a single instrument,
  * where two sets read as a chart pasted onto a background.
  *
  * The drawing is left to right in both languages, like every real chart in
  * Baydar.
  */
 
+const SPAN = 1440;
+const BASELINE = 196;
+
 /*
- * The figure's columns: shapes, not values. Rising, with one honest dip.
- *
- * Taller against its baseline than the drawing this replaced, and in a taller
- * box. The panel distributes its three blocks with `justify-between`, so the
- * height of this one decides how much air is left above it — the old figure
- * reached barely half its baseline and left a 240px void under the tagline.
+ * The volume strip: one tick per slot, rising with the dips a real week has.
+ * Shapes, not values — see the note about invented figures above.
  */
-const BASELINE = 230;
-const COLUMN_WIDTH = 44;
-const COLUMNS = [70, 96, 82, 128, 112, 170].map((height, index) => ({
-  x: 40 + index * 70,
+const TICK_HEIGHTS = [
+  18, 26, 22, 34, 29, 41, 33, 46, 38, 52, 44, 58, 49, 63, 55, 70, 60, 74, 66, 80, 71, 86, 77, 92,
+  82, 97, 88, 103, 94, 110, 99, 116, 105, 122, 112, 130,
+];
+
+const SLOT = SPAN / TICK_HEIGHTS.length;
+const TICK_WIDTH = 12;
+
+const TICKS = TICK_HEIGHTS.map((height, index) => ({
+  x: index * SLOT + (SLOT - TICK_WIDTH) / 2,
   height,
 }));
 
-const LINE = COLUMNS.map(
-  ({ x, height }) => `${x + COLUMN_WIDTH / 2},${BASELINE - height - 14}`,
-).join(' ');
-
-const NOW = COLUMNS.at(-1);
-const NOW_X = NOW.x + COLUMN_WIDTH / 2;
-const NOW_Y = BASELINE - NOW.height - 14;
-
-/* Each caption lights at the beat it names — see the timeline's labels. */
-const STEPS = [
-  { key: 'records', at: 'records' },
-  { key: 'computed', at: 'computed' },
-  { key: 'figure', at: 'figure' },
+/* The trace read across the strip, clear of its tallest tick. */
+const TREND = [
+  [40, 150],
+  [215, 132],
+  [390, 141],
+  [565, 112],
+  [740, 119],
+  [915, 86],
+  [1090, 95],
+  [1265, 54],
+  [1400, 34],
 ];
 
-export function LedgerScene({ fill = false }) {
-  const { t } = useI18n();
+const LINE = TREND.map(([x, y]) => `${x},${y}`).join(' ');
+const NOW = TREND.at(-1);
+
+export function LedgerScene() {
   const { scene } = AUTH_MOTION;
 
   const root = useGsap((self) => {
@@ -84,17 +91,8 @@ export function LedgerScene({ fill = false }) {
     // animate each other's elements.
     const q = self.selector;
 
-    const timeline = gsap.timeline({ delay: AUTH_MOTION.sceneStart });
-
-    timeline
-      /*
-       * The records are already on the panel and already moving when this
-       * starts, so the first beat has nothing of its own to animate — it is a
-       * label the caption hangs on, naming what the reader can see above.
-       */
-      .addLabel('records')
-
-      .addLabel('computed')
+    gsap
+      .timeline({ delay: AUTH_MOTION.sceneStart })
       .from(q('.ledger-col'), {
         scaleY: 0,
         transformOrigin: 'center bottom',
@@ -102,132 +100,67 @@ export function LedgerScene({ fill = false }) {
         stagger: scene.columnStagger,
         ease: 'power2.out',
       })
-
-      .addLabel('figure')
       /*
        * The line is drawn, not faded. `pathLength="1"` on the element makes
        * the dash length one unit whatever the path's real length, so the
        * offset animates from 1 to 0 without measuring anything.
        */
-      .from(q('.ledger-line'), {
-        strokeDashoffset: 1,
-        duration: scene.line,
-        ease: 'power1.inOut',
-      })
+      .from(
+        q('.ledger-line'),
+        { strokeDashoffset: 1, duration: scene.line, ease: 'power1.inOut' },
+        '-=0.6',
+      )
       .from(q('.ledger-dot'), { scale: 0, duration: scene.dot, ease: 'back.out(2)' }, '-=0.1');
-
-    /*
-     * Each caption brightens at the beat it NAMES — one tween per caption,
-     * positioned by that beat's label. A single tween over the shared class
-     * would light all three at once, three times over, which looks like a
-     * flicker and says nothing.
-     */
-    q('.ledger-step').forEach((step, index) => {
-      timeline.from(step, { opacity: 0.4, duration: 0.3 }, STEPS[index].at);
-    });
   });
 
   return (
-    <figure ref={root}>
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 480 244"
-        dir="ltr"
-        /*
-         * `fill` is for the sign-in field, where this is a horizon across
-         * the whole screen rather than a figure in a box. `xMidYMax slice`
-         * fills the width and crops from the top, which is the right way
-         * round for a drawing that stands on a baseline: a bar running off
-         * the top of the frame reads as continuing, where a cropped
-         * baseline would read as broken.
-         */
-        preserveAspectRatio={fill ? 'xMidYMax slice' : 'xMidYMid meet'}
-        className={fill ? 'h-full w-full' : 'h-auto w-full'}
-        fill="none"
-      >
-        {/*
-          The rules a figure is read against — the same dashed gridlines the
-          real charts use, so the door is drawn in the product's own hand.
-          They belong to the figure and scale with it: carried across the
-          whole panel instead, one of them ruled a line through the middle of
-          the headline.
-        */}
-        {[0.3, 0.55, 0.8].map((fraction) => (
-          <line
-            key={fraction}
-            x1="20"
-            x2="460"
-            y1={BASELINE - BASELINE * fraction}
-            y2={BASELINE - BASELINE * fraction}
-            stroke="var(--on-brand-line)"
-            strokeWidth="1"
-            strokeDasharray="3 6"
-            opacity="0.3"
-          />
-        ))}
+    <svg
+      ref={root}
+      aria-hidden="true"
+      viewBox={`0 0 ${SPAN} 240`}
+      dir="ltr"
+      preserveAspectRatio="xMidYMax meet"
+      className="h-full w-full"
+      fill="none"
+    >
+      {/* The rule every figure stands on. */}
+      <line
+        x1="0"
+        x2={SPAN}
+        y1={BASELINE}
+        y2={BASELINE}
+        stroke="var(--on-brand-line)"
+        strokeWidth="1.5"
+        opacity="0.5"
+      />
 
-        {/* The rule every figure stands on. */}
-        <line
-          x1="20"
-          x2="460"
-          y1={BASELINE}
-          y2={BASELINE}
-          stroke="var(--on-brand-line)"
-          strokeWidth="2"
-          opacity="0.7"
+      {TICKS.map((tick, index) => (
+        <rect
+          key={index}
+          className="ledger-col"
+          x={tick.x}
+          y={BASELINE - tick.height}
+          width={TICK_WIDTH}
+          height={tick.height}
+          rx="3"
+          fill="var(--on-brand)"
+          opacity="0.22"
         />
+      ))}
 
-        {COLUMNS.map((column, index) => (
-          <rect
-            key={index}
-            className="ledger-col"
-            x={column.x}
-            y={BASELINE - column.height}
-            width={COLUMN_WIDTH}
-            height={column.height}
-            rx="7"
-            fill="var(--on-brand)"
-            opacity="0.26"
-          />
-        ))}
-
-        {/* The line reads it, and the point marks now. */}
-        <polyline
-          className="ledger-line"
-          points={LINE}
-          pathLength="1"
-          strokeDasharray="1"
-          stroke="var(--on-brand)"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle
-          className="ledger-dot"
-          cx={NOW_X}
-          cy={NOW_Y}
-          r="5.5"
-          fill="var(--accent-on-brand)"
-        />
-      </svg>
-
-      {/* The three beats, named — lit in turn as the drawing reaches each one. */}
-      <figcaption className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-(--color-on-brand-line)/30 pt-5 text-sm text-(--color-on-brand-2)">
-        {STEPS.map((step, index) => (
-          <span key={step.key} className="inline-flex items-center gap-3">
-            {index > 0 && (
-              <span aria-hidden="true" className="h-px w-6 bg-(--color-on-brand-line)/50" />
-            )}
-            <span className="ledger-step inline-flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="size-1.5 rounded-(--radius-pill) bg-(--color-accent-on-brand)"
-              />
-              {t(`login.scene.${step.key}`)}
-            </span>
-          </span>
-        ))}
-      </figcaption>
-    </figure>
+      {/* The line reads the strip, and the point marks now. */}
+      <polyline
+        className="ledger-line"
+        points={LINE}
+        pathLength="1"
+        strokeDasharray="1"
+        stroke="var(--on-brand)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.75"
+      />
+      <circle className="ledger-dot" cx={NOW[0]} cy={NOW[1]} r="6" fill="var(--accent-on-brand)" />
+    </svg>
   );
 }

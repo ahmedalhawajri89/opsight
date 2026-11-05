@@ -37,13 +37,17 @@ export const MESSAGE =
   'mt-2 rounded-(--radius-control) bg-(--color-danger-soft) px-2.5 py-1.5 text-sm text-(--color-danger)';
 
 /*
- * White, not brand navy. The submit button used to be `--color-brand`, which
- * is the same navy the page is now made of — a primary action that dissolves
- * into its own background. On ink the brightest thing is the action.
+ * THE ACCENT, and the only saturated colour on the screen.
+ *
+ * It was `--color-brand` once, which is the same navy the page is made of —
+ * a primary action dissolving into its own background. Then it was white, on
+ * a card whose two inputs are also white and also 44px tall: three white
+ * rectangles in a column, and nothing saying which one was the thing to
+ * press. Bronze on ink is unmistakable at a glance, and the dark label on it
+ * clears AA with room to spare (tests/contrast.test.js).
  */
 export const SUBMIT =
-  'inline-flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-control) bg-(--color-on-brand) px-4 text-base font-semibold text-(--color-brand-panel) transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand-2) disabled:opacity-60';
+  'inline-flex h-11 w-full items-center justify-center gap-2 rounded-(--radius-control) bg-(--color-accent-on-brand) px-4 text-base font-semibold text-(--color-brand-panel) transition-colors duration-(--duration-fast) hover:bg-(--color-accent-on-brand-strong) disabled:opacity-60';
 
 /** A link inside the sign-in column — the accent, which is legible on ink. */
-export const LINK =
-  'font-medium text-(--color-accent-on-brand) underline-offset-4 hover:underline';
+export const LINK = 'font-medium text-(--color-accent-on-brand) underline-offset-4 hover:underline';

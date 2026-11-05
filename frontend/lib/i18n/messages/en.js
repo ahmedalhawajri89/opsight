@@ -194,11 +194,6 @@ const en = {
     emailInstead: 'Sign in with an email address instead',
     lockoutNote:
       'Five failed attempts in a minute pause sign-in for a minute. Every attempt is written to the activity log.',
-    scene: {
-      records: 'Records',
-      computed: 'Computed on request',
-      figure: 'The figure',
-    },
   },
 
   register: {
@@ -212,7 +207,8 @@ const en = {
     emailHint: 'You will sign in with this address.',
     passwordHint: 'At least {min} characters. Long is better than complicated.',
     passwordLongEnough: 'Long enough.',
-    passwordBreached: 'A password that has appeared in a known breach is refused, however long it is.',
+    passwordBreached:
+      'A password that has appeared in a known breach is refused, however long it is.',
     preview: 'How this will read',
     previewNamePlaceholder: 'Your name',
     submit: 'Create business',

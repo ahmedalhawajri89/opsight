@@ -185,6 +185,23 @@ const TEXT_PAIRS = [
   ['on-brand', 'brand-panel-deep', 4.5, 'headline over the deep edge of the panel'],
   ['on-brand-2', 'brand-panel-deep', 4.5, 'secondary text over the deep edge'],
   ['success-on-brand', 'brand-panel', 4.5, '"long enough" in the password meter'],
+
+  /*
+   * The sign-in card. It is not the panel: it is one opaque step lighter,
+   * so every pair that passes on the ink has to be checked again on it.
+   */
+  ['on-brand', 'on-brand-raise', 4.5, 'the title on the sign-in card'],
+  ['on-brand-2', 'on-brand-raise', 4.5, 'the subtitle and the field labels on it'],
+  ['accent-on-brand', 'on-brand-raise', 4.5, 'a link inside the card'],
+  ['success-on-brand', 'on-brand-raise', 4.5, '"long enough" in the password meter'],
+
+  /*
+   * The submit button, which reads the other way round: a dark label on the
+   * accent. It is the one saturated surface on the screen and the one
+   * element a reader has to find, so it is held to body-text contrast.
+   */
+  ['brand-panel', 'accent-on-brand', 4.5, 'the label on the sign-in button'],
+  ['brand-panel', 'accent-on-brand-strong', 4.5, 'that label while the pointer is on it'],
 ];
 
 /** Non-text elements: 3:1 is the requirement for a meaningful boundary. */
