@@ -1,4 +1,4 @@
-# Opsight — Architecture Decision Records
+# Baydar — Architecture Decision Records
 
 Every decision where a reasonable engineer could have chosen differently. Each records the
 alternatives, the reasoning, the cost accepted, and what would make it worth revisiting.
@@ -14,7 +14,7 @@ owner. **Open** decisions need an answer before the phase that depends on them.
 the plan.
 **Affects:** Every table, every query, every test
 
-**Decision.** Opsight serves one business per installation. There is no `businesses` table
+**Decision.** Baydar serves one business per installation. There is no `businesses` table
 and no tenant column.
 
 **Alternatives.**
@@ -28,7 +28,7 @@ and no tenant column.
 3. *Single-business.* Chosen.
 
 **Reasoning.** The product is an internal operations system for one company's staff.
-Multi-tenancy serves a business model Opsight does not have. Building it now would mean
+Multi-tenancy serves a business model Baydar does not have. Building it now would mean
 paying for isolation that nothing uses, and every over-engineering rule in the brief points
 the same way.
 
@@ -408,7 +408,7 @@ experience — a multi-step wizard, for instance.
 - **Tax** is collected for a tax authority. It is a liability, not earnings. Including it
   inflates revenue and destroys margin comparability. This is not debatable.
 - **Shipping** is genuinely debatable. A business charging shipping at cost is recovering an
-  expense; a business charging a margin on shipping is earning revenue. Opsight treats it as
+  expense; a business charging a margin on shipping is earning revenue. Baydar treats it as
   cost recovery, because the alternative inflates revenue for every business that does not
   profit on delivery, and because shipping cost is not modelled — counting the income
   without the cost would overstate profit.
@@ -470,7 +470,7 @@ currency's own decimal places. Money crosses the API as a string, at those place
 3. *`DECIMAL`.* Chosen.
 
 **Reasoning.** `DECIMAL` is exact in MySQL and MariaDB, `SUM()` and `AVG()` stay exact, and
-values are readable in the database during verification. Opsight's primary operation is
+values are readable in the database during verification. Baydar's primary operation is
 aggregation, so keeping aggregation exact and legible in SQL is worth more than integer
 arithmetic's safety in application code.
 
@@ -607,11 +607,11 @@ authority, and had to trust whatever figure someone typed.
 7. **Off by default.** With VAT off, confirm behaves exactly as before, including a
    typed-in tax figure. The existing test suite passes unchanged with VAT off.
 8. **The report is operational, not a return.** `GET /analytics/vat` gives output VAT by
-   rate, VAT refunded, and VAT due for a period, from the snapshots. Opsight records no
+   rate, VAT refunded, and VAT due for a period, from the snapshots. Baydar records no
    purchase VAT, so there is no input VAT to reclaim. The screen says so.
 
 **Not decided here, deliberately.**
-- E-invoicing (ZATCA and others) is left to an accredited provider. Opsight will hand it
+- E-invoicing (ZATCA and others) is left to an accredited provider. Baydar will hand it
   confirmed orders — the Gulf VAT requirement the product was shaped around.
 - VAT on shipping is not calculated. Shipping is outside revenue already, and the order
   form has no shipping input yet.
@@ -628,7 +628,7 @@ discount when prices include VAT, or that plus VAT when they exclude it
 dashboard and analytics screens
 
 **Context.** Ramadan and the two Eids reshape trade across the region, and they move about
-eleven days earlier every Gregorian year. The one year-on-year comparison Opsight had,
+eleven days earlier every Gregorian year. The one year-on-year comparison Baydar had,
 `previous_year`, therefore set Ramadan against ordinary trade in most years. The insights
 built on it reported a collapse or a surge that was only the calendar.
 
@@ -725,7 +725,7 @@ and `CustomerFormDialog` — and each carries its own `name_ar` field with `dir=
 **Affects:** `orders`, new `order_payments` and `order_refunds`, `RecordRefund`,
 `OrderResource`, the order list, the dashboard's quick stats, the roles matrix
 
-**Context.** Opsight knew what an order was worth but not whether it had been paid. In the
+**Context.** Baydar knew what an order was worth but not whether it had been paid. In the
 Gulf a large share of online orders are cash on delivery, collected days after the goods
 leave, and an owner's first question after "what did we sell" is "what are we still owed".
 Refunds were one pair of columns (ADR-005), so a second refund overwrote the first.
@@ -781,7 +781,7 @@ payments on its own (they would be written through `RecordPayment`, not beside i
 **Status:** Accepted (2026-09), superseding ADR-001
 **Affects:** every business-owned table, the models, authentication, audit, tests
 
-**Context.** Selling Opsight to more than one company needs one deployment to serve many
+**Context.** Selling Baydar to more than one company needs one deployment to serve many
 businesses, with no way for one to see another's data. It is the first item of P2 in the
 market study, and the integrations after it (Salla, WhatsApp) must be built per business
 from the start.
@@ -1316,7 +1316,7 @@ merchant could connect their store and see nothing. This is the other half.
    `in_progress`, `under_review`, `completed`, `delivering`, `delivered`, `shipped`,
    `canceled`, `restored`, `restoring`.
 
-   **The line is "has the merchant committed?", not "has the money arrived".** Opsight books
+   **The line is "has the merchant committed?", not "has the money arrived".** Baydar books
    a confirmed order as revenue and tracks what is owed separately (ADR-022) — the same thing
    it does for a hand-typed order with cash due on delivery — so an unpaid order is
    confirmed-and-unpaid rather than invisible. The exception is the three states where the
@@ -1606,7 +1606,7 @@ competing for one visitor, with nothing to say which was meant for them.
    distort, and these are rounded bars. Pinned left — `left`, not `inset-inline-start`,
    the codebase's second deliberate physical side after the password reveal button —
    because the stream and the figure are one drawing and that drawing is left to right in
-   both languages, like every real chart in Opsight. Mirrored with the page, the records
+   both languages, like every real chart in Baydar. Mirrored with the page, the records
    landed on the figure's tallest columns in Arabic and its shortest in English: the same
    picture reading as two different ones.
 

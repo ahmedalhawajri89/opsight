@@ -88,7 +88,7 @@ class ReconcileSalla extends Command
 
             $this->line("<options=bold>{$name}</> — store {$connection->external_account_id}");
             $this->table(
-                ['', 'Opsight', 'Salla'],
+                ['', 'Baydar', 'Salla'],
                 [
                     ['Orders', $result['ours']['orders'], $result['theirs']['orders']],
                     ['Revenue', $result['ours']['revenue'], $result['theirs']['revenue']],
@@ -102,7 +102,7 @@ class ReconcileSalla extends Command
             }
 
             foreach ($result['differences'] as $difference) {
-                $this->error("{$difference['what']}: Opsight has {$difference['ours']}, Salla has {$difference['theirs']}.");
+                $this->error("{$difference['what']}: Baydar has {$difference['ours']}, Salla has {$difference['theirs']}.");
             }
 
             return true;

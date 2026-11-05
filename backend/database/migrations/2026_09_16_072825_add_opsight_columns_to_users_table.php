@@ -8,7 +8,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Adds Opsight's own columns to Laravel's default users table.
+ * Adds Baydar's own columns to Laravel's default users table.
  *
  * `role` is an enum rather than a foreign key to a roles table (ADR-003).
  * `is_active` replaces deletion — users are deactivated, never removed, so

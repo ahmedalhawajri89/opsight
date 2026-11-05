@@ -6,22 +6,26 @@ import { cn } from '@/lib/cn';
 /**
  * The product mark and wordmark.
  *
- * THE O THAT MEASURES. The initial, drawn as a single open stroke, cut at the
- * top right where a figure rises out of it. The name is the idea — operations
- * and sight — and the letter is the only part of it that could not belong to
- * another product. An eye or a lens would read faster to a stranger and would
- * be one of a hundred: every monitoring tool on the market has one.
+ * THE FLOOR, THE WIND LINE, THE GRAIN. A بيدر is the round floor where a
+ * harvest is gathered, the grain separated from the chaff, and the yield
+ * weighed and counted — which is what this product does to a month of
+ * trading. So the mark is that floor seen from above: a ring, a line across
+ * it where the wind takes the chaff, and beneath it the grain standing in a
+ * measure that is also a bar chart. The last bar carries the accent because
+ * it is now.
  *
- * A STROKE, NOT A FILL, AND NO GRADIENT. The mark it replaced was the only
- * gradient in the interface, which made it the one element that could not be
- * printed in a single colour, embroidered, or reduced to a 16px favicon
- * without turning to mud. This is one path at one weight: it survives at
- * 18px in a taskbar, which is where it will spend most of its life once the
- * application is installed.
+ * It replaced a mark drawn around the Latin letter O, which was the first
+ * letter of a name this product no longer has.
  *
- * `currentColor`, so the mark takes the colour of whatever it sits on — navy
- * on the light sidebar, the pale brand blue in dark mode — without a second
- * set of tokens to keep in step.
+ * A STROKE, NOT A FILL, AND NO GRADIENT. One weight, one path set: it
+ * survives at 18px in a taskbar, which is where it spends most of its life
+ * once the application is installed, and it can be printed in a single
+ * colour or embroidered without turning to mud.
+ *
+ * `currentColor`, so the mark takes the colour of whatever it sits on —
+ * ink on the light sidebar, white on the sign-in panel — without a second
+ * set of tokens to keep in step. The one exception is the grain's accent,
+ * which carries meaning rather than decoration and so is named.
  */
 const TONES = {
   /** On a light surface: the mark in link blue, the name in ink. */
@@ -47,16 +51,28 @@ export function Logo({ compact = false, tone = 'brand' }) {
         width="30"
         height="30"
         fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
         focusable="false"
       >
-        {/* The O, open where the figure leaves it. */}
-        <path d="M22.4 6.2A11.6 11.6 0 1 0 27 14.3" />
-        {/* The figure: three steps up and out through the gap. */}
-        <path d="m19.6 16.6 4-4.6 3.1 2.6 3.6-6.1" />
+        {/* The floor, seen from above. */}
+        <circle cx="16" cy="16" r="13.2" stroke="currentColor" strokeWidth="2.4" />
+
+        {/*
+          The wind line, where the chaff goes. It is the one element that
+          keeps its own colour at every size: below about 20px the bars close
+          up into a block and this line is what still reads as sorting rather
+          than as a filled circle.
+        */}
+        <path
+          d="M6.4 17.4h19.2"
+          stroke="var(--color-accent-on-brand, currentColor)"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+
+        {/* The grain beneath it, counted — a measure that is also a figure. */}
+        <rect x="9.6" y="19.8" width="3" height="4.2" rx="1.1" fill="currentColor" />
+        <rect x="14.5" y="18.4" width="3" height="5.6" rx="1.1" fill="currentColor" />
+        <rect x="19.4" y="21" width="3" height="3" rx="1.1" fill="currentColor" />
       </svg>
 
       {!compact && (

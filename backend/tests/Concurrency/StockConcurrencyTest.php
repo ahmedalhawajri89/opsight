@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 |--------------------------------------------------------------------------
 |
 | Two users confirming the last unit at the same moment is the one place in
-| Opsight where getting it wrong means selling stock that does not exist.
+| Baydar where getting it wrong means selling stock that does not exist.
 |
 | WHAT THESE TESTS DO AND DO NOT PROVE. PHP here is single-threaded, so two
 | confirms cannot literally run at the same instant inside one test process.

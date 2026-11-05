@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * One Salla order, as an Opsight order (ADR-029).
+ * One Salla order, as a Baydar order (ADR-029).
  *
  * IDEMPOTENT BY CONSTRUCTION. Salla retries deliveries, an order is updated
  * several times through its life, and a backfill may cover ground a webhook

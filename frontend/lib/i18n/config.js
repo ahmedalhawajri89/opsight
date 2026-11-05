@@ -1,5 +1,5 @@
 /**
- * The languages Opsight speaks, and how each is laid out and formatted.
+ * The languages Baydar speaks, and how each is laid out and formatted.
  *
  * Mirrors the server's Localizer: the same two languages and the same two
  * numbering systems, so the sentences the API writes and the labels this

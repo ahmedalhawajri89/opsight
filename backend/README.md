@@ -1,7 +1,7 @@
-# Opsight — backend
+# Baydar — backend
 
 The Laravel API. Read the [root README](../README.md) first; it explains what
-Opsight is and how to run both halves together.
+Baydar is and how to run both halves together.
 
 ## Running it
 

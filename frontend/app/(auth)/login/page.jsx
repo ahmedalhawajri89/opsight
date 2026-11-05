@@ -31,7 +31,7 @@ export default function LoginPage() {
         <div className="measure mt-4 space-y-2 text-sm">
           {/*
             Two different people arrive here without an account: an owner whose
-            business is not on Opsight yet, who can sign it up, and a member of
+            business is not on Baydar yet, who can sign it up, and a member of
             staff, whose account an owner creates. Each is told what to do.
           */}
           <p className="text-(--color-text-2)">

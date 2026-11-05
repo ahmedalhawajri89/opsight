@@ -1,4 +1,4 @@
-# Opsight — Frontend Architecture
+# Baydar — Frontend Architecture
 
 Phase 00 document. Nothing here is implemented yet.
 

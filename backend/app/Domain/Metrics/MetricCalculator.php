@@ -65,7 +65,7 @@ final class MetricCalculator
     }
 
     /**
-     * The revenue figure Opsight treats as authoritative.
+     * The revenue figure Baydar treats as authoritative.
      *
      * Excludes tax (collected for a tax authority — a liability, not earnings)
      * and shipping (treated as cost recovery, ADR-013). Reduced by refunds,

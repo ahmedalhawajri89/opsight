@@ -1,4 +1,4 @@
-# Opsight — Testing Strategy
+# Baydar — Testing Strategy
 
 Phase 00 document. No tests are written in this phase.
 
@@ -6,7 +6,7 @@ Phase 00 document. No tests are written in this phase.
 
 ## 1. What testing is for here
 
-Opsight's output is numbers that people make decisions with. A UI bug is embarrassing; a
+Baydar's output is numbers that people make decisions with. A UI bug is embarrassing; a
 metric bug is a manager acting on a margin that was never real, and it can go unnoticed for
 months because a wrong number looks exactly like a right one.
 

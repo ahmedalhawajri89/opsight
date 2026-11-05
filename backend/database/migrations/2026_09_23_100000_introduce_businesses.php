@@ -185,7 +185,7 @@ return new class extends Migration
         }
 
         return (int) DB::table('businesses')->insertGetId([
-            'name' => $settings->company_name ?? 'Opsight',
+            'name' => $settings->company_name ?? 'Baydar',
             'slug' => 'default',
             'status' => 'active',
             'created_at' => now(),

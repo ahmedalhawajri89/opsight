@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
     {
         // An existing installation's business was created by the migration
         // under the slug `default`; a fresh one gets it here.
-        $business = Business::query()->firstOrCreate(['slug' => 'default'], ['name' => 'Opsight Demo Trading']);
+        $business = Business::query()->firstOrCreate(['slug' => 'default'], ['name' => 'Baydar Demo Trading']);
 
         // Set up by this seeder, not by an owner in the wizard: it counts as
         // onboarded, as businesses set up by hand do (the onboarding
@@ -56,7 +56,7 @@ class DatabaseSeeder extends Seeder
         }
         CurrentBusiness::get()->set($business->id);
 
-        BusinessSetting::ensureExists(['company_name' => 'Opsight Demo Trading']);
+        BusinessSetting::ensureExists(['company_name' => 'Baydar Demo Trading']);
 
         $accounts = [
             ['Ahmed Al Hawajri', 'owner@opsight.test', Role::Owner],

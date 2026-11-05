@@ -14,11 +14,12 @@
  * is the normal case. So the brand is configuration, and the places that use
  * it read it rather than repeat it.
  *
- * NOT TRANSLATED, deliberately. The name is the same in both languages — the
- * manifest is read once at install time, before any language handling has
- * run, and a shortcut cannot be renamed later by changing the interface
- * language. `tagline` is the one brand string that IS translated, because it
- * is a sentence rather than a name; it stays in the dictionaries.
+ * THE LATIN FORM IS NOT TRANSLATED, deliberately. `name` is what the
+ * operating system installs under: the manifest is read once, before any
+ * language handling has run, and a shortcut cannot be renamed later by
+ * changing the interface language. `nameAr` is the wordmark drawn inside the
+ * application, where the language IS known. `tagline` is a sentence rather
+ * than a name, so it stays in the dictionaries with the rest of the prose.
  *
  * ONE FILE CANNOT REACH `public/offline.html`. It is served by the service
  * worker when the network is gone, so it is static HTML with no build step
@@ -30,11 +31,25 @@
  * one component to replace for a new mark.
  */
 export const brand = {
-  /** The wordmark, and what the installed application is called. */
-  name: 'Opsight',
+  /**
+   * The Latin form: the installed application's name, the browser tab, the
+   * manifest. Latin even in an Arabic build, because an operating system
+   * shortcut is made once at install time and cannot be renamed later by
+   * changing the interface language.
+   */
+  name: 'Baydar',
+
+  /**
+   * The wordmark an Arabic interface draws instead. The product is named in
+   * Arabic — بَيْدَر, the floor where a harvest is gathered, the grain
+   * separated from the chaff, and the yield weighed and counted — so an
+   * Arabic reader should meet it in its own script rather than transliterated
+   * back at them.
+   */
+  nameAr: 'بيدر',
 
   /** Used where a launcher has little room. Same as `name` unless it is long. */
-  shortName: 'Opsight',
+  shortName: 'Baydar',
 
   /**
    * One sentence, in English, for the install prompt and the page's meta

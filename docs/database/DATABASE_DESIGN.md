@@ -1,4 +1,4 @@
-# Opsight — Database Design
+# Baydar — Database Design
 
 Phase 00 document. **No migrations exist and none are written in this phase.**
 

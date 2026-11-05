@@ -1,8 +1,8 @@
-# Opsight
+# Baydar
 
 **Operations & Business Intelligence platform.**
 
-Opsight consolidates a business's operational records — orders, customers, products,
+Baydar consolidates a business's operational records — orders, customers, products,
 inventory and expenses — and turns them into metrics, comparative analytics and
 actionable insights for owners and managers.
 

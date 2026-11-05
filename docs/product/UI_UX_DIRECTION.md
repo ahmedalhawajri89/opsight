@@ -1,4 +1,4 @@
-# Opsight — UI/UX Direction & Design System Requirements
+# Baydar — UI/UX Direction & Design System Requirements
 
 Phase 00 document. **No UI is built in this phase.** This defines what will be built and,
 just as importantly, what will not.
@@ -7,7 +7,7 @@ just as importantly, what will not.
 
 ## 1. Design thesis
 
-Opsight is a **working instrument**, not a showcase. Its users open it several times a day
+Baydar is a **working instrument**, not a showcase. Its users open it several times a day
 to answer a specific question and get on with their work. The interface earns its keep by
 making numbers readable and comparisons obvious — not by being memorable.
 
@@ -20,7 +20,7 @@ it more? If not, remove it.
 
 ## 2. Explicitly rejected
 
-These are common in dashboard templates and are prohibited in Opsight:
+These are common in dashboard templates and are prohibited in Baydar:
 
 | Rejected | Why |
 | --- | --- |

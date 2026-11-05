@@ -44,7 +44,7 @@ import { useGsap } from '@/hooks/useGsap';
  *
  * WHY HERE AND NOWHERE ELSE. The first attempt put the stream across the top
  * 40%, which is where the mark and the sentence live: a record ran straight
- * through the word "Opsight" and another through the tagline. Faintness is
+ * through the word "Baydar" and another through the tagline. Faintness is
  * not a licence to lay texture over type.
  *
  * So the band is the gap the panel actually had — between the tagline and
@@ -56,7 +56,7 @@ import { useGsap } from '@/hooks/useGsap';
  * `left`, NOT `inset-inline-start` — the codebase's second deliberate use of
  * a physical side, after the password reveal button. The stream and the
  * figure below it are one drawing, and that drawing is left to right in both
- * languages, like every real chart in Opsight. Mirrored with the page, the
+ * languages, like every real chart in Baydar. Mirrored with the page, the
  * records landed on the figure's tallest columns in Arabic and its shortest
  * in English: the same picture reading as two different ones. Pinned left,
  * the records always dissolve over the low end of the figure, which is where

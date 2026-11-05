@@ -37,7 +37,7 @@ it('does not book revenue for a basket that was never paid for', function (strin
 
 it('counts an order the merchant has committed to, paid or not', function (string $slug): void {
     /*
-     * Opsight books a confirmed order as revenue and tracks what is owed
+     * Baydar books a confirmed order as revenue and tracks what is owed
      * separately (ADR-022), exactly as it does for a hand-typed order with
      * cash due on delivery. Waiting for the money before counting the sale
      * would make every cash-on-delivery store look empty.

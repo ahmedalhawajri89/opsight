@@ -1,7 +1,7 @@
-# Opsight — frontend
+# Baydar — frontend
 
 The Next.js application. Read the [root README](../README.md) first; it explains
-what Opsight is and how to run both halves together.
+what Baydar is and how to run both halves together.
 
 **JavaScript, not TypeScript.** That is a project-wide decision, not an
 oversight, and nothing here should introduce `.ts`/`.tsx`.

@@ -39,10 +39,10 @@ abstract class TestCase extends BaseTestCase
          * test about isolation creates a second one and switches with
          * CurrentBusiness::run() (ADR-023).
          */
-        $business = Business::query()->firstOrCreate(['slug' => 'opsight-test'], ['name' => 'Opsight Test']);
+        $business = Business::query()->firstOrCreate(['slug' => 'opsight-test'], ['name' => 'Baydar Test']);
         CurrentBusiness::get()->set($business->id);
 
-        BusinessSetting::ensureExists(['company_name' => 'Opsight Test']);
+        BusinessSetting::ensureExists(['company_name' => 'Baydar Test']);
     }
 
     /**

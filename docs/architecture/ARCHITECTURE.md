@@ -1,4 +1,4 @@
-# Opsight — System Architecture
+# Baydar — System Architecture
 
 Phase 00 document. Nothing here is implemented yet.
 
@@ -36,7 +36,7 @@ at this scale (ADR-002, ADR-004).
 ## 2. Layered backend
 
 Laravel's default controller-and-model layout is not enough once business rules matter.
-Opsight uses four layers inside the Laravel application:
+Baydar uses four layers inside the Laravel application:
 
 ```
 HTTP layer        Routes → Middleware → FormRequest → Controller → API Resource
@@ -115,7 +115,7 @@ and is the main downside of this choice; it is documented in the Phase 01 setup 
 
 Because the browser holds the session cookie, **data fetching happens in the browser**.
 Server Components render the shell, layout and static chrome; anything requiring the
-user's identity is a Client Component using the shared API client. Opsight does not
+user's identity is a Client Component using the shared API client. Baydar does not
 proxy API calls through Next.js route handlers in the MVP. This is an accepted trade-off
 of ADR-002: less server rendering of data, in exchange for one authentication mechanism
 instead of two.

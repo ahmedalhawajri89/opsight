@@ -10,7 +10,7 @@ use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 /**
- * One Salla product, as an Opsight product (ADR-030).
+ * One Salla product, as a Baydar product (ADR-030).
  *
  * THIS EXISTS FOR ONE FIELD: `cost_price`.
  *

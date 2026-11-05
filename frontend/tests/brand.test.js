@@ -27,10 +27,17 @@ const root = process.cwd();
 const read = (...parts) => readFileSync(join(root, ...parts), 'utf8');
 
 describe('the brand', () => {
-  it('names the application once, and the dictionaries read it', () => {
-    // Not "both say Opsight" — both read the same value, whatever it becomes.
+  it('gives each language the wordmark it should draw', () => {
+    /*
+     * Not one string for both. The Latin form is what an operating system
+     * installs under and cannot translate later; the Arabic form is what a
+     * reader meets inside the application, in their own script rather than
+     * transliterated back at them. Both come from the config, so neither can
+     * drift on its own.
+     */
     expect(en.common.appName).toBe(brand.name);
-    expect(ar.common.appName).toBe(brand.name);
+    expect(ar.common.appName).toBe(brand.nameAr);
+    expect(brand.nameAr).not.toBe(brand.name);
   });
 
   it('reaches the offline page, which cannot import it', () => {

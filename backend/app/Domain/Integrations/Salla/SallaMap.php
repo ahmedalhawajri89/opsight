@@ -31,7 +31,7 @@ final class SallaMap
      * Salla's status slug to ours.
      *
      * THE LINE IS "HAS THE MERCHANT COMMITTED?", not "has the money arrived".
-     * Opsight counts a confirmed order as revenue and tracks what is still
+     * Baydar counts a confirmed order as revenue and tracks what is still
      * owed separately (ADR-022), so an unpaid order is confirmed-and-unpaid
      * rather than invisible. That is the same thing the product does for an
      * order typed in by hand with cash due on delivery.
@@ -46,7 +46,7 @@ final class SallaMap
      * and the hardest to notice because the figures only ever look good.
      *
      * `restoring` and `restored` mean an order came back to the store after
-     * a cancellation. Opsight has no such state: what matters to the figures
+     * a cancellation. Baydar has no such state: what matters to the figures
      * is that it is live trade again, so it is confirmed.
      *
      * @return array<string, OrderStatus>

@@ -1,4 +1,4 @@
-# Opsight — Roles & Authorization Boundaries
+# Baydar — Roles & Authorization Boundaries
 
 Phase 00 document. Nothing here is implemented yet.
 

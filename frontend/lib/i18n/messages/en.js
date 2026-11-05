@@ -58,15 +58,15 @@ const en = {
     },
     promo: {
       title: 'Better decisions. Stronger business.',
-      body: 'Opsight turns your data into clear insights and real results.',
+      body: 'Baydar turns your data into clear insights and real results.',
     },
   },
 
   privacy: {
     title: 'Privacy',
-    subtitle: 'What Opsight holds, for how long, and how to have it removed.',
+    subtitle: 'What Baydar holds, for how long, and how to have it removed.',
     intro:
-      'Opsight is business software. The people it holds records about are the customers of the business using it, and that business decides what to record. This page describes what the software does with those records — not what any particular business does.',
+      'Baydar is business software. The people it holds records about are the customers of the business using it, and that business decides what to record. This page describes what the software does with those records — not what any particular business does.',
     back: 'Back to sign in',
     held: {
       title: 'What is held',
@@ -95,7 +95,7 @@ const en = {
     },
     contact: {
       title: 'How to ask',
-      body: 'Opsight does not hold a direct relationship with the customers of the businesses that use it. Requests for a copy, a correction or an erasure go to the business you deal with, which has the controls described here.',
+      body: 'Baydar does not hold a direct relationship with the customers of the businesses that use it. Requests for a copy, a correction or an erasure go to the business you deal with, which has the controls described here.',
     },
   },
 
@@ -175,7 +175,7 @@ const en = {
 
   demo: {
     title: 'Try it with a demo account',
-    body: 'Each role sees a different Opsight, decided by the server. The business and its figures are invented, and everything goes back to how it was every night.',
+    body: 'Each role sees a different Baydar, decided by the server. The business and its figures are invented, and everything goes back to how it was every night.',
     secondBusiness: 'Owner of a second business, in Kuwaiti dinars',
     secondBusinessShort: 'Second business',
     enterAsOwner: 'Enter as the owner',
@@ -187,9 +187,9 @@ const en = {
     headline:
       'Every figure here is computed from the records it came from, the moment you ask for it.',
     formSubtitle: 'Use the account your owner created for you.',
-    newBusiness: 'New to Opsight?',
+    newBusiness: 'New to Baydar?',
     createBusiness: 'Set up your business',
-    help: 'Working for a business already on Opsight? Its owner creates your account, and resets your password.',
+    help: 'Working for a business already on Baydar? Its owner creates your account, and resets your password.',
     switchLanguage: 'Switch the interface to {language}',
     emailInstead: 'Sign in with an email address instead',
     lockoutNote:
@@ -338,13 +338,13 @@ const en = {
   integrations: {
     title: 'Connected stores',
     description:
-      'Bring a store\u2019s orders into Opsight, so your figures cover everything you sell rather than what you enter by hand.',
+      'Bring a store\u2019s orders into Baydar, so your figures cover everything you sell rather than what you enter by hand.',
 
     connect: 'Connect a store',
     steps: {
-      install: 'In your Salla dashboard, install the Opsight app.',
+      install: 'In your Salla dashboard, install the Baydar app.',
       findId: 'Copy your store id \u2014 Salla shows it in your store settings.',
-      claim: 'Paste it below, and Opsight will connect the store to this business.',
+      claim: 'Paste it below, and Baydar will connect the store to this business.',
     },
     deadline:
       'A store can be connected for one hour after you install the app. After that, install it again and the hour starts over.',
@@ -540,7 +540,7 @@ const en = {
   },
 
   install: {
-    title: 'Install Opsight',
+    title: 'Install Baydar',
     body: 'Open it in its own window, from your taskbar, without a browser around it.',
     action: 'Install',
     dismiss: 'Not now',
@@ -953,7 +953,7 @@ const en = {
     },
     empty: {
       title: 'No expenses recorded',
-      description: 'Without expenses, Opsight reports revenue rather than profit.',
+      description: 'Without expenses, Baydar reports revenue rather than profit.',
     },
   },
 
@@ -969,7 +969,7 @@ const en = {
       rate: 'Rate',
       taxable: 'Taxable amount',
       amount: 'VAT',
-      note: 'An operational figure, not your filed return: it counts VAT on sales only, and Opsight does not record the VAT you paid on purchases.',
+      note: 'An operational figure, not your filed return: it counts VAT on sales only, and Baydar does not record the VAT you paid on purchases.',
     },
     description:
       'Every figure is computed from source records at the moment you ask. Nothing here is stored.',

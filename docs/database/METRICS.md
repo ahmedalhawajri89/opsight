@@ -1,8 +1,8 @@
-# Opsight — BI Metrics Model
+# Baydar — BI Metrics Model
 
 Phase 00 document. Nothing here is implemented yet.
 
-This file is the **single authoritative definition** of every number Opsight displays. If
+This file is the **single authoritative definition** of every number Baydar displays. If
 the API, a chart and an export disagree, this document decides which is wrong.
 
 ---
@@ -139,7 +139,7 @@ Excludes tax and shipping by definition (§2.2).
 
 ### 2.2 Net Revenue
 
-**Definition.** The revenue figure Opsight treats as authoritative. What the business
+**Definition.** The revenue figure Baydar treats as authoritative. What the business
 actually earned from selling goods in the period.
 
 **Formula.**
@@ -511,7 +511,7 @@ because coverage is about current burn rate; the label says so.
 **Definition.** `COGS(P) / Average Inventory Value(P)`
 
 Average inventory value requires knowing what stock was worth **at points throughout the
-period**. Opsight stores only current stock. There are three honest options:
+period**. Baydar stores only current stock. There are three honest options:
 
 1. Daily inventory valuation snapshots — a new table, a nightly job, and no history before
    the day it is switched on.

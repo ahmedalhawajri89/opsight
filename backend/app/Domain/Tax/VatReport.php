@@ -15,7 +15,7 @@ use App\Support\Tenancy\TenantQuery;
  *
  * An OPERATIONAL figure — "how much of what we took belongs to the tax
  * authority" — not a filed return. Output VAT only: input VAT on purchases is
- * not recorded anywhere in Opsight, so this is the gross liability before any
+ * not recorded anywhere in Baydar, so this is the gross liability before any
  * reclaim, and says so (ADR-018).
  *
  * Read from the per-line snapshots taken at confirm, never recomputed from a

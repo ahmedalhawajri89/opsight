@@ -35,7 +35,7 @@ import { useGsap } from '@/hooks/useGsap';
  * where two sets read as a chart pasted onto a background.
  *
  * The drawing is left to right in both languages, like every real chart in
- * Opsight.
+ * Baydar.
  */
 
 /*

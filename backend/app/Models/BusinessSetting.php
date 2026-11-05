@@ -134,7 +134,7 @@ class BusinessSetting extends Model
         self::flushCache();
 
         return self::create(array_merge([
-            'company_name' => 'Opsight',
+            'company_name' => 'Baydar',
             'currency' => 'BHD',
             'currency_decimals' => 3,
             'timezone' => 'Asia/Bahrain',

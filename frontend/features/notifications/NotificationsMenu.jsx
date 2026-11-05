@@ -11,7 +11,7 @@ import { cn } from '@/lib/cn';
 /**
  * The bell: the key changes the rules found, reachable from every screen.
  *
- * There is no separate notification system — nothing in Opsight pushes
+ * There is no separate notification system — nothing in Baydar pushes
  * messages — so the bell shows exactly what the dashboard's key changes show,
  * for the default window (the last 30 days against the 30 before). The dot
  * means "there is at least one finding", and the button's name says how many,

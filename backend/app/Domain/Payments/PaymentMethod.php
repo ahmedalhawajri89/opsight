@@ -9,7 +9,7 @@ namespace App\Domain\Payments;
  *
  * Deliberately few, and by kind rather than by brand: "card" covers Mada,
  * Visa and Apple Pay alike, "wallet" covers STC Pay, BenefitPay and the rest.
- * Opsight records that money arrived and how; it does not take payments, so it
+ * Baydar records that money arrived and how; it does not take payments, so it
  * has no reason to know which network carried them.
  */
 enum PaymentMethod: string

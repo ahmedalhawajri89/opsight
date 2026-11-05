@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
- * A business using Opsight: the unit of isolation (ADR-023).
+ * A business using Baydar: the unit of isolation (ADR-023).
  *
  * @property int $id
  * @property string $name

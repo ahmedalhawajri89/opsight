@@ -71,9 +71,9 @@ it('saves a change made by an Owner', function (): void {
     $owner = User::factory()->role(Role::Owner)->create();
 
     $this->actingAs($owner)->patchJson('/api/v1/settings', [
-        'company_name' => 'Opsight Trading WLL',
+        'company_name' => 'Baydar Trading WLL',
         'default_low_stock_threshold' => 15,
-    ])->assertOk()->assertJsonPath('data.company_name', 'Opsight Trading WLL');
+    ])->assertOk()->assertJsonPath('data.company_name', 'Baydar Trading WLL');
 
     BusinessSetting::flushCache();
 

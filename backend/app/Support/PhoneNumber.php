@@ -24,7 +24,7 @@ namespace App\Support;
  */
 final class PhoneNumber
 {
-    /** Calling codes for the countries Opsight serves, by ISO 3166 alpha-2. */
+    /** Calling codes for the countries Baydar serves, by ISO 3166 alpha-2. */
     public const CALLING_CODES = [
         'BH' => '973',
         'SA' => '966',

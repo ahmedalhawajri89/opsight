@@ -100,7 +100,7 @@ it('reports a missing order, and exits non-zero', function (): void {
     ]))]);
 
     $this->artisan('opsight:salla:reconcile', ['from' => '2026-09-01', 'to' => '2026-09-30'])
-        ->expectsOutputToContain('orders: Opsight has 1, Salla has 2.')
+        ->expectsOutputToContain('orders: Baydar has 1, Salla has 2.')
         ->assertFailed();
 });
 

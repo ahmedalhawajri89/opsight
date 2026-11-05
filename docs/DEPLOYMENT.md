@@ -1,8 +1,8 @@
-# Opsight — The Public Demo on Vercel
+# Baydar — The Public Demo on Vercel
 
 How the live demo is deployed: the API and the frontend as two Vercel projects,
 a MySQL-compatible database on TiDB Cloud, and a nightly reset. For running
-Opsight on your own machine, see [SETUP.md](SETUP.md).
+Baydar on your own machine, see [SETUP.md](SETUP.md).
 
 The demo is a production installation with `DEMO_MODE` on (`config/demo.php`).
 That one switch does three things, and nothing else in the code knows it is a
@@ -64,7 +64,7 @@ routes and the nightly cron. Environment variables:
 
 | Variable | Value |
 | --- | --- |
-| `APP_NAME` | `Opsight` |
+| `APP_NAME` | `Baydar` |
 | `APP_ENV` | `production` |
 | `APP_KEY` | output of `php artisan key:generate --show` |
 | `APP_DEBUG` | `false` |

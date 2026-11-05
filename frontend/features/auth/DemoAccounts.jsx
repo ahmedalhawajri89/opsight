@@ -33,7 +33,7 @@ export const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
  *
  * A visitor who came from a portfolio wants to see the product, not guess a
  * password. Each role is offered by name because the difference between them
- * is the point: the Staff view and the Owner view are not the same Opsight,
+ * is the point: the Staff view and the Owner view are not the same Baydar,
  * and the server, not the browser, decides which is which.
  *
  * ONE DOOR IS WIDER THAN THE OTHERS. This used to be five equal buttons in a

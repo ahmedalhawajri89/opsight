@@ -1,4 +1,4 @@
-# Opsight — Local Setup
+# Baydar — Local Setup
 
 Gets both applications running with seeded data. Takes about five minutes.
 

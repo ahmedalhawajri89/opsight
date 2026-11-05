@@ -1,4 +1,4 @@
-# Opsight — Product Definition & MVP Scope
+# Baydar — Product Definition & MVP Scope
 
 Phase 00 document. Nothing here is implemented yet.
 
@@ -15,9 +15,9 @@ which products are causing it?"
 The gap is not data collection. It is the absence of a **defined, trustworthy
 calculation layer** on top of the data, and a way to see change over time.
 
-## 2. What Opsight is
+## 2. What Baydar is
 
-Opsight is an internal operations system for one business. It is the system of record
+Baydar is an internal operations system for one business. It is the system of record
 for operational transactions **and** the analysis layer over them.
 
 It does four things, in strict order of dependency:
@@ -27,7 +27,7 @@ It does four things, in strict order of dependency:
 3. **Compares** metrics across periods and segments.
 4. **Surfaces** observations worth acting on.
 
-## 3. What Opsight is not
+## 3. What Baydar is not
 
 - Not an accounting or tax system. It reports operational profit, not statutory accounts.
 - Not a POS or storefront. It records orders; it does not take payments.
@@ -96,7 +96,7 @@ this is a defect, not a shortcut.
 
 ## 5. Immutability and historical truth
 
-The single most important correctness rule in Opsight:
+The single most important correctness rule in Baydar:
 
 > **A change to a catalog record must never change a past metric.**
 
@@ -396,7 +396,7 @@ entries for a specific record.
 | Products & Categories | MVP | Order dimension, source of price and cost |
 | Orders | MVP | The revenue-bearing record; without it there is no BI |
 | Inventory | MVP | Operational visibility is half the product |
-| Expenses | MVP | Without it Opsight reports revenue, not profit |
+| Expenses | MVP | Without it Baydar reports revenue, not profit |
 | Analytics | MVP (core) | The reason the product exists |
 | Dashboard | MVP | The primary surface |
 | Activity Log | MVP | Trust and auditability |

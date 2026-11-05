@@ -13,7 +13,7 @@ use App\Models\Product;
 
 /*
 |--------------------------------------------------------------------------
-| One Salla order, as an Opsight order (ADR-029)
+| One Salla order, as a Baydar order (ADR-029)
 |--------------------------------------------------------------------------
 |
 | The payloads below are shaped from Salla's own documented order webhook

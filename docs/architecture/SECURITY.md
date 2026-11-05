@@ -1,4 +1,4 @@
-# Opsight — Security Strategy
+# Baydar — Security Strategy
 
 Phase 00 document. **Nothing here is implemented in this phase.** This is the strategy that
 Phase 01 onward implements and that the test suite enforces.
@@ -372,7 +372,7 @@ Added in Phase 4 of the sales-readiness work, for the Gulf market's data-protect
 expectations — Saudi PDPL in particular. The decisions behind this
 chapter are ADR-026.
 
-**Opsight is a processor, not the controller.** The people it holds records about are the
+**Baydar is a processor, not the controller.** The people it holds records about are the
 customers of the business using it. That business decides what to record and answers the
 requests; what this chapter describes is the machinery the software gives it. A privacy
 statement written for those people is served at `/privacy`, readable without an account.

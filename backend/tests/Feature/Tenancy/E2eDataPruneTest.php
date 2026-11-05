@@ -105,7 +105,7 @@ it('removes an account and the audit rows that name it', function (): void {
 });
 
 it('refuses a seeded business or a seeded account', function (string $option, string $value): void {
-    Business::factory()->create(['name' => 'Opsight Demo Trading', 'slug' => 'default']);
+    Business::factory()->create(['name' => 'Baydar Demo Trading', 'slug' => 'default']);
     User::factory()->role(Role::Owner)->create(['email' => 'owner@opsight.test']);
 
     $this->artisan('opsight:e2e:prune', ["--{$option}" => $value])->assertFailed();
@@ -116,7 +116,7 @@ it('refuses a seeded business or a seeded account', function (string $option, st
         expect(User::query()->where('email', $value)->exists())->toBeTrue();
     }
 })->with([
-    'the first business' => ['business', 'Opsight Demo Trading'],
+    'the first business' => ['business', 'Baydar Demo Trading'],
     'the account the suite signs in with' => ['user', 'owner@opsight.test'],
 ]);
 

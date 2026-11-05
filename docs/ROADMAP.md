@@ -1,4 +1,4 @@
-# Opsight — Roadmap
+# Baydar — Roadmap
 
 Phase 00 document. Phases are sequential; each ends with something demonstrable.
 
@@ -503,7 +503,7 @@ product" and "customer growth" insight types; a change figure for total inventor
 active users (no historical valuation — ADR-014 — and no user-count history); entity names in
 the activity feed (the audit API exposes a subject type and id, not a label); product images;
 and the Reports and Profile screens. The specification's "AI-powered analysis" wording is not
-used, because nothing in Opsight is AI-powered.
+used, because nothing in Baydar is AI-powered.
 
 ---
 

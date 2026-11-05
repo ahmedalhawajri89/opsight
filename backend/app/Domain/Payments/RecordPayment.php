@@ -20,7 +20,7 @@ use Illuminate\Validation\ValidationException;
  *
  * Only a committed order can be paid — confirmed, fulfilled or refunded.
  * Payment ahead of confirmation would be a deposit against goods not yet
- * committed, which Opsight does not model. And never more than is
+ * committed, which Baydar does not model. And never more than is
  * outstanding: an overpayment is a different conversation with the customer,
  * not a figure to record against this order.
  */
