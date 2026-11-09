@@ -520,7 +520,21 @@ export function AppShell({ children }) {
              * the decision to the layout, which is where it belonged before
              * anyone was asked.
              */
-            !sidebarCollapsed && 'lg:w-[236px]',
+            /*
+             * 280px, measured against the shape the owner asked for rather
+             * than chosen by eye. The reference they gave spends 17.9% of the
+             * window on its navigation (283px of 1583); this was spending
+             * 15.6% (236px of 1512), and the names were living in 212px once
+             * the icon and the gutters were paid for. 280px is 18.5% at that
+             * width and leaves 256px of panel.
+             *
+             * The row height is deliberately NOT raised with it. Every link
+             * has to fit without a scrollbar at any ordinary height — the
+             * list already steps down to 32px rows below 820px — and taller
+             * rows would spend the gain on air at the exact sizes where
+             * there is least of it.
+             */
+            !sidebarCollapsed && 'lg:w-[280px]',
           )}
         >
           {/*
@@ -845,6 +859,14 @@ function Sidebar({
         screen the list still scrolls by wheel, touch and keyboard focus,
         without a grey system bar across the ink, and the soft fade at its
         top and foot says there is more.
+
+        ONE THRESHOLD, 820px, AND IT USED TO BE TWO. The rows stepped down at
+        820 while the group names only gave way to rules at 760, which left a
+        band between them where the list was taller than its track: measured
+        at 1366x768 it overflowed by 15px, so the last link sat under the fade
+        with nothing but a wheel to reach it — on one of the most common
+        laptop heights there is, and against the claim this very comment
+        makes. Both steps happen together now.
       */}
       <nav
         aria-label={t('nav.main')}
@@ -870,7 +892,7 @@ function Sidebar({
               : `nav-group-${index}`;
 
             return (
-              <div key={id} className={cn(index > 0 && 'mt-3.5 [@media(max-height:760px)]:mt-2')}>
+              <div key={id} className={cn(index > 0 && 'mt-3.5 [@media(max-height:820px)]:mt-2')}>
                 {/*
                 A label, not a heading: as <h2>s these put headings in the
                 outline BEFORE the page's <h1>.
@@ -879,7 +901,7 @@ function Sidebar({
                   <p
                     id={id}
                     className={cn(
-                      'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase [@media(max-height:760px)]:hidden',
+                      'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase [@media(max-height:820px)]:hidden',
                       // On the rail the group is shown by a rule instead of a word.
                       style.group,
                     )}
@@ -898,8 +920,8 @@ function Sidebar({
                     className={cn(
                       'mx-3 mb-2 hidden h-px bg-(--color-on-brand-line)/25',
                       variant === 'auto'
-                        ? 'lg:[@media(max-height:760px)]:block'
-                        : '[@media(max-height:760px)]:block',
+                        ? 'lg:[@media(max-height:820px)]:block'
+                        : '[@media(max-height:820px)]:block',
                     )}
                   />
                 )}

@@ -112,6 +112,12 @@ export function CustomerFormDialog({ open, onClose, customer = null, onSaved }) 
       title={editing ? t('customers.form.editTitle') : t('customers.form.newTitle')}
       description={t('customers.form.description')}
       size="md"
+      /*
+       * A drawer, not a centred panel: this is reached from a list the
+       * reader scrolled, filtered and sorted to build, and they will very
+       * likely fix the next row after this one. See Dialog.
+       */
+      placement="side"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>

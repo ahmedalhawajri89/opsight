@@ -142,6 +142,12 @@ export function ProductFormDialog({ open, onClose, product = null, onCreated }) 
       title={editing ? t('products.new.editTitle') : t('products.new.title')}
       description={t('products.new.description')}
       size="sm"
+      /*
+       * A drawer, not a centred panel: this is reached from a list the
+       * reader scrolled, filtered and sorted to build, and they will very
+       * likely fix the next row after this one. See Dialog.
+       */
+      placement="side"
       footer={
         <>
           {/* A product with history is never deleted, only taken out of the

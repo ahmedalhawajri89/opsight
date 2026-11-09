@@ -15,8 +15,40 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  *
  * Focus is restored to the trigger on close — a keyboard user who closes a
  * dialog and lands at the top of the document has lost their place.
+ *
+ * TWO PLACEMENTS, AND THE CHOICE IS ABOUT THE TASK, NOT THE FORM'S LENGTH.
+ *
+ * `center` is for a single decision whose context stops mattering the moment
+ * it is made: a confirmation, a payment, a stock adjustment. Blocking the
+ * screen behind it is the point — the reader is meant to stop and read what
+ * will happen.
+ *
+ * `side` is for editing a record the reader found in a list. They scrolled,
+ * filtered and sorted to reach row thirty, and they will very likely fix the
+ * next row after this one. A centred panel covers the row being edited, so
+ * they cannot check they have the right customer while they type; a separate
+ * page throws the list away and makes them find their place again. A drawer
+ * leaves the list where it is.
+ *
+ * Same element either way. The platform's focus trap, Escape handling, top
+ * layer and inert background all still come from `<dialog>`, so a drawer
+ * costs a placement rather than a second component with hand-written key
+ * handlers that are subtly wrong.
+ *
+ * BELOW 640px THE DISTINCTION DISSOLVES, deliberately: both become one sheet
+ * rising from the bottom edge, where a thumb is. There is no room on a phone
+ * for a panel beside anything, and nothing to keep in view behind it.
  */
-export function Dialog({ open, onClose, title, description, footer, size = 'md', children }) {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  description,
+  footer,
+  size = 'md',
+  placement = 'center',
+  children,
+}) {
   const { t } = useI18n();
   const ref = useRef(null);
   const previouslyFocused = useRef(null);
@@ -55,7 +87,15 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
     return () => element.removeEventListener('close', handleClose);
   }, [handleClose]);
 
-  const widths = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl' };
+  /*
+   * A drawer is wider than a centred panel at the same name. It has the
+   * full height of the screen to work with, so a two-column form fits
+   * without the reader scrolling, which is most of the reason to use one.
+   */
+  const widths =
+    placement === 'side'
+      ? { sm: 'sm:max-w-md', md: 'sm:max-w-xl', lg: 'sm:max-w-3xl' }
+      : { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl' };
 
   return (
     <dialog
@@ -82,6 +122,25 @@ export function Dialog({ open, onClose, title, description, footer, size = 'md',
          * a thumb is, full width, with only its top corners rounded.
          */
         'm-auto max-sm:mt-auto max-sm:mb-0 max-sm:rounded-b-none',
+
+        /*
+         * The drawer, by margins rather than by `position`. `inset: 0` is
+         * already on the element from the browser, so pushing the inline-start
+         * margin to auto and holding the inline-end margin at nothing pins the
+         * panel against the trailing edge — the left in Arabic, the right in
+         * English — and zero block margins let it take the full height.
+         *
+         * The trailing edge, not the leading one, because the navigation
+         * already owns the leading edge. A panel arriving on top of the
+         * sidebar would cover the one thing on the screen that says where the
+         * reader is.
+         *
+         * Only the inner corners are rounded: the other two sit against the
+         * screen's own edge, where a radius would leave three slivers of
+         * backdrop and read as a panel that failed to reach the side.
+         */
+        placement === 'side' &&
+          'sm:my-0 sm:ms-auto sm:me-0 sm:h-dvh sm:max-h-dvh sm:rounded-e-none sm:rounded-s-(--radius-card)',
 
         /*
          * A COLUMN THAT CANNOT OUTGROW THE SCREEN.
