@@ -161,7 +161,14 @@ export function useInventory(filters) {
     placeholderData: (previous) => previous,
   });
 
-  return { items: query.data?.data ?? [], meta: query.data?.meta, ...query };
+  return {
+    items: query.data?.data ?? [],
+    meta: query.data?.meta,
+    /* How many lines need reordering and what the shelves cost.
+       `value` is absent for a role that cannot see cost. */
+    totals: query.data?.totals,
+    ...query,
+  };
 }
 
 export function useMovements(productId, filters) {

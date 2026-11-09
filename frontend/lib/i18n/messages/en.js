@@ -955,12 +955,18 @@ const en = {
   },
 
   inventory: {
+    summary: {
+      items: 'Lines in stock',
+      low: 'Need reordering',
+      value: 'Shelves at cost',
+    },
     description:
       'Stock on hand is a cache over an append-only ledger. Every change is recorded with a reason.',
     searchPlaceholder: 'Search product or SKU…',
     searchLabel: 'Search inventory',
     adjust: 'Adjust',
     columns: {
+      neverMoved: 'Never moved',
       onHand: 'On hand',
       reorderAt: 'Reorder at',
       lastMovement: 'Last movement',

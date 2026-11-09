@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Authorization\Ability;
 use App\Domain\Export\CsvExport;
 use App\Domain\Inventory\AdjustStock;
 use App\Domain\Inventory\StockLevel;
@@ -13,6 +14,7 @@ use App\Http\Resources\InventoryMovementResource;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Support\Money;
 use App\Support\QueryFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -26,11 +28,54 @@ class InventoryController extends Controller
     {
         $this->authorize('viewAny', InventoryItem::class);
 
+        $listing = $this->listing($request);
+
+        // Totalled before the page is taken, and from a CLONE: `paginate`
+        // mutates the builder it is called on.
+        $totals = self::totals($request, clone $listing);
+
         return InventoryItemResource::collection(
-            $this->listing($request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+            $listing->paginate(QueryFilter::perPage($request))->withQueryString(),
+        )->additional(['totals' => $totals]);
+    }
+
+    /**
+     * The two questions this screen is opened to answer.
+     *
+     * `low` is how many of the matched lines are at or under their reorder
+     * point — the one figure that turns a stock list into a to-do list, and
+     * the reader had to count the amber rows by eye to get it. It runs the
+     * SAME `StockLevel::whereLow` the rows and the filter use, so the badge
+     * on a row and the count above it can never disagree.
+     *
+     * `value` is what the goods on the shelves cost. At cost, never at the
+     * selling price: stock valued at what it might fetch books a profit
+     * nobody has earned on goods that may never sell. Withheld as a set from
+     * a role that cannot see cost, and more carefully than a column is —
+     * one number over the whole warehouse discloses more than any row.
+     *
+     * @param  Builder<InventoryItem>  $query
+     * @return array<string, int|string>
+     */
+    private static function totals(Request $request, Builder $query): array
+    {
+        $totals = [
+            'items' => (int) (clone $query)->reorder()->toBase()->count(),
+            'low' => (int) (clone $query)->reorder()->tap(StockLevel::whereLow(...))->toBase()->count(),
+        ];
+
+        if ($request->user()?->can(Ability::ProductsViewCost->value) === true) {
+            $value = (clone $query)
+                ->reorder()
+                ->join('products', 'products.id', '=', 'inventory_items.product_id')
+                ->toBase()
+                ->selectRaw('COALESCE(SUM(inventory_items.stock_on_hand * products.cost), 0) AS value')
+                ->value('value');
+
+            $totals['value'] = Money::round((string) ($value ?: '0'));
+        }
+
+        return $totals;
     }
 
     /**

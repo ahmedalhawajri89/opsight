@@ -976,11 +976,17 @@ const ar = {
   },
 
   inventory: {
+    summary: {
+      items: 'أصناف في المخزون',
+      low: 'تحتاج إعادة طلب',
+      value: 'الرفوف بالتكلفة',
+    },
     description: 'المخزون المتوفر ملخّص لسجل حركات لا يقبل إلا الإضافة. كل تغيير يُسجَّل مع سببه.',
     searchPlaceholder: 'ابحث بالمنتج أو رمز المنتج…',
     searchLabel: 'البحث في المخزون',
     adjust: 'تعديل',
     columns: {
+      neverMoved: 'لم تتحرّك بعد',
       onHand: 'المتوفر',
       reorderAt: 'حد إعادة الطلب',
       lastMovement: 'آخر حركة',

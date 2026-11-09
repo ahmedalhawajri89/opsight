@@ -51,7 +51,15 @@ export function ResultSummary({ items, loading = false, className }) {
             <p
               className={cn(
                 'tabular text-xl leading-7 font-semibold',
-                item.tone === 'accent' ? 'text-(--color-brand-text)' : 'text-(--color-text)',
+                /*
+                 * `warning` is only ever set when the figure is non-zero —
+                 * the caller decides, not this. A nought painted amber reads
+                 * as a problem, and "nothing needs reordering" is the
+                 * opposite of one.
+                 */
+                item.tone === 'accent' && 'text-(--color-brand-text)',
+                item.tone === 'warning' && 'text-(--color-warning)',
+                !item.tone && 'text-(--color-text)',
               )}
             >
               {item.value}

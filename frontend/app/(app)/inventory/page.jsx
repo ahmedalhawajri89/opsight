@@ -14,10 +14,11 @@ import { Field, Input, NumberInput, Select, Textarea } from '@/components/ui/Fie
 import { DataTable } from '@/components/data/DataTable';
 import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
+import { ResultSummary } from '@/components/data/ResultSummary';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
-import { formatDateTime, formatNumber } from '@/lib/format';
+import { formatDateTime, formatMoney, formatNumber, formatRelative } from '@/lib/format';
 import { exportInventory } from '@/services/catalog';
 
 const FILTER_CONFIG = {
@@ -46,7 +47,7 @@ export default function InventoryPage() {
     filter: { search: filters.search, low_stock: filters.low_stock },
   };
 
-  const { items, meta, isLoading, isError, error, refetch } = useInventory(query);
+  const { items, meta, totals, isLoading, isError, error, refetch } = useInventory(query);
 
   const columns = [
     {
@@ -91,8 +92,27 @@ export default function InventoryPage() {
       header: t('inventory.columns.lastMovement'),
       sortable: true,
       numeric: true,
-      width: '12rem',
-      cell: (row) => formatDateTime(row.last_movement_at),
+      width: '9rem',
+      /*
+       * "Four days ago", not "05 November 2026, 13:42".
+       *
+       * This was the widest column on the table and the one carrying least.
+       * A reader scanning stock wants to know whether a line has moved
+       * recently, which is a DURATION; the minute a movement was posted
+       * answers a different question, and one they can get by opening the
+       * line. Twelve rem of table went on four digits of clock.
+       *
+       * The exact moment is still there on hover, for the rare time it is
+       * the thing wanted.
+       */
+      cell: (row) =>
+        row.last_movement_at ? (
+          <span title={formatDateTime(row.last_movement_at)}>
+            {formatRelative(row.last_movement_at)}
+          </span>
+        ) : (
+          <span className="text-(--color-muted)">{t('inventory.columns.neverMoved')}</span>
+        ),
     },
     {
       key: 'actions',
@@ -114,6 +134,35 @@ export default function InventoryPage() {
       ),
     },
   ];
+
+  /*
+   * Counted by the server over the whole filtered set — the low count runs
+   * the same rule the rows and the filter use, so the badge on a row and
+   * the figure above it cannot disagree. `value` is absent for a role that
+   * cannot see cost, so the item is simply not pushed.
+   */
+  const summary = [
+    {
+      key: 'items',
+      value: formatNumber(totals?.items ?? meta?.total ?? 0),
+      label: t('inventory.summary.items'),
+    },
+    {
+      key: 'low',
+      value: formatNumber(totals?.low ?? 0),
+      label: t('inventory.summary.low'),
+      tone: totals?.low > 0 ? 'warning' : undefined,
+    },
+  ];
+
+  if (totals?.value !== undefined) {
+    summary.push({
+      key: 'value',
+      value: formatMoney(totals.value),
+      label: t('inventory.summary.value'),
+      tone: 'accent',
+    });
+  }
 
   return (
     <div>
@@ -147,6 +196,8 @@ export default function InventoryPage() {
       </FilterBar>
 
       <Card padded={false}>
+        <ResultSummary items={summary} loading={isLoading} />
+
         <DataTable
           caption={t('nav.items.inventory')}
           columns={columns}
