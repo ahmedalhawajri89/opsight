@@ -8,6 +8,7 @@ use App\Domain\Export\CsvExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
+use App\Support\Money;
 use App\Support\QueryFilter;
 use App\Support\Tenancy\TenantRule;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,11 +23,43 @@ class ExpenseController extends Controller
     {
         $this->authorize('viewAny', Expense::class);
 
+        $listing = $this->listing($request);
+
+        // Totalled before the page is taken, and from a CLONE: `paginate`
+        // mutates the builder it is called on.
+        $totals = self::totals(clone $listing);
+
         return ExpenseResource::collection(
-            $this->listing($request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+            $listing->paginate(QueryFilter::perPage($request))->withQueryString(),
+        )->additional(['totals' => $totals]);
+    }
+
+    /**
+     * What the filtered set of expenses comes to.
+     *
+     * The one question this screen exists to answer, and it could not. A
+     * reader filtering to "Payroll, this quarter" got a page of rows and had
+     * to add them up by eye — on the first twenty-five of them, which is not
+     * the quarter.
+     *
+     * Counted over every row that matched, not the page, and not gated by a
+     * role: the expenses screen is already withheld whole from anyone
+     * without the ability to see it (ExpensePolicy), so there is no second,
+     * narrower disclosure to make here.
+     *
+     * @param  Builder<Expense>  $query
+     * @return array<string, int|string>
+     */
+    private static function totals(Builder $query): array
+    {
+        $row = $query->reorder()->toBase()->selectRaw(
+            'COUNT(*) AS expenses, COALESCE(SUM(amount), 0) AS amount'
+        )->first();
+
+        return [
+            'expenses' => (int) ($row->expenses ?? 0),
+            'amount' => Money::round((string) ($row->amount ?? '0')),
+        ];
     }
 
     public function export(Request $request, CsvExport $export): StreamedResponse

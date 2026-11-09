@@ -14,10 +14,11 @@ import { DateInput, Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
+import { ResultSummary } from '@/components/data/ResultSummary';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 import { exportExpenses } from '@/services/catalog';
 
 const FILTER_CONFIG = {
@@ -54,7 +55,7 @@ export default function ExpensesPage() {
     },
   };
 
-  const { expenses, meta, isLoading, isError, error, refetch } = useExpenses(query);
+  const { expenses, meta, totals, isLoading, isError, error, refetch } = useExpenses(query);
   // null means "no dialog"; an expense means edit; 'new' means create.
   const [editing, setEditing] = useState(null);
   const { categories } = useExpenseCategories();
@@ -113,6 +114,26 @@ export default function ExpensesPage() {
     },
   ];
 
+  /*
+   * Counted by the server over the whole filtered set — never summed from
+   * the rows on this page (ResultSummary). "How much did we spend in
+   * February" is the question this screen is opened with, and a sum of the
+   * visible twenty-five would answer it wrongly while looking right.
+   */
+  const summary = [
+    {
+      key: 'matched',
+      value: formatNumber(totals?.expenses ?? meta?.total ?? 0),
+      label: t('expenses.summary.matched'),
+    },
+    {
+      key: 'amount',
+      value: formatMoney(totals?.amount),
+      label: t('expenses.summary.amount'),
+      tone: 'accent',
+    },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -165,6 +186,8 @@ export default function ExpensesPage() {
       </FilterBar>
 
       <Card padded={false}>
+        <ResultSummary items={summary} loading={isLoading} />
+
         <DataTable
           caption={t('nav.items.expenses')}
           columns={columns}

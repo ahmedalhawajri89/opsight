@@ -999,6 +999,10 @@ const en = {
   },
 
   expenses: {
+    summary: {
+      matched: 'Expenses matched',
+      amount: 'Total spent',
+    },
     description:
       'Operating costs only. Stock purchases reach profit through cost of goods at the point of sale — recording them here would count them twice.',
     searchPlaceholder: 'Search description or vendor…',

@@ -215,7 +215,13 @@ export function useExpenses(filters) {
     placeholderData: (previous) => previous,
   });
 
-  return { expenses: query.data?.data ?? [], meta: query.data?.meta, ...query };
+  return {
+    expenses: query.data?.data ?? [],
+    meta: query.data?.meta,
+    /* What the filtered set comes to, counted by the server. */
+    totals: query.data?.totals,
+    ...query,
+  };
 }
 
 export function useExpenseActions() {
