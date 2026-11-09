@@ -294,7 +294,16 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
             return (
               <li key={stat.key} className="flex items-center gap-2.5 py-2.5">
                 <Icon name={stat.icon} size={16} className="shrink-0 text-(--color-text-2)" />
-                <span className="min-w-0 flex-1 truncate text-xs text-(--color-text-2)">
+                {/*
+                  It wraps rather than truncating. Keeping every row one line
+                  tall is worth something, and it is worth less than the
+                  words: in the two-column layout this panel is about 290px
+                  wide, which left the label 120px, and three of the five
+                  came out as "Total Inventory Val…", "Owed by customer…"
+                  and "Total Custome…". A label that has to be guessed at is
+                  not a label.
+                */}
+                <span className="min-w-0 flex-1 text-xs leading-snug text-(--color-text-2)">
                   {t(stat.label)}
                 </span>
                 <bdi
@@ -304,9 +313,18 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
                 >
                   {value}
                 </bdi>
-                {/* A change only where one honestly exists — growth of a count. */}
+                {/*
+                  A change only where one honestly exists — growth of a count.
+
+                  `min-w-12`, not `w-12`. A fixed 48px box kept the column of
+                  changes aligned and clipped anything that did not fit, which
+                  turned out to be most of them: "19.3%" with its arrow was cut
+                  off at every width measured, from 1920 down to 360. The
+                  minimum keeps the alignment it was there for; the figure is
+                  no longer the thing that gives way.
+                */}
                 {entry.change !== null && (
-                  <span className="w-12 shrink-0 text-end">
+                  <span className="min-w-12 shrink-0 text-end whitespace-nowrap">
                     <Trend change={entry.change} />
                   </span>
                 )}

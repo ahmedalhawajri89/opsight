@@ -19,7 +19,6 @@ import { Trans, useI18n } from '@/features/i18n/I18nProvider';
 import { describePeriod } from '@/lib/periods';
 import { PartialBadge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Field';
-import { StatGrid } from '@/components/data/StatTile';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
 import { BreakdownChart } from '@/components/charts/BreakdownChart';
 import { TrendChart } from '@/components/charts/TrendChart';
@@ -150,9 +149,28 @@ export default function AnalyticsPage() {
           <ErrorState error={summary.error} onRetry={summary.refetch} />
         </Card>
       ) : (
-        <StatGrid>
+        /*
+          ONE PANEL DIVIDED BY HAIRLINES, not a grid of framed tiles.
+          UI_UX_DIRECTION.md §5: "A group of figures that describe one period
+          is ONE panel divided by hairlines… Twelve equal boxes give the eye
+          no place to start." This screen had fifteen, each with its own
+          border and its own corner, and nothing in the arrangement said
+          where to begin or which figures belonged together.
+
+          They are one surface now, ruled between the cells, which is the
+          same treatment the dashboard's compact band already uses
+          (KpiPanel). The ORDER is unchanged and so is every figure — this is
+          the frame coming off, not a re-selection of what is shown.
+
+          `divide-x` is mirrored for Arabic by `rtl:divide-x-reverse`:
+          without it the divider lands on the wrong side of each cell and the
+          panel gains a rule down its outer edge.
+        */
+        <div className="grid grid-cols-2 divide-(--color-line-subtle) divide-x divide-y overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-3 xl:grid-cols-4 rtl:divide-x-reverse">
           {summary.isLoading && visibleTiles.length === 0
-            ? TILE_ORDER.slice(0, 4).map((key) => <MetricTile key={key} metricKey={key} loading />)
+            ? TILE_ORDER.slice(0, 4).map((key) => (
+                <MetricTile key={key} metricKey={key} loading bare />
+              ))
             : visibleTiles.map((key) => (
                 <MetricTile
                   key={key}
@@ -161,12 +179,13 @@ export default function AnalyticsPage() {
                   currency={currency}
                   decimals={decimals}
                   comparisonLabel={meta?.comparison?.label ?? ''}
+                  bare
                   // No per-tile "Incomplete" badge: the period is flagged once,
                   // beside the range and in the notice above. Fifteen identical
                   // badges trained the eye to skip all of them.
                 />
               ))}
-        </StatGrid>
+        </div>
       )}
 
       <TrendChart
@@ -261,21 +280,28 @@ export default function AnalyticsPage() {
         standing counts. Cost-blind roles receive no cash flow, and the row
         closes up around it.
       */}
-      <div className="grid gap-4 lg:grid-cols-12">
+      {/*
+        `xl`, not `lg`. Sharing the row from 1024px gave the stats panel
+        about 215px, which left each label 57px — "Total Inventory Value"
+        and "Owed by customers" came out as fragments, and the figures they
+        name were the only readable part of the row. Below 1280 the two
+        stack and each gets the full width.
+      */}
+      <div className="grid gap-4 xl:grid-cols-12">
         {overview.dashboard?.cash_flow && (
           <CashFlowChart
             data={overview.dashboard.cash_flow}
             currency={currency}
             decimals={decimals}
             loading={overview.isLoading}
-            className="lg:col-span-8"
+            className="xl:col-span-8"
           />
         )}
         <QuickStatsCard
           stats={overview.dashboard?.quick_stats}
           currency={currency}
           loading={overview.isLoading}
-          className={overview.dashboard?.cash_flow ? 'lg:col-span-4' : 'lg:col-span-12'}
+          className={overview.dashboard?.cash_flow ? 'xl:col-span-4' : 'xl:col-span-12'}
         />
       </div>
 

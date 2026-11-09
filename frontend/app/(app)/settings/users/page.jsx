@@ -191,7 +191,12 @@ export default function UsersPage() {
       </FilterBar>
 
       <Card padded={false}>
+        {/*
+            `bare`: the Card around it already draws the edge. A bordered
+            table inside a bordered card is a box in a box (DataTable).
+          */}
         <DataTable
+          bare
           caption={t('nav.items.users')}
           columns={columns}
           rows={users}

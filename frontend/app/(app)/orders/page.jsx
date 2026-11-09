@@ -245,7 +245,12 @@ export default function OrdersPage() {
       <Card padded={false}>
         <ResultSummary items={summary} loading={isLoading} />
 
+        {/*
+            `bare`: the Card around it already draws the edge. A bordered
+            table inside a bordered card is a box in a box (DataTable).
+          */}
         <DataTable
+          bare
           caption={t('nav.items.orders')}
           columns={columns}
           rows={orders}

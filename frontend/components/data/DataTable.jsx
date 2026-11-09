@@ -123,8 +123,30 @@ export function DataTable({
         <table className="w-full border-collapse text-base">
           {caption && <caption className="sr-only">{caption}</caption>}
 
+          {/*
+            OPAQUE, and NOT sticky — the second half of that is a measured
+            result rather than an omission.
+
+            UI_UX_DIRECTION.md §6 asks for a sticky header. It cannot have
+            one while §8 also asks that "tables scroll within their own
+            container", because the two are incompatible in CSS: a box with
+            `overflow-x: auto` has its `overflow-y` computed to `auto` as
+            well, which makes it the nearest scrollport for anything inside
+            it. `position: sticky` then sticks to THAT box — and the box has
+            no height limit, so it never scrolls and the header never moves.
+            Measured on /orders: scroll 600px and the header sat at -264.
+
+            A real one needs the table to scroll inside a capped height, with
+            the page no longer scrolling it — a different scroll model for
+            every list screen, not a styling change. Left as a decision.
+
+            The fill is solid regardless. It was a translucent band over the
+            page ground, and the content column is a white panel now, so the
+            translucency was tinting the header with whatever happened to be
+            behind it rather than separating it from the rows.
+          */}
           <thead>
-            <tr className="border-b border-(--color-line) bg-(--color-ground)/70">
+            <tr className="border-b border-(--color-line) bg-(--color-surface-subtle)">
               {columns.map((column) => (
                 <HeaderCell
                   key={column.key}
@@ -146,7 +168,7 @@ export function DataTable({
                   // table the eye needs help staying on a line as it crosses
                   // from a name to a figure.
                   'border-b border-(--color-line-subtle) transition-colors duration-150 last:border-b-0',
-                  'hover:bg-(--color-surface-hover)/70',
+                  'hover:bg-(--color-surface-hover)',
                   rowHeight,
                   onRowClick && 'cursor-pointer',
                 )}
@@ -163,6 +185,14 @@ export function DataTable({
                       // scrolls the table sideways instead.
                       column.numeric && 'tabular text-end whitespace-nowrap',
                       column.mono && 'font-mono text-sm',
+                      /*
+                       * `primary` is the figure the row is about — the one a
+                       * reader is scanning the column for. It headlined the
+                       * card on a phone and was indistinguishable from every
+                       * other cell on a desk, which is where the table is
+                       * actually read.
+                       */
+                      column.primary && 'font-medium',
                       column.className,
                     )}
                   >
@@ -277,7 +307,7 @@ function Shell({ bare, className, children }) {
     <div
       className={cn(
         'overflow-hidden bg-(--color-surface)',
-        !bare && 'rounded-(--radius-card) border border-(--color-line) shadow-(--shadow-card)',
+        !bare && 'rounded-(--radius-card) border border-(--color-line)',
         className,
       )}
     >
@@ -310,7 +340,7 @@ function HeaderCell({ column, sort, onSortChange }) {
       style={column.width ? { width: column.width } : undefined}
       aria-sort={column.sortable ? ariaSort : undefined}
       className={cn(
-        'px-3 py-2.5 text-xs font-medium tracking-[0.05em] whitespace-nowrap uppercase first:ps-5 last:pe-5',
+        'px-3 py-2.5 text-xs font-medium tracking-(--tracking-eyebrow) whitespace-nowrap uppercase first:ps-5 last:pe-5',
         'text-(--color-text-2)',
         // Header alignment follows its column so the label sits over its data.
         column.numeric ? 'text-end' : 'text-start',
@@ -324,7 +354,7 @@ function HeaderCell({ column, sort, onSortChange }) {
             // Buttons reset text-transform and letter-spacing in Tailwind's
             // preflight, so a sortable header rendered in sentence case beside
             // uppercase static ones. Inherit both from the <th> instead.
-            'inline-flex items-center gap-1 rounded-[2px] tracking-[inherit] uppercase transition-colors hover:text-(--color-text)',
+            'inline-flex items-center gap-1 rounded-(--radius-chip) tracking-[inherit] uppercase transition-colors hover:text-(--color-text)',
             active && 'text-(--color-text)',
           )}
         >

@@ -37,7 +37,21 @@ export function SeasonNotice({ meta, onUseHijri }) {
       className="flex flex-wrap items-center gap-3 rounded-(--radius-card) border border-(--color-line) bg-(--color-accent-soft) px-4 py-3 text-sm text-(--color-text)"
     >
       <Icon name="calendar" size={16} className="shrink-0 text-(--color-accent-strong)" />
-      <p className="measure min-w-0 flex-1">
+      {/*
+        `basis-64`, and without it `flex-wrap` above never wraps anything.
+
+        A `flex-1` item has a flex-basis of 0, so the row's natural width is
+        whatever the BUTTON needs and the sentence is simply squeezed into
+        the remainder. On a 390px phone that remainder was about one word
+        wide: this notice rendered as a vertical column of single words —
+        "This / period / holds / neither;" — roughly 550px tall for one
+        sentence, with the button sitting beside it in full.
+
+        A real basis gives the paragraph a width to be measured against, so
+        the row wraps the button onto its own line once the two no longer fit
+        side by side. `flex-1` still lets it take the leftover on a desk.
+      */}
+      <p className="measure min-w-0 flex-1 basis-64">
         {t('season.mismatch', {
           current: names(meta.seasons),
           previous: names(meta.comparison.seasons),

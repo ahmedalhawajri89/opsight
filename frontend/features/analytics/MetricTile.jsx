@@ -118,11 +118,12 @@ export function MetricTile({
   comparisonLabel,
   partial,
   loading,
+  bare = false,
 }) {
   const { t } = useI18n();
 
   if (loading) {
-    return <StatTile label={metricLabel(t, metricKey)} loading />;
+    return <StatTile label={metricLabel(t, metricKey)} loading bare={bare} />;
   }
 
   if (!metric) return null;
@@ -131,6 +132,7 @@ export function MetricTile({
 
   return (
     <StatTile
+      bare={bare}
       label={metricLabel(t, metricKey)}
       value={shown.value}
       definition={metricDefinition(t, metricKey)}

@@ -152,7 +152,12 @@ export default function ActivityPage() {
       </FilterBar>
 
       <Card padded={false}>
+        {/*
+            `bare`: the Card around it already draws the edge. A bordered
+            table inside a bordered card is a box in a box (DataTable).
+          */}
         <DataTable
+          bare
           caption={t('nav.items.activity')}
           columns={columns}
           rows={entries}

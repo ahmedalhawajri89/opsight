@@ -36,6 +36,7 @@ export function StatTile({
   partial = false,
   loading = false,
   emptyReason,
+  bare = false,
   className,
   children,
 }) {
@@ -43,13 +44,7 @@ export function StatTile({
 
   if (loading) {
     return (
-      <div
-        className={cn(
-          'rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) p-4',
-          className,
-        )}
-        aria-busy="true"
-      >
+      <div className={cn(FRAME(bare), className)} aria-busy="true">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="mt-3 h-7 w-36" />
         <Skeleton className="mt-3 h-3 w-32" />
@@ -60,12 +55,7 @@ export function StatTile({
   const isEmpty = value === null || value === undefined || value === EMPTY;
 
   return (
-    <div
-      className={cn(
-        'rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) p-4',
-        className,
-      )}
-    >
+    <div className={cn(FRAME(bare), className)}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-xs font-medium uppercase tracking-wide text-(--color-text-2)">
           {label}
@@ -113,6 +103,20 @@ export function StatTile({
  * are absent, not null, for cost-blind roles — so this renders whatever it is
  * given rather than assuming a fixed shape (ROLES_AND_PERMISSIONS.md §4).
  */
+/*
+ * The tile's own edges — which a tile inside a divided panel must not draw.
+ *
+ * UI_UX_DIRECTION.md §5: "A group of figures that describe one period is ONE
+ * panel divided by hairlines, not a grid of identically framed tiles. Twelve
+ * equal boxes give the eye no place to start." The analytics screen had
+ * fifteen. `bare` lets the panel own the edge and the hairlines, exactly as
+ * `bare` does for a DataTable inside a Card.
+ */
+const FRAME = (bare) =>
+  bare
+    ? 'bg-(--color-surface) p-4'
+    : 'rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-4';
+
 export function StatGrid({ className, children }) {
   return (
     <div className={cn('grid gap-3 sm:grid-cols-2 xl:grid-cols-4', className)}>{children}</div>

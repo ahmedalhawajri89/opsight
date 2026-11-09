@@ -38,9 +38,12 @@ import { metricDefinition, metricLabel, presentMetric } from './MetricTile';
  * this reason; pulling the library in here through a plain import would undo
  * that for a view most readers never open.
  */
-const TrendChart = dynamic(() => import('@/components/charts/TrendChart').then((m) => m.TrendChart), {
-  ssr: false,
-});
+const TrendChart = dynamic(
+  () => import('@/components/charts/TrendChart').then((m) => m.TrendChart),
+  {
+    ssr: false,
+  },
+);
 
 const PRIMARY_ORDER = [
   'net_revenue',
@@ -136,7 +139,6 @@ const SPARKS = {
   red: 'var(--chart-4)',
 };
 
-
 /** Splits the metrics that arrived into the two rows, with no key in both. */
 export function tierMetrics(metrics = {}) {
   const primary = PRIMARY_ORDER.filter((key) => key in metrics).slice(0, PRIMARY_COUNT);
@@ -146,7 +148,7 @@ export function tierMetrics(metrics = {}) {
 }
 
 const CARD =
-  'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) transition-shadow duration-(--duration-base) ease-(--ease-out) hover:shadow-(--shadow-card-hover)';
+  'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) transition-colors duration-(--duration-base) ease-(--ease-out) hover:border-(--color-line-strong)';
 
 export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
   const { t } = useI18n();
@@ -204,7 +206,10 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
         </div>
         <div className="grid grid-cols-2 divide-(--color-line-subtle) overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-4 sm:divide-x rtl:sm:divide-x-reverse min-[90rem]:grid-cols-8">
           {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
-            <div key={index} className="border-b border-(--color-line-subtle) px-3.5 py-3 sm:border-b-0">
+            <div
+              key={index}
+              className="border-b border-(--color-line-subtle) px-3.5 py-3 sm:border-b-0"
+            >
               <Skeleton className="h-3 w-20" />
               <Skeleton className="mt-3 h-5 w-24" />
               <Skeleton className="mt-2 h-3 w-12" />
@@ -343,8 +348,16 @@ function PrimaryKpi({
               type="button"
               onClick={onToggle}
               aria-expanded={expanded}
-              aria-label={expanded ? t('dashboard.kpi.collapse', { metric: label }) : t('dashboard.kpi.expand', { metric: label })}
-              title={expanded ? t('dashboard.kpi.collapse', { metric: label }) : t('dashboard.kpi.expand', { metric: label })}
+              aria-label={
+                expanded
+                  ? t('dashboard.kpi.collapse', { metric: label })
+                  : t('dashboard.kpi.expand', { metric: label })
+              }
+              title={
+                expanded
+                  ? t('dashboard.kpi.collapse', { metric: label })
+                  : t('dashboard.kpi.expand', { metric: label })
+              }
               className="inline-flex size-11 items-center justify-center rounded-(--radius-control) text-(--color-muted) transition-colors duration-(--duration-fast) hover:bg-(--color-surface-hover) hover:text-(--color-text) md:size-7"
             >
               <Icon name={expanded ? 'collapse' : 'expand'} size={15} />
@@ -366,23 +379,25 @@ function PrimaryKpi({
         under the figure: drawn over it, it hid the figure's last digits.
       */}
       <div className="mt-5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
-      <p
-        className="tabular min-w-0 text-[clamp(1.125rem,8.5cqi,1.625rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
-        title={shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined}
-      >
-        {shown.value === null ? (
-          <span className="text-(--color-muted)">{EMPTY}</span>
-        ) : (
-          <bdi dir={figureDirection(shown.value)}>
-            {/*
+        <p
+          className="tabular min-w-0 text-[clamp(1.125rem,8.5cqi,1.625rem)] leading-none font-bold tracking-tight whitespace-nowrap text-(--color-text)"
+          title={
+            shown.value === null ? (metric.empty_reason ?? t('comparison.noValue')) : undefined
+          }
+        >
+          {shown.value === null ? (
+            <span className="text-(--color-muted)">{EMPTY}</span>
+          ) : (
+            <bdi dir={figureDirection(shown.value)}>
+              {/*
               Counted up only on the four primary cards. Twelve figures all
               counting at once is a slot machine, not a dashboard — the
               compact row prints its values outright.
             */}
-            <CountUp value={shown.raw} format={shown.format} />
-          </bdi>
-        )}
-      </p>
+              <CountUp value={shown.raw} format={shown.format} />
+            </bdi>
+          )}
+        </p>
 
         <Change metric={metric} shown={shown} costly={visual.costly} size="pill" />
       </div>
@@ -591,7 +606,9 @@ function Change({ metric, shown, costly = false, size }) {
           fill,
         )}
       >
-        <span aria-hidden="true">{tone === 'negative' ? '▼' : tone === 'positive' ? '▲' : '→'}</span>
+        <span aria-hidden="true">
+          {tone === 'negative' ? '▼' : tone === 'positive' ? '▲' : '→'}
+        </span>
         {magnitude}
       </span>
     );

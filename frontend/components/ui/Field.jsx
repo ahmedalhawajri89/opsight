@@ -258,7 +258,7 @@ export const Checkbox = forwardRef(function Checkbox({ label, className, id, ...
         ref={ref}
         id={inputId}
         type="checkbox"
-        className="size-3.5 rounded-[2px] border-(--color-line-strong) accent-(--color-brand)"
+        className="size-3.5 rounded-(--radius-chip) border-(--color-line-strong) accent-(--color-brand)"
         {...props}
       />
       {label && (

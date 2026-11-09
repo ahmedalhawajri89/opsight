@@ -93,7 +93,14 @@ export function Card({
         // min-w-0: as a grid or flex child a panel would otherwise grow to fit
         // its widest content, so one unwrappable table widened the whole page
         // on a phone. The table scrolls inside its panel instead.
-        'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)',
+        /*
+         * A border, and NOT a shadow with it. §5: "no card carries both a
+         * shadow and a visible border" — the shipped card carried both, and
+         * on a white content panel the shadow (4% at 2px) was doing nothing
+         * except softening the one edge that had to separate white from
+         * white. The hairline was lifted to carry it alone (--border).
+         */
+        'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface)',
         className,
       )}
     >
@@ -123,10 +130,19 @@ export function Card({
  * The icon is a wayfinding aid for a page of many panels — it lets the eye
  * find "the stock one" without reading — and is hidden from assistive
  * technology, which has the title.
+ *
+ * `basis-48`, for the same reason SeasonNotice needs one: a `flex-1` item has
+ * a flex-basis of 0, so a header row that says `flex-wrap` never actually
+ * wraps — the controls beside the title keep their full width and the title
+ * is squeezed into whatever is left. On a 390px phone that left about 160px,
+ * and "Business Performance" was cut off in its own card's header.
+ *
+ * Twelve rem is a width worth having before the controls give way. The title
+ * still takes the leftover on a wide screen, because `flex-1` is unchanged.
  */
 export function PanelTitle({ title, description, icon }) {
   return (
-    <div className="flex min-w-0 flex-1 items-start gap-2.5">
+    <div className="flex min-w-0 flex-1 basis-48 items-start gap-2.5">
       {icon && (
         <Icon
           name={icon}

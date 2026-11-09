@@ -108,9 +108,29 @@ class AppServiceProvider extends ServiceProvider
         // Bulk extraction is the exfiltration vector.
         RateLimiter::for('exports', static fn (Request $request): Limit => Limit::perHour(10)->by($byUser($request)));
 
-        // A coarse per-address backstop; LoginRequest owns the real 5/min
-        // per email-and-address limit.
-        RateLimiter::for('login', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->ip()));
+        /*
+         * A coarse per-address backstop; LoginRequest owns the real 5/min
+         * per email-and-address limit, and clears it on a success.
+         *
+         * THIS ONE COUNTS SUCCESSES TOO, which is the point in production —
+         * somebody spraying a stolen password list gets some of them right,
+         * and the per-email limit never sees a pattern because each guess is
+         * against a different account.
+         *
+         * Locally it measures nothing. Every request comes from 127.0.0.1:
+         * the developer, the browser suite's four sign-ins, and any script
+         * run beside them share one bucket, so ten a minute is reached by
+         * ordinary work rather than by an attack. It cost three false runs
+         * of the suite before it was named — each one a cascade, because a
+         * failed auth setup leaves every authenticated test looking at the
+         * sign-in page with no navigation on it.
+         *
+         * Raised rather than removed in local: a runaway loop should still
+         * meet a wall.
+         */
+        RateLimiter::for('login', static fn (Request $request): Limit => app()->isLocal()
+            ? Limit::perMinute(120)->by((string) $request->ip())
+            : Limit::perMinute(10)->by((string) $request->ip()));
 
         // Each sign-up creates a business: a handful an hour from one address.
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));
