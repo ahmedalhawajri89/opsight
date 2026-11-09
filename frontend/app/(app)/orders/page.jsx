@@ -13,10 +13,11 @@ import { DateInput, Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
+import { ResultSummary } from '@/components/data/ResultSummary';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 import { describeFilters } from '@/lib/i18n/filters';
 import { exportOrders } from '@/services/orders';
 
@@ -69,7 +70,39 @@ export default function OrdersPage() {
     },
   };
 
-  const { orders, meta, isLoading, isError, error, refetch } = useOrders(query);
+  const { orders, meta, totals, isLoading, isError, error, refetch } = useOrders(query);
+
+  /*
+   * The band above the table. Built from what the SERVER counted over the
+   * whole filtered set, never from the rows on this page — see ResultSummary.
+   *
+   * Gross profit is pushed only when the key is present. The endpoint omits
+   * it for a role without the margin ability, exactly as it omits the field
+   * on each row, so the absence here needs no second permission check and
+   * cannot drift out of step with the one the server already made.
+   */
+  const summary = [
+    {
+      key: 'matched',
+      value: formatNumber(totals?.orders ?? meta?.total ?? 0),
+      label: t('orders.summary.matched'),
+    },
+    {
+      key: 'sales',
+      value: formatMoney(totals?.sales),
+      label: t('orders.summary.sales'),
+    },
+  ];
+
+  if (totals?.gross_profit !== undefined) {
+    summary.push({
+      key: 'gross_profit',
+      value: formatMoney(totals.gross_profit),
+      label: t('metrics.gross_profit.label'),
+      // The one figure on this screen the product exists to produce.
+      tone: 'accent',
+    });
+  }
 
   const columns = [
     {
@@ -139,7 +172,17 @@ export default function OrdersPage() {
       header: t('metrics.gross_profit.label'),
       numeric: true,
       width: '10rem',
-      cell: (row) => formatMoney(row.gross_profit),
+      /*
+       * Weighted away from the total beside it. The two sat at identical
+       * size, colour and weight, so the figure the product exists to compute
+       * looked like a second copy of the invoice amount. This is the only
+       * column on the screen in the brand's own colour.
+       */
+      cell: (row) => (
+        <span className="font-medium text-(--color-brand-text)">
+          {formatMoney(row.gross_profit)}
+        </span>
+      ),
     });
   }
 
@@ -200,6 +243,8 @@ export default function OrdersPage() {
       </FilterBar>
 
       <Card padded={false}>
+        <ResultSummary items={summary} loading={isLoading} />
+
         <DataTable
           caption={t('nav.items.orders')}
           columns={columns}

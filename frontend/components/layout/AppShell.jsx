@@ -458,7 +458,15 @@ export function AppShell({ children }) {
 
   useShortcuts({ onHelp: openShortcuts, chords });
 
-  const [showFocusHint, dismissFocusHint] = useSeenOnce('focus-mode');
+  /*
+   * `after: 3` — held back until the reader's third visit.
+   *
+   * useSeenOnce exists for exactly this and the option was not being used:
+   * the hint met every first-time visitor on their first screen, before they
+   * had seen a single figure. An invitation to change how the interface is
+   * laid out is worth nothing to somebody who has not yet decided to stay.
+   */
+  const [showFocusHint, dismissFocusHint] = useSeenOnce('focus-mode', { after: 3 });
 
   /*
    * The state says focused; this says whether that means anything here. It
@@ -587,6 +595,13 @@ export function AppShell({ children }) {
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
               <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
+
+              {/*
+                Beside the control it describes, not above the page title.
+                See the note in FocusHint for what it used to cost there.
+              */}
+              <FocusHint show={showFocusHint && wide} onDismiss={dismissFocusHint} />
+
               {wide && (
                 <FocusControls
                   focused={focus.focused}
@@ -644,12 +659,6 @@ export function AppShell({ children }) {
             tabIndex={-1}
             className={cn(CONTENT_INSET, 'w-full min-w-0 flex-1 py-5 focus:outline-none lg:py-6')}
           >
-            {/*
-              Above the content and in its flow, so it takes a line of its
-              own rather than landing on top of what the reader came for.
-            */}
-            <FocusHint show={showFocusHint && wide} onDismiss={dismissFocusHint} />
-
             {children}
           </main>
 

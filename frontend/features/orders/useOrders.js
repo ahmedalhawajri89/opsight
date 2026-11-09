@@ -24,6 +24,13 @@ export function useOrders(filters) {
   return {
     orders: query.data?.data ?? [],
     meta: query.data?.meta,
+    /*
+     * What the whole filtered set comes to, counted by the server. Undefined
+     * until the first response, and `gross_profit` is absent entirely for a
+     * role without the margin ability — never zero, which would read as
+     * "no profit" rather than "not yours to see".
+     */
+    totals: query.data?.totals,
     ...query,
   };
 }

@@ -802,6 +802,10 @@ const en = {
   },
 
   orders: {
+    summary: {
+      matched: 'Orders matched',
+      sales: 'Total sales',
+    },
     description: 'Every committed sale, and the drafts on their way to becoming one.',
     new: 'New order',
     searchPlaceholder: 'Search by reference…',

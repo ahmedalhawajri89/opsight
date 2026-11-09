@@ -821,6 +821,10 @@ const ar = {
   },
 
   orders: {
+    summary: {
+      matched: 'طلبات مطابقة',
+      sales: 'إجمالي المبيعات',
+    },
     description: 'كل عملية بيع معتمدة، والمسودات في طريقها إلى الاعتماد.',
     new: 'طلب جديد',
     searchPlaceholder: 'ابحث برقم المرجع…',

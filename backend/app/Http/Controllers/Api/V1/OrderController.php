@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Authorization\Ability;
 use App\Domain\Export\CsvExport;
 use App\Domain\Orders\CancelOrder;
 use App\Domain\Orders\ConfirmOrder;
@@ -21,6 +22,7 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Support\Money;
 use App\Support\QueryFilter;
 use App\Support\Tenancy\TenantRule;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,11 +41,73 @@ class OrderController extends Controller
     {
         $this->authorize('viewAny', Order::class);
 
+        $listing = $this->listing($request);
+
+        // Totalled before the page is taken, and from a CLONE: `paginate`
+        // mutates the builder it is called on.
+        $totals = self::totals($request, clone $listing);
+
         return OrderResource::collection(
-            $this->listing($request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+            $listing->paginate(QueryFilter::perPage($request))->withQueryString(),
+        )->additional(['totals' => $totals]);
+    }
+
+    /**
+     * What the filtered set adds up to — every row that matched, not the page.
+     *
+     * WHY THIS IS NOT THE ANALYTICS FIGURE, AND MUST NOT BE. `MetricCalculator`
+     * defines net revenue as subtotal less discounts less refunds, over
+     * qualifying statuses only, and the Analytics screen reports it under its
+     * own name. This sums `total_amount` over whatever the reader's filters
+     * matched, because it is printed directly above a table of `total_amount`
+     * and a band that disagrees with the column under it is worse than no band
+     * at all. The two carry different names for that reason.
+     *
+     * So the status filter is the reader's, not ours: ask for cancelled orders
+     * and the total is the total of cancelled orders. A hidden status
+     * restriction would mean the band quietly answered a different question
+     * from the one the filters asked.
+     *
+     * Gross profit repeats the row's own expression (OrderResource) rather
+     * than the calculator's, for the same reason — the band is the column's
+     * sum. It is withheld whole from a role without the ability, exactly as
+     * the column is.
+     *
+     * One query, and no ORDER BY: `reorder()` drops the sort, which an
+     * aggregate cannot use and the engine would otherwise still plan for.
+     * `toBase()` keeps the tenancy scope, because Eloquent applies its scopes
+     * on the way down to the query builder.
+     *
+     * @param  Builder<Order>  $query
+     * @return array<string, int|string>
+     */
+    private static function totals(Request $request, Builder $query): array
+    {
+        $scale = Money::scale();
+
+        $row = $query->reorder()->toBase()->selectRaw(
+            'COUNT(*) AS orders, '
+            .'COALESCE(SUM(total_amount), 0) AS sales, '
+            .'COALESCE(SUM(subtotal_amount), 0) AS subtotal, '
+            .'COALESCE(SUM(discount_amount), 0) AS discounts, '
+            .'COALESCE(SUM(cogs_amount), 0) AS cogs'
+        )->first();
+
+        $totals = [
+            'orders' => (int) ($row->orders ?? 0),
+            'sales' => Money::round((string) ($row->sales ?? '0')),
+        ];
+
+        // Withheld as a set, like every other margin figure.
+        if ($request->user()?->can(Ability::OrdersViewMargin->value) === true) {
+            $totals['gross_profit'] = bcsub(
+                bcsub((string) ($row->subtotal ?? '0'), (string) ($row->discounts ?? '0'), $scale),
+                (string) ($row->cogs ?? '0'),
+                $scale,
+            );
+        }
+
+        return $totals;
     }
 
     public function export(Request $request, CsvExport $export): StreamedResponse
