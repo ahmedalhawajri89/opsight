@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Authorization\Ability;
 use App\Domain\Export\CsvExport;
 use App\Domain\Inventory\AdjustStock;
 use App\Domain\Inventory\StockLedger;
@@ -14,6 +15,7 @@ use App\Http\Requests\Products\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Support\Money;
 use App\Support\QueryFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -35,11 +37,61 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', Product::class);
 
+        $listing = $this->listing($request);
+
+        // Totalled before the page is taken, and from a CLONE: `paginate`
+        // mutates the builder it is called on.
+        $totals = self::totals($request, clone $listing);
+
         return ProductResource::collection(
-            $this->listing($request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+            $listing->paginate(QueryFilter::perPage($request))->withQueryString(),
+        )->additional(['totals' => $totals]);
+    }
+
+    /**
+     * What the filtered catalogue comes to.
+     *
+     * `products` is the count of every row that matched, not the page.
+     *
+     * `stock_value` is the money sitting on the shelves: units on hand times
+     * what each one cost to buy. It is the figure a catalogue screen exists
+     * to answer and the product had no way to show it — an owner scanning
+     * forty rows of price and cost could not tell whether that was ten
+     * thousand dinars of stock or a hundred.
+     *
+     * AT COST, NOT AT PRICE, and the distinction is the whole point. Stock
+     * valued at its selling price books a profit nobody has earned yet, on
+     * goods that may never sell. What the business has tied up is what it
+     * paid.
+     *
+     * Withheld as a set from a role that cannot see cost, exactly as the
+     * column is — and more carefully, because one number covering the whole
+     * catalogue discloses more than any single row.
+     *
+     * @param  Builder<Product>  $query
+     * @return array<string, int|string>
+     */
+    private static function totals(Request $request, Builder $query): array
+    {
+        $totals = ['products' => (int) (clone $query)->reorder()->toBase()->count()];
+
+        if ($request->user()?->can(Ability::ProductsViewCost->value) === true) {
+            /*
+             * Joined rather than summed through the relation: `withSum` would
+             * need the product of two columns from two tables, which is not
+             * something a relation aggregate can express.
+             */
+            $value = (clone $query)
+                ->reorder()
+                ->join('inventory_items', 'inventory_items.product_id', '=', 'products.id')
+                ->toBase()
+                ->selectRaw('COALESCE(SUM(inventory_items.stock_on_hand * products.cost), 0) AS value')
+                ->value('value');
+
+            $totals['stock_value'] = Money::round((string) ($value ?: '0'));
+        }
+
+        return $totals;
     }
 
     /**

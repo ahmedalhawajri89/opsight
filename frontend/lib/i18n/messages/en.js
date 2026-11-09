@@ -911,12 +911,17 @@ const en = {
   },
 
   products: {
+    summary: {
+      matched: 'Products matched',
+      stockValue: 'Stock at cost',
+    },
     description:
       'The catalog. Editing a price or cost affects future orders only — past orders keep their own snapshots.',
     searchPlaceholder: 'Search name or SKU…',
     searchLabel: 'Search products',
     all: 'All products',
     columns: {
+      margin: 'Margin',
       category: 'Category',
       price: 'Price',
       cost: 'Cost',

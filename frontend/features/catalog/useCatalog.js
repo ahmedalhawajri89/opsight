@@ -23,7 +23,14 @@ export function useProducts(filters) {
     placeholderData: (previous) => previous,
   });
 
-  return { products: query.data?.data ?? [], meta: query.data?.meta, ...query };
+  return {
+    products: query.data?.data ?? [],
+    meta: query.data?.meta,
+    /* What the filtered catalogue comes to. `stock_value` is absent
+       entirely for a role that cannot see cost — never zero. */
+    totals: query.data?.totals,
+    ...query,
+  };
 }
 
 export function useProductActions() {
