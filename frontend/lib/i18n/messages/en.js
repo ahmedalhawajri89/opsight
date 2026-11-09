@@ -837,12 +837,20 @@ const en = {
   },
 
   customers: {
+    summary: {
+      matched: 'Customers matched',
+      lifetimeValue: 'Lifetime value of the set',
+    },
     description:
       'Order history, lifetime value and growth are computed from orders — they are metrics, not stored columns.',
     searchPlaceholder: 'Search name, email or company…',
     searchLabel: 'Search customers',
     all: 'All customers',
     columns: {
+      orders: 'Orders',
+      lifetimeValue: 'Lifetime value',
+      lastOrder: 'Last order',
+      neverOrdered: 'Never ordered',
       customer: 'Customer',
       email: 'Email',
       company: 'Company',

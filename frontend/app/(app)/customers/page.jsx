@@ -16,10 +16,11 @@ import { Input, Select } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
+import { ResultSummary } from '@/components/data/ResultSummary';
 import { EmptyState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 import { exportCustomers } from '@/services/catalog';
 
 const FILTER_CONFIG = {
@@ -46,7 +47,7 @@ export default function CustomersPage() {
     filter: { search: filters.search, is_active: filters.is_active },
   };
 
-  const { customers, meta, isLoading, isError, error, refetch } = useCustomers(query);
+  const { customers, meta, totals, isLoading, isError, error, refetch } = useCustomers(query);
   const [creating, setCreating] = useState(false);
   const router = useRouter();
 
@@ -86,20 +87,78 @@ export default function CustomersPage() {
           <span className="text-(--color-muted)">—</span>
         ),
     },
-    { key: 'company', header: t('customers.columns.company'), cell: (row) => row.company ?? '—' },
+    /*
+     * WHAT THIS REPLACED. Company and country used to sit here, and on the
+     * demo data `company` was null for all sixty-eight customers while
+     * `country` was the same two letters for all sixty-eight — two of the
+     * table's four columns carrying no information at any width, while the
+     * page's own description promised order history, lifetime value and
+     * growth and showed none of the three. Both still exist, on the detail
+     * screen, where an address belongs.
+     *
+     * They are computed from orders rather than stored, so they cannot go
+     * stale, and they sort — which is the reason to put value in a column at
+     * all. Sorting an address book by "date added" answers nothing.
+     */
     {
-      key: 'country',
-      header: t('customers.columns.country'),
-      width: '7rem',
-      cell: (row) => row.country ?? '—',
-    },
-    {
-      key: 'created_at',
-      header: t('customers.columns.added'),
+      key: 'orders_count',
+      header: t('customers.columns.orders'),
       sortable: true,
       numeric: true,
-      width: '9rem',
-      cell: (row) => formatDate(row.created_at),
+      width: '8rem',
+      cell: (row) => formatNumber(row.orders_count ?? 0),
+    },
+    {
+      key: 'lifetime_value',
+      header: t('customers.columns.lifetimeValue'),
+      sortable: true,
+      numeric: true,
+      primary: true,
+      width: '11rem',
+      /*
+       * Null, not zero, for somebody who has never ordered — the server
+       * sends no figure rather than a nought, because "nothing yet" and
+       * "nothing spent" read identically as 0 and mean different things.
+       */
+      cell: (row) =>
+        row.lifetime_value === null || row.lifetime_value === undefined ? (
+          <span className="text-(--color-muted)">—</span>
+        ) : (
+          <span className="font-medium text-(--color-brand-text)">
+            {formatMoney(row.lifetime_value)}
+          </span>
+        ),
+    },
+    {
+      key: 'last_order_at',
+      header: t('customers.columns.lastOrder'),
+      sortable: true,
+      numeric: true,
+      width: '10rem',
+      cell: (row) =>
+        row.last_order_at ? (
+          formatDate(row.last_order_at)
+        ) : (
+          <span className="text-(--color-muted)">{t('customers.columns.neverOrdered')}</span>
+        ),
+    },
+  ];
+
+  /*
+   * The band above the table — server-counted over the whole matched set,
+   * never summed from the rows on this page (ResultSummary).
+   */
+  const summary = [
+    {
+      key: 'matched',
+      value: formatNumber(totals?.customers ?? meta?.total ?? 0),
+      label: t('customers.summary.matched'),
+    },
+    {
+      key: 'lifetime_value',
+      value: formatMoney(totals?.lifetime_value),
+      label: t('customers.summary.lifetimeValue'),
+      tone: 'accent',
     },
   ];
 
@@ -148,6 +207,8 @@ export default function CustomersPage() {
       </FilterBar>
 
       <Card padded={false}>
+        <ResultSummary items={summary} loading={isLoading} />
+
         <DataTable
           caption={t('nav.items.customers')}
           columns={columns}

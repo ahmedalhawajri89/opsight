@@ -856,12 +856,20 @@ const ar = {
   },
 
   customers: {
+    summary: {
+      matched: 'عملاء مطابقون',
+      lifetimeValue: 'القيمة الدائمة للمجموعة',
+    },
     description:
       'سجل الطلبات والقيمة الدائمة للعميل والنمو تُحتسب من الطلبات — فهي مؤشرات وليست حقولًا مخزّنة.',
     searchPlaceholder: 'ابحث بالاسم أو البريد أو الشركة…',
     searchLabel: 'البحث في العملاء',
     all: 'كل العملاء',
     columns: {
+      orders: 'الطلبات',
+      lifetimeValue: 'القيمة الدائمة',
+      lastOrder: 'آخر طلب',
+      neverOrdered: 'لم يطلب بعد',
       customer: 'العميل',
       email: 'البريد الإلكتروني',
       company: 'الشركة',

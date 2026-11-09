@@ -7,15 +7,20 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Compliance\EraseCustomer;
 use App\Domain\Export\CsvExport;
 use App\Domain\Export\CustomerDataExport;
+use App\Domain\Orders\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Http\Resources\OrderResource;
 use App\Models\Customer;
+use App\Models\Order;
+use App\Support\Money;
 use App\Support\PhoneNumber;
 use App\Support\QueryFilter;
 use App\Support\Tenancy\TenantRule;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,11 +32,93 @@ class CustomerController extends Controller
     {
         $this->authorize('viewAny', Customer::class);
 
+        $filtered = $this->listing($request);
+
+        /*
+         * Totalled from the PLAIN filtered query, before the per-row
+         * subqueries are attached, and from a clone because `paginate`
+         * mutates the builder it is called on.
+         */
+        $totals = self::totals(clone $filtered);
+
         return CustomerResource::collection(
-            $this->listing($request)
-                ->paginate(QueryFilter::perPage($request))
-                ->withQueryString(),
-        );
+            self::withTrade($filtered)->paginate(QueryFilter::perPage($request))->withQueryString(),
+        )->additional(['totals' => $totals]);
+    }
+
+    /**
+     * What each customer has actually traded — counted, never stored.
+     *
+     * The resource has carried a note since Phase 02 saying order counts and
+     * lifetime value are metrics rather than columns, computed from orders so
+     * they can never go stale. The principle was right and nothing ever
+     * delivered on it: the screen's own description promised order history,
+     * lifetime value and growth, and the table under it showed an email
+     * address, a company, a country and a date added — of which, on the demo
+     * data, `company` is null for all sixty-eight customers and `country` is
+     * the same two letters for all sixty-eight. Two of its four columns
+     * carried no information at all, and none of the three it advertised.
+     *
+     * These are correlated subqueries on the one listing query, so the page
+     * costs no extra round trip per row, and they stay sortable — which is
+     * the point of putting value in a column rather than on a detail page.
+     * Sorting an address book by "date added" answers nothing; sorting a
+     * customer list by what each one is worth is the reason to open it.
+     *
+     * QUALIFYING STATUSES ONLY, and this is a different rule from the band on
+     * the orders screen deliberately. That one totals whatever the reader
+     * filtered, because it is printed above the column it sums. This is a
+     * claim about a relationship — a cancelled order is not value received,
+     * and counting it would overstate every customer who ever cancelled.
+     *
+     * @param  Builder<Customer>  $query
+     * @return Builder<Customer>
+     */
+    private static function withTrade(Builder $query): Builder
+    {
+        $qualifying = fn (QueryBuilder|EloquentBuilder $orders) => $orders
+            ->whereIn('status', OrderStatus::qualifying());
+
+        return $query
+            ->withCount(['orders as orders_count' => $qualifying])
+            ->withSum(['orders as lifetime_value' => $qualifying], 'total_amount')
+            ->withMax(['orders as last_order_at' => $qualifying], 'placed_at');
+    }
+
+    /**
+     * What the filtered set of customers comes to.
+     *
+     * Counted over every row that matched, not the page — see the same note
+     * on OrderController::totals. `lifetime_value` here is the trade of the
+     * whole matched set, which is the figure that makes a filtered customer
+     * list worth filtering.
+     *
+     * @param  Builder<Customer>  $query
+     * @return array<string, int|string>
+     */
+    private static function totals(Builder $query): array
+    {
+        $customers = (int) (clone $query)->reorder()->toBase()->count();
+
+        /*
+         * Summed from the orders table against the matched customers, NOT by
+         * aggregating `withTrade`'s per-row alias. An alias on a SELECT list
+         * cannot be aggregated in the same statement — the first version of
+         * this asked MySQL for SUM(lifetime_value) and got "Unknown column
+         * 'lifetime_value' in 'field list'" on the first request.
+         *
+         * Walk-in orders carry no customer_id and so fall outside this, which
+         * is right: the figure is what the matched CUSTOMERS have traded.
+         */
+        $value = Order::query()
+            ->whereIn('status', OrderStatus::qualifying())
+            ->whereIn('customer_id', (clone $query)->reorder()->select('customers.id'))
+            ->sum('total_amount');
+
+        return [
+            'customers' => $customers,
+            'lifetime_value' => Money::round((string) ($value ?: '0')),
+        ];
     }
 
     public function export(Request $request, CsvExport $export): StreamedResponse
@@ -80,7 +167,10 @@ class CustomerController extends Controller
                 'is_active' => QueryFilter::boolean('is_active'),
                 'country' => QueryFilter::exact('country'),
             ],
-            sortable: ['name', 'email', 'created_at'],
+            // The trade columns sort too — a customer list is opened to find
+            // the biggest, the quietest, the ones who stopped. They are
+            // subquery aliases from `withTrade`, which MySQL sorts on happily.
+            sortable: ['name', 'email', 'created_at', 'orders_count', 'lifetime_value', 'last_order_at'],
             defaultSort: 'name',
         );
 

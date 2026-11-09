@@ -82,7 +82,13 @@ export function useCustomers(filters) {
     placeholderData: (previous) => previous,
   });
 
-  return { customers: query.data?.data ?? [], meta: query.data?.meta, ...query };
+  return {
+    customers: query.data?.data ?? [],
+    meta: query.data?.meta,
+    /* What the whole matched set has traded, counted by the server. */
+    totals: query.data?.totals,
+    ...query,
+  };
 }
 
 export function useCustomer(id) {

@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Support\Localization\LocalizedName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 /**
  * @mixin Customer
@@ -36,9 +37,29 @@ class CustomerResource extends JsonResource
             // writes its own words in the reader's language.
             'erased_at' => $this->erased_at?->toIso8601String(),
 
-            // Order counts and lifetime value are METRICS, not columns. They
-            // arrive from the analytics endpoints in Phase 04, computed from
-            // orders, so they can never go stale (DATABASE_DESIGN.md §3.5).
+            /*
+             * Order count and lifetime value are METRICS, not columns — never
+             * stored, so they can never go stale (DATABASE_DESIGN.md §3.5).
+             * The listing computes them as correlated subqueries over
+             * qualifying orders (CustomerController::withTrade), and they are
+             * present only on the endpoints that asked for them.
+             *
+             * `whenNotNull`, not `whenHas`: a customer with no qualifying
+             * orders gets NULL from SUM and MAX but 0 from COUNT, so the
+             * count is sent as a real zero — "has never ordered" is a fact
+             * worth stating — while the value and the date stay absent rather
+             * than claiming a lifetime value of nothing and a last order at
+             * the epoch.
+             */
+            $this->mergeWhen($this->orders_count !== null, fn (): array => [
+                'orders_count' => (int) $this->orders_count,
+                'lifetime_value' => $this->lifetime_value === null
+                    ? null
+                    : (string) $this->lifetime_value,
+                'last_order_at' => $this->last_order_at
+                    ? Carbon::parse($this->last_order_at)->toIso8601String()
+                    : null,
+            ]),
 
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
