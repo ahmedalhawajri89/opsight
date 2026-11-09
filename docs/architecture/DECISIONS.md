@@ -1824,3 +1824,64 @@ texture rather than an argument. The owner chose the ink.
 measurement rather than by looking at the code: the trace crossing the email field, a figure
 730px tall on a 900px screen, and a short-screen threshold set at 700px that missed 720 —
 which is the height the browser suite itself runs at.
+## ADR-036 — The installed application, and a worker that stands down where it is wrong
+
+**Status:** Accepted (2026-11)
+**Affects:** `app/manifest.js`, `public/sw.js`, `public/offline.html`,
+`features/pwa/ServiceWorker.jsx`, `brand.config.js`, `tests/serviceWorker.test.jsx`
+**Supersedes:** nothing — this record was missing. Six source files cited "ADR-028" for the
+installed application; ADR-028 is the Salla connection, and the PWA decision had never been
+written down. The citations now point here.
+
+**Context.** Baydar installs: there is a manifest, an icon set, an offline page and a
+service worker. A worker in front of a business intelligence tool is the part worth arguing
+about, because every tutorial on the subject recommends exactly the thing that would break
+this product.
+
+**Decision.**
+
+1. **Not one figure is ever cached.** Every request under `/api/` goes to the network, and
+   if the network is gone the request fails exactly as it would without a worker — the
+   reader sees the application's own error state, which says it could not reach the server.
+   A cache-first worker here is a machine for showing someone yesterday's revenue as though
+   it were today's, silently, with nothing to notice. The product's whole claim is that its
+   figures are current.
+
+2. **A navigation offline gets a page that admits it**, not a cached dashboard. Last week's
+   numbers presented as this morning's are worse than no answer.
+
+3. **The shell is cached, on one stated ground:** Next fingerprints its JavaScript, CSS and
+   fonts by content, so a changed file has a different URL and a cached copy can never be
+   the wrong one. That assumption is the licence for the whole cache.
+
+4. **Therefore the worker runs in production only — and unregisters itself everywhere
+   else.** The assumption in (3) holds for `next build` and is false for `next dev`, which
+   serves chunks from stable paths and changes what is behind them on every save.
+
+**What (4) replaced, and why "skip" was not enough.** The component used to return early in
+development. That reads like the same thing and is not: a worker is registered against an
+ORIGIN and stays registered until something removes it, and a page that merely declines to
+register one removes nothing.
+
+This project puts a production build on the development origin as a matter of routine — the
+browser suite's `webServer` runs `npm run build && npm run start` on `localhost:3000`
+(`playwright.config.mjs`). So a single `npx playwright test` left a worker installed on the
+port `npm run dev` serves from, permanently. It then kept its side of a bargain that does
+not hold there, and the owner's browser rendered the sign-in page assembled from two builds
+weeks apart: current markup asking a months-old dictionary for keys it had never heard of
+(`reset.forgotLink` and `login.copyright` printed raw where sentences belonged), the product
+under its previous name, and a stylesheet whose class names no longer matched anything — so
+the page arrived with no styling at all.
+
+Development now unregisters every worker on the origin and deletes its caches. The caches go
+too: an unregistered worker stops answering fetches, but its Cache Storage survives on disk,
+and a dead copy of an old build left there is how this returns the next time anybody
+registers a worker on the port. One reload is still needed after it runs, because the page
+that runs it was itself served by the worker being removed.
+
+**Measured, not assumed.** The fix was verified in a real browser rather than by reading it:
+a worker registered by hand against the dev server, then one page load — registrations 1 → 0,
+caches 1 → 0, the title back to "Baydar" and no raw translation keys left on the page.
+
+**Rejected.** Telling the owner to clear site data. It works once and teaches nothing, and
+the next `playwright test` run puts it back.

@@ -1,5 +1,5 @@
 /*
- * The service worker (ADR-028).
+ * The service worker (ADR-036).
  *
  * IT CACHES NO DATA. NOT ONE FIGURE. EVER.
  *

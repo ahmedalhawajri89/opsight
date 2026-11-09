@@ -1,5 +1,5 @@
 /**
- * The installed application (ADR-028).
+ * The installed application (ADR-036).
  *
  * `display: 'standalone'` is what makes a desktop install open in its own
  * window with no address bar — the thing a reader asked for when they said

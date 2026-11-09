@@ -90,7 +90,7 @@ export const metadata = {
   title: brand.name,
   description: brand.description,
   // The icons the browser tab and an iOS home screen use. The installed
-  // application's own icons are declared in app/manifest.js (ADR-028).
+  // application's own icons are declared in app/manifest.js (ADR-036).
   icons: {
     icon: [{ url: '/icons/favicon-64.png', type: 'image/png', sizes: '64x64' }],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],

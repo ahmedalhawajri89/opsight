@@ -18,7 +18,7 @@ import en from '@/lib/i18n/messages/en';
 |
 | The offline page is the reason this file exists at all: it is static HTML
 | served by the service worker when the network is gone, so it cannot import
-| anything (ADR-028). It is the one place a rename has to be made by hand —
+| anything (ADR-036). It is the one place a rename has to be made by hand —
 | and the one place nobody looks until it is already wrong.
 |
 */

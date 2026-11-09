@@ -23,7 +23,7 @@
  *
  * ONE FILE CANNOT REACH `public/offline.html`. It is served by the service
  * worker when the network is gone, so it is static HTML with no build step
- * and no imports (ADR-028). Its copy of the name is enforced instead:
+ * and no imports (ADR-036). Its copy of the name is enforced instead:
  * `tests/brand.test.js` fails if it drifts from this file.
  *
  * The mark itself is not here. An SVG path in a config object is unreadable
