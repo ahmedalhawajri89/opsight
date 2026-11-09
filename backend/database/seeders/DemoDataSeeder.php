@@ -214,9 +214,21 @@ class DemoDataSeeder extends Seeder
                 app(StockLedger::class)
                     ->createItemForProduct($product, (int) $product->low_stock_threshold);
 
-                // Opening stock through the ledger, so the invariant holds from
-                // the product's first moment.
-                $adjust->restock($product, mt_rand(60, 400), (string) $cost, 'Opening stock', $owner?->id);
+                /*
+                 * Opening stock through the ledger, so the invariant holds
+                 * from the product's first moment — and dated to the day
+                 * before trading starts, which is what "opening" means. Left
+                 * at `now()` it put every product's first delivery AFTER
+                 * three years of selling it.
+                 */
+                $adjust->restock(
+                    $product,
+                    mt_rand(60, 400),
+                    (string) $cost,
+                    'Opening stock',
+                    $owner?->id,
+                    $this->historyStartsAt()->subDay(),
+                );
 
                 $products->push($product);
             }
@@ -279,7 +291,7 @@ class DemoDataSeeder extends Seeder
     {
         $customers = collect();
         $names = $this->customerNames(68);
-        $start = Carbon::now()->subMonths(self::MONTHS_OF_HISTORY)->startOfMonth();
+        $start = $this->historyStartsAt();
 
         foreach (array_slice($names, 0, 60) as $i => [$name, $nameAr, $email]) {
             $customer = Customer::create([
@@ -372,7 +384,7 @@ class DemoDataSeeder extends Seeder
         $adjust = app(AdjustStock::class);
 
         $staff = User::whereIn('role', ['staff', 'manager'])->get();
-        $start = Carbon::now()->subMonths(self::MONTHS_OF_HISTORY)->startOfMonth();
+        $start = $this->historyStartsAt();
         $sequence = 0;
 
         // Every full month, then the one in progress up to today, in
@@ -414,7 +426,12 @@ class DemoDataSeeder extends Seeder
             // A customer's first month is theirs: the arrival shows as a first order.
             $arriving = $customers->filter(fn (Customer $c): bool => $this->joinsAt[$c->id] === $month && $month > 0);
 
-            // Periodic restocks, so stock does not simply drain to zero.
+            /*
+             * Periodic restocks, so stock does not simply drain to zero —
+             * each dated inside the month it belongs to. Undated, all 325 of
+             * them landed on the day the seeder ran, which read as a business
+             * that sold for three years and took delivery once.
+             */
             if ($month % 2 === 0) {
                 foreach ($products->random(15) as $product) {
                     $adjust->restock(
@@ -422,6 +439,8 @@ class DemoDataSeeder extends Seeder
                         mt_rand(40, 160),
                         (string) $product->cost,
                         'Scheduled restock',
+                        null,
+                        $this->businessDayIn($monthStart, $days),
                     );
                 }
             }
@@ -536,6 +555,65 @@ class DemoDataSeeder extends Seeder
                 }
             }
         }
+
+        $this->backdateStockMovements();
+    }
+
+    /**
+     * Put the stock ledger back on the calendar the orders live on.
+     *
+     * WHY THIS IS NEEDED AT ALL. Every order here goes through the real
+     * ConfirmOrder, FulfilOrder and CancelOrder services, which is the point
+     * — the demo data is produced by the same code a merchant's would be.
+     * Those services stamp a movement `now()`, correctly, because in the
+     * application the stock moves at the moment the row is written. Only a
+     * seeder replays months of trade in two minutes, and only a seeder has
+     * any business rewriting the clock afterwards. The orders themselves are
+     * backdated a few lines above for exactly the same reason.
+     *
+     * Left alone it produced 6,656 ledger entries inside a 101-second window
+     * — from 13:40:27 to 13:42:08 — for a history that claims to span
+     * eighteen months. Every line on the stock screen read "4 days ago", and
+     * the movement log, which is what a client opens to ask when a line ran
+     * out, had no dates in it worth the name.
+     *
+     * Done in SQL against the order each movement already references, rather
+     * than by threading a date through three domain services for a seeder's
+     * benefit.
+     */
+    private function backdateStockMovements(): void
+    {
+        $businessId = CurrentBusiness::get()->id();
+
+        /*
+         * `placed_at` is the business date of the sale. A movement from a
+         * cancelled order is a return to stock, which happens after the sale
+         * rather than at it — but the demo's cancellations follow within a
+         * day or two, and inventing a separate cancellation clock would be
+         * inventing data rather than placing it.
+         */
+        DB::statement(
+            'UPDATE inventory_movements m '
+            .'JOIN orders o ON o.id = m.reference_id AND o.business_id = m.business_id '
+            .'SET m.occurred_at = COALESCE(o.placed_at, m.occurred_at) '
+            ."WHERE m.business_id = ? AND m.reference_type = 'order' AND o.placed_at IS NOT NULL",
+            [$businessId],
+        );
+
+        /*
+         * The item's cached `last_movement_at` has to follow, or the stock
+         * screen keeps reading a timestamp its own ledger no longer agrees
+         * with — two figures about one event, which is the whole class of
+         * bug a derived cache exists to create.
+         */
+        DB::statement(
+            'UPDATE inventory_items i '
+            .'JOIN (SELECT product_id, MAX(occurred_at) AS last_at FROM inventory_movements '
+            .'WHERE business_id = ? GROUP BY product_id) m ON m.product_id = i.product_id '
+            .'SET i.last_movement_at = m.last_at '
+            .'WHERE i.business_id = ?',
+            [$businessId, $businessId],
+        );
     }
 
     /** A Gulf-shaped mix: card first, then cash on delivery, cash and wallets. */
@@ -556,6 +634,18 @@ class DemoDataSeeder extends Seeder
     private function daysCovered(Carbon $monthStart): int
     {
         return $monthStart->isSameMonth(now()) ? now()->day : $monthStart->daysInMonth;
+    }
+
+    /**
+     * The first day of trading, named once.
+     *
+     * It was written out at three call sites and needed at a fourth — the
+     * opening stock, which has to land BEFORE the first sale rather than on
+     * whatever day the seeder happens to run.
+     */
+    private function historyStartsAt(): Carbon
+    {
+        return Carbon::now()->subMonths(self::MONTHS_OF_HISTORY)->startOfMonth();
     }
 
     /** A weekday-weighted instant within the month's first $days days, at a plausible hour, never ahead of now. */
@@ -639,13 +729,22 @@ class DemoDataSeeder extends Seeder
                 continue;
             }
 
-            // The reason defaults to a plain adjustment, which is what these
-            // are; naming it again would only add an import.
+            /*
+             * The reason defaults to a plain adjustment, which is what these
+             * are; naming it again would only add an import.
+             *
+             * Dated a few days back rather than left at `now()`. A stocktake
+             * recorded the same second the demo was built printed "34
+             * seconds ago" against five of the forty lines — true, and the
+             * one thing on the screen that announced the data had been
+             * manufactured a moment earlier.
+             */
             $adjust->adjust(
                 $product,
                 $delta,
                 $index === 0 ? 'Stocktake: shortfall written off' : 'Stocktake correction',
                 actorId: $owner?->id,
+                occurredAt: now()->subDays($index + 2)->setTime(mt_rand(9, 16), mt_rand(0, 59)),
             );
         }
     }
@@ -653,7 +752,7 @@ class DemoDataSeeder extends Seeder
     private function seedExpenses(Collection $categories): void
     {
         $owner = User::where('role', 'owner')->first();
-        $start = Carbon::now()->subMonths(self::MONTHS_OF_HISTORY)->startOfMonth();
+        $start = $this->historyStartsAt();
 
         $recurring = [
             'Rent' => [1800, 2200],

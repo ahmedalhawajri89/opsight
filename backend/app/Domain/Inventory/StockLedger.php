@@ -8,6 +8,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Support\Tenancy\TenantQuery;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
@@ -37,6 +38,19 @@ final class StockLedger
     /**
      * Apply a signed change to a product's stock.
      *
+     * `$occurredAt` is WHEN THE STOCK ACTUALLY MOVED, which is not always
+     * when the row is written. In the application they are the same instant
+     * and the default is right. They are not the same when history is being
+     * replayed — the demo seeder walks months of orders in a couple of
+     * minutes, and stamping every one of them `now()` produced a ledger with
+     * 6,656 entries inside a 101-second window: a stock history with no
+     * history in it, on the screen a client opens to ask when a line ran
+     * out.
+     *
+     * It is a parameter rather than something the seeder patches afterwards
+     * because `last_movement_at` on the item has to agree with it, and two
+     * writes that must agree belong in the one place that makes them.
+     *
      * @param  int  $delta  negative for a sale, positive for a restock
      */
     public function move(
@@ -48,6 +62,7 @@ final class StockLedger
         ?string $note = null,
         ?string $unitCost = null,
         ?int $actorId = null,
+        ?DateTimeInterface $occurredAt = null,
     ): InventoryMovement {
         $this->assertInTransaction();
 
@@ -76,6 +91,8 @@ final class StockLedger
                 : InsufficientStockException::wouldGoNegative($product->name, $balanceAfter);
         }
 
+        $at = $occurredAt ?? now();
+
         $movement = InventoryMovement::create([
             'product_id' => $product->id,
             'quantity_delta' => $delta,
@@ -86,14 +103,14 @@ final class StockLedger
             'unit_cost' => $unitCost,
             'note' => $note,
             'created_by' => $actorId,
-            'occurred_at' => now(),
+            'occurred_at' => $at,
         ]);
 
         // The cache is updated in the same transaction as the ledger entry, so
         // the invariant can never be observed broken.
         $item->forceFill([
             'stock_on_hand' => $balanceAfter,
-            'last_movement_at' => now(),
+            'last_movement_at' => $at,
         ])->save();
 
         return $movement;

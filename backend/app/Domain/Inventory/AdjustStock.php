@@ -6,6 +6,7 @@ namespace App\Domain\Inventory;
 
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -33,6 +34,7 @@ final class AdjustStock
         string $note,
         string $reason = InventoryMovement::REASON_ADJUSTMENT,
         ?int $actorId = null,
+        ?DateTimeInterface $occurredAt = null,
     ): InventoryMovement {
         $note = trim($note);
 
@@ -48,6 +50,7 @@ final class AdjustStock
             referenceId: null,
             note: $note,
             actorId: $actorId,
+            occurredAt: $occurredAt,
         ));
     }
 
@@ -62,6 +65,12 @@ final class AdjustStock
      * This flow never creates an expense row. Stock purchases reach profit
      * through COGS at the point of sale; recording them as an expense as well
      * would double-count them (MVP_SCOPE.md §6.7).
+     *
+     * `occurredAt` is when the goods ARRIVED, which is not always when
+     * somebody got round to recording them — a delivery booked on Sunday for
+     * a van that came on Thursday belongs on Thursday, or every stock report
+     * in between is wrong. It defaults to now, which is right whenever the
+     * two are the same.
      */
     public function restock(
         Product $product,
@@ -69,6 +78,7 @@ final class AdjustStock
         ?string $unitCost = null,
         ?string $note = null,
         ?int $actorId = null,
+        ?DateTimeInterface $occurredAt = null,
     ): InventoryMovement {
         if ($quantity < 1) {
             throw new InvalidArgumentException('A restock must add at least one unit.');
@@ -83,6 +93,7 @@ final class AdjustStock
             note: $note,
             unitCost: $unitCost,
             actorId: $actorId,
+            occurredAt: $occurredAt,
         ));
     }
 }

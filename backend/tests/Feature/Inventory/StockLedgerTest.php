@@ -173,3 +173,68 @@ it('flags a product at or below its threshold', function (int $stock, int $thres
     'above' => [11, 10, false],
     'zero stock' => [0, 5, true],
 ]);
+
+/*
+|--------------------------------------------------------------------------
+| When the stock moved, which is not always when the row was written
+|--------------------------------------------------------------------------
+|
+| In the application the two are the same instant and the default is right.
+| They are not the same when history is replayed: the demo seeder walks
+| eighteen months of trade in two minutes, and stamping every movement
+| `now()` produced 6,656 ledger entries inside a 101-second window — a stock
+| history with no history in it, on the screen a client opens to ask when a
+| line ran out.
+|
+*/
+
+it('defaults the moment of a movement to now', function (): void {
+    $product = Product::factory()->withStock(10)->create();
+
+    $movement = DB::transaction(
+        fn () => app(StockLedger::class)->move($product, -3, InventoryMovement::REASON_SALE),
+    );
+
+    expect($movement->occurred_at->diffInSeconds(now()))->toBeLessThan(5)
+        ->and($product->inventoryItem->fresh()->last_movement_at->diffInSeconds(now()))
+        ->toBeLessThan(5);
+});
+
+it('records the moment the stock actually moved when it is given one', function (): void {
+    $product = Product::factory()->withStock(10)->create();
+    $when = now()->subMonths(7)->startOfDay();
+
+    $movement = DB::transaction(
+        fn () => app(StockLedger::class)->move(
+            $product,
+            -2,
+            InventoryMovement::REASON_SALE,
+            occurredAt: $when,
+        ),
+    );
+
+    expect($movement->occurred_at->toDateString())->toBe($when->toDateString());
+});
+
+it('keeps the item\'s cached timestamp in step with the entry it wrote', function (): void {
+    /*
+     * Two figures about one event. If the ledger entry and the item's cache
+     * can be stamped separately, the stock screen reads a date its own
+     * movement log does not agree with — which is the entire class of bug a
+     * derived cache exists to create.
+     */
+    $product = Product::factory()->withStock(10)->create();
+    $when = now()->subMonths(3)->startOfDay();
+
+    $movement = DB::transaction(
+        fn () => app(StockLedger::class)->move(
+            $product,
+            5,
+            InventoryMovement::REASON_ADJUSTMENT,
+            occurredAt: $when,
+        ),
+    );
+
+    expect($product->inventoryItem->fresh()->last_movement_at->toIso8601String())
+        ->toBe($movement->occurred_at->toIso8601String());
+});
