@@ -573,83 +573,110 @@ export function AppShell({ children }) {
         </div>
       )}
 
-      <div data-shell-flip="" className="flex min-w-0 flex-1 flex-col">
-        <TopBarContext.Provider value={slot}>
-          <header
-            className={cn(
-              CONTENT_INSET,
-              'sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 backdrop-blur-sm [view-transition-name:app-topbar]',
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setOpenedAt(pathname);
-                setDrawerOpen(true);
-              }}
-              aria-expanded={drawerOpen}
-              aria-label={t('nav.openNavigation')}
-              className="-ms-1.5 inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) md:hidden"
-            >
-              <Icon name="menu" size={20} />
-            </button>
+      {/*
+        THE CONTENT IS A PANEL, like the navigation beside it.
 
-            {wide ? (
-              <TopBarSearch pages={pages} commands={commands} />
-            ) : (
+        The sidebar has stood off the edge of the screen as a rounded panel
+        since the ink redesign, while the bar and the content it introduces
+        lay flat on the ground — so one half of the shell was a surface and
+        the other half was the floor, and the seam between them was the only
+        place in the product where that was true. They are one panel now,
+        sharing the sidebar's own gutter, which is why the inset is `p-3 ps-0`
+        against the sidebar's `p-3 pe-0`: the two paddings meet and make a
+        single 12px channel rather than a 24px trench.
+
+        It keeps `--surface` rather than taking a deeper colour behind it. The
+        cards inside carry `border-(--color-line)` of their own (PageHeader),
+        so they still read as cards against it, and nothing else in the
+        product had to move.
+
+        AND IT IS NOT CLIPPED, which it was for one measurement. `overflow-
+        hidden` looked like the way to keep the corners honest, and it made
+        the panel the nearest scroll container for the bar inside it — a
+        container that never scrolls, so `position: sticky` had nothing to
+        stick to. Measured: scroll 400px and the top bar sat at -387 and was
+        gone, taking search, notifications and the way out of focus mode with
+        it. Nothing reaches the panel's edges anyway: <main> carries its own
+        vertical padding, and the bar's background is the panel's own colour.
+      */}
+      <div data-shell-flip="" className="flex min-w-0 flex-1 flex-col p-3 ps-0 max-md:p-0">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) max-md:rounded-none max-md:border-0 max-md:shadow-none">
+          <TopBarContext.Provider value={slot}>
+            <header
+              className={cn(
+                CONTENT_INSET,
+                'sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 backdrop-blur-sm [view-transition-name:app-topbar]',
+              )}
+            >
               <button
                 type="button"
-                onClick={() => setSearchOpen(true)}
-                aria-label={t('search.label')}
-                className="inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover)"
+                onClick={() => {
+                  setOpenedAt(pathname);
+                  setDrawerOpen(true);
+                }}
+                aria-expanded={drawerOpen}
+                aria-label={t('nav.openNavigation')}
+                className="-ms-1.5 inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) md:hidden"
               >
-                <Icon name="search" size={19} />
+                <Icon name="menu" size={20} />
               </button>
-            )}
 
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-              <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
+              {wide ? (
+                <TopBarSearch pages={pages} commands={commands} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  aria-label={t('search.label')}
+                  className="inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover)"
+                >
+                  <Icon name="search" size={19} />
+                </button>
+              )}
 
-              {/*
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+                <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
+
+                {/*
                 Beside the control it describes, not above the page title.
                 See the note in FocusHint for what it used to cost there.
               */}
-              <FocusHint show={showFocusHint && wide} onDismiss={dismissFocusHint} />
+                <FocusHint show={showFocusHint && wide} onDismiss={dismissFocusHint} />
 
-              {wide && (
-                <FocusControls
-                  focused={focus.focused}
-                  fullscreen={focus.fullscreen}
-                  supported={focus.supported}
-                  onToggleFocus={() => {
-                    dismissFocusHint();
-                    focus.toggleFocus();
-                  }}
-                  onToggleFullscreen={() => {
-                    dismissFocusHint();
-                    focus.toggleFullscreen();
-                  }}
-                />
-              )}
-              {/*
+                {wide && (
+                  <FocusControls
+                    focused={focus.focused}
+                    fullscreen={focus.fullscreen}
+                    supported={focus.supported}
+                    onToggleFocus={() => {
+                      dismissFocusHint();
+                      focus.toggleFocus();
+                    }}
+                    onToggleFullscreen={() => {
+                      dismissFocusHint();
+                      focus.toggleFullscreen();
+                    }}
+                  />
+                )}
+                {/*
                 The account menu is the way out of focus mode for a reader who
                 does not know the shortcut and cannot see the sidebar, so it
                 stays. Notifications do not: they are an interruption, which
                 is the one thing focus mode exists to remove.
               */}
-              {!focused && <NotificationsMenu />}
-              <UserMenu user={user} onSignOut={handleSignOut} />
-            </div>
-          </header>
+                {!focused && <NotificationsMenu />}
+                <UserMenu user={user} onSignOut={handleSignOut} />
+              </div>
+            </header>
 
-          <SearchDialog
-            open={searchOpen}
-            onClose={() => setSearchOpen(false)}
-            pages={pages}
-            commands={commands}
-          />
+            <SearchDialog
+              open={searchOpen}
+              onClose={() => setSearchOpen(false)}
+              pages={pages}
+              commands={commands}
+            />
 
-          {/*
+            {/*
             tabIndex -1 lets the skip link move focus here. The outline is
             suppressed on THIS element only: <main> is a landing point, not a
             control.
@@ -668,22 +695,23 @@ export function AppShell({ children }) {
             its own — PageHeader caps its description at 3xl, the settings
             forms at xl, FocusColumn at 110.
           */}
-          <main
-            id="main-content"
-            tabIndex={-1}
-            className={cn(CONTENT_INSET, 'w-full min-w-0 flex-1 py-5 focus:outline-none lg:py-6')}
-          >
-            {children}
-          </main>
+            <main
+              id="main-content"
+              tabIndex={-1}
+              className={cn(CONTENT_INSET, 'w-full min-w-0 flex-1 py-5 focus:outline-none lg:py-6')}
+            >
+              {children}
+            </main>
 
-          <ShortcutsSheet
-            open={shortcutsOpen}
-            onClose={() => setShortcutsOpen(false)}
-            destinations={destinations}
-          />
+            <ShortcutsSheet
+              open={shortcutsOpen}
+              onClose={() => setShortcutsOpen(false)}
+              destinations={destinations}
+            />
 
-          <InstallPrompt />
-        </TopBarContext.Provider>
+            <InstallPrompt />
+          </TopBarContext.Provider>
+        </div>
       </div>
     </div>
   );
