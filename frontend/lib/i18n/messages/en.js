@@ -468,6 +468,7 @@ const en = {
   },
 
   charts: {
+    step: 'Step',
     viewAsTable: 'View as table',
     viewAsChart: 'View as chart',
     noData: 'No data for this period',
@@ -1036,6 +1037,10 @@ const en = {
   },
 
   analytics: {
+    waterfall: {
+      title: 'From revenue to profit',
+      description: 'What the period earned, and what it cost to earn it',
+    },
     vat: {
       title: 'Value-added tax',
       description:

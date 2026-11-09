@@ -474,6 +474,7 @@ const ar = {
   },
 
   charts: {
+    step: 'الخطوة',
     viewAsTable: 'عرض كجدول',
     viewAsChart: 'عرض كرسم بياني',
     noData: 'لا توجد بيانات لهذه الفترة',
@@ -1055,6 +1056,10 @@ const ar = {
   },
 
   analytics: {
+    waterfall: {
+      title: 'من الإيراد إلى الربح',
+      description: 'ما كسبته الفترة، وما كلّف كسبُه',
+    },
     vat: {
       title: 'ضريبة القيمة المضافة',
       description:

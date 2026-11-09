@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,11 +28,19 @@ import {
  * Horizontal rather than vertical because the labels are product and customer
  * names: rotated vertical labels are unreadable at any useful density.
  *
- * Two rules:
+ * Three rules:
  *  - Bars start at zero. A truncated baseline makes a 5% difference look like
  *    a 50% one, which is the classic way a bar chart lies.
  *  - The "Other" row the API supplies is drawn in a neutral tone and kept, so
  *    the visible shares still sum to the whole.
+ *  - EVERY BAR CARRIES ITS OWN FIGURE at the tip. The share was in the
+ *    tooltip and in the table view, and on the chart a reader had to measure
+ *    a length against an axis — which is exactly the work this screen exists
+ *    to save them. It matters most here: "Other" aggregates thirty products
+ *    and comes to two and a half times the largest single one, so the ten
+ *    the chart is ranking are compressed into the first part of the width
+ *    and are hard to tell apart by length alone. The label does not depend
+ *    on the scale.
  */
 export function BreakdownChart({
   title,
@@ -81,7 +90,15 @@ export function BreakdownChart({
       footnote={rows.some((row) => row.is_other) ? t('charts.otherFootnote') : undefined}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={
+            rtl
+              ? { top: 4, right: 16, bottom: 0, left: 68 }
+              : { top: 4, right: 68, bottom: 0, left: 8 }
+          }
+        >
           <CartesianGrid horizontal={false} stroke="var(--border)" />
 
           {/* Baseline at zero, always. */}
@@ -139,6 +156,38 @@ export function BreakdownChart({
                 fill={row.is_other ? 'var(--chart-6)' : 'var(--chart-1)'}
               />
             ))}
+
+            {/*
+              OUTSIDE the bar, never inside it. The shortest bars here are a
+              few pixels wide, and a label placed inside one is either
+              clipped or printed over a mark it no longer fits in.
+
+              The share, not the amount: it is short enough to never collide
+              with the next row's label, it needs no currency, and it is the
+              comparison the ranking is actually for. The exact amount is on
+              the bar's own tooltip and in the table view behind the frame's
+              toggle — this is the figure that has to be readable without
+              either.
+
+              `var(--text-2)`, not the bar's colour: text never wears the
+              data colour, or a reader starts reading the label as a series.
+
+              `position="right"` in BOTH directions. Recharts reads it
+              against the VALUE axis, not the screen, and the Arabic chart
+              reverses that axis — so `left` put every label back at the
+              baseline, printed over the product names beside it. The margin
+              on the BarChart is the part that flips, because that one is
+              pixels.
+            */}
+            <LabelList
+              dataKey="share"
+              position="right"
+              offset={8}
+              formatter={(share) => formatPercent(share)}
+              fill="var(--text-2)"
+              fontSize={11}
+              className="tabular"
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

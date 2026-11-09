@@ -139,10 +139,22 @@ const SPARKS = {
   red: 'var(--chart-4)',
 };
 
-/** Splits the metrics that arrived into the two rows, with no key in both. */
-export function tierMetrics(metrics = {}) {
+/**
+ * Splits the metrics that arrived into the two rows, with no key in both.
+ *
+ * `compact` is an override because the two screens that use this do not show
+ * the same SET. The dashboard shows twelve; the analytics screen shows
+ * fifteen, and the three it adds — gross revenue, net margin and cost of
+ * goods — are not on the dashboard at all. Taking the default list there
+ * would have dropped them silently: still rendered correctly, just absent,
+ * which is the kind of loss nobody files a bug about.
+ *
+ * The PRIMARY row is not overridable. Which four figures lead is a product
+ * decision, and it should be the same four wherever they are shown.
+ */
+export function tierMetrics(metrics = {}, { compact = COMPACT_ORDER } = {}) {
   const primary = PRIMARY_ORDER.filter((key) => key in metrics).slice(0, PRIMARY_COUNT);
-  const secondary = COMPACT_ORDER.filter((key) => key in metrics && !primary.includes(key));
+  const secondary = compact.filter((key) => key in metrics && !primary.includes(key));
 
   return { primary, secondary };
 }
@@ -150,7 +162,15 @@ export function tierMetrics(metrics = {}) {
 const CARD =
   'min-w-0 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) transition-colors duration-(--duration-base) ease-(--ease-out) hover:border-(--color-line-strong)';
 
-export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonLabel, loading }) {
+export function KpiPanel({
+  metrics,
+  trends = {},
+  currency,
+  decimals,
+  comparisonLabel,
+  loading,
+  compact,
+}) {
   const { t } = useI18n();
 
   /*
@@ -191,7 +211,9 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
   if (loading) {
     return (
       <section aria-busy="true" className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* The same breakpoint as the real row, or the grid jumps from four
+            columns to two the moment the figures arrive. */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className={cn(CARD, 'p-5')}>
               <div className="flex items-center gap-3">
@@ -220,7 +242,19 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
     );
   }
 
-  const { primary, secondary } = tierMetrics(metrics);
+  const { primary, secondary } = tierMetrics(metrics, { compact });
+
+  /*
+   * Does ANY card in this row have a series to draw?
+   *
+   * A card with no history keeps the sparkline's space so that four cards
+   * stay the same height when only some of them have one. On a screen where
+   * NONE do — the analytics page holds one series at a time, for the metric
+   * chosen under the chart, not one per card — that reservation is 40px of
+   * nothing on every card, four times over. The row decides, so the cards
+   * still match each other either way.
+   */
+  const rowHasHistory = primary.some((key) => seriesValues(trends[key]).length > 1);
   const context = { currency, decimals, comparisonLabel };
 
   return (
@@ -229,7 +263,14 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
         {t('dashboard.keyMetrics')}
       </h2>
 
-      <div ref={gridScope} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/*
+          `xl`, not `lg`. Four cards from 1024px left each one about 174px,
+          and the icon chip and the tooltip take 84 of those — so the
+          metric's NAME was being squeezed into 39px and clipped mid-word.
+          Measured, not guessed. Two columns until 1280 gives each card
+          around 350px, which is a card.
+        */}
+      <div ref={gridScope} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {primary.map((key, index) => (
           <PrimaryKpi
             key={key}
@@ -237,6 +278,7 @@ export function KpiPanel({ metrics, trends = {}, currency, decimals, comparisonL
             metricKey={key}
             metric={metrics[key]}
             trend={trends[key]}
+            rowHasHistory={rowHasHistory}
             expanded={opened === key}
             onToggle={() => toggle(key)}
             {...context}
@@ -292,6 +334,7 @@ function PrimaryKpi({
   metricKey,
   metric,
   trend,
+  rowHasHistory = true,
   expanded,
   onToggle,
   currency,
@@ -315,7 +358,7 @@ function PrimaryKpi({
         CARD,
         'rise @container flex flex-col p-5',
         // Opened, the card takes the whole row and the others move down.
-        expanded && 'sm:col-span-2 lg:col-span-4',
+        expanded && 'sm:col-span-2 xl:col-span-4',
       )}
       style={{ '--rise-index': index }}
     >
@@ -334,7 +377,17 @@ function PrimaryKpi({
         >
           <Icon name={visual.icon} size={20} strokeWidth={1.75} />
         </span>
-        <h3 className="min-w-0 truncate text-sm font-semibold text-(--color-text)">{label}</h3>
+        {/*
+            It wraps rather than truncating. Four cards share the row from
+            1024px up, which leaves each about 270px once the icon and the
+            tooltip are paid for — and "هامش الربح الإجمالي" came out cut at
+            both 1280 and 1024. A metric's name is the one thing on the card
+            that cannot be guessed from the rest of it.
+
+            The grid equalises the heights, so a two-line name costs the row
+            a line rather than leaving one card taller than its neighbours.
+          */}
+        <h3 className="min-w-0 text-sm leading-snug font-semibold text-(--color-text)">{label}</h3>
         <span className="ms-auto flex shrink-0 items-center gap-1">
           {definition && <InfoTip label={label} content={definition} />}
           {/*
@@ -417,9 +470,14 @@ function PrimaryKpi({
 
         Decorative, and hidden from assistive technology — every fact it
         hints at is already stated on the card, and the full series is a
-        table away on the chart below. A metric the server sends no series
-        for draws nothing and keeps its space, so four cards stay the same
-        height whether or not all four have history.
+        table away on the chart below.
+
+        A metric the server sends no series for draws nothing and KEEPS its
+        space, so four cards stay the same height whether or not all four
+        have history — but only while at least one of them does. Where none
+        do, the row drops the band entirely rather than reserving 40px of
+        nothing on each of four cards; `rowHasHistory` is decided once, for
+        the row, so the cards still match each other.
       */}
       {expanded ? (
         /*
@@ -443,9 +501,11 @@ function PrimaryKpi({
           />
         </div>
       ) : (
-        <div className="mt-4">
-          <Sparkline values={series} colour={SPARKS[visual.accent]} height={40} />
-        </div>
+        rowHasHistory && (
+          <div className="mt-4">
+            <Sparkline values={series} colour={SPARKS[visual.accent]} height={40} />
+          </div>
+        )
       )}
 
       <div className="mt-auto" />

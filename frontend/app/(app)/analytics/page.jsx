@@ -13,7 +13,8 @@ import {
 import { QuickStatsCard } from '@/features/analytics/DashboardPanels';
 import { VatCard } from '@/features/analytics/VatCard';
 import { SeasonNotice } from '@/features/analytics/SeasonNotice';
-import { MetricTile } from '@/features/analytics/MetricTile';
+import { KpiPanel } from '@/features/analytics/KpiPanel';
+import { WaterfallChart } from '@/components/charts/WaterfallChart';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Trans, useI18n } from '@/features/i18n/I18nProvider';
 import { describePeriod } from '@/lib/periods';
@@ -48,14 +49,35 @@ const FILTER_CONFIG = {
   sortable: [],
 };
 
-const TILE_ORDER = [
-  'net_revenue',
+/*
+ * The compact row, in reading order: revenue and volume, then profit and
+ * margin, then what it cost, then the customers behind it, then the two
+ * quality rates.
+ *
+ * The four HEADLINE figures are not listed here — KpiPanel decides those,
+ * and they are the same four on the dashboard. This is only the remainder,
+ * which differs between the two screens: gross revenue, net margin and cost
+ * of goods are shown here and not there.
+ */
+/*
+ * The five steps of the period's profit, in the order the arithmetic runs.
+ *
+ * `total` stands on the axis; `down` is taken off the running figure. The
+ * two totals are the server's own gross_profit and net_profit rather than
+ * sums of the bars, so the chart can never disagree with the tile above it.
+ */
+const WATERFALL_STEPS = [
+  { key: 'net_revenue', kind: 'total' },
+  { key: 'cogs', kind: 'down' },
+  { key: 'gross_profit', kind: 'total' },
+  { key: 'operating_expenses', kind: 'down' },
+  { key: 'net_profit', kind: 'total' },
+];
+
+const COMPACT_ORDER = [
   'gross_revenue',
-  'orders_count',
   'units_sold',
   'average_order_value',
-  'gross_profit',
-  'gross_margin',
   'net_profit',
   'net_margin',
   'operating_expenses',
@@ -97,7 +119,12 @@ export default function AnalyticsPage() {
   const metrics = summary.metrics ?? {};
   const currency = meta?.currency ?? getMoneyDefaults().currency;
   const decimals = meta?.currency_decimals ?? getMoneyDefaults().decimals;
-  const visibleTiles = TILE_ORDER.filter((key) => key in metrics);
+  /*
+   * Loading means the FIRST load, not a refetch: `placeholderData` keeps the
+   * previous period's figures on screen while the next one arrives, so a
+   * reader changing the range never watches the panel empty itself.
+   */
+  const hasFigures = Object.keys(metrics).length > 0;
 
   // Cost-bearing series are refused by the API rather than returned as zeros,
   // so they are only offered to a role that may see them.
@@ -150,42 +177,60 @@ export default function AnalyticsPage() {
         </Card>
       ) : (
         /*
-          ONE PANEL DIVIDED BY HAIRLINES, not a grid of framed tiles.
-          UI_UX_DIRECTION.md §5: "A group of figures that describe one period
-          is ONE panel divided by hairlines… Twelve equal boxes give the eye
-          no place to start." This screen had fifteen, each with its own
-          border and its own corner, and nothing in the arrangement said
-          where to begin or which figures belonged together.
+          TWO TIERS, which is the same arrangement the dashboard leads with
+          and the arrangement §5 asks for: "A group of figures that describe
+          one period is ONE panel divided by hairlines… Twelve equal boxes
+          give the eye no place to start." This screen had fifteen, each in
+          its own frame, and nothing said where to begin.
 
-          They are one surface now, ruled between the cells, which is the
-          same treatment the dashboard's compact band already uses
-          (KpiPanel). The ORDER is unchanged and so is every figure — this is
-          the frame coming off, not a re-selection of what is shown.
+          Four headline figures carry an icon, a change chip and the period's
+          shape; the other eleven sit in one ruled band beneath them. The
+          component was already built for the dashboard and was not being
+          used by anything (KpiPanel) — its compact list takes an override
+          here because this screen shows three metrics the dashboard does
+          not, and the default list would have dropped them without a word.
 
-          `divide-x` is mirrored for Arabic by `rtl:divide-x-reverse`:
-          without it the divider lands on the wrong side of each cell and the
-          panel gains a rule down its outer edge.
+          No `trends`: this screen holds one series at a time, for the metric
+          chosen under the chart below, not one per card. KpiPanel treats a
+          missing series as an empty one — the sparkline is omitted and the
+          card does not offer to expand.
         */
-        <div className="grid grid-cols-2 divide-(--color-line-subtle) divide-x divide-y overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) sm:grid-cols-3 xl:grid-cols-4 rtl:divide-x-reverse">
-          {summary.isLoading && visibleTiles.length === 0
-            ? TILE_ORDER.slice(0, 4).map((key) => (
-                <MetricTile key={key} metricKey={key} loading bare />
-              ))
-            : visibleTiles.map((key) => (
-                <MetricTile
-                  key={key}
-                  metricKey={key}
-                  metric={metrics[key]}
-                  currency={currency}
-                  decimals={decimals}
-                  comparisonLabel={meta?.comparison?.label ?? ''}
-                  bare
-                  // No per-tile "Incomplete" badge: the period is flagged once,
-                  // beside the range and in the notice above. Fifteen identical
-                  // badges trained the eye to skip all of them.
-                />
-              ))}
-        </div>
+        <KpiPanel
+          metrics={metrics}
+          currency={currency}
+          decimals={decimals}
+          comparisonLabel={meta?.comparison?.label ?? ''}
+          compact={COMPACT_ORDER}
+          loading={summary.isLoading && !hasFigures}
+        />
+      )}
+
+      {/*
+        The arithmetic between the figures above, which the panel states but
+        never performs. Every step is a metric the server already computed
+        and this page already holds — no request, and no second idea of what
+        gross profit means.
+
+        Owner and manager only. The whole chart IS the cost structure, so
+        there is no partial version of it worth drawing for a role that
+        cannot see cost; `showCost` already gates the cost series in the
+        metric picker below.
+      */}
+      {showCost && (
+        <WaterfallChart
+          title={t('analytics.waterfall.title')}
+          description={t('analytics.waterfall.description')}
+          steps={WATERFALL_STEPS.filter((step) => step.key in metrics).map((step) => ({
+            ...step,
+            label: t(`metrics.${step.key}.label`),
+            value: metrics[step.key]?.value ?? null,
+          }))}
+          currency={currency}
+          decimals={decimals}
+          loading={summary.isLoading && !hasFigures}
+          error={summary.isError ? summary.error : null}
+          onRetry={summary.refetch}
+        />
       )}
 
       <TrendChart
