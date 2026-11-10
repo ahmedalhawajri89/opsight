@@ -7,6 +7,7 @@ use App\Domain\Orders\ConfirmOrder;
 use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderReference;
 use App\Domain\Orders\OrderStatus;
+use App\Models\AssistantConversation;
 use App\Models\Business;
 use App\Models\BusinessSetting;
 use App\Models\Category;
@@ -70,6 +71,13 @@ function otherBusiness(): array
             'access_token' => LEAK_MARKER.'-token',
         ]);
 
+        // An Ask Baydar conversation, so its route is asked the same question
+        // (ADR-038): another business's id must answer 404.
+        $conversation = AssistantConversation::query()->create([
+            'user_id' => $owner->id,
+            'title' => LEAK_MARKER.' question',
+        ]);
+
         $draft = Order::factory()->forCustomer($customer)->create(['notes' => LEAK_MARKER]);
         $draft->items()->create([
             'product_id' => $product->id,
@@ -98,7 +106,7 @@ function otherBusiness(): array
         // Inside the analytics period, so a leak in any aggregate shows a name.
         DB::table('orders')->where('id', $fulfilled->id)->update(['placed_at' => '2026-08-20 10:00:00']);
 
-        return compact('business', 'owner', 'staff', 'customer', 'product', 'expense', 'category', 'draft', 'fulfilled', 'integration');
+        return compact('business', 'owner', 'staff', 'customer', 'product', 'expense', 'category', 'draft', 'fulfilled', 'integration', 'conversation');
     });
 }
 
@@ -142,6 +150,7 @@ it('answers 404 to every route that names another business\'s record, and change
         'item' => $b['draft']->items()->withoutGlobalScopes()->value('id'),
         'user' => $b['staff']->id,
         'integration' => $b['integration']->id,
+        'conversation' => $b['conversation']->id,
     ];
 
     $this->actingAs($this->ownerA);

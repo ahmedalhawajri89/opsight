@@ -65,6 +65,8 @@
         <env name="ZID_REDIRECT_URI" value=""/>
         <env name="ZID_WEBHOOK_SECRET" value=""/>
         <env name="ZID_WEBHOOK_URL" value=""/>
+        <!-- No test may call Anthropic; the model is faked through LanguageModel. -->
+        <env name="ANTHROPIC_API_KEY" value=""/>
         <!--
             NOT "array".
 

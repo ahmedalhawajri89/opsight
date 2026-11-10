@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\ActivityController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
+use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
@@ -248,6 +249,15 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:imports');
         Route::post('imports', [FileImportController::class, 'store'])
             ->middleware('throttle:imports');
+
+        /* ---- Ask Baydar (ADR-038) ---------------------------------------- */
+        Route::get('assistant/conversations', [AssistantController::class, 'index']);
+        Route::get('assistant/conversations/{conversation}', [AssistantController::class, 'show'])
+            ->whereNumber('conversation');
+        // Each question is several model calls; the monthly ceiling caps the
+        // spend, this caps a script.
+        Route::post('assistant/messages', [AssistantController::class, 'store'])
+            ->middleware('throttle:assistant');
 
         /* ---- Business settings ------------------------------------------- */
         Route::get('settings', [SettingsController::class, 'show']);

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Anthropic\Client as AnthropicClient;
+use App\Domain\Assistant\ClaudeModel;
+use App\Domain\Assistant\LanguageModel;
 use App\Listeners\RecordAuthActivity;
 use App\Models\User;
 use App\Support\Auth\GoogleIdTokens;
@@ -30,6 +33,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        /*
+         * Ask Baydar's model (ADR-038). Bound to the interface so tests script
+         * the model instead of calling Anthropic, and resolved lazily so an
+         * installation without a key never constructs a client.
+         */
+        $this->app->bind(LanguageModel::class, static fn (): ClaudeModel => new ClaudeModel(
+            new AnthropicClient(apiKey: (string) config('assistant.api_key')),
+        ));
+
         /*
          * One Localizer per request. A singleton would carry one user's
          * language into the next request on a long-lived worker (Octane, a
@@ -113,6 +125,8 @@ class AppServiceProvider extends ServiceProvider
          * and an owner fixing a file goes round that loop a few times — so
          * more generous than exports, still far short of a script.
          */
+        RateLimiter::for('assistant', static fn (Request $request): Limit => Limit::perMinute(10)->by($byUser($request)));
+
         RateLimiter::for('imports', static fn (Request $request): Limit => Limit::perHour(60)->by($byUser($request)));
 
         /*
