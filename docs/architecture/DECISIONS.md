@@ -1964,8 +1964,9 @@ delivery's kind is recognised (`ZidWebhooks::event`).
 
 ## ADR-038 — The language model explains figures; it never produces one
 
-**Status:** Proposed (2026-11). Decided when Phase B of the product track starts.
-**Affects:** the planned Ask Baydar chat, the morning brief, and any MCP server
+**Status:** Accepted (2026-11), built as Ask Baydar. See "What was built" below.
+**Affects:** `app/Domain/Assistant/`, `AssistantController`, `/assistant`; later, the morning brief
+and any MCP server
 **Builds on:** ADR-010 (rule-based insights), the role matrix in ROLES_AND_PERMISSIONS.md
 
 **Context.** The product's claim is that its figures can be trusted: decimals stored as
@@ -1994,6 +1995,30 @@ summarise a dashboard screenshot: it cannot be audited.
 
 **Revisit when:** merchants repeatedly ask questions the tools cannot answer. The fix is then a
 new tool with a tested definition, not a looser model.
+
+**What was built.** Five tools: summary, trend, breakdown, insights and stock risks. Each is a thin
+call into `MetricSummary`, `TimeSeries`, `Breakdown`, `InsightEngine` or `MetricCalculator`, made as
+the asking user. For a role without `metrics.view_cost`, the cost metrics are absent from the tools'
+allowed values, so (2) holds by construction. The assistant is open to `analytics.view`. Points
+the proposal did not settle:
+
+- **The history is the server's.** Conversations are stored. A history sent back by the browser could
+  carry invented tool results, so the client sends only a question and a conversation id. A
+  conversation is its author's alone.
+- **It stops.** There is a cap of six tool rounds per question, and a monthly token ceiling per business
+  (`ASSISTANT_MONTHLY_TOKENS`) that is checked before the model is called.
+- **Cache-stable prefix.** The system prompt and tool list are fixed text per role. Today's date
+  travels with each question instead, and a test requires the prefix to be identical across days and
+  users.
+- **The model.** Claude Opus 5.5 at effort `medium` is the default, through the official PHP SDK
+  (`anthropic-ai/sdk`). The model is configuration, because choosing a cheaper one is a decision about
+  answer quality. Server-side fallbacks (`'default'`) retry a classifier refusal on a model the server
+  picks.
+
+**Not yet run against the live API**, because no key existed while it was built. `ClaudeModelTest`
+runs the real SDK through a recording transport and checks the outgoing request and the parsing of
+a reply in wire format, but it cannot show answer quality. Run a handful of real questions in both
+languages before showing it to a merchant.
 
 ---
 

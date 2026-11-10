@@ -269,6 +269,12 @@ Zid signs no deliveries; the door checks the Basic Auth password Baydar gave
 Zid when it registered the store's webhooks. Rotating `ZID_WEBHOOK_SECRET`
 therefore means reconnecting every Zid store.
 
+**Ask Baydar (ADR-038).** Set `ANTHROPIC_API_KEY` in `backend/.env`. Without it the assistant
+answers 503 and its screen says it is not set up. `ASSISTANT_MODEL` (default `claude-opus-5-5`),
+`ASSISTANT_EFFORT` (default `medium`) and `ASSISTANT_MONTHLY_TOKENS` (default 2,000,000 per business
+per month) are the knobs. The tests never call Anthropic: `phpunit.xml` pins the key empty, and the
+model is faked through `LanguageModel`.
+
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly
 audit-log prune (ADR-026):
 

@@ -598,7 +598,12 @@ check are named in ADR-037.
 **Done when:** a Zid store and a Salla store both feed one business, and their orders sit side
 by side in the same metrics.
 
-### Phase B — Ask Baydar *(3–4 weeks)*
+### Phase B — Ask Baydar ✅ *(built 2026-11; the live-API check is outstanding)*
+
+**Done:** the chat in Arabic and English, five role-scoped tools over the existing metric
+services, server-kept conversations, sources shown under every answer, a monthly token ceiling and
+a tool-round cap (ADR-038, accepted). **Outstanding:** questions run against the live API to judge
+answer quality, which needs `ANTHROPIC_API_KEY`.
 
 - An Arabic and English chat over the business's own records. The model answers by calling
   `MetricCalculator`, `TimeSeries`, `Breakdown` and `InsightEngine` as tools. Each tool runs
