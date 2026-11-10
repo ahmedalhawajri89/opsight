@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Integrations\Salla\SallaConnector;
 use App\Domain\Integrations\Salla\SallaWebhooks;
 
 /*
@@ -30,6 +31,19 @@ return [
      */
     'providers' => [
         'salla' => SallaWebhooks::class,
+    ],
+
+    /*
+     * Stores whose history can be imported, by provider name (ADR-037).
+     *
+     * Separate from `providers` above because receiving webhooks and reading
+     * a store's records are different contracts: a provider could offer one
+     * without the other.
+     *
+     * @var array<string, class-string>
+     */
+    'connectors' => [
+        'salla' => SallaConnector::class,
     ],
 
     /*
