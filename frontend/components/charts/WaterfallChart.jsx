@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { ChartFrame } from './ChartFrame';
+import { CHART_TYPE, ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { formatMoney, formatMoneyCompact, getMoneyDefaults } from '@/lib/format';
 
@@ -141,7 +141,7 @@ export function WaterfallChart({
           <XAxis
             dataKey="label"
             reversed={rtl}
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
             interval={0}
@@ -150,7 +150,7 @@ export function WaterfallChart({
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={(value) => formatMoneyCompact(value, { currency })}
-            tick={{ fill: 'var(--muted)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             width={72}
@@ -228,8 +228,8 @@ export function WaterfallChart({
               position="top"
               offset={6}
               formatter={(value) => (value === null ? '' : formatMoneyCompact(value, { currency }))}
-              fill="var(--text-2)"
-              fontSize={11}
+              fill={CHART_TYPE.label.fill}
+              fontSize={CHART_TYPE.label.fontSize}
               className="tabular"
             />
           </Bar>

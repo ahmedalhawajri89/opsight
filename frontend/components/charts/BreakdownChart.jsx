@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { ChartFrame } from './ChartFrame';
+import { CHART_TYPE, ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import {
   formatMoney,
@@ -110,7 +110,7 @@ export function BreakdownChart({
             tickFormatter={(value) =>
               format === 'money' ? formatMoneyCompact(value, { currency }) : formatNumber(value)
             }
-            tick={{ fill: 'var(--muted)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
           />
@@ -119,7 +119,7 @@ export function BreakdownChart({
             type="category"
             orientation={rtl ? 'right' : 'left'}
             dataKey="label"
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             width={140}
@@ -184,8 +184,8 @@ export function BreakdownChart({
               position="right"
               offset={8}
               formatter={(share) => formatPercent(share)}
-              fill="var(--text-2)"
-              fontSize={11}
+              fill={CHART_TYPE.label.fill}
+              fontSize={CHART_TYPE.label.fontSize}
               className="tabular"
             />
           </Bar>

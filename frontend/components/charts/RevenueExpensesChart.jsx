@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { ChartFrame } from './ChartFrame';
+import { CHART_TYPE, ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
@@ -159,7 +159,9 @@ export function RevenueExpensesChart({
           </defs>
 
           {/* Light dashed horizontal gridlines only. */}
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+          {/* Solid, horizontal, at the lightest token — a dashed rule reads as
+              a second data line. */}
+          <CartesianGrid vertical={false} stroke="var(--border-subtle)" strokeDasharray="0" />
 
           {/* The business's days off, so a quiet Friday reads as a weekend. */}
           {weekendRuns(revenue, weekendDays).map(([from, to]) => (
@@ -176,7 +178,7 @@ export function RevenueExpensesChart({
           <XAxis
             dataKey="label"
             reversed={rtl}
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             tickMargin={10}
@@ -186,7 +188,7 @@ export function RevenueExpensesChart({
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={(value) => formatMoneyCompact(value, { currency })}
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             width={68}

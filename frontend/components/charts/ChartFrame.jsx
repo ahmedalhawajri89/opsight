@@ -23,6 +23,31 @@ import { useI18n } from '@/features/i18n/I18nProvider';
  * The table is rendered rather than hidden, so it is not a second
  * representation that can silently drift from the first.
  */
+/**
+ * The type a chart draws its own labels in.
+ *
+ * WHY THIS IS A CONSTANT AND NOT A NUMBER AT EACH AXIS. Recharts takes a
+ * pixel size rather than a class, so every tick, every label and every
+ * legend was carrying its own `fontSize` — twelve of them across six
+ * charts, eleven at 11px and one at 10. Neither is on the type scale.
+ * UI_UX_DIRECTION.md §3 lists seven sizes and says plainly that "a size
+ * outside the table is a bug"; the smallest is 12.
+ *
+ * Eleven pixels of Arabic is also simply harder to read than eleven pixels
+ * of Latin — the script carries its meaning in marks above and below the
+ * line, and they are the first thing to go.
+ *
+ * `--text-2` rather than `--muted`: an axis is read, not glanced at, and
+ * the two charts that used the lighter token were a shade quieter than the
+ * four that did not, for no reason either of them recorded.
+ */
+export const CHART_TYPE = {
+  size: 12,
+  tick: { fill: 'var(--text-2)', fontSize: 12 },
+  /* A direct label on a mark: the same size, one step quieter. */
+  label: { fill: 'var(--text-2)', fontSize: 12 },
+};
+
 export function ChartFrame({
   title,
   description,

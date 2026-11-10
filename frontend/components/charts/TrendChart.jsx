@@ -4,6 +4,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  LabelList,
   Line,
   ReferenceArea,
   ResponsiveContainer,
@@ -12,7 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { ChartFrame } from './ChartFrame';
+import { CHART_TYPE, ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useId } from 'react';
 
@@ -77,6 +78,21 @@ export function TrendChart({
 
   const partial = series.find((bucket) => bucket.is_partial);
 
+  /*
+   * Which bucket carries the end marker: the last COMPLETE one.
+   *
+   * The obvious choice is the last bucket, and it is wrong here. The final
+   * bucket of a live period is usually still filling — the chart shades it
+   * and says underneath that it "will keep rising" — so putting the series'
+   * one prominent figure on it states a number the chart's own footnote
+   * contradicts two lines later. A partial week showing 1.5k is not where
+   * the business is; it is Monday.
+   *
+   * -1 when there is nothing to mark: a single bucket has no "end" worth
+   * pointing at, and an all-partial series has no complete one.
+   */
+  const endIndex = series.length > 1 ? series.findLastIndex((bucket) => !bucket.is_partial) : -1;
+
   // Daily series only: the business's days off, shaded so a quiet Friday
   // reads as a weekend rather than as a drop (ADR-020).
   const weekends = weekendRuns(series, weekendDays);
@@ -118,7 +134,7 @@ export function TrendChart({
       }
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+        <AreaChart data={series} margin={{ top: 20, right: 8, bottom: 0, left: 8 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={colour} stopOpacity={0.22} />
@@ -137,7 +153,7 @@ export function TrendChart({
           <XAxis
             dataKey="label"
             reversed={rtl}
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={{ stroke: 'var(--border)' }}
             tickMargin={8}
@@ -151,7 +167,7 @@ export function TrendChart({
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={formatAxis}
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             tickMargin={4}
@@ -216,9 +232,59 @@ export function TrendChart({
             isAnimationActive={!reducedMotion}
             animationDuration={800}
             animationEasing="ease-out"
-            dot={false}
+            /*
+             * A point only on the LAST bucket, and only when there is more
+             * than one. A dot on every bucket turns a line into a necklace
+             * and says nothing — the line already carries every value. The
+             * end is different: it is the last figure the period actually
+             * closed on, and it is what a reader looks for before they look
+             * at the shape. "Lines carry their value at the end" is the mark
+             * spec's own rule and this chart was not following it.
+             *
+             * The ring is the surface colour, so the point reads as sitting
+             * on the chart rather than punched through it.
+             */
+            dot={(props) =>
+              props.index === endIndex ? (
+                <circle
+                  key={props.index}
+                  cx={props.cx}
+                  cy={props.cy}
+                  r={4}
+                  fill={colour}
+                  stroke="var(--surface)"
+                  strokeWidth={2}
+                />
+              ) : (
+                <g key={props.index} />
+              )
+            }
             activeDot={{ r: 5, strokeWidth: 2.5, stroke: 'var(--surface)', fill: colour }}
-          />
+          >
+            {/*
+              And its value beside it. The axis gives an order of magnitude;
+              this gives the number, which is what the reader came for and
+              what they otherwise had to hover to see.
+            */}
+            <LabelList
+              dataKey="value"
+              content={({ x, y, value, index }) =>
+                index === endIndex ? (
+                  <text
+                    x={x}
+                    y={y - 12}
+                    textAnchor={rtl ? 'start' : 'end'}
+                    className="tabular"
+                    fill={CHART_TYPE.label.fill}
+                    fontSize={CHART_TYPE.label.fontSize}
+                    fontWeight="500"
+                  >
+                    {formatAxis(value)}
+                  </text>
+                ) : null
+              }
+            />
+          </Area>
         </AreaChart>
       </ResponsiveContainer>
     </ChartFrame>

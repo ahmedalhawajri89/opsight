@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { ChartFrame } from './ChartFrame';
+import { CHART_TYPE, ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { formatMoney, formatMoneyCompact } from '@/lib/format';
@@ -23,11 +23,30 @@ import { describePeriod, formatBucketLabel, formatMonthLabel } from '@/lib/perio
  *
  * Two series the server sends separately, joined here by bucket date — a join,
  * not a calculation: no difference or margin is derived on the client. The
- * current month is drawn lighter and footnoted, because an unfinished month set
- * beside five finished ones reads as a collapse.
+ * current month is drawn at reduced strength and footnoted, because an
+ * unfinished month set beside five finished ones reads as a collapse.
+ */
+/*
+ * TWO HUES, and they used to be one.
+ *
+ * Both series were `--chart-1` and told apart by opacity alone — revenue at
+ * 1, expenses at 0.35 — while the unfinished month ALSO used opacity,
+ * multiplying whichever series it belonged to by 0.5. One channel carrying
+ * two variables: revenue in the current month landed at 0.5 and expenses in
+ * any month at 0.35, which no reader can separate, and the two mean
+ * completely different things.
+ *
+ * Hue says WHICH SERIES now and opacity says WHETHER THE MONTH IS DONE, so
+ * each channel carries one fact. The pair is validated: contrast.test.js
+ * holds every pair of the six chart colours at delta-E 15 or better under
+ * normal, protanopic and deuteranopic vision.
  */
 const REVENUE = 'var(--chart-1)';
-const EXPENSES = 'var(--chart-1)';
+const EXPENSES = 'var(--chart-2)';
+
+/** Complete, and still filling. The only thing opacity means here. */
+const SOLID = 1;
+const UNFINISHED = 0.45;
 
 export function CashFlowChart({ data, currency, decimals, loading, className, style }) {
   const { t, dir } = useI18n();
@@ -76,9 +95,7 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
        * of the dashboard is showing — and a reader comparing this panel with
        * the figures above it has no way to know that unless it is written.
        */
-      description={
-        data?.period ? describePeriod(data.period.from, data.period.to) : undefined
-      }
+      description={data?.period ? describePeriod(data.period.from, data.period.to) : undefined}
       icon="trendUp"
       columns={columns}
       rows={hasData ? rows : []}
@@ -97,12 +114,14 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
           barCategoryGap="22%"
           margin={{ top: 6, right: 4, bottom: 0, left: 4 }}
         >
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+          {/* Solid, horizontal, at the lightest token. Dashing a gridline adds
+              noise and reads as a second data line. */}
+          <CartesianGrid vertical={false} stroke="var(--border-subtle)" strokeDasharray="0" />
 
           <XAxis
             dataKey="month"
             reversed={rtl}
-            tick={{ fill: 'var(--text-2)', fontSize: 11 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             tickMargin={8}
@@ -111,7 +130,7 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
           <YAxis
             orientation={rtl ? 'right' : 'left'}
             tickFormatter={(value) => formatMoneyCompact(value, { currency })}
-            tick={{ fill: 'var(--text-2)', fontSize: 10 }}
+            tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
             width={62}
@@ -152,26 +171,25 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
           />
 
           {/*
-            Revenue solid, expenses the same blue at a third strength — the
-            reference's pairing. The two are also told apart by position (always
-            revenue first) and by the legend and table, never by shade alone.
+            Revenue first, always, so position reinforces the hue — and the
+            legend and the table view carry the names, so neither series is
+            ever identified by colour alone (UI_UX_DIRECTION.md §4).
           */}
           {[
-            ['revenueNumeric', 1],
-            ['expensesNumeric', 0.35],
-          ].map(([key, opacity]) => (
+            ['revenueNumeric', REVENUE],
+            ['expensesNumeric', EXPENSES],
+          ].map(([key, colour]) => (
             <Bar
               key={key}
               dataKey={key}
-              fill={REVENUE}
-              fillOpacity={opacity}
+              fill={colour}
               radius={[4, 4, 0, 0]}
               maxBarSize={26}
               isAnimationActive={!reducedMotion}
               animationDuration={700}
             >
               {rows.map((row) => (
-                <Cell key={row.key} fillOpacity={row.is_partial ? opacity * 0.5 : opacity} />
+                <Cell key={row.key} fillOpacity={row.is_partial ? UNFINISHED : SOLID} />
               ))}
             </Bar>
           ))}
@@ -187,14 +205,14 @@ function Legend() {
   return (
     <ul className="flex items-center gap-4 text-xs text-(--color-text-2)">
       {[
-        [1, t('dashboard.trend.revenue')],
-        [0.35, t('dashboard.trend.expenses')],
-      ].map(([opacity, label]) => (
+        [REVENUE, t('dashboard.trend.revenue')],
+        [EXPENSES, t('dashboard.trend.expenses')],
+      ].map(([colour, label]) => (
         <li key={label} className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
             className="size-2.5 rounded-full"
-            style={{ background: REVENUE, opacity }}
+            style={{ background: colour }}
           />
           {label}
         </li>
