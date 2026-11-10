@@ -563,6 +563,79 @@ from a cold production server. Pint clean, PHPStan level 6 clean, ESLint clean.
 
 ---
 
+## Product track — connected, and explained *(planned 2026-11; nothing built yet)*
+
+Baydar already holds the three things a merchant's other tools hold separately: what was sold
+(orders, the payment and refund ledger), what is on the shelf (the stock ledger), and what the
+business spent (expenses). This track does two things. It makes those records arrive on their
+own from the systems a merchant already runs. Then it puts a language model on top that
+explains the figures and never produces one.
+
+First segment: online merchants on Salla and Zid, many of whom also sell on social media or in a
+shop. Estimates are for one developer and are revised after each phase's detailed design.
+
+### Phase A — The connector contract *(4–5 weeks)*
+
+- One `Connector` contract above the existing `WebhookProvider` (ADR-027): OAuth and token
+  refresh, a backfill, webhook verification, and mapping into Order, Product, Customer and
+  Expense. Proposed in ADR-037.
+- Salla refactored onto it with no change in behaviour. The existing Salla suites, the backfill
+  tests and `opsight:salla:simulate` must pass unchanged. That is the proof the contract fits a
+  real provider and was not invented around an imaginary one.
+- **Zid** as the second implementation (REST and webhooks, the same shape as Salla).
+- CSV / Excel import with column mapping, for a merchant who has no system to connect.
+
+**Done when:** a Zid store and a Salla store both feed one business, and their orders sit side
+by side in the same metrics.
+
+### Phase B — Ask Baydar *(3–4 weeks)*
+
+- An Arabic and English chat over the business's own records. The model answers by calling
+  `MetricCalculator`, `TimeSeries`, `Breakdown` and `InsightEngine` as tools. Each tool runs
+  under the asking user's tenant and role. Proposed in ADR-038.
+- Every money figure in an answer comes from a tool result and is shown with the period it
+  covers. A question the tools cannot answer gets "I can't tell from your records", not an
+  estimate.
+- Usage metering per business: tokens and requests, with a cap per plan.
+
+**Done when:** a Staff user cannot get cost or margin out of the chat by any phrasing, a test
+proves it, and the same question asked twice returns the same figures.
+
+### Phase C — The morning brief *(2–3 weeks)*
+
+- WhatsApp through the Meta Cloud API (P2 phase 7), with email as the fallback. The brief
+  covers yesterday's profit, cash owed and due, stock at risk, and up to three actions.
+- The ten insight rules (`app/Domain/Insights/Rules/`) stay the detectors. The model only words
+  their output and links causes ("revenue fell, two of the top sellers were out of stock").
+
+**Done when:** an owner who opts in receives one brief a day in their language, and every
+number in it matches the dashboard for the same period.
+
+### Phase D — Forecasts *(4 weeks)*
+
+- A run-out date per product with a reorder suggestion, built on `stockCoverageDays()`.
+- A 13-week cash forecast from open orders, the payment ledger, expenses and platform payout
+  delays.
+- Ramadan and Eid seasonality on the Hijri comparison that already exists (ADR-019).
+- An Arabic PDF of the forecast and the profit report, laid out for a lender to read.
+- Statistical methods first. Each forecast is published next to how wrong it was last time.
+
+### Phase E — Sellable *(3–4 weeks)*
+
+- Phase 06 (hardening and deployment), with hosting decided by OD-4.
+- Plans and billing; listings on the Salla and Zid app stores.
+- A written ZATCA stance: Baydar reads invoices and does not issue them.
+
+### Phase F — Wider *(ongoing)*
+
+- Foodics; one accounting system (Qoyod or Wafeq) so expenses arrive on their own.
+- One unified API vendor for the global long tail (Shopify, WooCommerce, QuickBooks, Xero),
+  behind the same `Connector` contract.
+- A read-only, tenant-scoped MCP server, so a merchant's own assistant can query their figures.
+- A public REST API with per-business keys, and outgoing webhooks.
+
+---
+
 ## Phase 08 — Post-MVP depth
 
 Ordered by likely value, not committed:

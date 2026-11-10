@@ -1885,3 +1885,76 @@ caches 1 → 0, the title back to "Baydar" and no raw translation keys left on t
 
 **Rejected.** Telling the owner to clear site data. It works once and teaches nothing, and
 the next `playwright test` run puts it back.
+
+---
+
+## ADR-037 — One connector contract, proven by moving Salla onto it
+
+**Status:** Proposed (2026-11). Decided when Phase A of the product track starts.
+**Affects:** `app/Domain/Integrations/`, `config/integrations.php`, the Salla classes
+**Builds on:** ADR-027 (integration plumbing), ADR-028 (the Salla connection), ADR-030
+(catalogue first)
+
+**Context.** ADR-027 shipped the parts that are the same for every provider: encrypted tokens,
+a verified and idempotent webhook receipt, a queued handler. It deliberately left the rest to
+be learned from a real provider. Salla has now taught it. A store authorises through OAuth.
+Its tokens are refreshed before they expire. The catalogue is walked before the orders
+(ADR-030). Each record is mapped into Baydar's own vocabulary (`SallaMap`). A reconciler then
+compares against totals the provider computed independently. Zid and Foodics ask for the same
+steps, and so does any accounting system that is meant to supply expenses.
+
+**Proposed decision.**
+
+1. A `Connector` contract covering authorisation and refresh, a paged backfill in dependency
+   order, webhook handling (the existing `WebhookProvider` becomes one part of it), and
+   mapping into Order, Product, Customer and, for accounting sources, Expense.
+2. **Salla moves onto the contract before any second provider is written**, and every
+   existing Salla test passes unchanged. A contract that needs Salla bent to fit it is wrong,
+   and moving Salla first is what exposes that.
+3. Shared behaviour stays outside each connector and is not copied into it: idempotency on
+   `(source, external_id)`, the rule that imported orders do not move stock (ADR-027), and the
+   rule that an erased customer is never repopulated (ADR-026).
+4. A unified-API vendor, when one is adopted for the global long tail, is **one connector**
+   behind the same contract, not a second integration model.
+
+**Alternatives.** Copy the Salla classes per provider: fastest for the second provider, but the
+idempotency and erasure rules would then live in several places and drift apart. Adopt a
+unified API for everything: it does not cover the regional platforms this product is for.
+
+**Revisit when:** a provider's model cannot be expressed through the contract without a flag
+that only it uses.
+
+---
+
+## ADR-038 — The language model explains figures; it never produces one
+
+**Status:** Proposed (2026-11). Decided when Phase B of the product track starts.
+**Affects:** the planned Ask Baydar chat, the morning brief, and any MCP server
+**Builds on:** ADR-010 (rule-based insights), the role matrix in ROLES_AND_PERMISSIONS.md
+
+**Context.** The product's claim is that its figures can be trusted: decimals stored as
+strings, money rounded by `App\Support\Money`, every metric defined in METRICS.md. A language
+model asked "what was my margin last Ramadan?" will produce a fluent number whether or not it
+has one. A wrong figure in a confident sentence does more damage than a blank tile.
+
+**Proposed decision.**
+
+1. **The model has no route to a figure except a tool.** Its tools are the existing domain
+   functions (`MetricCalculator`, `TimeSeries`, `Breakdown`, `InsightEngine`, `Comparison`).
+   They return values already computed and rounded. The model may choose which to call, and
+   compare and describe the results. It does not do arithmetic on money.
+2. **Tools run as the asking user.** They resolve under that user's tenant and role, exactly as
+   the API does, so a Staff user's chat has no tool that returns cost or margin. This is
+   enforced by which tools are registered for the role, not by instructions in a prompt.
+3. **Every figure in an answer is traceable** to the tool call and the period that produced
+   it, and the interface shows that period beside the answer.
+4. **ADR-010 stands.** The insight rules remain the detectors. The model words their output
+   and links rules that fired together. It does not invent new alerts.
+5. Model calls are metered per business, and business data is not used to train any model.
+
+**Alternatives.** Text-to-SQL over the database: flexible, but it reaches past the tenant and
+role scopes and recomputes metrics that already have one tested definition. A model left to
+summarise a dashboard screenshot: it cannot be audited.
+
+**Revisit when:** merchants repeatedly ask questions the tools cannot answer. The fix is then a
+new tool with a tested definition, not a looser model.
