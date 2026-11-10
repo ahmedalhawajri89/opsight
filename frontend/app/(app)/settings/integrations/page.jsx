@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 import { useIntegrationActions, useIntegrations } from '@/features/admin/useAdmin';
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -117,19 +118,19 @@ export default function IntegrationsPage() {
         */}
         <ol className="measure mt-3 space-y-2 text-sm text-(--color-text-2)">
           <li className="flex gap-2">
-            <span aria-hidden="true" className="font-semibold text-(--color-text-3)">
+            <span aria-hidden="true" className="font-semibold text-(--color-muted)">
               1.
             </span>
             <span>{t('integrations.steps.install')}</span>
           </li>
           <li className="flex gap-2">
-            <span aria-hidden="true" className="font-semibold text-(--color-text-3)">
+            <span aria-hidden="true" className="font-semibold text-(--color-muted)">
               2.
             </span>
             <span>{t('integrations.steps.findId')}</span>
           </li>
           <li className="flex gap-2">
-            <span aria-hidden="true" className="font-semibold text-(--color-text-3)">
+            <span aria-hidden="true" className="font-semibold text-(--color-muted)">
               3.
             </span>
             <span>{t('integrations.steps.claim')}</span>
@@ -142,7 +143,7 @@ export default function IntegrationsPage() {
           left lying about; a reader who learns of it from a failure learns
           the wrong lesson about the application.
         */}
-        <p className="mt-3 flex items-start gap-2 text-xs text-(--color-text-3)">
+        <p className="mt-3 flex items-start gap-2 text-xs text-(--color-muted)">
           <Icon name="clock" size={14} aria-hidden="true" className="mt-px shrink-0" />
           <span className="measure">{t('integrations.deadline')}</span>
         </p>
@@ -172,6 +173,26 @@ export default function IntegrationsPage() {
         </form>
       </Card>
 
+      {/*
+        For the merchant whose "store" is WhatsApp and a workbook. Last of the
+        three because a connected store keeps itself current and a file does
+        not — the better option is offered first.
+      */}
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-(--color-text)">{t('integrations.file.title')}</h3>
+            <p className="measure mt-1 text-sm text-(--color-text-2)">{t('integrations.file.description')}</p>
+          </div>
+          <Link
+            href="/settings/integrations/import"
+            className="inline-flex h-8 items-center rounded-(--radius-control) border border-(--border) px-3 text-sm font-medium text-(--color-text) hover:bg-(--color-surface-selected)"
+          >
+            {t('integrations.file.action')}
+          </Link>
+        </div>
+      </Card>
+
       {isLoading ? (
         <Card>
           <SkeletonText lines={3} />
@@ -199,7 +220,7 @@ export default function IntegrationsPage() {
                     </Badge>
                   </div>
 
-                  <p className="mt-1 text-xs text-(--color-text-3)">
+                  <p className="mt-1 text-xs text-(--color-muted)">
                     {t('integrations.storeLabel', { id: integration.store_id })}
                   </p>
                 </div>
@@ -211,13 +232,13 @@ export default function IntegrationsPage() {
 
               <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-3">
                 <div>
-                  <dt className="text-(--color-text-3)">{t('integrations.connectedAt')}</dt>
+                  <dt className="text-(--color-muted)">{t('integrations.connectedAt')}</dt>
                   <dd className="mt-0.5 text-(--color-text-2)">
                     {formatDateTime(integration.connected_at)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-(--color-text-3)">{t('integrations.lastSynced')}</dt>
+                  <dt className="text-(--color-muted)">{t('integrations.lastSynced')}</dt>
                   <dd className="mt-0.5 text-(--color-text-2)">
                     {integration.last_synced_at
                       ? formatDateTime(integration.last_synced_at)
@@ -225,7 +246,7 @@ export default function IntegrationsPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-(--color-text-3)">{t('integrations.renewal')}</dt>
+                  <dt className="text-(--color-muted)">{t('integrations.renewal')}</dt>
                   <dd className="mt-0.5 text-(--color-text-2)">
                     {integration.can_refresh
                       ? t('integrations.renews')

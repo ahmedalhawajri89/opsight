@@ -176,7 +176,15 @@ export async function request(
     'Accept-Language': requestLanguage,
   };
 
-  if (body !== undefined) {
+  /*
+   * A file upload goes as the FormData it is, with NO Content-Type of ours:
+   * the browser writes `multipart/form-data` itself, with the boundary the
+   * body was encoded with. Setting the header by hand drops the boundary and
+   * the server reads an empty request.
+   */
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+
+  if (body !== undefined && !isForm) {
     headers['Content-Type'] = 'application/json';
   }
 
@@ -193,7 +201,7 @@ export async function request(
       headers,
       // Without this the session cookie is neither sent nor stored.
       credentials: 'include',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined || isForm ? body : JSON.stringify(body),
       signal,
     });
   } catch (cause) {

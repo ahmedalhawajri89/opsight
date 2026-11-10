@@ -107,6 +107,36 @@ export function completeZid(body) {
   return api.post('/integrations/zid/callback', body);
 }
 
+/**
+ * Importing from a file (ADR-039). Both calls carry the file: the server
+ * keeps nothing between them, so there is no stored spreadsheet of
+ * customers' numbers to clean up.
+ */
+function importForm(file, kind, mapping, dryRun) {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('kind', kind);
+
+  if (mapping) {
+    // An empty value for an unmapped field, so the array is never empty and
+    // the server reads "not in this file" rather than "no mapping sent".
+    Object.entries(mapping).forEach(([field, index]) => {
+      form.append(`mapping[${field}]`, index === null || index === undefined ? '' : String(index));
+    });
+    form.append('dry_run', dryRun ? '1' : '0');
+  }
+
+  return form;
+}
+
+export function previewImport({ file, kind }) {
+  return api.post('/imports/preview', importForm(file, kind));
+}
+
+export function runImport({ file, kind, mapping, dryRun }) {
+  return api.post('/imports', importForm(file, kind, mapping, dryRun));
+}
+
 export function disconnectIntegration(id) {
   return api.delete(`/integrations/${id}`);
 }

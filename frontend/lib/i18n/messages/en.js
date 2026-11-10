@@ -390,6 +390,12 @@ const en = {
       title: 'Salla',
     },
 
+    file: {
+      title: 'No online store?',
+      description: 'Import your orders or your catalogue from Excel or CSV instead.',
+      action: 'Import a spreadsheet',
+    },
+
     steps: {
       install: 'In your Salla dashboard, install the Baydar app.',
       findId: 'Copy your store id \u2014 Salla shows it in your store settings.',
@@ -435,6 +441,70 @@ const en = {
       title: 'Disconnect this store?',
       consequence:
         'No new orders will arrive from it. Everything already imported stays \u2014 it is your history now \u2014 and you can connect the store again at any time.',
+    },
+  },
+
+  imports: {
+    title: 'Import from a spreadsheet',
+    description:
+      'No online store to connect? Bring your orders or your catalogue in from Excel or CSV, and they count in your figures like any other sale.',
+
+    step1: 'Choose what the file holds, and the file',
+    step2: 'Check which column is which',
+    kindLabel: 'What the file holds',
+    kinds: { orders: 'Orders', products: 'Products' },
+    shape: {
+      orders:
+        'One row per product sold. An order with three products is three rows with the same order number.',
+      products: 'One row per product, with its SKU, name and price. Cost is optional.',
+    },
+    file: 'File',
+    fileHint: 'CSV or Excel (.xlsx), up to ten megabytes. The first row must be the column names.',
+    rowsFound: '{count} rows found. Baydar has guessed the columns below; change any that are wrong.',
+    notInFile: '— Not in this file —',
+    example: 'First row: {value}',
+    chooseRequired: 'Choose a column for every field marked required.',
+    check: 'Check every row',
+    import: 'Import',
+
+    ready: {
+      orders: 'Every row reads cleanly: {count} orders with {lines} lines. Nothing has been written yet.',
+      products: 'Every row reads cleanly: {count} products. Nothing has been written yet.',
+    },
+    nothing: 'The file reads cleanly but holds nothing to import.',
+    problems:
+      '{count} rows need fixing. Nothing has been imported. Correct them in the spreadsheet, choose the file again, and check once more.',
+    more: 'And {count} more. The first ones usually share a cause, often a column chosen for the wrong field.',
+    row: 'Row',
+    problem: 'What to fix',
+
+    done: {
+      orders: '{count} orders imported, with {lines} lines. Uploading the same file again later updates them rather than adding copies.',
+      products: '{count} products imported.',
+    },
+    see: { orders: 'See the orders', products: 'See the products' },
+    another: 'Import another file',
+
+    fields: {
+      order_id: 'Order number',
+      date: 'Date',
+      status: 'Status',
+      sku: 'SKU',
+      product_name: 'Product',
+      quantity: 'Quantity',
+      unit_price: 'Unit price',
+      line_total: 'Line total',
+      customer_name: 'Customer',
+      customer_phone: 'Phone',
+      customer_email: 'Email',
+      shipping: 'Shipping',
+      tax: 'Tax',
+      discount: 'Discount',
+      order_total: 'Order total',
+      payment_method: 'Payment method',
+      name: 'Name',
+      price: 'Price',
+      cost: 'Cost',
     },
   },
 

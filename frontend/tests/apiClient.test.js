@@ -29,6 +29,19 @@ describe('successful requests', () => {
     expect(options.headers.Accept).toBe('application/json');
   });
 
+  it('sends a file upload as FormData, leaving the content type to the browser', async () => {
+    fetch.mockResolvedValue(jsonResponse({ data: {} }));
+    const form = new FormData();
+    form.append('kind', 'orders');
+
+    await api.post('/imports/preview', form);
+
+    const [, options] = fetch.mock.calls.at(-1);
+    expect(options.body).toBe(form);
+    // A hand-set multipart header would lose the boundary.
+    expect(options.headers['Content-Type']).toBeUndefined();
+  });
+
   it('returns a 204 as null rather than throwing on an empty body', async () => {
     fetch.mockResolvedValue(jsonResponse(null, 204));
 
