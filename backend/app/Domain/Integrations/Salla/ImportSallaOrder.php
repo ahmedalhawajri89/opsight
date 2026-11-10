@@ -67,7 +67,13 @@ final class ImportSallaOrder
             status: $status,
             placedAt: $this->placedAt($payload),
             customer: $this->customer($payload['customer'] ?? null),
-            lines: $this->lines($payload['items'] ?? []),
+            /*
+             * Absent is not empty. A delivery with no `items` key says
+             * nothing about the lines and leaves the stored ones alone; one
+             * with `items: []` says the order now has none. `?? []` used to
+             * merge the two, so a bare status update emptied the order.
+             */
+            lines: $this->lines($payload['items'] ?? null),
             subtotal: (string) SallaMap::money($amounts['sub_total'] ?? null, '0'),
             discount: $discount,
             tax: (string) SallaMap::money($amounts['tax']['amount'] ?? null, '0'),
@@ -203,8 +209,17 @@ final class ImportSallaOrder
         $entries = is_array($payload['payment_methods'] ?? null) ? $payload['payment_methods'] : [];
 
         if ($entries === []) {
-            $method = SallaMap::paymentMethod(is_string($payload['payment_method'] ?? null) ? $payload['payment_method'] : null);
-            $entries = [['amount' => $payload['amounts']['total']['amount'] ?? 0, 'payment_method' => $method->value]];
+            /*
+             * No itemised list: the whole total, paid by the order's single
+             * method. Salla's OWN word is carried through, not ours. This
+             * used to pass the already-mapped value, which then went through
+             * the map a second time — `mada` became `card`, and `card` is
+             * not a Salla word, so every such order was filed as `other`.
+             */
+            $entries = [[
+                'amount' => $payload['amounts']['total']['amount'] ?? 0,
+                'payment_method' => $payload['payment_method'] ?? null,
+            ]];
         }
 
         $payments = [];

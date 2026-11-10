@@ -311,6 +311,45 @@ it('keeps Salla\'s own word for a method it had to file as other', function (): 
         ->and($payment->reference)->toBe('some_new_wallet');
 });
 
+it('files a single-method order under the method Salla named', function (): void {
+    /*
+     * No itemised list, only `payment_method`. The method used to be mapped,
+     * then mapped AGAIN — `mada` became `card`, which is not one of Salla's
+     * words — so every order paid this way landed in `other`.
+     */
+    $order = importOrder(['payment_methods' => [], 'payment_method' => 'mada']);
+
+    $payment = $order->payments()->sole();
+
+    expect($payment->method)->toBe(PaymentMethod::Card)
+        ->and($payment->amount)->toBe('196.000')
+        ->and($payment->reference)->toBe('mada');
+});
+
+it('leaves the lines alone when a delivery says nothing about them', function (): void {
+    /*
+     * Absent is not empty. A status update without the item list used to
+     * empty the order, because `?? []` read "not mentioned" as "none", and
+     * every figure grouped by product then lost the sale.
+     */
+    $order = importOrder();
+
+    $bare = sallaOrderPayload(['status' => ['slug' => 'canceled']]);
+    unset($bare['items']);
+    app(ImportSallaOrder::class)($bare);
+
+    expect($order->refresh()->items()->count())->toBe(1)
+        ->and($order->status)->toBe(OrderStatus::Cancelled);
+});
+
+it('empties the lines when a delivery says the order has none', function (): void {
+    $order = importOrder();
+
+    importOrder(['items' => []]);
+
+    expect($order->refresh()->items()->count())->toBe(0);
+});
+
 it('records nothing against an order that was never committed', function (): void {
     // An unpaid basket owes nothing, because it is not a sale yet.
     $order = importOrder(['status' => ['slug' => 'payment_pending']]);
