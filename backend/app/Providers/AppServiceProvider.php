@@ -109,6 +109,13 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('exports', static fn (Request $request): Limit => Limit::perHour(10)->by($byUser($request)));
 
         /*
+         * File imports (ADR-039): a preview, a check and a write per attempt,
+         * and an owner fixing a file goes round that loop a few times — so
+         * more generous than exports, still far short of a script.
+         */
+        RateLimiter::for('imports', static fn (Request $request): Limit => Limit::perHour(60)->by($byUser($request)));
+
+        /*
          * A coarse per-address backstop; LoginRequest owns the real 5/min
          * per email-and-address limit, and clears it on a success.
          *

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\FileImportController;
 use App\Http\Controllers\Api\V1\GoogleSignInController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InsightController;
@@ -240,6 +241,13 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:integration-claim');
         Route::post('integrations/zid/callback', [ZidConnectionController::class, 'callback'])
             ->middleware('throttle:integration-claim');
+
+        // Importing from a file (ADR-039). Limited like exports: each request
+        // reads a whole spreadsheet, and the second may write thousands of rows.
+        Route::post('imports/preview', [FileImportController::class, 'preview'])
+            ->middleware('throttle:imports');
+        Route::post('imports', [FileImportController::class, 'store'])
+            ->middleware('throttle:imports');
 
         /* ---- Business settings ------------------------------------------- */
         Route::get('settings', [SettingsController::class, 'show']);
