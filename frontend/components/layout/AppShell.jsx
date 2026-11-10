@@ -89,6 +89,13 @@ const NAV_GROUPS = [
         icon: 'chart',
         ability: 'analytics.view',
       },
+      // Reads the same figures as Analytics, so the same ability (ADR-038).
+      {
+        href: '/assistant',
+        label: 'nav.items.assistant',
+        icon: 'spark',
+        ability: 'analytics.view',
+      },
       // Not built yet: shown disabled and labelled, never as a link to nothing.
       {
         href: '/reports',

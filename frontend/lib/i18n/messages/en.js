@@ -357,6 +357,7 @@ const en = {
       inventory: 'Inventory',
       expenses: 'Expenses',
       analytics: 'Analytics',
+      assistant: 'Ask Baydar',
       reports: 'Reports',
       gallery: 'Component gallery',
       activity: 'Activity Log',
@@ -441,6 +442,34 @@ const en = {
       title: 'Disconnect this store?',
       consequence:
         'No new orders will arrive from it. Everything already imported stays \u2014 it is your history now \u2014 and you can connect the store again at any time.',
+    },
+  },
+
+  assistant: {
+    title: 'Ask Baydar',
+    description: 'Ask about your sales, profit, customers and stock, in Arabic or English.',
+    intro:
+      'Ask a question about your business. Every figure in an answer is read from your records, and the views it came from are listed under it, so you can check any number on the Analytics screen.',
+    starters: {
+      month: 'How is this month going compared with last month?',
+      ramadan: 'How did Ramadan compare with last year?',
+      products: 'Which products made the most money this quarter?',
+      stock: 'Is anything about to run out?',
+    },
+    placeholder: 'Ask about your business…',
+    send: 'Ask',
+    new: 'New conversation',
+    history: 'Earlier conversations',
+    reading: 'Reading your figures…',
+    unavailable: 'Ask Baydar is not set up on this installation yet.',
+    disclaimer: 'Answers are written by AI from your figures. Check anything you will act on against the figures themselves.',
+    sourcesLabel: 'Where these figures came from',
+    sources: {
+      get_summary: 'Summary',
+      get_trend: 'Trend',
+      get_breakdown: 'Breakdown',
+      get_insights: 'Insights',
+      get_stock_risks: 'Stock',
     },
   },
 
