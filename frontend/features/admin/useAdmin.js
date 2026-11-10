@@ -177,6 +177,19 @@ export function useIntegrationActions() {
 
   return {
     claim: useMutation({ mutationFn: (body) => admin.claimStore(body), onSuccess: invalidate }),
+    /*
+     * Leaves the application on success: the browser goes to Zid's consent
+     * screen and comes back to the callback page. Nothing to invalidate yet.
+     */
+    connectZid: useMutation({
+      mutationFn: () => admin.zidAuthorizeUrl(),
+      onSuccess: (response) => {
+        const url = response?.data?.url;
+
+        if (url) window.location.assign(url);
+      },
+    }),
+    completeZid: useMutation({ mutationFn: (body) => admin.completeZid(body), onSuccess: invalidate }),
     disconnect: useMutation({
       mutationFn: (id) => admin.disconnectIntegration(id),
       onSuccess: invalidate,

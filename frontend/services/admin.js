@@ -94,6 +94,19 @@ export function claimStore(body) {
   return api.post('/integrations/claim', body);
 }
 
+/**
+ * Zid connects through its own consent screen (ADR-037). The first call
+ * returns where to send the browser; Zid sends it back to the callback page,
+ * which hands the code and state to the second, inside this session.
+ */
+export function zidAuthorizeUrl() {
+  return api.get('/integrations/zid/authorize');
+}
+
+export function completeZid(body) {
+  return api.post('/integrations/zid/callback', body);
+}
+
 export function disconnectIntegration(id) {
   return api.delete(`/integrations/${id}`);
 }

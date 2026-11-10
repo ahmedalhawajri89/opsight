@@ -27,6 +27,10 @@ import { formatDateTime } from '@/lib/format';
  * So the instructions are on the screen, in order, with the deadline stated
  * before it matters rather than after it has passed.
  *
+ * ZID IS THE OPPOSITE CASE, and gets one button. It runs a normal OAuth
+ * redirect, so the owner approves in Zid and comes straight back — nothing to
+ * copy, no deadline to state (ADR-037).
+ *
  * The connection card shows what an owner can act on: whether the token can
  * be renewed at all (it cannot, if the app was installed without offline
  * access, and the connection will simply stop in a fortnight), and the
@@ -53,6 +57,7 @@ export default function IntegrationsPage() {
   }
 
   const claimError = actions.claim.error;
+  const zidError = actions.connectZid.error;
 
   function submit(event) {
     event.preventDefault();
@@ -71,8 +76,39 @@ export default function IntegrationsPage() {
     <div className="space-y-5">
       <PageHeader title={t('integrations.title')} description={t('integrations.description')} />
 
+      <h2 className="text-sm font-semibold text-(--color-text)">{t('integrations.connect')}</h2>
+
       <Card>
-        <h2 className="text-sm font-semibold text-(--color-text)">{t('integrations.connect')}</h2>
+        <h3 className="text-sm font-semibold text-(--color-text)">{t('integrations.zid.title')}</h3>
+        <p className="measure mt-2 text-sm text-(--color-text-2)">
+          {t('integrations.zid.description')}
+        </p>
+
+        {/*
+          503 means this installation has no Zid app configured. Said in place
+          of the button's result rather than as a generic error, because the
+          owner can do nothing about it and should not retry.
+        */}
+        {zidError ? (
+          <p role="status" className="measure mt-3 text-xs text-(--color-danger)">
+            {zidError.status === 503 ? t('integrations.zid.unavailable') : t('integrations.zid.failed')}
+          </p>
+        ) : null}
+
+        <Button
+          className="mt-4"
+          variant="primary"
+          onClick={() => actions.connectZid.mutate()}
+          disabled={actions.connectZid.isPending || actions.connectZid.isSuccess}
+        >
+          {actions.connectZid.isPending || actions.connectZid.isSuccess
+            ? t('common.loading')
+            : t('integrations.zid.action')}
+        </Button>
+      </Card>
+
+      <Card>
+        <h3 className="text-sm font-semibold text-(--color-text)">{t('integrations.salla.title')}</h3>
 
         {/*
           Numbered, because the order matters and one of the steps happens in
@@ -206,7 +242,7 @@ export default function IntegrationsPage() {
               {integration.last_error ? (
                 <p
                   role="status"
-                  className="measure mt-3 rounded-(--radius-control) bg-(--color-danger-soft) px-3 py-2 text-xs text-(--color-danger-text)"
+                  className="measure mt-3 rounded-(--radius-control) bg-(--color-danger-soft) px-3 py-2 text-xs text-(--color-danger)"
                 >
                   {integration.last_error}
                 </p>

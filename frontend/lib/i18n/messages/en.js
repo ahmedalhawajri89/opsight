@@ -372,6 +372,24 @@ const en = {
       'Bring a store\u2019s orders into Baydar, so your figures cover everything you sell rather than what you enter by hand.',
 
     connect: 'Connect a store',
+
+    zid: {
+      title: 'Zid',
+      description:
+        'Zid asks you to approve Baydar, then sends you back here. Your catalogue and the last year of orders follow, and new orders arrive as they are placed.',
+      action: 'Connect Zid',
+      unavailable: 'Connecting Zid is not set up on this installation yet.',
+      connecting: 'Connecting your Zid store…',
+      connected: 'Your Zid store is connected. Its history is being imported and will appear in your figures shortly.',
+      declined: 'The connection was cancelled in Zid. Nothing was connected.',
+      failed: 'The store could not be connected.',
+      back: 'Back to connected stores',
+    },
+
+    salla: {
+      title: 'Salla',
+    },
+
     steps: {
       install: 'In your Salla dashboard, install the Baydar app.',
       findId: 'Copy your store id \u2014 Salla shows it in your store settings.',
@@ -397,6 +415,7 @@ const en = {
 
     providers: {
       salla: 'Salla',
+      zid: 'Zid',
     },
 
     status: {
