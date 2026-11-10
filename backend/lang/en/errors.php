@@ -31,6 +31,10 @@ return [
      */
     'integrations' => [
         'claim_not_found' => 'No store is waiting to be connected with that id. Install the app from your store again, then enter the id within the hour.',
+        'zid_unavailable' => 'Connecting a Zid store is not set up on this installation yet.',
+        'zid_state' => 'This connection request has expired or was not started from this account. Start again from Connected stores.',
+        'zid_refused' => 'Zid did not accept the connection. Start again from Connected stores; if it keeps happening, reinstall the app from Zid.',
+        'zid_taken' => 'That Zid store is already connected to another business. Disconnect it there first.',
     ],
 
     'filter' => [

@@ -59,6 +59,12 @@
             do with the code. A test that asks about Salla sets its own.
         -->
         <env name="SALLA_WEBHOOK_SECRET" value=""/>
+        <!-- Pinned empty for the same reason: no test may depend on a developer's own Zid app. -->
+        <env name="ZID_CLIENT_ID" value=""/>
+        <env name="ZID_CLIENT_SECRET" value=""/>
+        <env name="ZID_REDIRECT_URI" value=""/>
+        <env name="ZID_WEBHOOK_SECRET" value=""/>
+        <env name="ZID_WEBHOOK_URL" value=""/>
         <!--
             NOT "array".
 

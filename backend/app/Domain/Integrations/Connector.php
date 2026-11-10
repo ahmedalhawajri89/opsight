@@ -6,7 +6,6 @@ namespace App\Domain\Integrations;
 
 use App\Models\Integration;
 use App\Models\Order;
-use App\Models\Product;
 
 /**
  * A store Baydar can read its history from (ADR-037).
@@ -48,8 +47,15 @@ interface Connector
      */
     public function orders(Integration $connection, string $from, string $to): iterable;
 
-    /** @param  array<string, mixed>  $payload */
-    public function importProduct(array $payload): ?Product;
+    /**
+     * Imports one catalogue entry, which may be several products: a Zid
+     * product with options is one entry whose variants are what is sold.
+     * The first change the second provider forced on the contract, which
+     * began as `?Product` because Salla's entries are one product each.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function importProduct(array $payload): void;
 
     /** @param  array<string, mixed>  $payload */
     public function importOrder(array $payload): Order;

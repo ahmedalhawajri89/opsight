@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\Api\V1\ZidConnectionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -231,6 +232,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('integrations/claim', [IntegrationController::class, 'claim'])
             ->middleware('throttle:integration-claim');
         Route::delete('integrations/{integration}', [IntegrationController::class, 'destroy']);
+
+        // Zid connects through an OAuth redirect bound to this session, so
+        // there is nothing to guess and no claim to rate-limit as tightly;
+        // the claim limiter still caps a script hammering the token endpoint.
+        Route::get('integrations/zid/authorize', [ZidConnectionController::class, 'authorizeUrl'])
+            ->middleware('throttle:integration-claim');
+        Route::post('integrations/zid/callback', [ZidConnectionController::class, 'callback'])
+            ->middleware('throttle:integration-claim');
 
         /* ---- Business settings ------------------------------------------- */
         Route::get('settings', [SettingsController::class, 'show']);

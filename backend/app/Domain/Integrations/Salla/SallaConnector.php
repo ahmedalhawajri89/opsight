@@ -7,7 +7,6 @@ namespace App\Domain\Integrations\Salla;
 use App\Domain\Integrations\Connector;
 use App\Models\Integration;
 use App\Models\Order;
-use App\Models\Product;
 
 /**
  * Salla, as one implementation of the connector contract (ADR-037).
@@ -39,9 +38,9 @@ final class SallaConnector implements Connector
         return $this->client->each($connection, 'orders', ['from_date' => $from, 'to_date' => $to]);
     }
 
-    public function importProduct(array $payload): ?Product
+    public function importProduct(array $payload): void
     {
-        return ($this->products)($payload);
+        ($this->products)($payload);
     }
 
     public function importOrder(array $payload): Order

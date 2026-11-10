@@ -29,8 +29,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $external_account_id
  * @property string $status
  * @property string|null $access_token
+ * @property string|null $authorization_token
  * @property string|null $refresh_token
  * @property Carbon|null $token_expires_at
+ * @property Carbon|null $refresh_token_expires_at
  * @property list<string>|null $scopes
  * @property Carbon|null $last_synced_at
  * @property string|null $last_error
@@ -53,8 +55,10 @@ class Integration extends Model
         'external_account_id',
         'status',
         'access_token',
+        'authorization_token',
         'refresh_token',
         'token_expires_at',
+        'refresh_token_expires_at',
         'scopes',
         'last_synced_at',
         'last_error',
@@ -69,15 +73,17 @@ class Integration extends Model
      *
      * @var list<string>
      */
-    protected $hidden = ['access_token', 'refresh_token'];
+    protected $hidden = ['access_token', 'authorization_token', 'refresh_token'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
         return [
             'access_token' => 'encrypted',
+            'authorization_token' => 'encrypted',
             'refresh_token' => 'encrypted',
             'token_expires_at' => 'datetime',
+            'refresh_token_expires_at' => 'datetime',
             'last_synced_at' => 'datetime',
             'scopes' => 'array',
         ];

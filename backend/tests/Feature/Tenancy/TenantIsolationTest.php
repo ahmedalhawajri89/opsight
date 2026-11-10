@@ -222,6 +222,15 @@ it('never shows another business\'s data on any list, export or analytics endpoi
         'api/v1/insights' => $range,
     ];
 
+    /*
+     * A Zid app, so the connect endpoint answers with its URL instead of a
+     * 503 for an installation that has none — asked the real question, like
+     * the analytics endpoints above, rather than exempted from it.
+     */
+    config(['integrations.zid' => array_merge((array) config('integrations.zid'), [
+        'client_id' => 'test-client', 'client_secret' => 'test-secret', 'redirect_uri' => 'https://app.test/callback',
+    ])]);
+
     $checked = 0;
 
     foreach (apiRoutes() as $route) {
