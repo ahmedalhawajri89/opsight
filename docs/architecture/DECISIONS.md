@@ -1890,8 +1890,10 @@ the next `playwright test` run puts it back.
 
 ## ADR-037 — One connector contract, proven by moving Salla onto it
 
-**Status:** Proposed (2026-11). Decided when Phase A of the product track starts.
-**Affects:** `app/Domain/Integrations/`, `config/integrations.php`, the Salla classes
+**Status:** Accepted (2026-11). Salla moved onto it with all 174 of its tests untouched, and Zid
+was built on it second. "What the second provider taught" below records how it changed.
+**Affects:** `app/Domain/Integrations/` (`Connector`, `Connectors`, `Backfill`, `Import/`,
+`Salla/`, `Zid/`), `config/integrations.php`, `opsight:import`
 **Builds on:** ADR-027 (integration plumbing), ADR-028 (the Salla connection), ADR-030
 (catalogue first)
 
@@ -1923,6 +1925,40 @@ unified API for everything: it does not cover the regional platforms this produc
 
 **Revisit when:** a provider's model cannot be expressed through the contract without a flag
 that only it uses.
+
+**What was built.** The contract ended up smaller than proposed. It covers where a store's records are
+(`catalogue`, `orders`) and what one means (`importProduct`, `importOrder`). Each provider's
+mapper produces an `ImportedOrder` or `ImportedProduct`, and `RecordImportedOrder` and
+`RecordImportedProduct` do the writing, so the shared rules in (3) exist once. Two things stayed
+OUT of the contract, against the proposal, because the two real providers differ on them too much:
+
+- **Webhooks** remain `WebhookProvider`. Salla signs each delivery with an HMAC of the body. Zid signs
+  nothing and offers only Basic Auth credentials the app chooses when it registers a webhook.
+  That is weaker: it proves who sent a delivery, not what it said. It is accepted because it is the
+  only mechanism Zid has, and a forged delivery can only restate an order that the next backfill
+  overwrites from Zid's API.
+- **Connecting** stays with each provider. Salla's Easy mode delivers tokens in an install event
+  with no way to tell whose they are, hence ClaimStore. Zid runs a standard OAuth redirect and
+  returns our `state`, which is bound to the signed-in user and business. The Zid flow is the
+  stronger of the two.
+
+**What the second provider taught.**
+
+1. `importProduct` began as `?Product`, because a Salla catalogue entry is one product. A Zid
+   product with options is one entry whose variants are what is sold, and what order lines name.
+   It now returns nothing.
+2. A provider can need more than one credential. Zid needs `authorization` and `access_token` on
+   every call, and its refresh token dies two years before the tokens it renews. The migration adds
+   `authorization_token` and `refresh_token_expires_at`, and refresh is driven by the earlier of
+   the two expiries.
+3. Moving Salla surfaced two faults it already had, both now fixed with tests. A delivery
+   without `items` emptied the order's lines. A single-method payment was mapped twice and filed
+   as `other`.
+
+**Not yet seen working against a live Zid store**, because no Zid partner app exists for this
+installation. The assumptions most likely to be wrong are each named in one place: the headers and
+order pagination (`ZidClient`), the timezone of Zid's timestamps (`ZidMap::TIMEZONE`), and how a
+delivery's kind is recognised (`ZidWebhooks::event`).
 
 ---
 

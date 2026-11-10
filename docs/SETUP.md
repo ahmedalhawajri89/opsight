@@ -238,6 +238,37 @@ it makes are real orders: the browser suite checks that the second business has
 exactly its seeded twelve, and simulated ones break it. It refuses to run
 outside a local environment.
 
+**Connecting a Zid store (ADR-037).** Zid connects through its own consent
+screen, so it needs an app in Zid's Partner Dashboard and four values in
+`backend/.env`:
+
+```bash
+ZID_CLIENT_ID=...          # from the app's keys
+ZID_CLIENT_SECRET=...
+ZID_REDIRECT_URI=http://localhost:3000/settings/integrations/zid/callback
+ZID_WEBHOOK_SECRET=...     # any long random string; Zid sends it back on every delivery
+```
+
+The redirect URI must match the app's **Redirection URL** in Zid exactly. It is
+the frontend's page, not the API: the page hands the code to the API inside the
+owner's session, which is how the server knows who started the flow. Then an
+owner opens **Connected stores → Connect Zid**.
+
+Two things are worth knowing before the first run:
+
+- **Live updates need a public URL.** Zid cannot reach `localhost`. Without a
+  tunnel the store still connects and its history still imports; set
+  `ZID_WEBHOOK_URL` to the tunnel's `/api/v1/webhooks/zid` to receive new
+  orders as they happen.
+- **The history import is a queued job.** Connecting returns at once, and a
+  year of orders arrives when a worker runs (`php artisan queue:work`). Any
+  range can be fetched again with `php artisan opsight:import zid 2026-01-01 2026-06-30`.
+  Running it twice over the same days changes nothing.
+
+Zid signs no deliveries; the door checks the Basic Auth password Baydar gave
+Zid when it registered the store's webhooks. Rotating `ZID_WEBHOOK_SECRET`
+therefore means reconnecting every Zid store.
+
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly
 audit-log prune (ADR-026):
 
