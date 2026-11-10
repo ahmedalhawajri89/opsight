@@ -1994,3 +1994,46 @@ summarise a dashboard screenshot: it cannot be audited.
 
 **Revisit when:** merchants repeatedly ask questions the tools cannot answer. The fix is then a
 new tool with a tested definition, not a looser model.
+
+---
+
+## ADR-039 — Importing from a file: all or nothing, safe to repeat, no library
+
+**Status:** Accepted (2026-11)
+**Affects:** `app/Domain/Imports/`, `FileImportController`, `/settings/integrations/import`
+**Builds on:** ADR-037 (the shared writers)
+
+**Context.** Many merchants in the target segment have no online store to connect. They sell over
+WhatsApp and Instagram, and their orders live in a spreadsheet. Phase A promised them an import.
+
+**Decision.**
+
+1. **A file is one more source, not a separate path.** Rows become `ImportedOrder` and
+   `ImportedProduct`, written by the same `RecordImportedOrder` and `RecordImportedProduct` as Salla and
+   Zid. Idempotency, stock left alone and erased customers staying erased hold without being written a
+   third time.
+2. **All or nothing.** Every row is checked before anything is written, and the write is one
+   transaction. Half an import is the worst outcome, because the owner cannot tell which half they have.
+3. **Safe to upload again.** The identity is `(source = 'file', external_id = order number)`, so the
+   owner's natural move after a mistake, fixing the spreadsheet and uploading it again, corrects
+   rather than doubles.
+4. **One row per line.** Orders are read the way every store export lays them out: rows sharing an
+   order number are one order, and order-level columns come from its first row.
+5. **No spreadsheet library.** An `.xlsx` is a zip of XML, and PHP ships both readers. The fifth backend
+   dependency would have served one screen.
+6. **Stateless.** Preview and import each carry the file, so no spreadsheet of customers' phone numbers
+   is kept on the server between requests.
+7. **Gated by `integrations.manage`.** It is the same act as connecting a store: bringing a body of
+   records in from outside.
+
+**Defaults a file cannot state, chosen and written down.** Dates are read day first, in the business's
+timezone. A blank status is a completed sale. A completed sale is paid, and a cash-on-delivery order
+still on its way is owed. A product file must give a price, because a blank one read as zero would
+reprice an existing product. A blank cost leaves the existing cost alone.
+
+**Rejected.** Writing the good rows and reporting the bad: easier to build, and it leaves the owner
+reconciling a partial import by hand. Parsing in the browser: it puts the rules in two places, and
+the server must check everything anyway.
+
+**Revisit when:** files routinely exceed the 20,000-row cap or the request's five minutes. The answer
+is then a queued import with progress, not a larger cap.

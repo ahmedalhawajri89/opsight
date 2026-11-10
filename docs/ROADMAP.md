@@ -574,12 +574,17 @@ explains the figures and never produces one.
 First segment: online merchants on Salla and Zid, many of whom also sell on social media or in a
 shop. Estimates are for one developer and are revised after each phase's detailed design.
 
-### Phase A — The connector contract *(in progress: contract and Zid done, CSV import next)*
+### Phase A — The connector contract ✅ *(complete, 2026-11; one live check outstanding)*
 
-**Done (2026-11):** the contract, with Salla moved onto it unchanged (ADR-037, accepted). Zid
-connects through OAuth with a year of history queued on connection, and is kept current by
-webhooks. `opsight:import {provider}` is the provider-neutral backfill. Two existing Salla faults
-were found and fixed along the way. **Not done:** CSV import, and a run against a live Zid store.
+**Done:** the contract, with Salla moved onto it unchanged (ADR-037). Zid connects through OAuth,
+with a year of history queued on connection, and webhooks keep it current. `opsight:import {provider}`
+is the provider-neutral backfill. Orders and products import from CSV or Excel, all or nothing and
+safe to repeat (ADR-039). A test puts orders from Salla, Zid and a spreadsheet into one business
+and reads them as one revenue figure, which is this phase's "done when". Two existing Salla faults
+were found and fixed along the way.
+
+**Outstanding:** a run against a live Zid store. It needs a Zid partner app, and the assumptions to
+check are named in ADR-037.
 
 - One `Connector` contract above the existing `WebhookProvider` (ADR-027): OAuth and token
   refresh, a backfill, webhook verification, and mapping into Order, Product, Customer and

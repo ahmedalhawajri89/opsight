@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Imports\FileImport;
 use App\Domain\Integrations\Connector;
 use App\Domain\Integrations\Connectors;
+use App\Domain\Integrations\Salla\ImportSallaOrder;
+use App\Domain\Integrations\Zid\ImportZidOrder;
+use App\Domain\Metrics\MetricCalculator;
+use App\Domain\Metrics\Period;
 use App\Models\Integration;
 use App\Models\Order;
 use App\Models\Product;
@@ -105,4 +110,30 @@ it('refuses a provider nobody registered, and names the ones that are', function
     $this->artisan('opsight:import', ['provider' => 'nonexistent', 'from' => '2026-06-01', 'to' => '2026-06-30'])
         ->expectsOutputToContain("No connector is registered as 'nonexistent'. Registered: salla, zid.")
         ->assertFailed();
+});
+
+it('puts orders from Salla, Zid and a spreadsheet side by side in the same figures', function (): void {
+    /*
+     * Phase A's own "done when" (ROADMAP): a business fed by more than one
+     * source reads one set of numbers. Three sources, three orders, one
+     * revenue figure that is their sum.
+     */
+    app(ImportSallaOrder::class)(contractOrder());
+
+    app(ImportZidOrder::class)([
+        'id' => 7001, 'order_status' => ['code' => 'delivered'], 'payment_status' => 'paid',
+        'created_at' => '2026-06-26 10:00:00', 'order_total' => '40',
+        'products' => [['id' => 'z-1', 'sku' => 'ZID-1', 'name' => 'Cup', 'quantity' => 1, 'net_price' => 40]],
+    ]);
+
+    $file = tempnam(sys_get_temp_dir(), 'orders').'.csv';
+    file_put_contents($file, "order,date,sku,qty,price\nF-1,2026-06-26,FILE-1,1,25\n");
+    app(FileImport::class)->run($file, 'csv', 'orders', ['order_id' => 0, 'date' => 1, 'sku' => 2, 'quantity' => 3, 'unit_price' => 4], dryRun: false);
+
+    $june = Period::between('2026-06-01', '2026-06-30');
+    $metrics = app(MetricCalculator::class);
+
+    expect(Order::query()->pluck('source')->sort()->values()->all())->toBe(['file', 'salla', 'zid'])
+        ->and($metrics->ordersCount($june))->toBe(3)
+        ->and($metrics->grossRevenue($june))->toBe('165.000');
 });
