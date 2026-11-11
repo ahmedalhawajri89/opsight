@@ -598,7 +598,7 @@ check are named in ADR-037.
 **Done when:** a Zid store and a Salla store both feed one business, and their orders sit side
 by side in the same metrics.
 
-### Phase B — Ask Baydar ✅ *(built 2026-11; the live-API check is outstanding)*
+### Phase B — Ask Baydar ✅ *(built and tested live 2026-11)*
 
 **Done:** the chat in Arabic and English, five role-scoped tools over the existing metric
 services, server-kept conversations, sources shown under every answer, a monthly token ceiling and
@@ -616,7 +616,14 @@ answer quality, which needs `ANTHROPIC_API_KEY`.
 **Done when:** a Staff user cannot get cost or margin out of the chat by any phrasing, a test
 proves it, and the same question asked twice returns the same figures.
 
-### Phase C — The morning brief *(2–3 weeks)*
+### Phase C — The morning brief ✅ *(built 2026-11; WhatsApp awaits a Meta account)*
+
+**Done:** a daily brief at eight in each business's own timezone (yesterday against the same
+weekday last week, the month so far, receivables, named stock risks, the first three insight
+findings), computed with no model, role-scoped like the dashboard, once a day by a unique
+ledger. Email works; WhatsApp sends an approved template and is inert without credentials. A
+settings screen previews today's brief and sends a test. **Outstanding:** a live WhatsApp run,
+which needs Meta Cloud API credentials and an approved template (SETUP.md).
 
 - WhatsApp through the Meta Cloud API (P2 phase 7), with email as the fallback. The brief
   covers yesterday's profit, cash owed and due, stock at risk, and up to three actions.

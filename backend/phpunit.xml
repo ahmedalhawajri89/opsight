@@ -67,6 +67,8 @@
         <env name="ZID_WEBHOOK_URL" value=""/>
         <!-- No test may call Anthropic; the model is faked through LanguageModel. -->
         <env name="ANTHROPIC_API_KEY" value=""/>
+        <env name="WHATSAPP_TOKEN" value=""/>
+        <env name="WHATSAPP_PHONE_NUMBER_ID" value=""/>
         <!--
             NOT "array".
 

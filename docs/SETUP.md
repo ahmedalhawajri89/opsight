@@ -275,6 +275,29 @@ answers 503 and its screen says it is not set up. `ASSISTANT_MODEL` (default `cl
 per month) are the knobs. The tests never call Anthropic: `phpunit.xml` pins the key empty, and the
 model is faked through `LanguageModel`.
 
+**The morning brief (phase C).** Each user turns it on under **Morning brief** and
+chooses email or WhatsApp. `opsight:brief:send` runs hourly from the scheduler and
+sends to the businesses whose local clock has just reached `BRIEF_HOUR` (default
+8). Once a day per person, guaranteed by `brief_deliveries`. Locally, mail goes to
+the log (`MAIL_MAILER=log`); `php artisan opsight:brief:send --now` sends today's
+regardless of the hour.
+
+WhatsApp needs Meta's Cloud API (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`)
+and one **approved message template**, because a business may only start a
+conversation with a template. Create it as category **Utility**, named
+`baydar_morning_brief` (or set `WHATSAPP_BRIEF_TEMPLATE`), in **both Arabic and
+English** under the same name, with exactly five body parameters, in this order:
+
+| | Arabic body | English body |
+|---|---|---|
+| text | `صباح الخير {{1}}،` / `{{2}}` / `{{3}}` / `{{4}}` / `يستحق نظرة: {{5}}` / `التفاصيل في بيدر.` | `Good morning {{1}},` / `{{2}}` / `{{3}}` / `{{4}}` / `Worth a look: {{5}}` / `Details in Baydar.` |
+
+(Each `/` is a new line in the template.) The parameters are: the reader's first
+name, yesterday's headline, the month and receivables, the products about to
+run out, and up to three findings. The template starts and ends with fixed text
+because Meta rejects one that begins or ends with a variable, and every value is
+sent as a single line because template parameters may not contain line breaks.
+
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly
 audit-log prune (ADR-026):
 

@@ -136,6 +136,13 @@ const NAV_GROUPS = [
         icon: 'activity',
         ability: 'activity.view',
       },
+      // Personal, like the language: anyone who can see the dashboard.
+      {
+        href: '/settings/brief',
+        label: 'nav.items.brief',
+        icon: 'mail',
+        ability: 'dashboard.view',
+      },
       {
         href: '/settings/integrations',
         label: 'nav.items.integrations',
