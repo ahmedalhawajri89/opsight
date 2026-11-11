@@ -172,9 +172,19 @@ class ActivityController extends Controller
         $today = CarbonImmutable::now($timezone)->startOfDay();
         $from = $today->subDays(13);
 
-        $rows = ActivityLog::query()
+        /*
+         * Counted by the database, not by loading the rows: a busy business
+         * writes thousands of entries a fortnight. Bucketed by UTC hour and
+         * moved to the business's day here, which is exact for every
+         * whole-hour timezone (all of the Gulf) and needs no timezone tables
+         * in MySQL.
+         */
+        $hours = ActivityLog::query()
+            ->toBase()
             ->where('created_at', '>=', $from->utc())
-            ->get(['action', 'user_id', 'created_at']);
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') AS hour, COUNT(*) AS total")
+            ->groupBy('hour')
+            ->get();
 
         $daily = [];
 
@@ -182,31 +192,29 @@ class ActivityController extends Controller
             $daily[$from->addDays($d)->toDateString()] = 0;
         }
 
-        $people = [];
-        $failed = 0;
-        $weekStart = $today->subDays(6);
-
-        foreach ($rows as $row) {
-            $local = CarbonImmutable::parse($row->created_at)->setTimezone($timezone);
-            $day = $local->toDateString();
+        foreach ($hours as $row) {
+            $day = CarbonImmutable::parse((string) $row->hour, 'UTC')->setTimezone($timezone)->toDateString();
 
             if (array_key_exists($day, $daily)) {
-                $daily[$day]++;
-            }
-
-            if ($local->greaterThanOrEqualTo($today) && $row->user_id !== null) {
-                $people[$row->user_id] = true;
-            }
-
-            if ($local->greaterThanOrEqualTo($weekStart) && in_array($row->action, self::FAILED_SIGN_INS, true)) {
-                $failed++;
+                $daily[$day] += (int) $row->total;
             }
         }
+
+        $people = ActivityLog::query()
+            ->where('created_at', '>=', $today->utc())
+            ->whereNotNull('user_id')
+            ->distinct()
+            ->count('user_id');
+
+        $failed = ActivityLog::query()
+            ->where('created_at', '>=', $today->subDays(6)->utc())
+            ->whereIn('action', self::FAILED_SIGN_INS)
+            ->count();
 
         return ['data' => [
             'today' => $daily[$today->toDateString()],
             'week' => array_sum(array_slice($daily, 7)),
-            'people_today' => count($people),
+            'people_today' => $people,
             'failed_sign_ins_week' => $failed,
             'failed_sign_in_actions' => self::FAILED_SIGN_INS,
             'daily' => array_map(

@@ -257,10 +257,14 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:imports');
 
         /* ---- Forecasts (phase D) ----------------------------------------- */
-        Route::get('forecasts/stock', [ForecastController::class, 'stock']);
-        Route::get('forecasts/cash', [ForecastController::class, 'cash']);
+        // Aggregation over months of history, like analytics: its limit too.
+        Route::get('forecasts/stock', [ForecastController::class, 'stock'])
+            ->middleware('throttle:analytics');
+        Route::get('forecasts/cash', [ForecastController::class, 'cash'])
+            ->middleware('throttle:analytics');
         Route::put('forecasts/cash/balance', [ForecastController::class, 'setBalance']);
-        Route::get('reports/financing', [ReportController::class, 'financing']);
+        Route::get('reports/financing', [ReportController::class, 'financing'])
+            ->middleware('throttle:analytics');
 
         /* ---- The morning brief (phase C) ---------------------------------- */
         Route::get('me/brief', [BriefController::class, 'show']);
