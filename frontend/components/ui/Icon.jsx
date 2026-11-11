@@ -361,6 +361,9 @@ const PATHS = {
   ),
 };
 
+/** Every icon the set holds, for the component gallery's icon library. */
+export const ICON_NAMES = Object.keys(PATHS);
+
 export function Icon({ name, size = 16, label, className, strokeWidth = 1.75 }) {
   const glyph = PATHS[name];
 

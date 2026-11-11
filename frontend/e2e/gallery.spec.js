@@ -58,6 +58,14 @@ test('renders every component section without a runtime error', async ({ page })
     'Skeletons',
     'Overlays',
     'Colour tokens',
+    'Typography',
+    'Shape & elevation',
+    'Icons',
+    'Detail sheet',
+    'Ranking',
+    'Revenue to profit',
+    'Trend',
+    'Revenue and expenses',
   ]) {
     await expect(page.getByRole('heading', { name: section, exact: true })).toBeVisible();
   }
