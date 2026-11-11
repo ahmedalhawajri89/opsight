@@ -40,10 +40,16 @@ final class StockoutRisk extends Rule
      */
     private function sentence(array $first, int $rest): string
     {
-        $message = __('insights.stockout_risk.message', [
-            'product' => $first['name'],
-            'days' => app(Localizer::class)->number($first['days'], 1),
-        ]);
+        /*
+         * Under a day, a number reads wrong: "about 0.0 days of stock" sounds
+         * like a rounding error, not an emergency. Say it in words.
+         */
+        $message = $first['days'] < 1
+            ? __('insights.stockout_risk.message_today', ['product' => $first['name']])
+            : __('insights.stockout_risk.message', [
+                'product' => $first['name'],
+                'days' => app(Localizer::class)->number($first['days'], 1),
+            ]);
 
         if ($rest === 0) {
             return $message;

@@ -41,6 +41,7 @@ return [
     'stockout_risk' => [
         'title' => 'Products may run out',
         'message' => ':product has about :days days of stock left at its recent sales rate.',
+        'message_today' => ':product has less than a day of stock left at its recent sales rate.',
         'others' => '{1} :message (:count other product is close behind)|[2,*] :message (:count other products are close behind)',
     ],
 
