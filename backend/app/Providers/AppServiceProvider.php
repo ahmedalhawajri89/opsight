@@ -125,6 +125,8 @@ class AppServiceProvider extends ServiceProvider
          * and an owner fixing a file goes round that loop a few times — so
          * more generous than exports, still far short of a script.
          */
+        RateLimiter::for('brief-test', static fn (Request $request): Limit => Limit::perHour(5)->by($byUser($request)));
+
         RateLimiter::for('assistant', static fn (Request $request): Limit => Limit::perMinute(10)->by($byUser($request)));
 
         RateLimiter::for('imports', static fn (Request $request): Limit => Limit::perHour(60)->by($byUser($request)));

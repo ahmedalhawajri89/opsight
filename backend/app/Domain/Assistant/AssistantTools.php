@@ -6,7 +6,6 @@ namespace App\Domain\Assistant;
 
 use App\Authorization\Ability;
 use App\Domain\Insights\InsightEngine;
-use App\Domain\Inventory\StockLevel;
 use App\Domain\Metrics\Breakdown;
 use App\Domain\Metrics\Comparison;
 use App\Domain\Metrics\MetricCalculator;
@@ -14,7 +13,6 @@ use App\Domain\Metrics\MetricSummary;
 use App\Domain\Metrics\Period;
 use App\Domain\Metrics\TimeSeries;
 use App\Models\BusinessSetting;
-use App\Models\InventoryItem;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use stdClass;
@@ -165,7 +163,7 @@ final class AssistantTools
                      * stock, but the tool did not say which" — honest, and no
                      * use to an owner deciding what to reorder.
                      */
-                    'low_or_out' => $this->lowOrOut(),
+                    'low_or_out' => $this->metrics->lowStockProducts(),
                 ],
             };
         } catch (AssistantToolError $e) {
@@ -181,30 +179,6 @@ final class AssistantTools
             'error' => false,
             'source' => $this->source($name, $input),
         ];
-    }
-
-    /**
-     * Products at or below their reorder level, through the same rule the
-     * inventory screen's low-stock list uses (StockLevel::whereLow), so the
-     * assistant and the screen can never disagree about what "low" means.
-     *
-     * @return list<array{name: string, sku: string, stock: int}>
-     */
-    private function lowOrOut(): array
-    {
-        return InventoryItem::query()
-            ->with('product:id,name,sku')
-            ->whereHas('product', fn ($q) => $q->whereNull('deleted_at')->where('is_active', true))
-            ->tap(fn ($query) => StockLevel::whereLow($query))
-            ->orderBy('stock_on_hand')
-            ->limit(20)
-            ->get()
-            ->map(static fn (InventoryItem $item): array => [
-                'name' => (string) $item->product?->name,
-                'sku' => (string) $item->product?->sku,
-                'stock' => (int) $item->stock_on_hand,
-            ])
-            ->all();
     }
 
     /** @return list<string> */

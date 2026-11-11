@@ -67,6 +67,10 @@ class User extends Authenticatable
         // PATCH /me/preferences — not a privilege, so not guarded like role.
         'locale',
         'numerals',
+        // The morning brief: a personal choice, set through the same route.
+        'morning_brief',
+        'brief_channel',
+        'whatsapp_phone',
     ];
 
     /**
@@ -82,6 +86,8 @@ class User extends Authenticatable
     protected $attributes = [
         'locale' => 'en',
         'numerals' => 'latn',
+        'morning_brief' => false,
+        'brief_channel' => 'email',
     ];
 
     /**
@@ -103,6 +109,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
             'is_active' => 'boolean',
+            'morning_brief' => 'boolean',
         ];
     }
 

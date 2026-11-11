@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\ActivityController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BriefController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\FileImportController;
@@ -249,6 +250,11 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:imports');
         Route::post('imports', [FileImportController::class, 'store'])
             ->middleware('throttle:imports');
+
+        /* ---- The morning brief (phase C) ---------------------------------- */
+        Route::get('me/brief', [BriefController::class, 'show']);
+        // A test send reaches a real inbox or phone; a few an hour is plenty.
+        Route::post('me/brief/test', [BriefController::class, 'test'])->middleware('throttle:brief-test');
 
         /* ---- Ask Baydar (ADR-038) ---------------------------------------- */
         Route::get('assistant/conversations', [AssistantController::class, 'index']);

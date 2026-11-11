@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domain\Metrics;
 
 use App\Authorization\Ability;
-use App\Domain\Orders\OrderStatus;
 use App\Domain\Payments\PaymentStatus;
 use App\Models\User;
 use App\Support\Money;
@@ -59,10 +58,7 @@ final class QuickStats
             $stats['receivables'] = [
                 // Owed today by committed orders, on PaymentStatus's formula
                 // (ADR-022). Like inventory value, a position with no history.
-                'value' => Money::round((string) (TenantQuery::table('orders')
-                    ->whereIn('status', OrderStatus::qualifying())
-                    ->selectRaw('COALESCE(SUM('.PaymentStatus::outstandingSql().'), 0) AS total')
-                    ->value('total') ?? Money::zero())),
+                'value' => app(MetricCalculator::class)->receivables(),
                 'change' => null,
             ];
         }

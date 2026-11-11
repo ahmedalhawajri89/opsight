@@ -6,6 +6,8 @@ namespace App\Domain\Metrics;
 
 use App\Domain\Inventory\StockLevel;
 use App\Domain\Orders\OrderStatus;
+use App\Domain\Payments\PaymentStatus;
+use App\Models\InventoryItem;
 use App\Support\Localization\LocalizedName;
 use App\Support\Money;
 use App\Support\Tenancy\CurrentBusiness;
@@ -521,6 +523,45 @@ final class MetricCalculator
     }
 
     /** inventory_items for products that are live in the catalogue. */
+    /**
+     * Owed today by committed orders, on PaymentStatus's formula (ADR-022).
+     * A position with no history: there is no honest "change" to put beside it.
+     */
+    public function receivables(): string
+    {
+        return Money::round((string) (TenantQuery::table('orders')
+            ->whereIn('status', OrderStatus::qualifying())
+            ->selectRaw('COALESCE(SUM('.PaymentStatus::outstandingSql().'), 0) AS total')
+            ->value('total') ?? Money::zero()));
+    }
+
+    /**
+     * Products at or below their reorder level, by name, through the same rule
+     * as the inventory screen's low-stock list (StockLevel::whereLow), so no
+     * screen, answer or brief can disagree about what "low" means.
+     *
+     * @return list<array{name: string, sku: string, stock: int}>
+     */
+    public function lowStockProducts(int $limit = 20): array
+    {
+        return InventoryItem::query()
+            ->with('product:id,name,name_ar,sku')
+            ->whereHas('product', fn ($q) => $q->whereNull('deleted_at')->where('is_active', true))
+            ->tap(fn ($query) => StockLevel::whereLow($query))
+            ->orderBy('stock_on_hand')
+            ->limit($limit)
+            ->get()
+            ->map(static fn (InventoryItem $item): array => [
+                // The reader's language, like every other product name the
+                // system shows (ADR-021) — the first brief listed one board
+                // twice, once in each language, because this list did not.
+                'name' => (string) LocalizedName::pick($item->product?->name, $item->product?->name_ar),
+                'sku' => (string) $item->product?->sku,
+                'stock' => (int) $item->stock_on_hand,
+            ])
+            ->all();
+    }
+
     private function activeInventory(): Builder
     {
         return TenantQuery::table('inventory_items')

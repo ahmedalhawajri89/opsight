@@ -32,6 +32,7 @@ class UserResource extends JsonResource
             // signs in from (Phase 07).
             'locale' => $this->locale ?? 'en',
             'numerals' => $this->numerals ?? 'latn',
+            'morning_brief' => (bool) ($this->morning_brief ?? false),
 
             // The frontend's only source for permission decisions. There is no
             // second copy of the role → ability table in JavaScript

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Console\Commands\PruneActivityLogCommand;
 use App\Console\Commands\PruneUnclaimedIntegrations;
+use App\Console\Commands\SendMorningBriefs;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -42,6 +43,18 @@ Schedule::command(PruneActivityLogCommand::class)
  * rule — and it is cheap, since in the normal case it deletes nothing.
  */
 Schedule::command(PruneUnclaimedIntegrations::class)
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * The morning brief (phase C), hourly because the businesses are not in one
+ * timezone: each run sends to the businesses whose local clock has just
+ * reached BRIEF_HOUR. SendBrief's per-day ledger makes a repeated or
+ * overlapping run harmless, so withoutOverlapping() is about load, not
+ * correctness.
+ */
+Schedule::command(SendMorningBriefs::class)
     ->hourly()
     ->withoutOverlapping()
     ->onOneServer();

@@ -71,6 +71,20 @@ final class Localizer
     }
 
     /**
+     * An amount with its currency, the way the reader's locale writes it:
+     * "1,234.500 BHD" in English, "١٬٢٣٤٫٥٠٠ د.ب.‏" in Arabic. The decimals
+     * are the business's (three for the dinars), never ICU's guess.
+     */
+    public function money(int|float|string $value, string $currency, int $decimals): string
+    {
+        $formatter = $this->formatter(NumberFormatter::CURRENCY);
+        $formatter->setAttribute(NumberFormatter::MIN_FRACTION_DIGITS, $decimals);
+        $formatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, $decimals);
+
+        return $this->clean((string) $formatter->formatCurrency((float) $value, $currency));
+    }
+
+    /**
      * A ratio as a percentage: 0.224 → "22.4%" or "٢٢٫٤٪".
      *
      * Always the ABSOLUTE value. Every sentence that quotes a percentage states
