@@ -501,7 +501,49 @@ const en = {
 
   forecasts: {
     title: 'Forecasts',
-    description: 'What will run out, when, and what to order before it does — from your own sales.',
+    description: 'What will run out, whether the money lasts the quarter, and what to do before either happens — from your own figures.',
+    tabs: { stock: 'Stock', cash: 'Cash' },
+    cash: {
+      verdict: {
+        noBalance:
+          'Enter what is in the bank to see whether the money lasts. Until then, the line shows the net flow from zero: the shape of the quarter, not its level.',
+        negative: 'At this rate, cash runs out in the week of {date}.',
+        lasts: 'The money lasts the quarter. Its lowest point is {amount}, in the week of {date}.',
+      },
+      balance: {
+        title: 'Cash in the bank',
+        why: 'The one figure Baydar cannot know. State it, with its date, and the forecast starts from it.',
+        stated: '{amount}, as of {date}.',
+        amount: 'Balance',
+        asOf: 'As of',
+        save: 'Save',
+        clear: 'Clear',
+      },
+      totalIn: 'Money in, thirteen weeks',
+      totalOut: 'Money out, thirteen weeks',
+      lowest: 'Lowest balance',
+      lowestNet: 'Lowest running net',
+      weekOf: 'Week of {date}',
+      chartTitle: 'The next thirteen weeks',
+      chartBalance: 'Money in and out each week, and the balance it leaves.',
+      chartNoBalance: 'Money in and out each week, and the running net from zero.',
+      columns: { week: 'Week', in: 'Money in', out: 'Money out', net: 'Net', balance: 'Balance', runningNet: 'Running net' },
+      overdue:
+        'Customers owe {amount} that is past the day they usually pay. It is not in the forecast: money that is already late may not come. If it does, it is extra.',
+      assumptions: {
+        title: 'What the forecast assumes',
+        daysToPay: 'Customers usually pay after',
+        withinWeek: 'Paid in the week of the sale',
+        weeklySales: 'Sales per week',
+        stockOrders: 'Stock to order',
+        stockOrdersValue: '{count} orders, {amount}',
+        recurring: 'Recurring expenses',
+        monthlyOn: 'Monthly, around day {day}',
+        noRecurring: 'No expense has appeared in most of the last six months yet, so none is treated as recurring.',
+      },
+      notIncluded:
+        'Not included: VAT settlements, loan repayments, owner drawings, and anything else Baydar does not record. Other expenses are taken at their weekly average over the last twelve weeks.',
+    },
     stock: {
       title: 'Stock forecast',
       status: { out: 'Out of stock', order_now: 'Order now', soon: 'Order this week', ok: 'Covered' },
