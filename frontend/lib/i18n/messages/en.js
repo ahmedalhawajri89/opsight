@@ -1151,6 +1151,24 @@ const en = {
     searchPlaceholder: 'Search product or SKU…',
     searchLabel: 'Search inventory',
     adjust: 'Adjust',
+    sheet: {
+      status: { ok: 'In stock', low: 'Needs reordering', out: 'Out of stock' },
+      reorderNote: 'Reordered at {level}',
+      details: 'Details',
+      movements: 'Latest movements',
+      balance: 'Left {balance}',
+      openProduct: 'Open the product',
+      reasons: {
+        sale: 'Sold',
+        sale_cancelled: 'Sale cancelled',
+        sale_refunded: 'Sale refunded',
+        restock: 'Received',
+        adjustment: 'Adjusted',
+        damage: 'Damaged',
+        loss: 'Lost',
+        initial: 'Opening stock',
+      },
+    },
     columns: {
       neverMoved: 'Never moved',
       onHand: 'On hand',
@@ -1194,6 +1212,13 @@ const en = {
     searchPlaceholder: 'Search description or vendor…',
     searchLabel: 'Search expenses',
     anyCategory: 'Any category',
+    sheet: {
+      subtitle: 'Operating expense · {date}',
+      details: 'Details',
+      category: 'Category',
+      recorded: 'Recorded',
+      notes: 'Notes',
+    },
     columns: {
       incurred: 'Incurred',
       description: 'Description',

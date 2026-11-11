@@ -100,6 +100,8 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      // Hooks the shared enter and exit motion in globals.css.
+      data-placement={placement}
       aria-labelledby={title ? titleId : undefined}
       // Clicking the backdrop closes; clicking the panel must not.
       onClick={(event) => {

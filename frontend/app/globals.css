@@ -733,3 +733,107 @@ html[lang='ar'] [class*='tracking-'] {
     animation: none !important;
   }
 }
+
+/*
+ * Dialogs and side panels: one motion for the whole application.
+ *
+ * Side panels slide in from the edge they sit on — the inline end, which is
+ * the left in Arabic and the right in English — and centred dialogs settle
+ * in with a small scale and fade. On a phone both rise from the bottom, where
+ * they sit. The backdrop fades with them.
+ *
+ * Native <dialog> leaves the top layer the moment it closes, so the exit is
+ * animated with `overlay` and `display` as discrete transitions, and the
+ * entrance with @starting-style. A browser without either simply shows and
+ * hides the dialog as before — nothing depends on the motion.
+ */
+dialog[data-placement] {
+  transition:
+    opacity 0.2s ease,
+    translate 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.22s ease,
+    overlay 0.32s allow-discrete,
+    display 0.32s allow-discrete;
+}
+
+dialog[data-placement]:not([open]) {
+  opacity: 0;
+}
+
+dialog[data-placement='center']:not([open]) {
+  scale: 0.97;
+}
+
+@starting-style {
+  dialog[data-placement][open] {
+    opacity: 0;
+  }
+
+  dialog[data-placement='center'][open] {
+    scale: 0.97;
+  }
+}
+
+/* Phones: every dialog is a bottom sheet, and rises. */
+@media (max-width: 639px) {
+  dialog[data-placement]:not([open]) {
+    translate: 0 100%;
+  }
+
+  @starting-style {
+    dialog[data-placement][open] {
+      translate: 0 100%;
+    }
+  }
+}
+
+/* Wider: a side panel slides in from its own edge. */
+@media (min-width: 640px) {
+  dialog[data-placement='side']:not([open]) {
+    translate: 100% 0;
+  }
+
+  [dir='rtl'] dialog[data-placement='side']:not([open]) {
+    translate: -100% 0;
+  }
+
+  @starting-style {
+    dialog[data-placement='side'][open] {
+      translate: 100% 0;
+    }
+
+    [dir='rtl'] dialog[data-placement='side'][open] {
+      translate: -100% 0;
+    }
+  }
+}
+
+dialog[data-placement]::backdrop {
+  transition:
+    opacity 0.3s ease,
+    overlay 0.3s allow-discrete,
+    display 0.3s allow-discrete;
+  opacity: 0;
+}
+
+dialog[data-placement][open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  dialog[data-placement][open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Asked for less motion: the fade stays, the movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  dialog[data-placement] {
+    translate: none !important;
+    scale: none !important;
+    transition:
+      opacity 0.15s ease,
+      overlay 0.15s allow-discrete,
+      display 0.15s allow-discrete;
+  }
+}

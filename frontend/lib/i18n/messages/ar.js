@@ -1170,6 +1170,24 @@ const ar = {
     searchPlaceholder: 'ابحث بالمنتج أو رمز المنتج…',
     searchLabel: 'البحث في المخزون',
     adjust: 'تعديل',
+    sheet: {
+      status: { ok: 'متوفر', low: 'تحتاج إعادة طلب', out: 'نفد المخزون' },
+      reorderNote: 'يُعاد الطلب عند {level}',
+      details: 'التفاصيل',
+      movements: 'آخر الحركات',
+      balance: 'المتبقي {balance}',
+      openProduct: 'فتح المنتج',
+      reasons: {
+        sale: 'بيع',
+        sale_cancelled: 'إلغاء بيع',
+        sale_refunded: 'استرداد بيع',
+        restock: 'استلام مخزون',
+        adjustment: 'تعديل',
+        damage: 'تالف',
+        loss: 'مفقود',
+        initial: 'رصيد افتتاحي',
+      },
+    },
     columns: {
       neverMoved: 'لم تتحرّك بعد',
       onHand: 'المتوفر',
@@ -1212,6 +1230,13 @@ const ar = {
     searchPlaceholder: 'ابحث بالوصف أو المورّد…',
     searchLabel: 'البحث في المصروفات',
     anyCategory: 'كل الفئات',
+    sheet: {
+      subtitle: 'مصروف تشغيلي · {date}',
+      details: 'التفاصيل',
+      category: 'الفئة',
+      recorded: 'سُجّل في',
+      notes: 'ملاحظات',
+    },
     columns: {
       incurred: 'تاريخ الصرف',
       description: 'الوصف',

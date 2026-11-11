@@ -20,6 +20,7 @@ import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatDateTime, formatMoney, formatNumber, formatRelative } from '@/lib/format';
 import { exportInventory } from '@/services/catalog';
+import { InventorySheet } from '@/features/catalog/InventorySheet';
 
 const FILTER_CONFIG = {
   defaults: { sort: 'stock_on_hand', page: 1, per_page: 25 },
@@ -34,6 +35,7 @@ export default function InventoryPage() {
     useUrlFilters(FILTER_CONFIG);
 
   const [adjusting, setAdjusting] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   /*
    * One object for the list and the export, so "export" means "export what I
@@ -207,6 +209,8 @@ export default function InventoryPage() {
           caption={t('nav.items.inventory')}
           columns={columns}
           rows={items}
+          // The whole line opens it; the Adjust button stops the click itself.
+          onRowClick={(row) => setViewing(row)}
           // An inventory row is keyed by its product: the resource exposes
           // product_id rather than an id of its own, because the row IS the
           // stock state of that product.
@@ -231,6 +235,15 @@ export default function InventoryPage() {
           onPerPageChange={(perPage) => setFilters({ per_page: perPage })}
         />
       </Card>
+
+      <InventorySheet
+        item={viewing}
+        onClose={() => setViewing(null)}
+        onAdjust={(item) => {
+          setViewing(null);
+          setAdjusting(item);
+        }}
+      />
 
       <AdjustStockDialog item={adjusting} onClose={() => setAdjusting(null)} onDone={refetch} />
     </div>

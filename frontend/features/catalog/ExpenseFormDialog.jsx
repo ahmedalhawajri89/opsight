@@ -120,6 +120,8 @@ export function ExpenseFormDialog({ open, onClose, expense = null, onSaved }) {
         onClose={onClose}
         title={editing ? t('expenses.form.editTitle') : t('expenses.form.newTitle')}
         description={t('expenses.form.description')}
+        // A side panel, like every record form in the application.
+        placement="side"
         size="md"
         footer={
           <>

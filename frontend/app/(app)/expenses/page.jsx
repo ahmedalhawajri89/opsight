@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { useExpenses } from '@/features/catalog/useCatalog';
 import { ExpenseFormDialog } from '@/features/catalog/ExpenseFormDialog';
+import { ExpenseSheet } from '@/features/catalog/ExpenseSheet';
 import { Can } from '@/features/auth/Can';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -58,6 +59,8 @@ export default function ExpensesPage() {
   const { expenses, meta, totals, isLoading, isError, error, refetch } = useExpenses(query);
   // null means "no dialog"; an expense means edit; 'new' means create.
   const [editing, setEditing] = useState(null);
+  // Reading comes first; editing is a button inside the panel.
+  const [viewing, setViewing] = useState(null);
   const { categories } = useExpenseCategories();
 
   const columns = [
@@ -200,7 +203,7 @@ export default function ExpensesPage() {
           loading={isLoading}
           error={isError ? error : null}
           onRetry={refetch}
-          onRowClick={can('expenses.update') ? (row) => setEditing(row) : undefined}
+          onRowClick={(row) => setViewing(row)}
           sort={filters.sort}
           onSortChange={setSort}
           activeFilters={describeFilters(activeKeys, filters, t)}
@@ -225,6 +228,15 @@ export default function ExpensesPage() {
           onPerPageChange={(perPage) => setFilters({ per_page: perPage })}
         />
       </Card>
+
+      <ExpenseSheet
+        expense={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(expense) => {
+          setViewing(null);
+          setEditing(expense);
+        }}
+      />
 
       <ExpenseFormDialog
         key={editing === null ? 'closed' : (editing.id ?? 'new')}
