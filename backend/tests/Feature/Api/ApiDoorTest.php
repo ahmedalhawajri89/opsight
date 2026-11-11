@@ -52,10 +52,10 @@ describe('the root of the API', function (): void {
         // What stood here was Laravel's welcome page, and the owner read it
         // as a broken deployment. A door must not show another building's
         // furniture.
-        config(['app.frontend_url' => 'https://opsight-demo.vercel.app']);
+        config(['app.frontend_url' => 'https://baydar-demo.vercel.app']);
 
         $this->get('/')
-            ->assertRedirect('https://opsight-demo.vercel.app')
+            ->assertRedirect('https://baydar-demo.vercel.app')
             // 302: which address serves what is a deployment detail, and must
             // not be cached into somebody's browser for a year.
             ->assertStatus(302);

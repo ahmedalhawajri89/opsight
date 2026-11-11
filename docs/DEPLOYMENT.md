@@ -19,10 +19,10 @@ demo:
 ## How the pieces fit
 
 ```
-browser ──► opsight-demo.vercel.app            (Next.js, frontend/)
+browser ──► baydar-demo.vercel.app            (Next.js, frontend/)
               │  /api/v1/*, /sanctum/*  rewritten (next.config.mjs)
               ▼
-            opsight-demo-api.vercel.app        (Laravel, backend/, vercel-php)
+            baydar-demo-api.vercel.app        (Laravel, backend/, vercel-php)
               │
               ▼
             TiDB Cloud Starter                 (MySQL-compatible, TLS)
@@ -68,21 +68,27 @@ routes and the nightly cron. Environment variables:
 | `APP_ENV` | `production` |
 | `APP_KEY` | output of `php artisan key:generate --show` |
 | `APP_DEBUG` | `false` |
-| `APP_URL` | `https://opsight-demo-api.vercel.app` |
-| `FRONTEND_URL` | `https://opsight-demo.vercel.app` |
+| `APP_URL` | `https://baydar-demo-api.vercel.app` |
+| `FRONTEND_URL` | `https://baydar-demo.vercel.app` |
 | `DEMO_MODE` | `true` |
 | `DB_CONNECTION` | `mysql` |
 | `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | from TiDB |
 | `MYSQL_ATTR_SSL_CA` | `/etc/pki/tls/certs/ca-bundle.crt` |
 | `SESSION_DRIVER` | `cookie` |
 | `SESSION_SECURE_COOKIE` | `true` |
-| `SANCTUM_STATEFUL_DOMAINS` | `opsight-demo.vercel.app` |
+| `SANCTUM_STATEFUL_DOMAINS` | `baydar-demo.vercel.app` |
 | `CACHE_STORE` | `database` |
 | `QUEUE_CONNECTION` | `sync` |
 | `LOG_CHANNEL` | `stderr` |
 | `MAIL_MAILER` | `log` |
 | `TRUSTED_PROXIES` | `*` |
 | `CRON_SECRET` | a long random string |
+
+**No `ANTHROPIC_API_KEY` on the demo, on purpose (decided 2026-11-11).** Anyone
+can sign in to the demo, and every Ask Baydar question is billed to the key's
+owner. Without the key the assistant answers 503 and its screen says it is
+not set up, which is the honest state for a public sandbox. Zid is likewise
+unconfigured: no `ZID_*` variables.
 
 Leave `SESSION_DOMAIN` **unset**: the cookie belongs to the frontend's host.
 The disk is read-only except `/tmp`; `api/_runtime.php` moves storage and the
@@ -108,8 +114,8 @@ A second Vercel project from the same repository, **Root Directory**
 
 | Variable | Value |
 | --- | --- |
-| `NEXT_PUBLIC_API_URL` | `https://opsight-demo.vercel.app` (this project's own address) |
-| `API_ORIGIN` | `https://opsight-demo-api.vercel.app` |
+| `NEXT_PUBLIC_API_URL` | `https://baydar-demo.vercel.app` (this project's own address) |
+| `API_ORIGIN` | `https://baydar-demo-api.vercel.app` |
 | `NEXT_PUBLIC_DEMO_MODE` | `true` |
 
 Leave `NEXT_PUBLIC_ENABLE_GALLERY` unset. `NEXT_PUBLIC_DEMO_MODE` adds the
@@ -132,7 +138,7 @@ same every night at 01:00 UTC: Vercel calls `/api/demo-reset` with
 
 ## 5. Checking the deployment
 
-On `https://opsight-demo.vercel.app`:
+On `https://baydar-demo.vercel.app`:
 
 - each demo account signs in from the sign-in page, and lands on the dashboard;
 - Staff does not see what Owner sees (costs, margins, users, settings);
@@ -147,7 +153,7 @@ records as it goes, which the next reset removes:
 
 ```bash
 cd frontend
-E2E_BASE_URL=https://opsight-demo.vercel.app npx playwright test
+E2E_BASE_URL=https://baydar-demo.vercel.app npx playwright test
 ```
 
 ## Refreshing the snapshot

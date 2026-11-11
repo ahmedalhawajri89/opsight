@@ -13,7 +13,7 @@ actionable insights for owners and managers.
 > working week — and, since the tenancy work, many businesses on one
 > installation with self-service sign-up and a setup wizard.
 >
-> **Live demo:** [opsight-demo.vercel.app](https://opsight-demo.vercel.app) — sign in
+> **Live demo:** [baydar-demo.vercel.app](https://baydar-demo.vercel.app) — sign in
 > with any of the four roles offered on the page and the data resets nightly.
 >
 > Salla is connected end to end: a store installs the app, an owner claims it, and
