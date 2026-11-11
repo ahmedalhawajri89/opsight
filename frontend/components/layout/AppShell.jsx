@@ -26,6 +26,7 @@ import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/person';
+import { TodayChip } from '@/components/layout/TodayChip';
 import { PRESETS, PRESET_LABEL_COUNTS } from '@/lib/periods';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { NotificationsMenu } from '@/features/notifications/NotificationsMenu';
@@ -665,7 +666,11 @@ export function AppShell({ children }) {
               )}
 
               <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-                <div ref={setSlot} className="flex min-w-0 items-center gap-2" />
+                <div
+                  ref={setSlot}
+                  data-topbar-slot=""
+                  className="flex min-w-0 items-center gap-2"
+                />
 
                 {/*
                 Beside the control it describes, not above the page title.
@@ -673,28 +678,51 @@ export function AppShell({ children }) {
               */}
                 <FocusHint show={showFocusHint && wide} onDismiss={dismissFocusHint} />
 
-                {wide && (
-                  <FocusControls
-                    focused={focus.focused}
-                    fullscreen={focus.fullscreen}
-                    supported={focus.supported}
-                    onToggleFocus={() => {
-                      dismissFocusHint();
-                      focus.toggleFocus();
-                    }}
-                    onToggleFullscreen={() => {
-                      dismissFocusHint();
-                      focus.toggleFullscreen();
-                    }}
-                  />
+                <TodayChip />
+
+                {/* The most frequent act in the product, one click from anywhere. */}
+                {!focused && can('orders.create') && (
+                  <Link
+                    href="/orders/new"
+                    className="hidden h-9 shrink-0 items-center gap-1.5 rounded-(--radius-pill) bg-(--color-brand) ps-3 pe-3.5 text-sm font-semibold whitespace-nowrap text-(--color-text-inverse) shadow-(--shadow-card) transition-colors hover:bg-(--color-brand-hover) lg:inline-flex"
+                  >
+                    <Icon name="plus" size={16} aria-hidden="true" />
+                    {t('shell.newOrder')}
+                  </Link>
                 )}
+
                 {/*
+                  The tools that change the view, and the bell, in one
+                  capsule: a group of quiet controls reads as one thing, not
+                  three loose icons.
+                */}
+                <div className="flex items-center gap-0.5 rounded-(--radius-pill) border border-(--color-line) bg-(--color-ground) p-0.5">
+                  {wide && (
+                    <FocusControls
+                      focused={focus.focused}
+                      fullscreen={focus.fullscreen}
+                      supported={focus.supported}
+                      onToggleFocus={() => {
+                        dismissFocusHint();
+                        focus.toggleFocus();
+                      }}
+                      onToggleFullscreen={() => {
+                        dismissFocusHint();
+                        focus.toggleFullscreen();
+                      }}
+                    />
+                  )}
+                  {/*
                 The account menu is the way out of focus mode for a reader who
                 does not know the shortcut and cannot see the sidebar, so it
                 stays. Notifications do not: they are an interruption, which
                 is the one thing focus mode exists to remove.
               */}
-                {!focused && <NotificationsMenu />}
+                  {!focused && <NotificationsMenu />}
+                </div>
+
+                <span aria-hidden="true" className="hidden h-7 w-px bg-(--color-line) sm:block" />
+
                 <UserMenu user={user} onSignOut={handleSignOut} />
               </div>
             </header>
@@ -1179,7 +1207,7 @@ function UserMenu({ user, onSignOut }) {
         >
           <span
             aria-hidden="true"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--color-brand) text-xs font-semibold text-(--color-text-inverse)"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--color-brand) text-xs font-semibold text-(--color-text-inverse) ring-2 ring-(--color-brand-soft) ring-offset-2 ring-offset-(--color-surface)"
           >
             {initials(user.name)}
           </span>
@@ -1187,7 +1215,9 @@ function UserMenu({ user, onSignOut }) {
             <span className="block max-w-36 truncate text-sm font-semibold text-(--color-text)">
               {user.name}
             </span>
-            <span className="block text-xs text-(--color-text-2)">{user.role_label}</span>
+            <span className="mt-0.5 inline-block rounded-full bg-(--color-surface-selected) px-1.5 py-px text-[11px] leading-4 font-medium text-(--color-brand-text)">
+              {user.role_label}
+            </span>
           </span>
           <span className="sr-only sm:hidden">{user.name}</span>
           <span className="sr-only">{t('shell.accountMenu')}</span>
