@@ -312,3 +312,36 @@ it('lets someone delete their own conversation, and no one else\'s', function ()
     expect(AssistantConversation::query()->count())->toBe(0)
         ->and(AssistantMessage::query()->count())->toBe(0);
 });
+
+it('keeps counting what was spent after the conversation is deleted', function (): void {
+    /*
+     * The cap used to be the sum of the messages still stored, and deleting
+     * a conversation deletes its messages: ask, delete, ask again, without
+     * end. The spend is a ledger now, and deleting touches only the record.
+     */
+    config(['assistant.monthly_token_limit' => 1000]);
+    $model = script(says('first'), says('second'));
+
+    $id = ask('One?')->assertCreated()->json('data.conversation_id');
+    $this->deleteJson("/api/v1/assistant/conversations/{$id}")->assertSuccessful();
+
+    ask('Two?')->assertStatus(429)->assertJsonPath('code', 'assistant.limit');
+
+    expect($model->calls)->toHaveCount(1);
+});
+
+it('stops between rounds of one question once the month is spent', function (): void {
+    // Each tool round costs 1,050 tokens: the first is under a 1,500 line,
+    // the second crosses it, and no third call is made.
+    config(['assistant.monthly_token_limit' => 1500, 'assistant.max_tool_rounds' => 6]);
+    $model = script(
+        callsTool('get_insights', ['from' => '2026-03-01', 'to' => '2026-03-05'], 'a'),
+        callsTool('get_insights', ['from' => '2026-03-01', 'to' => '2026-03-05'], 'b'),
+        callsTool('get_insights', ['from' => '2026-03-01', 'to' => '2026-03-05'], 'c'),
+        says('never reached'),
+    );
+
+    ask('Keep going')->assertCreated()->assertJsonPath('data.answer.text', __('assistant.limit'));
+
+    expect($model->calls)->toHaveCount(2);
+});
