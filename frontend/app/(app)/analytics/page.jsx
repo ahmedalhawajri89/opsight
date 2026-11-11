@@ -225,6 +225,11 @@ export default function AnalyticsPage() {
             label: t(`metrics.${step.key}.label`),
             value: metrics[step.key]?.value ?? null,
           }))}
+          // The server's own margins, beside the subtotals they belong to.
+          margins={{
+            gross_profit: metrics.gross_margin?.value ?? null,
+            net_profit: metrics.net_margin?.value ?? null,
+          }}
           currency={currency}
           decimals={decimals}
           loading={summary.isLoading && !hasFigures}
@@ -257,7 +262,9 @@ export default function AnalyticsPage() {
         loading={trend.isLoading}
         error={trend.isError ? trend.error : null}
         onRetry={trend.refetch}
-        height={320}
+        // Every metric this screen offers adds up, so a total means something.
+        summary
+        height={300}
       />
 
       <div className="flex flex-wrap items-end gap-3">

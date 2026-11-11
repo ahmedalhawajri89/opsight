@@ -1,116 +1,71 @@
 'use client';
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-
-import { CHART_TYPE, ChartFrame } from './ChartFrame';
+import { ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { formatMoney, formatMoneyCompact, getMoneyDefaults } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { formatMoney, formatPercent, getMoneyDefaults } from '@/lib/format';
 
 /**
- * How the period's revenue became its profit, in one picture.
+ * From revenue to profit, as an equation and a split.
  *
- * WHY THIS CHART EXISTS. The analytics screen already carried every figure in
- * it — net revenue, cost of goods, gross profit, operating expenses, net
- * profit — as five separate cells in a panel of fifteen. What it never showed
- * was the ARITHMETIC between them: that 151,290 became 2,853 because the
- * goods cost 100,761 and running the business cost another 47,675. A reader
- * had to hold five numbers in their head and subtract. That is the one piece
- * of work a profit-and-loss screen exists to do for them.
+ * IT WAS A WATERFALL — floating bars on an axis — and a waterfall makes the
+ * reader do the subtraction by eye: estimate where one bar ends, where the
+ * next begins, read the difference off a scale. The owner asked for
+ * something modern; what the panel needed was to be legible.
  *
- * NOT A SECOND SOURCE OF TRUTH. Every step is a metric the server already
- * computed and the page already has; nothing here adds, and the two totals
- * are the server's own `gross_profit` and `net_profit` rather than sums taken
- * from the bars. If the service ever changes what gross profit means, this
- * chart changes with it instead of disagreeing with the tile above it.
+ * Two parts, each answering one question:
  *
- * HOW A WATERFALL IS DRAWN IN RECHARTS. Two stacked bars per column: an
- * invisible one that lifts the visible one to where it should start. The
- * `base` value is therefore layout, not data — it is kept out of the table
- * view and out of the tooltip, both of which show only the step's own amount.
+ *  1. HOW DOES REVENUE BECOME PROFIT? The arithmetic written out as cards —
+ *     revenue − cost of goods = gross profit − operating expenses = net
+ *     profit — with each subtotal's margin beside it. It reads as a
+ *     sentence, left to right or right to left, and every figure is the
+ *     server's own: nothing here is computed except the order they sit in.
  *
- * TWO HUES, NOT RED AND GREEN. A cost is not a failure and a total is not a
- * success; they are different KINDS of row, which is a categorical
- * distinction. Red for every deduction would read as four problems, and
- * UI_UX_DIRECTION.md §4 reserves the semantic palette for meaning. The one
- * place a status colour does appear is a NEGATIVE total, because a business
- * that lost money over the period is a fact the chart should not whisper.
+ *  2. WHERE DID EACH UNIT OF REVENUE GO? One bar, split into cost of goods,
+ *     running costs and what was left. In a month that lost money the costs
+ *     run past a marker at revenue, so the overrun is visible at a glance
+ *     instead of hidden below a zero line.
+ *
+ * Props are the ones the waterfall took, so the page did not change.
  */
+const SPLIT = [
+  { key: 'cogs', colour: 'var(--chart-2)' },
+  { key: 'operating_expenses', colour: 'var(--chart-4)' },
+  { key: 'net_profit', colour: 'var(--chart-3)' },
+];
+
 export function WaterfallChart({
   title,
   description,
   steps = [],
+  margins = {},
   currency = getMoneyDefaults().currency,
   decimals = 3,
   loading = false,
   error = null,
   onRetry,
-  height = 300,
   className,
 }) {
   const { t, dir } = useI18n();
-  const rtl = dir === 'rtl';
-
   const money = (value) => formatMoney(value, { currency, decimals });
+  const byKey = Object.fromEntries(steps.map((step) => [step.key, step]));
+  const valueOf = (key) => {
+    const n = Number(byKey[key]?.value);
 
-  /*
-   * The running base, derived here rather than asked of the caller.
-   *
-   * A `total` step stands on the axis. A `down` step hangs from the total
-   * before it and reaches the total after it, so its base is whatever the
-   * running figure becomes once it has been taken off.
-   */
-  const data = steps.reduce((rows, step) => {
-    const running = rows.length === 0 ? 0 : rows[rows.length - 1].running;
-    const amount = Number(step.value);
-    const valid = Number.isFinite(amount);
+    return Number.isFinite(n) ? n : null;
+  };
 
-    if (step.kind === 'total') {
-      const total = valid ? amount : running;
-
-      rows.push({
-        ...step,
-        amount: valid ? amount : null,
-        base: total < 0 ? total : 0,
-        span: Math.abs(total),
-        negative: total < 0,
-        running: total,
-      });
-
-      return rows;
-    }
-
-    const after = valid ? running - amount : running;
-
-    rows.push({
-      ...step,
-      amount: valid ? amount : null,
-      base: Math.min(running, after),
-      span: valid ? Math.abs(amount) : 0,
-      running: after,
-    });
-
-    return rows;
-  }, []);
+  const revenue = valueOf('net_revenue');
+  const hasData = revenue !== null && steps.some((step) => Number(step.value) !== 0);
 
   const columns = [
     { key: 'label', header: t('charts.step') },
     {
-      key: 'amount',
+      key: 'value',
       header: title,
       numeric: true,
-      // The deduction is shown as a deduction, not as a bare positive.
       cell: (row) =>
-        row.amount === null ? '—' : money(row.kind === 'down' ? -row.amount : row.amount),
+        row.value === null || row.value === undefined ? '—' : money(row.kind === 'down' ? -Number(row.value) : row.value),
     },
   ];
 
@@ -120,121 +75,138 @@ export function WaterfallChart({
       description={description}
       icon="analytics"
       columns={columns}
-      rows={data}
+      rows={hasData ? steps : []}
       loading={loading}
       error={error}
       onRetry={onRetry}
-      height={height}
+      height="auto"
       className={className}
       emptyDescription={t('charts.noData')}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 24, right: 8, bottom: 0, left: 8 }}>
-          {/* Horizontal only, at the lightest token (UI_UX_DIRECTION.md §6). */}
-          <CartesianGrid vertical={false} stroke="var(--border)" />
-
-          {/*
-            The sequence reads in the page's own direction: revenue first.
-            Reversed for Arabic rather than left to inherit, because an SVG
-            surface does not mirror itself.
-          */}
-          <XAxis
-            dataKey="label"
-            reversed={rtl}
-            tick={CHART_TYPE.tick}
-            tickLine={false}
-            axisLine={{ stroke: 'var(--border)' }}
-            interval={0}
-          />
-
-          <YAxis
-            orientation={rtl ? 'right' : 'left'}
-            tickFormatter={(value) => formatMoneyCompact(value, { currency })}
-            tick={CHART_TYPE.tick}
-            tickLine={false}
-            axisLine={false}
-            width={72}
-          />
-
-          <Tooltip
-            cursor={{ fill: 'var(--surface-hover)' }}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-
-              // The visible bar is the second of the two; the first is layout.
-              const row = payload[payload.length - 1].payload;
-
-              return (
-                <div
-                  dir={dir}
-                  className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-2.5 py-2 text-sm shadow-(--shadow-overlay)"
-                >
-                  <p className="font-medium text-(--color-text)">{row.label}</p>
-                  <p className="tabular text-(--color-text)">
-                    {row.amount === null
-                      ? '—'
-                      : money(row.kind === 'down' ? -row.amount : row.amount)}
-                  </p>
-                </div>
-              );
-            }}
-          />
-
-          {/* The lift. Never seen, never in the table, never in the tooltip. */}
-          <Bar dataKey="base" stackId="w" fill="transparent" isAnimationActive={false} />
-
-          {/*
-            `maxBarSize`: a column is capped and the rest of its band is air.
-            Left to itself Recharts filled the slot — five columns about
-            170px wide across the card — and a block that wide stops reading
-            as a measured height and starts reading as a panel.
-            
-            56, not the 24 the mark spec names. That figure is written for a
-            dense bar chart, where a column is one of thirty; this is five
-            steps across the width of a card, and at 24 they read as needles
-            with the chart mostly empty. The rule's stated intent is the
-            proportion — "never fill the slot; let the band's leftover be
-            air" — and 56 of a ~200px band is 72% air. The departure is from
-            the number, not from the rule.
-          */}
-          <Bar
-            dataKey="span"
-            stackId="w"
-            isAnimationActive={false}
-            radius={[2, 2, 0, 0]}
-            maxBarSize={56}
-          >
-            {data.map((row) => (
-              <Cell
-                key={row.key}
-                fill={
-                  row.negative
-                    ? 'var(--danger)'
-                    : row.kind === 'total'
-                      ? 'var(--chart-1)'
-                      : 'var(--chart-2)'
-                }
-              />
-            ))}
-
-            {/*
-              The amount above each column, so the chart is readable without
-              the axis — the same reason the ranked bars carry theirs. Compact
-              (`١٥١ ألف`), because five exact money strings across a 300px
-              chart collide at any width worth having.
-            */}
-            <LabelList
-              dataKey="amount"
-              position="top"
-              offset={6}
-              formatter={(value) => (value === null ? '' : formatMoneyCompact(value, { currency }))}
-              fill={CHART_TYPE.label.fill}
-              fontSize={CHART_TYPE.label.fontSize}
-              className="tabular"
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <div dir={dir} className="space-y-6">
+          <Equation steps={steps} margins={margins} money={money} />
+          <Split revenue={revenue} valueOf={valueOf} labelOf={(key) => byKey[key]?.label ?? key} />
+        </div>
+      ) : null}
     </ChartFrame>
+  );
+}
+
+/** revenue − cogs = gross profit − expenses = net profit, as cards. */
+function Equation({ steps, margins, money }) {
+  const { t } = useI18n();
+
+  return (
+    <ol className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center">
+      {steps.map((step, index) => {
+        const amount = Number(step.value);
+        const total = step.kind === 'total';
+        const last = index === steps.length - 1;
+        const loss = last && amount < 0;
+        const margin = margins[step.key];
+
+        return (
+          <li key={step.key} className="contents">
+            {index > 0 ? (
+              <span
+                aria-hidden="true"
+                className="tabular flex size-7 shrink-0 items-center justify-center self-center rounded-full bg-(--color-surface-selected) text-sm font-semibold text-(--color-text-2)"
+              >
+                {step.kind === 'down' ? '−' : '='}
+              </span>
+            ) : null}
+            <div
+              className={cn(
+                'min-w-0 flex-1 rounded-xl border p-3.5',
+                !total && 'border-(--border-subtle)',
+                total && !last && 'border-transparent bg-(--color-surface-selected)',
+                last && !loss && 'border-transparent bg-(--color-success-soft)',
+                loss && 'border-transparent bg-(--color-danger-soft)',
+              )}
+            >
+              <p className="truncate text-xs text-(--color-text-2)">
+                {/* Said in words too: the operator glyph is decorative. */}
+                <span className="sr-only">{step.kind === 'down' ? t('charts.minus') : index > 0 ? t('charts.equals') : ''} </span>
+                {step.label}
+              </p>
+              <p
+                className={cn(
+                  'tabular mt-1 truncate font-semibold',
+                  total ? 'text-lg' : 'text-base',
+                  loss ? 'text-(--color-danger)' : 'text-(--color-text)',
+                )}
+              >
+                {step.value === null || step.value === undefined ? '—' : money(step.value)}
+              </p>
+              {margin !== null && margin !== undefined ? (
+                <p className="mt-1 text-xs text-(--color-text-2)">
+                  {t('charts.marginOf', { margin: formatPercent(margin) })}
+                </p>
+              ) : null}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** Where each unit of revenue went: one bar, three parts. */
+function Split({ revenue, valueOf, labelOf }) {
+  const { t } = useI18n();
+
+  if (!(revenue > 0)) return null;
+
+  const cogs = Math.max(0, valueOf('cogs') ?? 0);
+  const expenses = Math.max(0, valueOf('operating_expenses') ?? 0);
+  const profit = Math.max(0, revenue - cogs - expenses);
+  const costs = cogs + expenses;
+  // The bar is as long as the larger of revenue and total costs, so a loss
+  // runs past the revenue marker instead of being clipped at 100%.
+  const scale = Math.max(revenue, costs);
+  const parts = { cogs, operating_expenses: expenses, net_profit: profit };
+  const overrun = costs > revenue;
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-medium text-(--color-text-2)">{t('charts.whereRevenueWent')}</p>
+
+      <div className="relative">
+        <div className="flex h-3 overflow-hidden rounded-full bg-(--color-surface-selected)">
+          {SPLIT.map(({ key, colour }) =>
+            parts[key] > 0 ? (
+              <span
+                key={key}
+                className="h-full first:rounded-s-full last:rounded-e-full"
+                style={{ width: `${(parts[key] / scale) * 100}%`, background: colour }}
+              />
+            ) : null,
+          )}
+        </div>
+        {overrun ? (
+          <span
+            className="absolute -top-1 h-5 w-0.5 rounded bg-(--color-text)"
+            style={{ insetInlineStart: `${(revenue / scale) * 100}%` }}
+            title={t('charts.revenueMarker')}
+          />
+        ) : null}
+      </div>
+
+      <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs">
+        {SPLIT.map(({ key, colour }) => (
+          <li key={key} className="flex items-center gap-1.5 text-(--color-text-2)">
+            <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: colour }} />
+            {labelOf(key)}
+            <span className="tabular font-semibold text-(--color-text)">{formatPercent(parts[key] / revenue)}</span>
+          </li>
+        ))}
+        {overrun ? (
+          <li className="text-(--color-danger)">
+            {t('charts.overrun', { share: formatPercent((costs - revenue) / revenue) })}
+          </li>
+        ) : null}
+      </ul>
+    </div>
   );
 }

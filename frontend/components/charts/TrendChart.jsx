@@ -7,6 +7,7 @@ import {
   LabelList,
   Line,
   ReferenceArea,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,7 +19,8 @@ import { useI18n } from '@/features/i18n/I18nProvider';
 import { useId } from 'react';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { formatCompact, formatMoney, formatNumber, getMoneyDefaults } from '@/lib/format';
+import { sumAmounts } from '@/lib/decimal';
+import { formatCompact, formatMoney, formatNumber, formatPercent, getMoneyDefaults } from '@/lib/format';
 import { formatBucketLabel, weekendRuns } from '@/lib/periods';
 
 /**
@@ -57,6 +59,7 @@ export function TrendChart({
   weekendDays = [],
   icon,
   bare = false,
+  summary = false,
   className,
   style,
 }) {
@@ -97,6 +100,8 @@ export function TrendChart({
   // reads as a weekend rather than as a drop (ADR-020).
   const weekends = weekendRuns(series, weekendDays);
 
+  const stats = summary ? summarise(series, format) : null;
+
   const columns = [
     { key: 'label', header: t('charts.period') },
     {
@@ -127,6 +132,7 @@ export function TrendChart({
       className={className}
       style={style}
       emptyDescription={t('charts.trendEmpty')}
+      legend={stats ? <TrendSummary stats={stats} formatValue={formatValue} /> : undefined}
       footnote={
         [partial && t('charts.partialFootnote'), weekends.length > 0 && t('charts.weekendFootnote')]
           .filter(Boolean)
@@ -223,6 +229,19 @@ export function TrendChart({
             />
           )}
 
+          {/* The peak, marked where it happened, so the summary's "highest" has a place. */}
+          {stats?.peak ? (
+            <ReferenceDot
+              x={stats.peak.label}
+              y={Number(stats.peak.value)}
+              r={4}
+              fill="var(--surface)"
+              stroke={colour}
+              strokeWidth={2}
+              ifOverflow="extendDomain"
+            />
+          ) : null}
+
           <Area
             type="monotone"
             dataKey="value"
@@ -314,5 +333,75 @@ export function ComparisonLine({ dataKey = 'previous' }) {
       dot={false}
       isAnimationActive={false}
     />
+  );
+}
+
+/**
+ * What the line says, in figures: the total, the average bucket, the best
+ * and the worst, and how the latest finished bucket moved.
+ *
+ * Opt-in (`summary`), because only additive metrics have a meaningful total
+ * — the analytics screen offers nothing else, the KPI panel's expanded
+ * charts include ratios and do not ask for it.
+ *
+ * The bucket still filling is in the total (it is money already earned) but
+ * not in "highest", "lowest" or "latest change": a Monday is not a week.
+ */
+function summarise(series, format) {
+  const values = series.map((bucket) => bucket.value).filter((v) => v !== null && v !== undefined);
+
+  if (values.length === 0) return null;
+
+  const total = format === 'money' ? sumAmounts(values) : String(values.reduce((sum, v) => sum + Number(v), 0));
+  const complete = series.filter((bucket) => !bucket.is_partial && bucket.value !== null && bucket.value !== undefined);
+  const byValue = [...complete].sort((a, b) => Number(b.value) - Number(a.value));
+  const last = complete.at(-1);
+  const previous = complete.at(-2);
+
+  return {
+    total,
+    average: Number(total) / values.length,
+    peak: byValue[0] ?? null,
+    low: byValue.length > 1 ? byValue.at(-1) : null,
+    change:
+      last && previous && Number(previous.value) > 0
+        ? { ratio: (Number(last.value) - Number(previous.value)) / Number(previous.value), label: last.label }
+        : null,
+  };
+}
+
+function TrendSummary({ stats, formatValue }) {
+  const { t } = useI18n();
+  const up = stats.change && stats.change.ratio >= 0;
+
+  const items = [
+    [t('charts.summary.total'), formatValue(stats.total), null],
+    [t('charts.summary.average'), formatValue(stats.average), null],
+    stats.peak ? [t('charts.summary.peak'), formatValue(stats.peak.value), stats.peak.label] : null,
+    stats.low ? [t('charts.summary.low'), formatValue(stats.low.value), stats.low.label] : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="flex flex-wrap items-end gap-x-8 gap-y-3 pb-2">
+      {items.map(([label, value, when]) => (
+        <div key={label} className="min-w-0">
+          <p className="text-xs text-(--color-text-2)">{label}</p>
+          <p className="tabular mt-1 text-lg font-semibold text-(--color-text)">{value}</p>
+          {when ? <p className="text-xs text-(--color-muted)">{when}</p> : null}
+        </div>
+      ))}
+      {stats.change ? (
+        <p
+          className={`mb-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+            up ? 'bg-(--color-success-soft) text-(--color-success)' : 'bg-(--color-danger-soft) text-(--color-danger)'
+          }`}
+        >
+          {t(up ? 'charts.summary.up' : 'charts.summary.down', {
+            change: formatPercent(Math.abs(stats.change.ratio)),
+            label: stats.change.label,
+          })}
+        </p>
+      ) : null}
+    </div>
   );
 }
