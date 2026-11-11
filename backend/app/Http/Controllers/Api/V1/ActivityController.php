@@ -8,8 +8,11 @@ use App\Domain\Export\CsvExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
+use App\Models\BusinessSetting;
 use App\Support\QueryFilter;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -55,6 +58,7 @@ class ActivityController extends Controller
         $filter = new QueryFilter(
             filters: [
                 'action' => QueryFilter::exact('action'),
+                'category' => self::category(),
                 'user_id' => QueryFilter::exact('user_id'),
                 'subject_type' => QueryFilter::exact('subject_type'),
                 'subject_id' => QueryFilter::exact('subject_id'),
@@ -83,6 +87,43 @@ class ActivityController extends Controller
         return $query->orderBy('id', 'desc');
     }
 
+    /**
+     * The log's areas, each a set of action prefixes. One place, so the
+     * screen's chips and the export filter the same rows.
+     */
+    public const CATEGORIES = [
+        'security' => ['auth.'],
+        'sales' => ['order.', 'orderitem.', 'customer.'],
+        'catalogue' => ['product.', 'category.', 'inventory.', 'import.'],
+        'money' => ['expense.', 'expensecategory.', 'forecast.', 'report.'],
+        'people' => ['user.'],
+        'system' => ['settings.', 'business.', 'integration.', 'webhook.', 'export.', 'activity.'],
+    ];
+
+    /**
+     * Narrows to one area of the business. An area this list does not know
+     * returns nothing rather than everything: a filter that silently stops
+     * filtering is how an audit reader misses a row.
+     *
+     * @return callable(Builder<covariant Model>, string): mixed
+     */
+    private static function category(): callable
+    {
+        return static function (Builder $query, string $value): Builder {
+            $prefixes = self::CATEGORIES[$value] ?? null;
+
+            if ($prefixes === null) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query->where(static function (Builder $inner) use ($prefixes): void {
+                foreach ($prefixes as $prefix) {
+                    $inner->orWhere('action', 'like', $prefix.'%');
+                }
+            });
+        };
+    }
+
     public function export(Request $request, CsvExport $export): StreamedResponse
     {
         $this->authorize('export', ActivityLog::class);
@@ -109,6 +150,71 @@ class ActivityController extends Controller
             request: $request,
             filename: 'activity-log',
         );
+    }
+
+    /** Sign-in attempts that did not get in, and the guards they tripped. */
+    private const FAILED_SIGN_INS = ['auth.login_failed', 'auth.failed', 'auth.google_failed', 'auth.google_no_account', 'auth.lockout', 'auth.throttled'];
+
+    /**
+     * The log at a glance: how busy today was, who was at work, the last
+     * fourteen days as a count per day, and the failed sign-ins of the week.
+     *
+     * Days are the BUSINESS's days, in its own timezone: "today" at two in
+     * the morning in Riyadh is not yesterday in UTC.
+     *
+     * @return array{data: array<string, mixed>}
+     */
+    public function summary(Request $request): array
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        $timezone = BusinessSetting::current()->timezone ?: 'UTC';
+        $today = CarbonImmutable::now($timezone)->startOfDay();
+        $from = $today->subDays(13);
+
+        $rows = ActivityLog::query()
+            ->where('created_at', '>=', $from->utc())
+            ->get(['action', 'user_id', 'created_at']);
+
+        $daily = [];
+
+        for ($d = 0; $d < 14; $d++) {
+            $daily[$from->addDays($d)->toDateString()] = 0;
+        }
+
+        $people = [];
+        $failed = 0;
+        $weekStart = $today->subDays(6);
+
+        foreach ($rows as $row) {
+            $local = CarbonImmutable::parse($row->created_at)->setTimezone($timezone);
+            $day = $local->toDateString();
+
+            if (array_key_exists($day, $daily)) {
+                $daily[$day]++;
+            }
+
+            if ($local->greaterThanOrEqualTo($today) && $row->user_id !== null) {
+                $people[$row->user_id] = true;
+            }
+
+            if ($local->greaterThanOrEqualTo($weekStart) && in_array($row->action, self::FAILED_SIGN_INS, true)) {
+                $failed++;
+            }
+        }
+
+        return ['data' => [
+            'today' => $daily[$today->toDateString()],
+            'week' => array_sum(array_slice($daily, 7)),
+            'people_today' => count($people),
+            'failed_sign_ins_week' => $failed,
+            'failed_sign_in_actions' => self::FAILED_SIGN_INS,
+            'daily' => array_map(
+                static fn (string $date, int $count): array => ['date' => $date, 'count' => $count],
+                array_keys($daily),
+                array_values($daily),
+            ),
+        ]];
     }
 
     /**

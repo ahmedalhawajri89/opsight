@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
@@ -208,8 +209,10 @@ Route::prefix('v1')->group(function (): void {
         // (SECURITY.md §10).
         Route::get('activity', [ActivityController::class, 'index']);
         Route::get('activity/actions', [ActivityController::class, 'actions']);
+        Route::get('activity/summary', [ActivityController::class, 'summary']);
 
         /* ---- Users ------------------------------------------------------- */
+        Route::get('roles', [RoleController::class, 'index']);
         Route::get('users', [UserController::class, 'index']);
         Route::post('users', [UserController::class, 'store']);
         Route::get('users/{user}', [UserController::class, 'show']);
