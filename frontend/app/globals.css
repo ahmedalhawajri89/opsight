@@ -837,3 +837,31 @@ dialog[data-placement][open]::backdrop {
       display 0.15s allow-discrete;
   }
 }
+
+/*
+ * PRINTED PAGES (the financing report, phase D3).
+ *
+ * A4 with room at the edges, and the page number in the bottom margin.
+ * Declaring a margin box also replaces the browser's own header and
+ * footer: the date, the page title and "localhost:3000/reports" printed
+ * across a document meant for a bank.
+ */
+@page {
+  size: A4;
+  margin: 14mm 12mm 16mm;
+
+  @bottom-center {
+    content: counter(page) ' / ' counter(pages);
+    font-size: 8pt;
+    color: #8a94a3;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

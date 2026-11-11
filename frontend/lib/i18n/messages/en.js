@@ -580,8 +580,12 @@ const en = {
       title: 'Financing report',
       description:
         'Your business’s financial picture in one document, to hand a bank or a lending programme: a year of profit, what you hold and are owed, and whether the cash lasts.',
-      howTo: 'Choose “Save as PDF” as the printer in the dialog that opens. Each time a report is drawn up, the activity log records who did it.',
+      howTo: 'Download PDF saves the file at once. Print opens the print dialog, where “Save as PDF” keeps the text selectable. Each time a report is drawn up, the activity log records who did it.',
+      amountsIn: 'Amounts in {currency}',
       download: 'Download PDF',
+      print: 'Print',
+      preparing: 'Preparing the file…',
+      downloadFailed: 'The file could not be prepared. Try again, or use Print and choose “Save as PDF”.',
       kicker: 'Financial report',
       period: 'Twelve complete months, {from} to {to}',
       cr: 'Commercial registration',

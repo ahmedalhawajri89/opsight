@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useI18n } from '@/features/i18n/I18nProvider';
@@ -8,6 +9,7 @@ import { Icon } from '@/components/ui/Icon';
 import { SkeletonText } from '@/components/ui/Skeleton';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
 import { cn } from '@/lib/cn';
+import { exportElementToPdf } from '@/lib/pdf/exportPdf';
 import {
   formatDate,
   formatDateTime,
@@ -23,12 +25,19 @@ import * as reports from '@/services/reports';
  * The financing report (phase D3): the document an owner hands a bank, or
  * a programme that lends to small businesses.
  *
- * A PAGE, PRINTED TO PDF BY THE BROWSER. Arabic is joined, shaped and set
- * right to left by the same engine that draws the rest of the app; the PHP
- * PDF libraries either break Arabic letters apart or carry a hundred
- * megabytes of fonts into every server. "Download PDF" opens the print
- * dialog, and the print styles lay it out as A4: the app's chrome is gone,
- * each section keeps together, and the cash forecast starts a new page.
+ * A PAGE, DRAWN BY THE BROWSER, TWO WAYS OUT. Arabic is joined, shaped and
+ * set right to left by the same engine that draws the rest of the app; the
+ * PHP PDF libraries either break Arabic letters apart or carry a hundred
+ * megabytes of fonts into every server.
+ *
+ *  Download PDF  saves an A4 file at once (lib/pdf/exportPdf), paged so no
+ *                row is cut in half. Its text is an image.
+ *  Print         opens the print dialog; the print styles lay the page out
+ *                as A4 with page numbers and the app's chrome gone. Saved
+ *                to PDF from there, its text stays selectable.
+ *
+ * Either way each section keeps together and the cash forecast starts a
+ * new page.
  *
  * WHAT A LENDER ASKS, IN ORDER: who the business is, whether it makes
  * money, what it holds and is owed today, and whether the cash lasts.
@@ -39,6 +48,9 @@ import * as reports from '@/services/reports';
  */
 export function FinancingReportView() {
   const { t } = useI18n();
+  const page = useRef(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
   const query = useQuery({
     queryKey: queryKeys.reports.financing,
     queryFn: reports.financing,
@@ -52,24 +64,67 @@ export function FinancingReportView() {
 
   const data = query.data?.data;
 
+  async function download() {
+    if (!page.current || !data) return;
+
+    setExporting(true);
+    setExportError(false);
+
+    try {
+      await exportElementToPdf(page.current, { filename: pdfName(data) });
+    } catch {
+      setExportError(true);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <p className="measure text-sm text-(--color-text-2)">{t('reports.financing.howTo')}</p>
-        <Button variant="primary" disabled={!data} onClick={() => window.print()}>
-          <Icon name="fileChart" size={16} aria-hidden="true" />
-          {t('reports.financing.download')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" disabled={!data} onClick={() => window.print()}>
+            <Icon name="receipt" size={16} aria-hidden="true" />
+            {t('reports.financing.print')}
+          </Button>
+          <Button variant="primary" disabled={!data} loading={exporting} onClick={download}>
+            <Icon name="fileChart" size={16} aria-hidden="true" />
+            {exporting ? t('reports.financing.preparing') : t('reports.financing.download')}
+          </Button>
+        </div>
       </div>
+
+      {exportError ? (
+        <p role="alert" className="text-sm text-(--color-danger) print:hidden">
+          {t('reports.financing.downloadFailed')}
+        </p>
+      ) : null}
 
       <article
         aria-label={t('reports.financing.title')}
         className="mx-auto max-w-[210mm] rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-6 shadow-(--shadow-card) sm:p-10 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none"
       >
-        {data ? <Report data={data} /> : <SkeletonText lines={12} />}
+        {data ? (
+          <div ref={page} className="bg-(--color-surface)">
+            <Report data={data} />
+          </div>
+        ) : (
+          <SkeletonText lines={12} />
+        )}
       </article>
     </div>
   );
+}
+
+/** "financing-report-baydar-demo-trading-2026-11-11.pdf" */
+function pdfName(data) {
+  const slug = data.business.name
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `financing-report-${slug || 'business'}-${data.generated_at.slice(0, 10)}.pdf`;
 }
 
 function Report({ data }) {
@@ -155,7 +210,7 @@ function Report({ data }) {
         description={t('reports.financing.pnl.description')}
       >
         <RevenueBars months={data.months} />
-        <ProfitAndLoss months={data.months} totals={totals} />
+        <ProfitAndLoss months={data.months} totals={totals} business={business} />
       </Section>
 
       {data.expenses_by_category.length ? (
@@ -208,7 +263,7 @@ function Report({ data }) {
         breakBefore
       >
         <CashVerdict forecast={forecast} hasBalance={hasBalance} />
-        <CashTable forecast={forecast} hasBalance={hasBalance} />
+        <CashTable forecast={forecast} hasBalance={hasBalance} business={business} />
         <CashAssumptions assumptions={forecast.assumptions} />
       </Section>
 
@@ -249,7 +304,10 @@ function Meta({ label, value }) {
 
 function Section({ number, title, description, breakBefore = false, children }) {
   return (
-    <section className={cn('space-y-4', breakBefore && 'print:break-before-page')}>
+    <section
+      data-pdf-break={breakBefore ? '' : undefined}
+      className={cn('space-y-4', breakBefore && 'print:break-before-page')}
+    >
       <div className="break-after-avoid">
         <h2 className="flex items-center gap-2.5 text-base font-bold">
           <span
@@ -335,12 +393,32 @@ function RevenueBars({ months }) {
   );
 }
 
-function ProfitAndLoss({ months, totals }) {
+/**
+ * A figure in a table, without the currency: stated once above the table, as
+ * financial statements do. Repeated in every cell, it made the profit and
+ * loss wider than an A4 page.
+ */
+function amount(value, business) {
+  return formatNumber(value, { decimals: business.decimals });
+}
+
+function AmountsIn({ business }) {
+  const { t } = useI18n();
+
+  return (
+    <p className="mb-1.5 text-end text-xs text-(--color-muted)">
+      {t('reports.financing.amountsIn', { currency: business.currency })}
+    </p>
+  );
+}
+
+function ProfitAndLoss({ months, totals, business }) {
   const { t } = useI18n();
   const columns = ['net_revenue', 'cogs', 'gross_profit', 'operating_expenses', 'net_profit'];
 
   return (
-    <div className="overflow-x-auto">
+    <div>
+      <AmountsIn business={business} />
       <table className="w-full border-collapse text-sm print:text-[9.5pt]">
         <caption className="sr-only">{t('reports.financing.pnl.title')}</caption>
         <thead>
@@ -369,7 +447,7 @@ function ProfitAndLoss({ months, totals }) {
                     key === 'net_profit' && Number(month[key]) < 0 && 'text-(--color-danger)',
                   )}
                 >
-                  {formatMoney(month[key])}
+                  {amount(month[key], business)}
                 </td>
               ))}
             </tr>
@@ -382,7 +460,7 @@ function ProfitAndLoss({ months, totals }) {
             </th>
             {columns.map((key) => (
               <td key={key} className="tabular py-2 ps-3 text-end">
-                {formatMoney(totals[key])}
+                {amount(totals[key], business)}
               </td>
             ))}
           </tr>
@@ -457,11 +535,12 @@ function CashVerdict({ forecast, hasBalance }) {
   );
 }
 
-function CashTable({ forecast, hasBalance }) {
+function CashTable({ forecast, hasBalance, business }) {
   const { t } = useI18n();
 
   return (
-    <div className="overflow-x-auto">
+    <div>
+      <AmountsIn business={business} />
       <table className="w-full border-collapse text-sm print:text-[9.5pt]">
         <caption className="sr-only">{t('reports.financing.cash.title')}</caption>
         <thead>
@@ -491,16 +570,16 @@ function CashTable({ forecast, hasBalance }) {
               <th scope="row" className="py-1.5 text-start font-medium">
                 {formatDate(week.start)}
               </th>
-              <td className="tabular py-1.5 ps-3 text-end">{formatMoney(week.in.total)}</td>
-              <td className="tabular py-1.5 ps-3 text-end">{formatMoney(week.out.total)}</td>
-              <td className="tabular py-1.5 ps-3 text-end">{formatMoney(week.net)}</td>
+              <td className="tabular py-1.5 ps-3 text-end">{amount(week.in.total, business)}</td>
+              <td className="tabular py-1.5 ps-3 text-end">{amount(week.out.total, business)}</td>
+              <td className="tabular py-1.5 ps-3 text-end">{amount(week.net, business)}</td>
               <td
                 className={cn(
                   'tabular py-1.5 ps-3 text-end font-semibold',
                   hasBalance && Number(week.running) < 0 && 'text-(--color-danger)',
                 )}
               >
-                {formatMoney(week.running)}
+                {amount(week.running, business)}
               </td>
             </tr>
           ))}
@@ -510,9 +589,9 @@ function CashTable({ forecast, hasBalance }) {
             <th scope="row" className="py-2 text-start">
               {t('reports.financing.pnl.total')}
             </th>
-            <td className="tabular py-2 ps-3 text-end">{formatMoney(forecast.totals.in)}</td>
-            <td className="tabular py-2 ps-3 text-end">{formatMoney(forecast.totals.out)}</td>
-            <td className="tabular py-2 ps-3 text-end">{formatMoney(forecast.totals.net)}</td>
+            <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.in, business)}</td>
+            <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.out, business)}</td>
+            <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.net, business)}</td>
             <td />
           </tr>
         </tfoot>

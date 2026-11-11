@@ -5,8 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FinancingReportView } from '@/features/reports/FinancingReportView';
 import * as reports from '@/services/reports';
+import * as pdf from '@/lib/pdf/exportPdf';
 
 vi.mock('@/services/reports', () => ({ financing: vi.fn() }));
+vi.mock('@/lib/pdf/exportPdf', () => ({ exportElementToPdf: vi.fn() }));
 
 /*
  * The financing report (phase D3): the document handed to a lender. It
@@ -84,6 +86,7 @@ function renderView() {
 
 beforeEach(() => {
   vi.mocked(reports.financing).mockReset().mockResolvedValue({ data: DATA });
+  vi.mocked(pdf.exportElementToPdf).mockReset().mockResolvedValue(undefined);
 });
 
 describe('the financing report', () => {
@@ -117,14 +120,38 @@ describe('the financing report', () => {
     expect(screen.getByText('No sales recorded the year before')).toBeInTheDocument();
   });
 
-  it('opens the print dialog to save the PDF', async () => {
+  it('prints from one button', async () => {
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    const user = userEvent.setup();
+    renderView();
+
+    await screen.findByText('Ahmed Al Hawajri');
+    await user.click(screen.getByRole('button', { name: 'Print' }));
+
+    expect(print).toHaveBeenCalled();
+    expect(vi.mocked(pdf.exportElementToPdf)).not.toHaveBeenCalled();
+  });
+
+  it('saves the file from the other, named for the business and the day', async () => {
     const user = userEvent.setup();
     renderView();
 
     await screen.findByText('Ahmed Al Hawajri');
     await user.click(screen.getByRole('button', { name: /Download PDF/ }));
 
-    expect(print).toHaveBeenCalled();
+    const [element, options] = vi.mocked(pdf.exportElementToPdf).mock.calls[0];
+    expect(element).toHaveTextContent('Baydar Demo Trading');
+    expect(options.filename).toBe('financing-report-baydar-demo-trading-2026-11-11.pdf');
+  });
+
+  it('says so when the file cannot be prepared, and points to Print', async () => {
+    vi.mocked(pdf.exportElementToPdf).mockRejectedValue(new Error('canvas'));
+    const user = userEvent.setup();
+    renderView();
+
+    await screen.findByText('Ahmed Al Hawajri');
+    await user.click(screen.getByRole('button', { name: /Download PDF/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/use Print/);
   });
 });
