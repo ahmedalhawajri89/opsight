@@ -117,3 +117,26 @@ describe('before it is set up', () => {
     expect(screen.queryByLabelText('Ask about your business…')).not.toBeInTheDocument();
   });
 });
+
+describe('the text of an answer', () => {
+  it('turns **bold** and lists into elements, not asterisks', async () => {
+    const { AnswerText } = await import('@/features/assistant/AnswerText');
+    const { container } = render(
+      <AnswerText text={'Sales **fell 22.5%** in October.\n\n- Orders: 64\n- Refunds: 4.7%\n\n1. Check refunds'} />,
+    );
+
+    expect(container.querySelector('strong')).toHaveTextContent('fell 22.5%');
+    expect(container.querySelectorAll('ul li')).toHaveLength(2);
+    expect(container.querySelectorAll('ol li')).toHaveLength(1);
+    expect(container).not.toHaveTextContent('**');
+  });
+
+  it('shows a name that looks like HTML as the text it is', async () => {
+    // Answers quote the business's own data; none of it may become markup.
+    const { AnswerText } = await import('@/features/assistant/AnswerText');
+    const { container } = render(<AnswerText text={'Top product: <img src=x onerror=alert(1)>'} />);
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container).toHaveTextContent('<img src=x onerror=alert(1)>');
+  });
+});

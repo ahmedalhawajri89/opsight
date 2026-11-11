@@ -8,6 +8,7 @@ use App\Domain\Assistant\LanguageModel;
 use App\Domain\Assistant\ModelReply;
 use App\Models\AssistantConversation;
 use App\Models\AssistantMessage;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\RateLimiter;
@@ -283,4 +284,19 @@ it('keeps one person\'s conversation from another, even with the same role', fun
     ask('Continue it', $id, $colleague)->assertNotFound();
 
     expect(AssistantConversation::query()->count())->toBe(1);
+});
+
+it('names the products that are low, not only how many there are', function (): void {
+    /*
+     * The first live test answered "two are out of stock, but the tool did
+     * not say which". Low means what the inventory screen's list means
+     * (StockLevel::whereLow), so the two can never disagree.
+     */
+    Product::factory()->withStock(1)->create(['name' => 'Whiteboard', 'sku' => 'WB-1']);
+    Product::factory()->withStock(500)->create(['name' => 'Plenty', 'sku' => 'PL-1']);
+
+    $outcome = app(AssistantTools::class)->run($this->owner, 'get_stock_risks', ['within_days' => 14]);
+
+    expect($outcome['error'])->toBeFalse()
+        ->and(collect($outcome['result']['low_or_out'])->pluck('sku')->all())->toContain('WB-1')->not->toContain('PL-1');
 });

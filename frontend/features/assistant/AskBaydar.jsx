@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useI18n } from '@/features/i18n/I18nProvider';
+import { AnswerText } from '@/features/assistant/AnswerText';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Card } from '@/components/layout/PageHeader';
@@ -223,9 +224,7 @@ function Answer({ message }) {
 
   return (
     <div className="max-w-[85%]">
-      <p dir="auto" className="whitespace-pre-line text-sm leading-relaxed text-(--color-text)">
-        {message.text}
-      </p>
+      <AnswerText text={message.text} />
       {message.sources?.length ? (
         <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={t('assistant.sourcesLabel')}>
           {message.sources.map((source, i) => (

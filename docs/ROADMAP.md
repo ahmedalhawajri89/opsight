@@ -563,7 +563,7 @@ from a cold production server. Pint clean, PHPStan level 6 clean, ESLint clean.
 
 ---
 
-## Product track — connected, and explained *(planned 2026-11; nothing built yet)*
+## Product track — connected, and explained *(A and B built 2026-11; C–F to come)*
 
 Baydar already holds the three things a merchant's other tools hold separately: what was sold
 (orders, the payment and refund ledger), what is on the shelf (the stock ledger), and what the
