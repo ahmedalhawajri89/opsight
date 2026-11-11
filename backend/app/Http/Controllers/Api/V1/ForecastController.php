@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Authorization\Ability;
+use App\Domain\Audit\AuditRecorder;
+use App\Domain\Forecast\CashForecast;
 use App\Domain\Forecast\StockForecast;
 use App\Http\Controllers\Controller;
+use App\Models\BusinessSetting;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -39,5 +43,53 @@ class ForecastController extends Controller
             coverDays: (int) ($input['cover_days'] ?? 30),
             withCost: $user->can(Ability::MetricsViewCost->value),
         )]);
+    }
+
+    /**
+     * Thirteen weeks of cash. A financial position built on costs, so it is
+     * for a role that may see cost.
+     */
+    public function cash(Request $request, CashForecast $forecast): JsonResponse
+    {
+        if (! ($request->user()?->can(Ability::MetricsViewCost->value) ?? false)) {
+            abort(403);
+        }
+
+        return response()->json(['data' => $forecast->for()]);
+    }
+
+    /**
+     * The cash in hand, stated by someone who may change the business's
+     * settings. Audited: the whole forecast's level moves with it.
+     */
+    public function setBalance(Request $request, AuditRecorder $recorder): JsonResponse
+    {
+        if (! ($request->user()?->can(Ability::SettingsUpdate->value) ?? false)) {
+            abort(403);
+        }
+
+        $input = $request->validate([
+            'amount' => ['present', 'nullable', 'numeric', 'between:-999999999999,999999999999'],
+            'as_of' => ['nullable', 'date', 'before_or_equal:today'],
+        ]);
+
+        $settings = BusinessSetting::current();
+        $before = $settings->cash_balance;
+
+        $settings->forceFill([
+            'cash_balance' => $input['amount'] === null ? null : Money::round((string) $input['amount']),
+            'cash_balance_as_of' => $input['amount'] === null ? null : ($input['as_of'] ?? now()->toDateString()),
+        ])->save();
+
+        $recorder->record(
+            action: 'forecast.cash_balance_set',
+            subject: $settings,
+            context: ['from' => $before, 'to' => $settings->cash_balance],
+        );
+
+        return response()->json(['data' => [
+            'cash_balance' => $settings->cash_balance,
+            'cash_balance_as_of' => $settings->cash_balance_as_of?->toDateString(),
+        ]]);
     }
 }

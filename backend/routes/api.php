@@ -254,6 +254,8 @@ Route::prefix('v1')->group(function (): void {
 
         /* ---- Forecasts (phase D) ----------------------------------------- */
         Route::get('forecasts/stock', [ForecastController::class, 'stock']);
+        Route::get('forecasts/cash', [ForecastController::class, 'cash']);
+        Route::put('forecasts/cash/balance', [ForecastController::class, 'setBalance']);
 
         /* ---- The morning brief (phase C) ---------------------------------- */
         Route::get('me/brief', [BriefController::class, 'show']);
