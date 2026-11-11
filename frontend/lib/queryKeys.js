@@ -65,6 +65,9 @@ export const queryKeys = {
     stock: (leadTime, coverDays) => ['forecasts', 'stock', leadTime, coverDays],
     cash: ['forecasts', 'cash'],
   },
+  reports: {
+    financing: ['reports', 'financing'],
+  },
   brief: {
     all: ['brief'],
     detail: ['brief', 'detail'],
