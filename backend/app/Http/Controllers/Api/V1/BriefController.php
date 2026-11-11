@@ -72,7 +72,7 @@ class BriefController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            return response()->json(['message' => $e->getMessage(), 'code' => 'brief.failed'], 422);
+            return response()->json(['message' => SendBrief::readerMessage($e), 'code' => 'brief.failed'], 422);
         }
 
         return response()->json(['message' => __('brief.sent_test')], 202);

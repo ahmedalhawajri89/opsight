@@ -24,4 +24,6 @@ return [
     'unavailable_whatsapp' => 'WhatsApp is not set up on this installation yet.',
     'no_phone' => 'Add a WhatsApp number first.',
     'sent_test' => 'A test brief is on its way.',
+    'whatsapp_refused' => 'WhatsApp did not accept the message. Check the number, or try email.',
+    'failed' => 'The brief could not be sent. Try again in a few minutes.',
 ];
