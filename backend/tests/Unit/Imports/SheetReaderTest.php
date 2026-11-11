@@ -153,3 +153,56 @@ it('finds the first sheet when it is not called sheet1', function (): void {
 it('refuses a file that only claims to be a workbook', function (): void {
     expect(fn () => (new SheetReader)->read(sheetFile('not a zip', 'xlsx'), 'xlsx'))->toThrow(ImportProblem::class);
 });
+
+/** A workbook whose single sheet is the given XML, written as-is. */
+function rawXlsx(string $sheetXml): string
+{
+    $path = tempnam(sys_get_temp_dir(), 'xlsx').'.xlsx';
+    $zip = new ZipArchive;
+    $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('xl/workbook.xml', '<?xml version="1.0"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="S" sheetId="1" r:id="rId1"/></sheets></workbook>');
+    $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+    $zip->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
+    $zip->close();
+
+    return $path;
+}
+
+it('does not pad a row out to a column the file only claims', function (): void {
+    /*
+     * "XFD1" is Excel's last column. Taken at its word it padded every row to
+     * 16,384 cells; a twelve-letter reference overflowed into a float.
+     */
+    $xml = '<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
+        .'<row r="1"><c r="A1" t="inlineStr"><is><t>order</t></is></c><c r="XFD1"><v>1</v></c><c r="ZZZZZZZZZZZZ1"><v>2</v></c></row>'
+        .'<row r="2"><c r="A2"><v>7</v></c></row>'
+        .'</sheetData></worksheet>';
+
+    $sheet = (new SheetReader)->read(rawXlsx($xml), 'xlsx');
+
+    expect($sheet['headers'])->toBe(['order']);
+});
+
+it('refuses a workbook that would unpack past the limit, before unpacking it', function (): void {
+    // Written to disk in chunks, so the test itself never holds it: it
+    // compresses to well under a megabyte and unpacks past the limit.
+    $sheet = tempnam(sys_get_temp_dir(), 'bomb');
+    $handle = fopen($sheet, 'wb');
+    fwrite($handle, '<?xml version="1.0"?><worksheet><sheetData>');
+
+    for ($written = 0; $written <= SheetReader::MAX_PART_BYTES; $written += 1024 * 1024) {
+        fwrite($handle, str_repeat(' ', 1024 * 1024));
+    }
+
+    fwrite($handle, '</sheetData></worksheet>');
+    fclose($handle);
+
+    $path = rawXlsx('');
+    $zip = new ZipArchive;
+    $zip->open($path);
+    $zip->addFile($sheet, 'xl/worksheets/sheet1.xml');
+    $zip->close();
+
+    expect(filesize($path))->toBeLessThan(1024 * 1024);
+    expect(fn () => (new SheetReader)->read($path, 'xlsx'))->toThrow(ImportProblem::class);
+});

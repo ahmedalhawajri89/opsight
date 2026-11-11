@@ -33,6 +33,20 @@ final class SheetReader
     public const MAX_ROWS = 20_000;
 
     /**
+     * The most one part of a workbook may unpack to. A 10 MB upload can hold
+     * gigabytes of repeated XML, and reading a part reads all of it into
+     * memory: the compressed size says nothing, the stated size says it all.
+     */
+    public const MAX_PART_BYTES = 50 * 1024 * 1024;
+
+    /**
+     * The widest row read. A cell reference is the file's own claim, and
+     * "XFD1" would otherwise pad every row to 16,384 cells; no import this
+     * screen maps has more than a few dozen columns.
+     */
+    public const MAX_COLUMNS = 256;
+
+    /**
      * @return array{headers: list<string>, rows: list<list<string>>}
      */
     public function read(string $path, string $extension): array
@@ -117,6 +131,26 @@ final class SheetReader
         return (string) array_key_first($counts);
     }
 
+    /**
+     * One part of the workbook, refused before it is unpacked if it would be
+     * larger than MAX_PART_BYTES. False when the part is absent, as
+     * getFromName() answers.
+     */
+    private function part(ZipArchive $zip, string $name): string|false
+    {
+        $stat = $zip->statName($name);
+
+        if ($stat === false) {
+            return false;
+        }
+
+        if ($stat['size'] > self::MAX_PART_BYTES) {
+            throw new ImportProblem('too_large');
+        }
+
+        return $zip->getFromName($name);
+    }
+
     /** @return list<list<string>> */
     private function xlsx(string $path): array
     {
@@ -127,7 +161,7 @@ final class SheetReader
         }
 
         $shared = $this->sharedStrings($zip);
-        $sheet = $zip->getFromName($this->firstSheetPath($zip));
+        $sheet = $this->part($zip, $this->firstSheetPath($zip));
         $zip->close();
 
         if ($sheet === false) {
@@ -159,6 +193,10 @@ final class SheetReader
                 $type = $reader->getAttribute('t');
 
                 if ($reader->isEmptyElement) {
+                    continue;
+                }
+
+                if ($column >= self::MAX_COLUMNS) {
                     continue;
                 }
 
@@ -202,8 +240,8 @@ final class SheetReader
     private function firstSheetPath(ZipArchive $zip): string
     {
         $fallback = 'xl/worksheets/sheet1.xml';
-        $workbook = $zip->getFromName('xl/workbook.xml');
-        $rels = $zip->getFromName('xl/_rels/workbook.xml.rels');
+        $workbook = $this->part($zip, 'xl/workbook.xml');
+        $rels = $this->part($zip, 'xl/_rels/workbook.xml.rels');
 
         if ($workbook === false || $rels === false) {
             return $fallback;
@@ -227,7 +265,7 @@ final class SheetReader
     /** @return list<string> */
     private function sharedStrings(ZipArchive $zip): array
     {
-        $xml = $zip->getFromName('xl/sharedStrings.xml');
+        $xml = $this->part($zip, 'xl/sharedStrings.xml');
 
         if ($xml === false) {
             return [];
@@ -260,6 +298,13 @@ final class SheetReader
     private function columnIndex(string $reference): int
     {
         $letters = preg_replace('/[^A-Z]/', '', strtoupper($reference)) ?? '';
+
+        // Excel's last column is XFD, three letters. More is not a column,
+        // and twelve letters would overflow the arithmetic into a float.
+        if (strlen($letters) > 3) {
+            return self::MAX_COLUMNS;
+        }
+
         $index = 0;
 
         foreach (str_split($letters) as $letter) {
