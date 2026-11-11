@@ -33,13 +33,13 @@ test.describe('a signed-in user choosing Arabic', () => {
         );
 
       // Language and digits live in the account menu and apply at once.
-      await page.getByRole('button', { name: /^Account:/ }).click();
+      await page.getByRole('button', { name: /account menu$/ }).click();
       let response = saved();
       await page.getByRole('button', { name: 'العربية' }).click();
       expect((await response).status()).toBe(200);
 
       // The page re-renders in Arabic, so the menu is opened again, by its Arabic name.
-      await page.getByRole('button', { name: /^الحساب:/ }).click();
+      await page.getByRole('button', { name: /قائمة الحساب$/ }).click();
       response = saved();
       await page.getByRole('button', { name: 'عربية مشرقية' }).click();
       expect((await response).status()).toBe(200);

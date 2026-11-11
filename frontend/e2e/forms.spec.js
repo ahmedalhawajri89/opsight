@@ -252,7 +252,7 @@ test.describe('an account holder', () => {
     await page.goto('/dashboard');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-    await page.getByRole('button', { name: /^Account/ }).click();
+    await page.getByRole('button', { name: /account menu$/ }).click();
     await page.getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/login/);
 

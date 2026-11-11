@@ -53,14 +53,15 @@ test('an owner signs in, sees the dashboard, and signs out', async ({ page }) =>
   // three finish before asking it to sign out.
   await dashboardReady(page);
 
-  // The signed-in identity is on screen, named as the server named it.
+  // The signed-in identity is on screen, named as the server named it, and
+  // the button is named by what it shows (WCAG 2.5.3), "account menu" last.
   // In the account menu: the sidebar also names the role, under the business.
-  const account = page.getByRole('button', { name: /^Account:/ });
+  const account = page.getByRole('button', { name: /account menu$/ });
   await expect(account).toContainText(user.name);
   await expect(account).toContainText(user.role_label);
 
   // Sign out lives in the account menu in the top bar.
-  await page.getByRole('button', { name: /^Account:/ }).click();
+  await page.getByRole('button', { name: /account menu$/ }).click();
   await page.getByRole('button', { name: 'Sign out' }).click();
 
   await expect(page).toHaveURL(/\/login/);
