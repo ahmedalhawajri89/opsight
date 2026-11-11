@@ -78,6 +78,18 @@ const NAV_GROUPS = [
         icon: 'expenses',
         ability: 'expenses.view',
       },
+      /*
+       * Forecasts (phase D), with the operations: what runs out and what to
+       * order is a stock decision, and staff who keep the stock may see it.
+       * Under "Analytics" it made that heading appear for staff, a role
+       * that holds no analytics at all. The cash tab inside asks for cost.
+       */
+      {
+        href: '/forecasts',
+        label: 'nav.items.forecasts',
+        icon: 'trendUp',
+        ability: 'inventory.view',
+      },
     ],
   },
   {
@@ -88,13 +100,6 @@ const NAV_GROUPS = [
         label: 'nav.items.analytics',
         icon: 'chart',
         ability: 'analytics.view',
-      },
-      // Forecasts (phase D): stock planning reads the inventory.
-      {
-        href: '/forecasts',
-        label: 'nav.items.forecasts',
-        icon: 'trendUp',
-        ability: 'inventory.view',
       },
       // Reads the same figures as Analytics, so the same ability (ADR-038).
       {
