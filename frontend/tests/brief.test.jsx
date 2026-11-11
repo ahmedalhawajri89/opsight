@@ -41,7 +41,9 @@ const BRIEF = {
 };
 
 function renderSettings() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 
   return render(
     <QueryClientProvider client={client}>
@@ -52,17 +54,61 @@ function renderSettings() {
 
 beforeEach(() => {
   vi.mocked(briefService.getBrief).mockReset().mockResolvedValue(BRIEF);
-  vi.mocked(briefService.updateBriefSettings).mockReset().mockResolvedValue({ data: { id: 1 } });
+  vi.mocked(briefService.updateBriefSettings)
+    .mockReset()
+    .mockResolvedValue({ data: { id: 1 } });
   vi.mocked(briefService.sendTestBrief).mockReset();
 });
 
 describe('the morning brief settings', () => {
-  it('shows what today\'s brief actually says', async () => {
+  it("shows what today's brief actually says", async () => {
     renderSettings();
 
     expect(await screen.findByText(/1,250.500 BHD in sales/)).toBeInTheDocument();
     expect(screen.getByText('About to run out: Whiteboard.')).toBeInTheDocument();
     expect(screen.getByText(/Revenue concentration/)).toBeInTheDocument();
+  });
+
+  it('lays the figures out as figures when the server sends them', async () => {
+    vi.mocked(briefService.getBrief).mockResolvedValue({
+      data: {
+        ...BRIEF.data,
+        preview: {
+          ...BRIEF.data.preview,
+          figures: {
+            revenue: '1250.500',
+            change: 0.12,
+            orders: 12,
+            gross_profit: null,
+            month_to_date: '24952.140',
+            receivables: '0',
+            stock: ['Whiteboard'],
+            actions: [
+              { title: 'Revenue concentration', message: 'One customer is 25.2% of revenue.' },
+            ],
+          },
+        },
+      },
+    });
+    renderSettings();
+
+    expect(await screen.findByText('Yesterday’s sales')).toBeInTheDocument();
+    expect(screen.getByText('12 orders')).toBeInTheDocument();
+    expect(screen.getByText('+12%')).toBeInTheDocument();
+    // What the role may not see, or what is zero, is not drawn as a tile.
+    expect(screen.queryByText('Gross profit')).toBeNull();
+    expect(screen.queryByText('Owed to you')).toBeNull();
+    expect(screen.getByText('Whiteboard')).toBeInTheDocument();
+    expect(screen.getByText('One customer is 25.2% of revenue.')).toBeInTheDocument();
+  });
+
+  it('says when the next brief arrives once it is on', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(await screen.findByRole('switch'));
+
+    expect(screen.getByText(/The next one arrives tomorrow at .+, by Email\./)).toBeInTheDocument();
   });
 
   it('turns the brief on and saves the choice', async () => {
@@ -103,8 +149,10 @@ describe('the morning brief settings', () => {
     });
   });
 
-  it('sends a test, and says the server\'s reason when it cannot', async () => {
-    vi.mocked(briefService.sendTestBrief).mockRejectedValue(new Error('Add a WhatsApp number first.'));
+  it("sends a test, and says the server's reason when it cannot", async () => {
+    vi.mocked(briefService.sendTestBrief).mockRejectedValue(
+      new Error('Add a WhatsApp number first.'),
+    );
     const user = userEvent.setup();
     renderSettings();
 

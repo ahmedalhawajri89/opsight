@@ -31,7 +31,24 @@ class BriefController extends Controller
             'whatsapp_phone' => $user->whatsapp_phone,
             'whatsapp_available' => $send->whatsappAvailable(),
             'hour' => (int) config('brief.hour', 8),
-            'preview' => $preview['text'] + ['quiet' => $preview['brief']['quiet']],
+            'preview' => $preview['text'] + [
+                'quiet' => $preview['brief']['quiet'],
+                /*
+                 * The same figures the text was written from, raw, so the
+                 * screen can lay them out as figures. Already shaped by the
+                 * reader's role: what they may not see arrives as null.
+                 */
+                'figures' => [
+                    'revenue' => $preview['brief']['revenue'],
+                    'change' => $preview['brief']['change'],
+                    'orders' => $preview['brief']['orders'],
+                    'gross_profit' => $preview['brief']['gross_profit'],
+                    'month_to_date' => $preview['brief']['month_to_date'],
+                    'receivables' => $preview['brief']['receivables'],
+                    'stock' => $preview['brief']['stock'],
+                    'actions' => $preview['brief']['actions'],
+                ],
+            ],
             'recent' => BriefDelivery::query()
                 ->where('user_id', $user->id)
                 ->latest('brief_date')

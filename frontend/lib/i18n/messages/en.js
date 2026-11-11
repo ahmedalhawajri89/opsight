@@ -597,6 +597,19 @@ const en = {
     worthALook: 'Worth a look today',
     quiet: 'A quiet day: nothing sold and nothing needs your attention.',
     test: 'Send me a test',
+    next: 'The next one arrives tomorrow at {time}, by {channel}.',
+    unsaved: 'Unsaved changes',
+    noneYet: 'No brief has been sent yet. Turn it on, or send yourself a test.',
+    from: 'Baydar',
+    figures: {
+      yesterday: 'Yesterday’s sales',
+      orders: '{count} orders',
+      vsLastWeek: 'Against the same day last week',
+      grossProfit: 'Gross profit',
+      monthToDate: 'This month so far',
+      receivables: 'Owed to you',
+      stock: 'About to run out',
+    },
   },
 
   imports: {

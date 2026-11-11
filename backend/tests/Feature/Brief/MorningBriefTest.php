@@ -240,6 +240,19 @@ it('shows today\'s brief as a preview, with the reader\'s settings', function ()
         ->assertJsonStructure(['data' => ['preview' => ['subject', 'headline', 'lines', 'actions'], 'recent']]);
 });
 
+it('sends the preview figures raw, shaped by the reader role', function (): void {
+    $staff = User::factory()->role(Role::Staff)->create();
+
+    $this->actingAs($this->owner)->getJson('/api/v1/me/brief')
+        ->assertOk()
+        ->assertJsonStructure(['data' => ['preview' => ['figures' => ['revenue', 'change', 'orders', 'gross_profit', 'month_to_date', 'receivables', 'stock', 'actions']]]]);
+
+    $this->actingAs($staff)->getJson('/api/v1/me/brief')
+        ->assertOk()
+        ->assertJsonPath('data.preview.figures.gross_profit', null)
+        ->assertJsonPath('data.preview.figures.receivables', null);
+});
+
 it('turns the brief on and stores a WhatsApp number in international form', function (): void {
     $this->actingAs($this->owner)->patchJson('/api/v1/me/preferences', [
         'morning_brief' => true,
