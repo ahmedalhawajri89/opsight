@@ -89,6 +89,13 @@ const NAV_GROUPS = [
         icon: 'chart',
         ability: 'analytics.view',
       },
+      // Forecasts (phase D): stock planning reads the inventory.
+      {
+        href: '/forecasts',
+        label: 'nav.items.forecasts',
+        icon: 'trendUp',
+        ability: 'inventory.view',
+      },
       // Reads the same figures as Analytics, so the same ability (ADR-038).
       {
         href: '/assistant',

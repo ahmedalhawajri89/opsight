@@ -60,6 +60,10 @@ export const queryKeys = {
     all: ['users'],
     list: (filters) => ['users', 'list', filters],
   },
+  forecasts: {
+    all: ['forecasts'],
+    stock: (leadTime, coverDays) => ['forecasts', 'stock', leadTime, coverDays],
+  },
   brief: {
     all: ['brief'],
     detail: ['brief', 'detail'],

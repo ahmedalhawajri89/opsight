@@ -358,6 +358,7 @@ const en = {
       expenses: 'Expenses',
       analytics: 'Analytics',
       assistant: 'Ask Baydar',
+      forecasts: 'Forecasts',
       brief: 'Morning brief',
       reports: 'Reports',
       gallery: 'Component gallery',
@@ -495,6 +496,40 @@ const en = {
       get_breakdown: 'Breakdown',
       get_insights: 'Insights',
       get_stock_risks: 'Stock',
+    },
+  },
+
+  forecasts: {
+    title: 'Forecasts',
+    description: 'What will run out, when, and what to order before it does — from your own sales.',
+    stock: {
+      title: 'Stock forecast',
+      status: { out: 'Out of stock', order_now: 'Order now', soon: 'Order this week', ok: 'Covered' },
+      accuracy: 'Over the last four weeks, this forecast was {accuracy} accurate.',
+      accuracyUnknown: 'Not enough sales yet to test how accurate the forecast is.',
+      method:
+        'Each product’s rate is its last eight weeks of sales, recent weeks counting for more. The same method, run four weeks ago, is checked against what then sold — that is the figure above. Weeks a product spent out of stock are not counted as weeks nobody wanted it.',
+      leadTime: 'Supplier lead time',
+      cover: 'Each order covers',
+      days: '{days} days',
+      daysLeft: '{days} days of stock',
+      seasonality:
+        'Seasons are not in the forecast yet: before Ramadan, Eid or a sale, expect demand above these rates.',
+      columns: {
+        product: 'Product',
+        trend: 'Last 8 weeks',
+        stock: 'In stock',
+        rate: 'Sells a day',
+        runOut: 'Runs out',
+        orderBy: 'Order by',
+        suggested: 'Suggested order',
+        confidence: 'Confidence',
+      },
+      confidence: { high: 'High', medium: 'Medium', low: 'Low' },
+      empty: {
+        title: 'Nothing is selling yet',
+        description: 'The forecast starts once products have sold in the last few weeks.',
+      },
     },
   },
 
