@@ -1168,7 +1168,13 @@ function UserMenu({ user, onSignOut }) {
         <button
           type="button"
           {...props}
-          aria-label={t('shell.account', { name: user.name })}
+          /*
+           * Named by what it shows, not by an aria-label over it. The label
+           * said "Account: {name}" while the button showed the name and the
+           * role, and a voice-control user who says what they see ("click
+           * Ahmed Al Hawajri") would not have reached it. On a phone, where
+           * the name is hidden, the sr-only copy below names it instead.
+           */
           className="flex items-center gap-2.5 rounded-(--radius-control) py-1 ps-1 pe-1.5 transition-colors hover:bg-(--color-surface-hover)"
         >
           <span
@@ -1183,6 +1189,8 @@ function UserMenu({ user, onSignOut }) {
             </span>
             <span className="block text-xs text-(--color-text-2)">{user.role_label}</span>
           </span>
+          <span className="sr-only sm:hidden">{user.name}</span>
+          <span className="sr-only">{t('shell.accountMenu')}</span>
           <Icon name="chevronDown" size={14} className="hidden text-(--color-muted) sm:block" />
         </button>
       )}

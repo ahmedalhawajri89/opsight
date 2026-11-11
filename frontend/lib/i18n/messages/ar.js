@@ -50,6 +50,7 @@ const ar = {
 
   shell: {
     account: 'الحساب: {name}',
+    accountMenu: 'قائمة الحساب',
     profile: 'الملف الشخصي',
     shortcuts: {
       title: 'اختصارات لوحة المفاتيح',
@@ -1568,6 +1569,8 @@ const ar = {
       business: 'النشاط',
       webhook: 'إشعار متجر',
       activity: 'سجل النشاط',
+      expense_category: 'فئة مصروف',
+      order_item: 'بند طلب',
     },
     subjectTypes: {
       Order: 'طلب',
@@ -1614,6 +1617,11 @@ const ar = {
       rejected: 'رُفض',
       unmatched: 'لم يُطابَق',
       pruned: 'حُذفت إدخالات قديمة',
+      payment_recorded: 'سُجّلت دفعة',
+    },
+    values: {
+      locale: { en: 'الإنجليزية', ar: 'العربية' },
+      numerals: { latn: 'أرقام غربية', arab: 'أرقام عربية هندية' },
     },
     fields: {
       name: 'الاسم',
@@ -1659,6 +1667,10 @@ const ar = {
       subtotal_amount: 'المجموع الفرعي',
       refunded_amount: 'المبلغ المسترد',
       cancellation_reason: 'سبب الإلغاء',
+      period: 'الفترة',
+      from: 'من',
+      to: 'إلى',
+      search: 'البحث',
     },
   },
 

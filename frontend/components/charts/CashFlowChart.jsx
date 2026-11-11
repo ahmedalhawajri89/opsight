@@ -142,7 +142,8 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
             tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
-            width={62}
+            // Wide enough for an Arabic compact figure, "135 ألف د.ب.".
+            width={84}
             domain={[0, 'auto']}
           />
 

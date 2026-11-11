@@ -153,7 +153,7 @@
    * SEMANTIC — meaning only, never decoration. Each has a soft tint for the
    * background of a badge or an inline message.
    */
-  --success: #15803d;
+  --success: #147a3a;
   --success-soft: #ebf7ef;
   --warning: #b45309;
   --warning-soft: #fef5e7;

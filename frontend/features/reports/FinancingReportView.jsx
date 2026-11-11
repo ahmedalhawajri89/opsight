@@ -419,53 +419,59 @@ function ProfitAndLoss({ months, totals, business }) {
   return (
     <div>
       <AmountsIn business={business} />
-      <table className="w-full border-collapse text-sm print:text-[9.5pt]">
-        <caption className="sr-only">{t('reports.financing.pnl.title')}</caption>
-        <thead>
-          <tr className="border-b-2 border-(--color-line-strong) text-xs text-(--color-text-2)">
-            <th scope="col" className="py-2 text-start font-semibold">
-              {t('reports.financing.pnl.month')}
-            </th>
-            {columns.map((key) => (
-              <th key={key} scope="col" className="py-2 ps-3 text-end font-semibold">
-                {t(`reports.financing.pnl.${key}`)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {months.map((month) => (
-            <tr key={month.month} className="break-inside-avoid border-b border-(--border-subtle)">
-              <th scope="row" className="py-1.5 text-start font-medium">
-                {monthLabel(month.month)}
+      {/* Scrolls on a phone; on A4 the table fits, so print and the PDF see no scrollbar. */}
+      <div className="overflow-x-auto print:overflow-visible">
+        <table className="w-full border-collapse text-sm print:text-[9.5pt]">
+          <caption className="sr-only">{t('reports.financing.pnl.title')}</caption>
+          <thead>
+            <tr className="border-b-2 border-(--color-line-strong) text-xs text-(--color-text-2)">
+              <th scope="col" className="py-2 text-start font-semibold">
+                {t('reports.financing.pnl.month')}
               </th>
               {columns.map((key) => (
-                <td
-                  key={key}
-                  className={cn(
-                    'tabular py-1.5 ps-3 text-end',
-                    key === 'net_profit' && Number(month[key]) < 0 && 'text-(--color-danger)',
-                  )}
-                >
-                  {amount(month[key], business)}
+                <th key={key} scope="col" className="py-2 ps-3 text-end font-semibold">
+                  {t(`reports.financing.pnl.${key}`)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {months.map((month) => (
+              <tr
+                key={month.month}
+                className="break-inside-avoid border-b border-(--border-subtle)"
+              >
+                <th scope="row" className="py-1.5 text-start font-medium">
+                  {monthLabel(month.month)}
+                </th>
+                {columns.map((key) => (
+                  <td
+                    key={key}
+                    className={cn(
+                      'tabular py-1.5 ps-3 text-end',
+                      key === 'net_profit' && Number(month[key]) < 0 && 'text-(--color-danger)',
+                    )}
+                  >
+                    {amount(month[key], business)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-(--color-line-strong) font-bold">
+              <th scope="row" className="py-2 text-start">
+                {t('reports.financing.pnl.total')}
+              </th>
+              {columns.map((key) => (
+                <td key={key} className="tabular py-2 ps-3 text-end">
+                  {amount(totals[key], business)}
                 </td>
               ))}
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="border-t-2 border-(--color-line-strong) font-bold">
-            <th scope="row" className="py-2 text-start">
-              {t('reports.financing.pnl.total')}
-            </th>
-            {columns.map((key) => (
-              <td key={key} className="tabular py-2 ps-3 text-end">
-                {amount(totals[key], business)}
-              </td>
-            ))}
-          </tr>
-        </tfoot>
-      </table>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }
@@ -541,61 +547,68 @@ function CashTable({ forecast, hasBalance, business }) {
   return (
     <div>
       <AmountsIn business={business} />
-      <table className="w-full border-collapse text-sm print:text-[9.5pt]">
-        <caption className="sr-only">{t('reports.financing.cash.title')}</caption>
-        <thead>
-          <tr className="border-b-2 border-(--color-line-strong) text-xs text-(--color-text-2)">
-            <th scope="col" className="py-2 text-start font-semibold">
-              {t('forecasts.cash.columns.week')}
-            </th>
-            <th scope="col" className="py-2 ps-3 text-end font-semibold">
-              {t('forecasts.cash.columns.in')}
-            </th>
-            <th scope="col" className="py-2 ps-3 text-end font-semibold">
-              {t('forecasts.cash.columns.out')}
-            </th>
-            <th scope="col" className="py-2 ps-3 text-end font-semibold">
-              {t('forecasts.cash.columns.net')}
-            </th>
-            <th scope="col" className="py-2 ps-3 text-end font-semibold">
-              {hasBalance
-                ? t('forecasts.cash.columns.balance')
-                : t('forecasts.cash.columns.runningNet')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {forecast.weeks.map((week) => (
-            <tr key={week.start} className="break-inside-avoid border-b border-(--border-subtle)">
-              <th scope="row" className="py-1.5 text-start font-medium">
-                {formatDate(week.start)}
+      {/* Scrolls on a phone; on A4 the table fits, so print and the PDF see no scrollbar. */}
+      <div className="overflow-x-auto print:overflow-visible">
+        <table className="w-full border-collapse text-sm print:text-[9.5pt]">
+          <caption className="sr-only">{t('reports.financing.cash.title')}</caption>
+          <thead>
+            <tr className="border-b-2 border-(--color-line-strong) text-xs text-(--color-text-2)">
+              <th scope="col" className="py-2 text-start font-semibold">
+                {t('forecasts.cash.columns.week')}
               </th>
-              <td className="tabular py-1.5 ps-3 text-end">{amount(week.in.total, business)}</td>
-              <td className="tabular py-1.5 ps-3 text-end">{amount(week.out.total, business)}</td>
-              <td className="tabular py-1.5 ps-3 text-end">{amount(week.net, business)}</td>
-              <td
-                className={cn(
-                  'tabular py-1.5 ps-3 text-end font-semibold',
-                  hasBalance && Number(week.running) < 0 && 'text-(--color-danger)',
-                )}
-              >
-                {amount(week.running, business)}
-              </td>
+              <th scope="col" className="py-2 ps-3 text-end font-semibold">
+                {t('forecasts.cash.columns.in')}
+              </th>
+              <th scope="col" className="py-2 ps-3 text-end font-semibold">
+                {t('forecasts.cash.columns.out')}
+              </th>
+              <th scope="col" className="py-2 ps-3 text-end font-semibold">
+                {t('forecasts.cash.columns.net')}
+              </th>
+              <th scope="col" className="py-2 ps-3 text-end font-semibold">
+                {hasBalance
+                  ? t('forecasts.cash.columns.balance')
+                  : t('forecasts.cash.columns.runningNet')}
+              </th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="border-t-2 border-(--color-line-strong) font-bold">
-            <th scope="row" className="py-2 text-start">
-              {t('reports.financing.pnl.total')}
-            </th>
-            <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.in, business)}</td>
-            <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.out, business)}</td>
-            <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.net, business)}</td>
-            <td />
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            {forecast.weeks.map((week) => (
+              <tr key={week.start} className="break-inside-avoid border-b border-(--border-subtle)">
+                <th scope="row" className="py-1.5 text-start font-medium">
+                  {formatDate(week.start)}
+                </th>
+                <td className="tabular py-1.5 ps-3 text-end">{amount(week.in.total, business)}</td>
+                <td className="tabular py-1.5 ps-3 text-end">{amount(week.out.total, business)}</td>
+                <td className="tabular py-1.5 ps-3 text-end">{amount(week.net, business)}</td>
+                <td
+                  className={cn(
+                    'tabular py-1.5 ps-3 text-end font-semibold',
+                    hasBalance && Number(week.running) < 0 && 'text-(--color-danger)',
+                  )}
+                >
+                  {amount(week.running, business)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-(--color-line-strong) font-bold">
+              <th scope="row" className="py-2 text-start">
+                {t('reports.financing.pnl.total')}
+              </th>
+              <td className="tabular py-2 ps-3 text-end">{amount(forecast.totals.in, business)}</td>
+              <td className="tabular py-2 ps-3 text-end">
+                {amount(forecast.totals.out, business)}
+              </td>
+              <td className="tabular py-2 ps-3 text-end">
+                {amount(forecast.totals.net, business)}
+              </td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }

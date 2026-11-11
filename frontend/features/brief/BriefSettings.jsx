@@ -92,7 +92,7 @@ function BriefForm({ data }) {
           className="pointer-events-none absolute -end-16 -top-20 size-56 rounded-full bg-(--color-accent-on-brand) opacity-15 blur-3xl"
         />
         <label className="relative flex cursor-pointer items-center justify-between gap-5">
-          <span className="flex items-center gap-4">
+          <span className="flex min-w-0 items-center gap-4">
             <span
               aria-hidden="true"
               className={cn(
@@ -104,7 +104,7 @@ function BriefForm({ data }) {
             >
               <Icon name="spark" size={22} />
             </span>
-            <span>
+            <span className="min-w-0">
               <span className="block text-base font-semibold">{t('brief.receive')}</span>
               <span className="mt-1 block text-sm text-(--color-on-brand-2)">
                 {form.enabled
@@ -127,7 +127,7 @@ function BriefForm({ data }) {
         </label>
       </section>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
         <div className="space-y-5">
           <Card title={t('brief.channel')} icon="mail">
             <fieldset disabled={!form.enabled} className="disabled:opacity-60">
@@ -239,7 +239,10 @@ function BriefForm({ data }) {
           </Card>
         </div>
 
-        <aside aria-label={t('brief.previewTitle')} className="lg:sticky lg:top-20">
+        <aside
+          aria-label={t('brief.previewTitle')}
+          className="min-w-0 break-words lg:sticky lg:top-20"
+        >
           <div className="overflow-hidden rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card)">
             <div className="flex items-center justify-between gap-2 border-b border-(--border-subtle) bg-(--color-ground) px-4 py-2.5">
               <h2 className="text-sm font-semibold text-(--color-text)">

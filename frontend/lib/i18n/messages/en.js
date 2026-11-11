@@ -39,6 +39,7 @@ const en = {
 
   shell: {
     account: 'Account: {name}',
+    accountMenu: 'account menu',
     profile: 'Profile',
     shortcuts: {
       title: 'Keyboard shortcuts',
@@ -1557,6 +1558,8 @@ const en = {
       business: 'business',
       webhook: 'store notification',
       activity: 'activity log',
+      expense_category: 'expense category',
+      order_item: 'order line',
     },
     // The model class recorded as the subject of a row.
     subjectTypes: {
@@ -1604,6 +1607,12 @@ const en = {
       rejected: 'rejected',
       unmatched: 'not matched',
       pruned: 'old entries removed',
+      payment_recorded: 'payment recorded',
+    },
+    // Recorded codes shown as words: a language, a digit style.
+    values: {
+      locale: { en: 'English', ar: 'Arabic' },
+      numerals: { latn: 'Western digits', arab: 'Arabic-Indic digits' },
     },
     fields: {
       name: 'name',
@@ -1649,6 +1658,10 @@ const en = {
       subtotal_amount: 'subtotal',
       refunded_amount: 'refunded',
       cancellation_reason: 'cancellation reason',
+      period: 'period',
+      from: 'from',
+      to: 'to',
+      search: 'search',
     },
   },
 

@@ -350,7 +350,7 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
                   <span className="min-w-0">
                     <bdi
                       dir={figureDirection(value)}
-                      className="tabular block truncate text-xl font-semibold text-(--color-text)"
+                      className="tabular block text-xl font-semibold break-words text-(--color-text)"
                     >
                       {value}
                     </bdi>

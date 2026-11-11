@@ -126,8 +126,14 @@ export default function OrdersPage() {
       header: t('orders.columns.customer'),
       // A walk-in order has no customer record, and saying so is more useful
       // than an empty cell.
+      // In the reader's script, as the order page and dashboard show it, and
+      // isolated so "W.L.L." stays at the end of the name in Arabic.
       cell: (row) =>
-        row.customer?.name ?? <span className="text-(--color-muted)">{t('common.walkIn')}</span>,
+        row.customer ? (
+          <bdi>{row.customer.display_name ?? row.customer.name}</bdi>
+        ) : (
+          <span className="text-(--color-muted)">{t('common.walkIn')}</span>
+        ),
     },
     {
       key: 'status',

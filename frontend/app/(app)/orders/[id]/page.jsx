@@ -181,19 +181,19 @@ export default function OrderDetailPage({ params }) {
               value={formatMoney(order.shipping_amount)}
               numeric
             />
-            <div className="border-t border-(--color-line) pt-2.5">
-              <Row
-                label={t('orderDetail.total')}
-                value={formatMoney(order.total_amount)}
-                numeric
-                strong
-              />
-            </div>
+            <Row
+              className="border-t border-(--color-line) pt-2.5"
+              label={t('orderDetail.total')}
+              value={formatMoney(order.total_amount)}
+              numeric
+              strong
+            />
 
             {/* Absent, not null, for a cost-blind role. */}
             {order.cogs_amount !== undefined && (
-              <div className="border-t border-(--color-line) pt-2.5">
+              <>
                 <Row
+                  className="border-t border-(--color-line) pt-2.5"
                   label={t('metrics.cogs.label')}
                   value={formatMoney(order.cogs_amount)}
                   numeric
@@ -204,7 +204,7 @@ export default function OrderDetailPage({ params }) {
                   numeric
                   strong
                 />
-              </div>
+              </>
             )}
           </dl>
 
@@ -360,9 +360,15 @@ function RefundsCard({ order }) {
   );
 }
 
-function Row({ label, value, numeric = false, strong = false }) {
+/*
+ * A dt/dd pair in its own div, which a <dl> allows. Anything around it (a
+ * border, a divider) goes on this div rather than on a wrapper: a div inside
+ * the div put the dt two levels below the dl, which is invalid and which
+ * screen readers announce as an unrelated term.
+ */
+function Row({ label, value, numeric = false, strong = false, className = '' }) {
   return (
-    <div className="flex items-baseline justify-between gap-4">
+    <div className={`flex items-baseline justify-between gap-4 ${className}`}>
       <dt className="text-(--color-text-2)">{label}</dt>
       <dd
         className={[

@@ -533,7 +533,7 @@ function Detail({ changes, context }) {
               {before?.[field] !== undefined && before?.[field] !== null && (
                 <>
                   <span className="truncate text-(--color-muted) line-through">
-                    {String(before[field])}
+                    {shown(t, field, before[field])}
                   </span>
                   <span aria-hidden="true" className="text-(--color-muted) rtl:rotate-180">
                     →
@@ -541,7 +541,7 @@ function Detail({ changes, context }) {
                 </>
               )}
               <span className="truncate font-medium text-(--color-text)">
-                {String(after[field])}
+                {shown(t, field, after[field])}
               </span>
             </li>
           ))}
@@ -567,17 +567,48 @@ function ContextLine({ context }) {
   const { t } = useI18n();
   const parts = Object.entries(context)
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
-    .map(([key, value]) => `${translateOr(t, `activity.fields.${key}`, key)}: ${format(value)}`);
+    .map(([key, value]) => `${translateOr(t, `activity.fields.${key}`, key)}: ${format(t, value)}`);
 
   if (parts.length === 0) return null;
 
   return <p className="truncate text-xs text-(--color-text-2)">{parts.join(' · ')}</p>;
 }
 
-function format(value) {
-  if (typeof value === 'object') return JSON.stringify(value);
+/*
+ * Objects as their parts, in words: `period: {"from":…,"to":…}` was the raw
+ * JSON of the record, which no reader asked for. The values themselves are
+ * still shown exactly as recorded.
+ */
+function format(t, value) {
+  if (value !== null && typeof value === 'object') {
+    return (
+      Object.entries(value)
+        .filter(([, part]) => part !== null && part !== undefined && part !== '')
+        .map(([key, part]) => `${translateOr(t, `activity.fields.${key}`, key)} ${format(t, part)}`)
+        // A space, not a comma: "from 2025-11-01 to 2026-10-31" reads in both languages.
+        .join(' ')
+    );
+  }
 
-  return String(value);
+  /*
+   * A date or any other run of digits and hyphens, isolated left to right
+   * (U+2066…U+2069): in an Arabic line, "2025-11-01" was reordered by the
+   * surrounding text into "01-11-2025".
+   */
+  const text = String(value);
+
+  return /^[\d:.\-T+Z ]+$/.test(text) ? `\u2066${text}\u2069` : text;
+}
+
+/**
+ * A recorded code in words where the code is a choice from a fixed list (a
+ * language, a digit style): "ar ← en" said nothing to an owner. Any other
+ * value is shown as recorded.
+ */
+function shown(t, field, value) {
+  const key = `activity.values.${field}.${value}`;
+
+  return t.has(key) ? t(key) : String(value);
 }
 
 /**

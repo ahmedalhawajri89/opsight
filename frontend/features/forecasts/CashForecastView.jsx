@@ -198,7 +198,7 @@ export function CashForecastView() {
                   tick={CHART_TYPE.tick}
                   tickLine={false}
                   axisLine={false}
-                  width={62}
+                  width={84}
                 />
                 <ReferenceLine y={0} stroke="var(--border-strong, var(--color-line-strong))" />
                 <Tooltip
@@ -463,7 +463,8 @@ function Tile({ icon, tone, label, value, detail }) {
       </span>
       <span className="min-w-0">
         <span className="block text-xs text-(--color-text-2)">{label}</span>
-        <span className="tabular mt-1 block truncate text-lg font-semibold text-(--color-text)">
+        {/* One line, never cut: a figure split at "د.ب." or hidden behind "…" says less than a smaller figure. */}
+        <span className="tabular mt-1 block text-base font-semibold whitespace-nowrap text-(--color-text) 2xl:text-lg">
           {value}
         </span>
         {detail ? <span className="block text-xs text-(--color-muted)">{detail}</span> : null}

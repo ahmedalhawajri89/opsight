@@ -170,6 +170,8 @@ const TEXT_PAIRS = [
   ['accent-strong', 'accent-soft', 4.5, 'accent badge'],
   ['success', 'surface', 4.5, 'favourable change'],
   ['success', 'success-soft', 4.5, 'success badge'],
+  // A change chip on a selected surface: 4.41:1 before the green went one step darker.
+  ['success', 'surface-selected', 4.5, 'favourable change on a selected surface'],
   ['danger', 'surface', 4.5, 'unfavourable change'],
   ['danger', 'danger-soft', 4.5, 'danger badge'],
   ['warning', 'surface', 4.5, 'warning text'],
