@@ -9,6 +9,7 @@ use App\Jobs\ImportStoreHistory;
 use App\Models\Integration;
 use App\Support\Tenancy\BusinessScope;
 use App\Support\Tenancy\CurrentBusiness;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Throwable;
@@ -97,10 +98,16 @@ final class ConnectZidStore
             'external_account_id' => $store['id'],
         ]);
 
-        $integration->forceFill($tokens->toAttributes() + [
-            'status' => Integration::STATUS_CONNECTED,
-            'last_error' => null,
-        ])->save();
+        try {
+            $integration->forceFill($tokens->toAttributes() + [
+                'status' => Integration::STATUS_CONNECTED,
+                'last_error' => null,
+            ])->save();
+        } catch (UniqueConstraintViolationException) {
+            // Another business connected this store between the check above
+            // and this write; the unique index decided, and it was not us.
+            throw new ZidStoreTaken($store['id']);
+        }
 
         $this->subscribe($integration);
 

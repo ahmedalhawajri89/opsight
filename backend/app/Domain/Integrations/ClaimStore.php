@@ -7,6 +7,7 @@ namespace App\Domain\Integrations;
 use App\Models\Integration;
 use App\Models\UnclaimedIntegration;
 use App\Support\Tenancy\BusinessScope;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -50,6 +51,17 @@ final class ClaimStore
      * @return Integration|null the new connection, or null if nothing matched
      */
     public function __invoke(string $provider, string $storeId): ?Integration
+    {
+        try {
+            return $this->claim($provider, $storeId);
+        } catch (UniqueConstraintViolationException) {
+            // Connected elsewhere between the check and the write: the index
+            // refused the second row, and the loser is told nothing matched.
+            return null;
+        }
+    }
+
+    private function claim(string $provider, string $storeId): ?Integration
     {
         return DB::transaction(function () use ($provider, $storeId): ?Integration {
             /*

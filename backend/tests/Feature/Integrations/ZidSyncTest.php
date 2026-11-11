@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 use App\Domain\Integrations\Zid\ZidOAuth;
 use App\Domain\Integrations\Zid\ZidWebhooks;
+use App\Models\Business;
 use App\Models\Integration;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\WebhookReceipt;
 use App\Support\Tenancy\BusinessScope;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 
@@ -240,4 +243,19 @@ it('marks a connection dead, with Zid\'s words, when the refresh is refused', fu
         ->and($dead->access_token)->toBeNull()
         ->and($dead->authorization_token)->toBeNull()
         ->and($dead->refresh_token)->toBeNull();
+});
+
+it('lets the database refuse a second business for one store', function (): void {
+    $first = Business::factory()->create();
+    $second = Business::factory()->create();
+
+    $row = fn (int $business): array => [
+        'business_id' => $business, 'provider' => 'zid', 'external_account_id' => 'store-42',
+        'status' => 'connected', 'created_at' => now(), 'updated_at' => now(),
+    ];
+
+    DB::table('integrations')->insert($row($first->id));
+
+    expect(fn () => DB::table('integrations')->insert($row($second->id)))
+        ->toThrow(UniqueConstraintViolationException::class);
 });
