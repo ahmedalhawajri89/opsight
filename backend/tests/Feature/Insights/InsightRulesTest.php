@@ -191,6 +191,24 @@ it('reports a product selling faster than its remaining cover', function (): voi
     expect(insightIds())->toContain('stockout_risk');
 });
 
+it('says "less than a day" rather than "about 0.0 days"', function (): void {
+    $product = Product::factory()->priced(20.0000, 8.0000)->withStock(1)->create(['name' => 'Whiteboard']);
+    $customer = Customer::factory()->create();
+
+    foreach (range(1, 7) as $day) {
+        $order = saleOn(Carbon::now()->subDays($day)->toDateString(), $customer, 20.0, $product);
+        $order->items()->update(['quantity' => 40]);
+    }
+
+    $insight = collect(app(InsightEngine::class)->for(
+        InsightFixture::period(),
+        Comparison::PreviousPeriod,
+        User::factory()->role(Role::Owner)->create(),
+    ))->firstWhere('id', 'stockout_risk');
+
+    expect($insight->message)->toBe('Whiteboard has less than a day of stock left at its recent sales rate.');
+});
+
 it('stays silent when the shelf holds more than a week of sales', function (): void {
     // The same rate of sale, with a thousand on the shelf.
     $product = Product::factory()->priced(20.0000, 8.0000)->withStock(1000)->create();

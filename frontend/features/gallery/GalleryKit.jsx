@@ -22,22 +22,50 @@ import { cn } from '@/lib/cn';
 
 /** The page's order, and the rail's. Titles are the section headings. */
 export const GALLERY_GROUPS = [
-  { key: 'foundations', label: 'Foundations', items: ['Colour tokens', 'Typography', 'Shape & elevation', 'Icons'] },
+  {
+    key: 'foundations',
+    label: 'Foundations',
+    items: ['Colour tokens', 'Typography', 'Shape & elevation', 'Icons'],
+  },
   {
     key: 'components',
     label: 'Components',
-    items: ['Buttons', 'Form controls', 'Badges', 'Comparison values', 'Stat tiles', 'Period selector', 'Overlays', 'Detail sheet'],
+    items: [
+      'Buttons',
+      'Form controls',
+      'Badges',
+      'Comparison values',
+      'Stat tiles',
+      'Period selector',
+      'Overlays',
+      'Detail sheet',
+    ],
   },
-  { key: 'data', label: 'Data & states', items: ['Data table', 'Table states', 'Other states', 'Skeletons'] },
-  { key: 'charts', label: 'Charts', items: ['Ranking', 'Revenue to profit', 'Trend', 'Revenue and expenses'] },
+  {
+    key: 'data',
+    label: 'Data & states',
+    items: ['Data table', 'Table states', 'Other states', 'Skeletons'],
+  },
+  {
+    key: 'charts',
+    label: 'Charts',
+    items: ['Ranking', 'Revenue to profit', 'Trend', 'Revenue and expenses'],
+  },
 ];
 
-export const slug = (title) => title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+export const slug = (title) =>
+  title
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 
 const FilterContext = createContext('');
 
 export function GalleryFilter({ query, children }) {
-  return <FilterContext.Provider value={query.trim().toLowerCase()}>{children}</FilterContext.Provider>;
+  return (
+    <FilterContext.Provider value={query.trim().toLowerCase()}>{children}</FilterContext.Provider>
+  );
 }
 
 /** Copies text and says so for a moment. */
@@ -75,7 +103,10 @@ export function GallerySection({ title, note, use, children }) {
   if (query && !title.toLowerCase().includes(query)) return null;
 
   return (
-    <section id={slug(title)} className="scroll-mt-24 space-y-4 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-5">
+    <section
+      id={slug(title)}
+      className="scroll-mt-24 space-y-4 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-5"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-(--border-subtle) pb-3">
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-(--color-text)">{title}</h2>
@@ -109,7 +140,9 @@ export function GalleryRail({ query }) {
     const ids = GALLERY_GROUPS.flatMap((group) => group.items.map(slug));
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
 
         if (visible[0]) setActive(visible[0].target.id);
       },
@@ -126,7 +159,10 @@ export function GalleryRail({ query }) {
   }, [q]);
 
   return (
-    <nav aria-label="Gallery contents" className="sticky top-20 max-h-[calc(100dvh-6rem)] space-y-5 overflow-y-auto pe-2">
+    <nav
+      aria-label="Gallery contents"
+      className="sticky top-20 max-h-[calc(100dvh-6rem)] space-y-5 overflow-y-auto pe-2"
+    >
       {GALLERY_GROUPS.map((group) => {
         const items = group.items.filter((item) => !q || item.toLowerCase().includes(q));
 
@@ -134,7 +170,9 @@ export function GalleryRail({ query }) {
 
         return (
           <div key={group.key}>
-            <p className="px-2 text-xs font-semibold tracking-(--tracking-eyebrow) text-(--color-muted) uppercase">{group.label}</p>
+            <p className="px-2 text-xs font-semibold tracking-(--tracking-eyebrow) text-(--color-muted) uppercase">
+              {group.label}
+            </p>
             <ul className="mt-1.5 space-y-0.5">
               {items.map((item) => (
                 <li key={item}>
@@ -171,7 +209,9 @@ export function PreviewToolbar({ query, onQuery }) {
   const { locale, setPreferences } = useI18n();
   // Read once, from <html>, as the page was opened.
   const [theme, setTheme] = useState(() =>
-    typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+    typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark'
+      ? 'dark'
+      : 'light',
   );
 
   // Whatever theme the reader arrived with is put back when they leave.
@@ -194,7 +234,12 @@ export function PreviewToolbar({ query, onQuery }) {
     <div className="flex flex-wrap items-center gap-3">
       <label className="relative">
         <span className="sr-only">Filter sections</span>
-        <Icon name="search" size={14} aria-hidden="true" className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-(--color-muted)" />
+        <Icon
+          name="search"
+          size={14}
+          aria-hidden="true"
+          className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-(--color-muted)"
+        />
         <input
           type="search"
           value={query}
@@ -227,7 +272,11 @@ export function PreviewToolbar({ query, onQuery }) {
 
 function Segmented({ label, value, onChange, options }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-(--radius-control) border border-(--border) bg-(--color-surface) p-0.5">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className="inline-flex rounded-(--radius-control) border border-(--border) bg-(--color-surface) p-0.5"
+    >
       {options.map(([key, text]) => (
         <button
           key={key}
@@ -237,7 +286,9 @@ function Segmented({ label, value, onChange, options }) {
           onClick={() => onChange(key)}
           className={cn(
             'rounded-[calc(var(--radius-control)-2px)] px-2.5 py-1 text-xs font-medium transition-colors',
-            value === key ? 'bg-(--color-brand) text-(--color-on-brand)' : 'text-(--color-text-2) hover:text-(--color-text)',
+            value === key
+              ? 'bg-(--color-brand) text-(--color-on-brand)'
+              : 'text-(--color-text-2) hover:text-(--color-text)',
           )}
         >
           {text}
@@ -261,14 +312,19 @@ export function Swatches({ groups }) {
       const style = getComputedStyle(document.documentElement);
       const next = {};
 
-      groups.forEach((group) => group.tokens.forEach((token) => (next[token] = style.getPropertyValue(token).trim())));
+      groups.forEach((group) =>
+        group.tokens.forEach((token) => (next[token] = style.getPropertyValue(token).trim())),
+      );
       setValues(next);
     };
 
     read();
 
     const observer = new MutationObserver(read);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
 
     return () => observer.disconnect();
   }, [groups]);
@@ -277,7 +333,9 @@ export function Swatches({ groups }) {
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {groups.map((group) => (
         <div key={group.title}>
-          <p className="mb-2 text-xs font-medium tracking-wide text-(--color-text-2) uppercase">{group.title}</p>
+          <p className="mb-2 text-xs font-medium tracking-wide text-(--color-text-2) uppercase">
+            {group.title}
+          </p>
           <ul className="space-y-1.5">
             {group.tokens.map((token) => (
               <li key={token}>
@@ -286,9 +344,15 @@ export function Swatches({ groups }) {
                   onClick={() => copy(`var(${token})`)}
                   className="flex w-full items-center gap-2.5 rounded-(--radius-control) p-1 text-start transition-colors hover:bg-(--color-surface-selected)"
                 >
-                  <span className="size-8 shrink-0 rounded-lg border border-(--color-line)" style={{ background: `var(${token})` }} aria-hidden="true" />
+                  <span
+                    className="size-8 shrink-0 rounded-lg border border-(--color-line)"
+                    style={{ background: `var(${token})` }}
+                    aria-hidden="true"
+                  />
                   <span className="min-w-0">
-                    <code className="block truncate font-mono text-xs text-(--color-text)">{token}</code>
+                    <code className="block truncate font-mono text-xs text-(--color-text)">
+                      {token}
+                    </code>
                     <code className="block font-mono text-[11px] text-(--color-muted)" dir="ltr">
                       {copied === `var(${token})` ? 'Copied' : values[token] || '—'}
                     </code>
@@ -323,7 +387,9 @@ export function IconLibrary() {
           aria-label="Search icons"
           className="h-8 w-56 rounded-(--radius-control) border border-(--border) bg-(--color-surface) px-2.5 text-sm text-(--color-text) placeholder:text-(--color-muted)"
         />
-        <span className="text-xs text-(--color-muted)">{names.length} shown · click to copy the name</span>
+        <span className="text-xs text-(--color-muted)">
+          {names.length} shown · click to copy the name
+        </span>
       </div>
       <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-8">
         {names.map((name) => (
@@ -334,7 +400,9 @@ export function IconLibrary() {
               className="flex w-full flex-col items-center gap-2 rounded-lg border border-(--border-subtle) px-2 py-3 text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:text-(--color-brand-text)"
             >
               <Icon name={copied === name ? 'check' : name} size={20} aria-hidden="true" />
-              <span className="w-full truncate text-center font-mono text-[11px]">{copied === name ? 'Copied' : name}</span>
+              <span className="w-full truncate text-center font-mono text-[11px]">
+                {copied === name ? 'Copied' : name}
+              </span>
             </button>
           </li>
         ))}
@@ -387,7 +455,10 @@ export function ShapeScale() {
       <div className="flex flex-wrap gap-4">
         {radii.map(([token, label]) => (
           <div key={token} className="text-center">
-            <div className="size-16 border-2 border-(--color-brand) bg-(--color-brand-soft)" style={{ borderRadius: `var(${token})` }} />
+            <div
+              className="size-16 border-2 border-(--color-brand) bg-(--color-brand-soft)"
+              style={{ borderRadius: `var(${token})` }}
+            />
             <p className="mt-1.5 text-xs text-(--color-text-2)">{label}</p>
             <code className="font-mono text-[11px] text-(--color-muted)">{token}</code>
           </div>
@@ -396,7 +467,10 @@ export function ShapeScale() {
       <div className="flex flex-wrap gap-4">
         {shadows.map(([token, label]) => (
           <div key={token} className="text-center">
-            <div className="size-16 rounded-(--radius-card) bg-(--color-surface)" style={{ boxShadow: `var(${token})` }} />
+            <div
+              className="size-16 rounded-(--radius-card) bg-(--color-surface)"
+              style={{ boxShadow: `var(${token})` }}
+            />
             <p className="mt-1.5 text-xs text-(--color-text-2)">{label}</p>
             <code className="font-mono text-[11px] text-(--color-muted)">{token}</code>
           </div>

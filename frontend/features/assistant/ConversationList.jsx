@@ -37,7 +37,9 @@ export function ConversationList({ conversations, activeId, onOpen, onNew, onDel
         ) : (
           groups.map(({ key, items }) => (
             <section key={key}>
-              <h3 className="px-2 pb-1 text-xs font-medium text-(--color-muted)">{t(`assistant.when.${key}`)}</h3>
+              <h3 className="px-2 pb-1 text-xs font-medium text-(--color-muted)">
+                {t(`assistant.when.${key}`)}
+              </h3>
               <ul className="space-y-0.5">
                 {items.map((conversation) => {
                   const active = conversation.id === activeId;

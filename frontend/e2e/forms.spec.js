@@ -178,9 +178,7 @@ test.describe('as the second business', () => {
      * A lower bound rather than an exact count, because the customer form test
      * above adds one customer to this business on every run.
      */
-    await expect
-      .poll(() => customer.locator('option').count())
-      .toBeGreaterThan(2);
+    await expect.poll(() => customer.locator('option').count()).toBeGreaterThan(2);
 
     await search.fill('Mishref');
     await expect(customer.locator('option')).toHaveCount(2);
@@ -254,7 +252,7 @@ test.describe('an account holder', () => {
     await page.goto('/dashboard');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-    await page.getByRole('button', { name: /^Account/ }).click();
+    await page.getByRole('button', { name: /account menu$/ }).click();
     await page.getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/login/);
 

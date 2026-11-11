@@ -9,6 +9,8 @@ use App\Domain\Metrics\MetricSummary;
 use App\Domain\Metrics\Period;
 use App\Domain\Metrics\QuickStats;
 use App\Models\ActivityLog;
+use App\Models\AssistantConversation;
+use App\Models\AssistantMessage;
 use App\Models\Customer;
 use App\Models\User;
 use Tests\Support\MetricFixture;
@@ -269,4 +271,27 @@ it('refuses a second erasure as a conflict, not as a denial', function (): void 
     $this->postJson("/api/v1/customers/{$customer->id}/erase", ['reason' => 'Subject request'])
         ->assertStatus(409)
         ->assertJsonPath('code', 'customer.already_erased');
+});
+
+it('takes the erased customer out of Ask Baydar\'s history, and no one else', function (): void {
+    $owner = User::factory()->role(Role::Owner)->create();
+    $customer = erasable();
+    $conversation = AssistantConversation::query()->create(['user_id' => $owner->id, 'title' => 'Best customers?']);
+
+    $message = AssistantMessage::query()->create([
+        'conversation_id' => $conversation->id,
+        'role' => 'assistant',
+        'content' => [['type' => 'text', 'text' => 'Khalid Al Mutairi led the month, ahead of Alia Trading. خالد المطيري']],
+        'display' => 'Khalid Al Mutairi led the month, ahead of Alia Trading.',
+    ]);
+
+    app(EraseCustomer::class)($customer, 'Subject request');
+
+    $message->refresh();
+
+    expect($message->display)->not->toContain('Khalid Al Mutairi')
+        ->and($message->display)->toContain('Alia Trading')
+        ->and(json_encode($message->content, JSON_UNESCAPED_UNICODE))->not->toContain('Khalid Al Mutairi')
+        ->and(json_encode($message->content, JSON_UNESCAPED_UNICODE))->not->toContain('خالد المطيري')
+        ->and(ActivityLog::query()->where('action', 'customer.erased')->value('context')['assistant_messages_scrubbed'])->toBe(1);
 });

@@ -14,7 +14,6 @@ use App\Support\Localization\Localizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\App;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -92,10 +91,18 @@ final class SendBrief
             $delivery->forceFill(['status' => BriefDelivery::SENT])->save();
         } catch (Throwable $e) {
             report($e);
-            $delivery->forceFill(['status' => BriefDelivery::FAILED, 'error' => mb_substr($e->getMessage(), 0, 500)])->save();
+            // Shown back on the settings screen, so only a reason written
+            // for the reader is kept; the rest went to the log above.
+            $delivery->forceFill(['status' => BriefDelivery::FAILED, 'error' => mb_substr(self::readerMessage($e), 0, 500)])->save();
         }
 
         return $delivery->status;
+    }
+
+    /** What the reader may be told about a failure: ours, or nothing technical. */
+    public static function readerMessage(Throwable $e): string
+    {
+        return $e instanceof BriefProblem ? $e->getMessage() : __('brief.failed');
     }
 
     /** "Send me one now", from the settings screen. Throws on failure. */
@@ -107,7 +114,7 @@ final class SendBrief
     private function deliver(User $user, BriefChannel $channel, ?CarbonImmutable $now): void
     {
         if (! $channel->available()) {
-            throw new RuntimeException(__('brief.unavailable_whatsapp'));
+            throw new BriefProblem(__('brief.unavailable_whatsapp'));
         }
 
         $this->inLocaleOf($user, function () use ($user, $channel, $now): void {

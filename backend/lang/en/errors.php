@@ -41,6 +41,7 @@ return [
         'malformed' => 'Filters must be supplied as filter[key]=value.',
         'unknown' => 'Unknown filter: :unknown. Allowed: :allowed.',
         'unsortable' => "Cannot sort by ':field'. Allowed: :allowed.",
+        'date' => "':value' is not a date. Use the form 2026-11-30.",
     ],
 
     'customer' => [

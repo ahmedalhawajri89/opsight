@@ -27,8 +27,14 @@ describe('quick stats', () => {
   it('makes each stat a way into its own screen', () => {
     render(<QuickStatsCard stats={stats} currency="BHD" />);
 
-    expect(screen.getByRole('link', { name: /Total Products/ })).toHaveAttribute('href', '/products');
-    expect(screen.getByRole('link', { name: /Owed by customers/ })).toHaveAttribute('href', '/orders');
+    expect(screen.getByRole('link', { name: /Total Products/ })).toHaveAttribute(
+      'href',
+      '/products',
+    );
+    expect(screen.getByRole('link', { name: /Owed by customers/ })).toHaveAttribute(
+      'href',
+      '/orders',
+    );
   });
 
   it('shows a change only where one honestly exists', () => {
@@ -41,7 +47,9 @@ describe('quick stats', () => {
   it('keeps the exact amount behind the compact one', () => {
     render(<QuickStatsCard stats={stats} currency="BHD" />);
 
-    expect(screen.getByRole('link', { name: /Owed by customers/ }).getAttribute('title')).toContain('152,777.945');
+    expect(screen.getByRole('link', { name: /Owed by customers/ }).getAttribute('title')).toContain(
+      '152,777.945',
+    );
   });
 
   it('shows only the stats the role was sent', () => {
@@ -56,13 +64,25 @@ describe('from revenue to profit', () => {
     { key: 'net_revenue', kind: 'total', label: 'Net revenue', value: '1000.000' },
     { key: 'cogs', kind: 'down', label: 'Cost of goods', value: '600.000' },
     { key: 'gross_profit', kind: 'total', label: 'Gross profit', value: '400.000' },
-    { key: 'operating_expenses', kind: 'down', label: 'Operating expenses', value: String(400 - net) },
+    {
+      key: 'operating_expenses',
+      kind: 'down',
+      label: 'Operating expenses',
+      value: String(400 - net),
+    },
     { key: 'net_profit', kind: 'total', label: 'Net profit', value: String(net) },
   ];
 
-  it('writes the arithmetic out, with each subtotal\'s margin', async () => {
+  it("writes the arithmetic out, with each subtotal's margin", async () => {
     const { WaterfallChart } = await import('@/components/charts/WaterfallChart');
-    render(<WaterfallChart title="From revenue to profit" steps={steps(100)} margins={{ gross_profit: 0.4, net_profit: 0.1 }} currency="BHD" />);
+    render(
+      <WaterfallChart
+        title="From revenue to profit"
+        steps={steps(100)}
+        margins={{ gross_profit: 0.4, net_profit: 0.1 }}
+        currency="BHD"
+      />,
+    );
 
     expect(screen.getAllByText('Gross profit').length).toBeGreaterThan(0);
     expect(screen.getByText('Margin 40.0%')).toBeInTheDocument();
@@ -83,7 +103,11 @@ describe('from revenue to profit', () => {
 describe('the trend summary', () => {
   // jsdom has no matchMedia; the chart asks it whether to animate.
   beforeAll(() => {
-    window.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+    window.matchMedia ??= () => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+    });
   });
 
   const series = [

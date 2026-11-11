@@ -31,7 +31,6 @@ test.describe('a new business', () => {
   });
 
   test('signs up, sets itself up, and records its first sale', async ({ page }) => {
-
     // ---- Sign-up ----------------------------------------------------------
     await page.goto('/login');
     await page.getByRole('link', { name: 'Set up your business' }).click();

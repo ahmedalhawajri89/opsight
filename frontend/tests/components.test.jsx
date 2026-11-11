@@ -413,7 +413,9 @@ describe('CatalogPicker', () => {
   });
 
   it('names a fetch that never reached the server by its code, not its message', () => {
-    render(<CatalogPicker {...base} options={[]} isError error={{ code: 'network.unreachable' }} />);
+    render(
+      <CatalogPicker {...base} options={[]} isError error={{ code: 'network.unreachable' }} />,
+    );
 
     expect(screen.getByRole('alert')).toHaveTextContent(/connection|offline|reach/i);
   });
@@ -465,11 +467,7 @@ describe('CatalogPicker', () => {
 
   it('does not list the chosen record twice when the search still returns it', () => {
     render(
-      <CatalogPicker
-        {...base}
-        value="1"
-        selected={{ value: 1, label: 'WIDGET-1 - Widget' }}
-      />,
+      <CatalogPicker {...base} value="1" selected={{ value: 1, label: 'WIDGET-1 - Widget' }} />,
     );
 
     expect(screen.getAllByRole('option', { name: /WIDGET-1/ })).toHaveLength(1);
@@ -566,7 +564,11 @@ describe('AccountPreview', () => {
     // Read aloud it would repeat the reader's own input back at them on every
     // keystroke. The two fields are the accessible interface.
     const { container } = render(
-      <AccountPreview businessName="Al Hawajri Trading" name="Ahmed Al Hawajri" roleLabel="Owner" />,
+      <AccountPreview
+        businessName="Al Hawajri Trading"
+        name="Ahmed Al Hawajri"
+        roleLabel="Owner"
+      />,
     );
 
     expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
@@ -574,7 +576,11 @@ describe('AccountPreview', () => {
 
   it('draws the chip with the same rules the top bar uses', () => {
     const { container } = render(
-      <AccountPreview businessName="Al Hawajri Trading" name="Ahmed Al Hawajri" roleLabel="Owner" />,
+      <AccountPreview
+        businessName="Al Hawajri Trading"
+        name="Ahmed Al Hawajri"
+        roleLabel="Owner"
+      />,
     );
 
     expect(container.textContent).toContain(initials('Ahmed Al Hawajri'));

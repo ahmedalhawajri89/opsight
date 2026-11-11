@@ -36,7 +36,10 @@ export function AskBaydar() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const scroller = useRef(null);
 
-  const list = useQuery({ queryKey: queryKeys.assistant.list, queryFn: assistant.listConversations });
+  const list = useQuery({
+    queryKey: queryKeys.assistant.list,
+    queryFn: assistant.listConversations,
+  });
 
   const ask = useMutation({
     mutationFn: assistant.ask,
@@ -90,7 +93,10 @@ export function AskBaydar() {
     if (message === '' || ask.isPending) return;
 
     setDraft('');
-    setThread((current) => [...current, { id: 'pending', role: 'user', text: message, pending: true }]);
+    setThread((current) => [
+      ...current,
+      { id: 'pending', role: 'user', text: message, pending: true },
+    ]);
     ask.mutate({ message, conversationId });
   }
 
@@ -114,7 +120,9 @@ export function AskBaydar() {
 
   return (
     <div className="flex h-[calc(100dvh-8.5rem)] min-h-[32rem] gap-4">
-      <aside className="hidden w-64 shrink-0 border-e border-(--border-subtle) pe-4 lg:block">{history}</aside>
+      <aside className="hidden w-64 shrink-0 border-e border-(--border-subtle) pe-4 lg:block">
+        {history}
+      </aside>
 
       <section aria-label={t('assistant.title')} className="relative flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between gap-2 pb-2 lg:hidden">
@@ -145,7 +153,9 @@ export function AskBaydar() {
 
         {!available ? (
           <div className="flex flex-1 items-center justify-center">
-            <p className="measure text-center text-sm text-(--color-text-2)">{t('assistant.unavailable')}</p>
+            <p className="measure text-center text-sm text-(--color-text-2)">
+              {t('assistant.unavailable')}
+            </p>
           </div>
         ) : list.isError ? (
           <ErrorState error={list.error} onRetry={list.refetch} />
@@ -158,7 +168,11 @@ export function AskBaydar() {
                 <ol className="mx-auto w-full max-w-3xl space-y-6 px-1 py-6" aria-live="polite">
                   {thread.map((message) => (
                     <li key={message.id}>
-                      {message.role === 'user' ? <UserMessage text={message.text} /> : <AssistantMessage message={message} />}
+                      {message.role === 'user' ? (
+                        <UserMessage text={message.text} />
+                      ) : (
+                        <AssistantMessage message={message} />
+                      )}
                     </li>
                   ))}
                   {ask.isPending ? (
@@ -179,7 +193,13 @@ export function AskBaydar() {
                   {ask.error?.message}
                 </p>
               ) : null}
-              <Composer value={draft} onChange={setDraft} onSend={send} busy={ask.isPending} autoFocus />
+              <Composer
+                value={draft}
+                onChange={setDraft}
+                onSend={send}
+                busy={ask.isPending}
+                autoFocus
+              />
             </div>
           </>
         )}

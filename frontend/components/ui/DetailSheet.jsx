@@ -21,7 +21,15 @@ import { cn } from '@/lib/cn';
  */
 export function DetailSheet({ open, onClose, title, subtitle, hero, footer, children }) {
   return (
-    <Dialog open={open} onClose={onClose} title={title} description={subtitle} placement="side" size="sm" footer={footer}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={subtitle}
+      placement="side"
+      size="sm"
+      footer={footer}
+    >
       <div className="space-y-6">
         {hero}
         {children}
@@ -59,7 +67,9 @@ export function DetailSection({ title, action, children }) {
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold tracking-(--tracking-eyebrow) text-(--color-muted) uppercase">{title}</h3>
+        <h3 className="text-xs font-semibold tracking-(--tracking-eyebrow) text-(--color-muted) uppercase">
+          {title}
+        </h3>
         {action}
       </div>
       {children}
@@ -79,7 +89,11 @@ export function DetailList({ items }) {
         <div key={label} className="flex items-start justify-between gap-4 px-3.5 py-2.5 text-sm">
           <dt className="shrink-0 text-(--color-text-2)">{label}</dt>
           <dd className="min-w-0 text-end break-words text-(--color-text)" dir="auto">
-            {value === null || value === undefined || value === '' ? <span className="text-(--color-muted)">—</span> : value}
+            {value === null || value === undefined || value === '' ? (
+              <span className="text-(--color-muted)">—</span>
+            ) : (
+              value
+            )}
           </dd>
         </div>
       ))}

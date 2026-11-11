@@ -15,7 +15,12 @@ use Illuminate\Support\Carbon;
  */
 class CustomerResource extends JsonResource
 {
-    /** @return array<string, mixed> */
+    /**
+     * Integer keys too: `mergeWhen` sits in the list as a value that the
+     * resource flattens when it resolves.
+     *
+     * @return array<int|string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [
@@ -51,13 +56,19 @@ class CustomerResource extends JsonResource
              * than claiming a lifetime value of nothing and a last order at
              * the epoch.
              */
-            $this->mergeWhen($this->orders_count !== null, fn (): array => [
-                'orders_count' => (int) $this->orders_count,
-                'lifetime_value' => $this->lifetime_value === null
+            /*
+             * Read with getAttribute: these exist only when the query added
+             * them, so they are not properties of the model, and reading
+             * them as if they were let a static check see a count that could
+             * never be null.
+             */
+            $this->mergeWhen($this->resource->getAttribute('orders_count') !== null, fn (): array => [
+                'orders_count' => (int) $this->resource->getAttribute('orders_count'),
+                'lifetime_value' => $this->resource->getAttribute('lifetime_value') === null
                     ? null
-                    : (string) $this->lifetime_value,
-                'last_order_at' => $this->last_order_at
-                    ? Carbon::parse($this->last_order_at)->toIso8601String()
+                    : (string) $this->resource->getAttribute('lifetime_value'),
+                'last_order_at' => $this->resource->getAttribute('last_order_at')
+                    ? Carbon::parse((string) $this->resource->getAttribute('last_order_at'))->toIso8601String()
                     : null,
             ]),
 

@@ -6,6 +6,7 @@ namespace App\Domain\Compliance;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Models\ActivityLog;
+use App\Models\AssistantMessage;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
 
@@ -77,6 +78,7 @@ final class EraseCustomer
             $customer->withoutAudit()->save();
 
             $scrubbed = $this->scrubHistory($customer, $original);
+            $conversations = $this->scrubConversations($original);
 
             $this->recorder->record(
                 action: 'customer.erased',
@@ -87,6 +89,7 @@ final class EraseCustomer
                     'reason' => $reason,
                     'fields' => self::PII_COLUMNS,
                     'activity_rows_scrubbed' => $scrubbed,
+                    'assistant_messages_scrubbed' => $conversations,
                 ],
             );
 
@@ -201,6 +204,62 @@ final class EraseCustomer
                     $row->changes = $this->scrub->byValue($row->changes, $needles);
                     $row->context = $this->scrub->byValue($row->context, $needles);
                     $row->save();
+                    $rewritten++;
+                }
+            });
+
+        return $rewritten;
+    }
+
+    /**
+     * Ask Baydar's stored conversations. A breakdown by customer puts names
+     * in its tool results, and the answer repeats them, so an erased
+     * customer would otherwise live on in the history of every question
+     * that ranked them.
+     *
+     * The FULL name, both scripts, joins the identifiers the activity sweep
+     * already uses. Not a first name: "Ali" would be struck out of "Alia
+     * Trading". A full name of four characters or more, in a conversation
+     * about this business's own customers, is a narrow enough needle.
+     *
+     * @param  array<string, mixed>  $original
+     */
+    private function scrubConversations(array $original): int
+    {
+        $needles = $this->scrub->needles($original);
+
+        foreach (['name', 'name_ar'] as $field) {
+            $name = is_string($original[$field] ?? null) ? trim($original[$field]) : '';
+
+            if (mb_strlen($name) >= 4) {
+                $needles[] = $name;
+            }
+        }
+
+        $needles = array_values(array_unique($needles));
+
+        if ($needles === []) {
+            return 0;
+        }
+
+        $rewritten = 0;
+
+        AssistantMessage::query()
+            ->where(function ($query) use ($needles): void {
+                foreach ($needles as $needle) {
+                    $like = '%'.addcslashes($needle, '%_\\').'%';
+                    $query->orWhere('content', 'like', $like)->orWhere('display', 'like', $like);
+                }
+            })
+            ->chunkById(200, function ($messages) use ($needles, &$rewritten): void {
+                foreach ($messages as $message) {
+                    /** @var array<string, mixed> $content */
+                    $content = $message->content;
+                    $message->content = array_values((array) $this->scrub->byValue($content, $needles));
+                    $message->display = $message->display === null
+                        ? null
+                        : str_ireplace($needles, ScrubActivityLog::SENTINEL, $message->display);
+                    $message->save();
                     $rewritten++;
                 }
             });

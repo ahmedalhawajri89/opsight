@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\BriefController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\FileImportController;
+use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Api\V1\GoogleSignInController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InsightController;
@@ -19,6 +20,8 @@ use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
@@ -206,8 +209,10 @@ Route::prefix('v1')->group(function (): void {
         // (SECURITY.md §10).
         Route::get('activity', [ActivityController::class, 'index']);
         Route::get('activity/actions', [ActivityController::class, 'actions']);
+        Route::get('activity/summary', [ActivityController::class, 'summary']);
 
         /* ---- Users ------------------------------------------------------- */
+        Route::get('roles', [RoleController::class, 'index']);
         Route::get('users', [UserController::class, 'index']);
         Route::post('users', [UserController::class, 'store']);
         Route::get('users/{user}', [UserController::class, 'show']);
@@ -250,6 +255,16 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:imports');
         Route::post('imports', [FileImportController::class, 'store'])
             ->middleware('throttle:imports');
+
+        /* ---- Forecasts (phase D) ----------------------------------------- */
+        // Aggregation over months of history, like analytics: its limit too.
+        Route::get('forecasts/stock', [ForecastController::class, 'stock'])
+            ->middleware('throttle:analytics');
+        Route::get('forecasts/cash', [ForecastController::class, 'cash'])
+            ->middleware('throttle:analytics');
+        Route::put('forecasts/cash/balance', [ForecastController::class, 'setBalance']);
+        Route::get('reports/financing', [ReportController::class, 'financing'])
+            ->middleware('throttle:analytics');
 
         /* ---- The morning brief (phase C) ---------------------------------- */
         Route::get('me/brief', [BriefController::class, 'show']);

@@ -8,6 +8,8 @@ use App\Models\AssistantConversation;
 use App\Models\AssistantMessage;
 use App\Models\BusinessSetting;
 use App\Models\User;
+use App\Support\Tenancy\CurrentBusiness;
+use App\Support\Tenancy\TenantQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -63,7 +65,20 @@ final class AskBaydar
         $rounds = 0;
 
         while (true) {
+            /*
+             * Checked before every call, not only the first: one question
+             * can take several rounds, each resending the whole history, and
+             * a cap checked once could be overrun by all of them.
+             */
+            if ($rounds > 0 && $this->usedThisMonth() >= (int) config('assistant.monthly_token_limit')) {
+                $reply = new ModelReply('max_rounds', [['type' => 'text', 'text' => __('assistant.limit')]]);
+                break;
+            }
+
             $reply = $this->model->respond($system, $tools, $this->history($conversation));
+
+            // Counted the moment it is spent, in the ledger nobody can delete.
+            $this->spend($reply->inputTokens + $reply->outputTokens + $reply->cacheWriteTokens);
 
             $tokens['input'] += $reply->inputTokens;
             $tokens['output'] += $reply->outputTokens;
@@ -126,15 +141,40 @@ final class AskBaydar
         return ['conversation' => $conversation, 'answer' => $answer];
     }
 
-    /** Tokens this business has used this calendar month. */
+    /**
+     * Tokens this business has used this calendar month, from the usage
+     * ledger. Not from the messages: those can be deleted with their
+     * conversation, and the spend cannot.
+     */
     public function usedThisMonth(): int
     {
-        $timezone = BusinessSetting::current()->timezone ?: 'UTC';
-        $start = CarbonImmutable::now($timezone)->startOfMonth()->utc();
+        return (int) TenantQuery::table('assistant_usage')
+            ->where('month', $this->month())
+            ->value('tokens');
+    }
 
-        return (int) AssistantMessage::query()
-            ->where('created_at', '>=', $start)
-            ->sum(DB::raw('input_tokens + output_tokens + cache_write_tokens'));
+    /**
+     * Adds to this month's spend. One statement, so two questions finishing
+     * together both count: a read-then-write would let one overwrite the
+     * other.
+     */
+    private function spend(int $tokens): void
+    {
+        if ($tokens <= 0) {
+            return;
+        }
+
+        DB::statement(
+            'INSERT INTO assistant_usage (business_id, month, tokens, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE tokens = tokens + VALUES(tokens), updated_at = NOW()',
+            [CurrentBusiness::get()->id(), $this->month(), $tokens],
+        );
+    }
+
+    /** yyyy-mm, in the business's own timezone. */
+    private function month(): string
+    {
+        return CarbonImmutable::now(BusinessSetting::current()->timezone ?: 'UTC')->format('Y-m');
     }
 
     /**

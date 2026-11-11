@@ -68,7 +68,11 @@ export function ZidCallback() {
       <PageHeader title={t('integrations.zid.title')} />
 
       <Card>
-        <p role="status" aria-live="polite" className={`measure flex items-start gap-2 text-sm ${color}`}>
+        <p
+          role="status"
+          aria-live="polite"
+          className={`measure flex items-start gap-2 text-sm ${color}`}
+        >
           <Icon name={icon} size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
           <span>{message}</span>
         </p>

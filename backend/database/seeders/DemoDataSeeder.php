@@ -749,6 +749,7 @@ class DemoDataSeeder extends Seeder
         }
     }
 
+    /** @param  Collection<int, ExpenseCategory>  $categories */
     private function seedExpenses(Collection $categories): void
     {
         $owner = User::where('role', 'owner')->first();

@@ -20,7 +20,13 @@ import { useId } from 'react';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { sumAmounts } from '@/lib/decimal';
-import { formatCompact, formatMoney, formatNumber, formatPercent, getMoneyDefaults } from '@/lib/format';
+import {
+  formatCompact,
+  formatMoney,
+  formatNumber,
+  formatPercent,
+  getMoneyDefaults,
+} from '@/lib/format';
 import { formatBucketLabel, weekendRuns } from '@/lib/periods';
 
 /**
@@ -352,8 +358,11 @@ function summarise(series, format) {
 
   if (values.length === 0) return null;
 
-  const total = format === 'money' ? sumAmounts(values) : String(values.reduce((sum, v) => sum + Number(v), 0));
-  const complete = series.filter((bucket) => !bucket.is_partial && bucket.value !== null && bucket.value !== undefined);
+  const total =
+    format === 'money' ? sumAmounts(values) : String(values.reduce((sum, v) => sum + Number(v), 0));
+  const complete = series.filter(
+    (bucket) => !bucket.is_partial && bucket.value !== null && bucket.value !== undefined,
+  );
   const byValue = [...complete].sort((a, b) => Number(b.value) - Number(a.value));
   const last = complete.at(-1);
   const previous = complete.at(-2);
@@ -365,7 +374,10 @@ function summarise(series, format) {
     low: byValue.length > 1 ? byValue.at(-1) : null,
     change:
       last && previous && Number(previous.value) > 0
-        ? { ratio: (Number(last.value) - Number(previous.value)) / Number(previous.value), label: last.label }
+        ? {
+            ratio: (Number(last.value) - Number(previous.value)) / Number(previous.value),
+            label: last.label,
+          }
         : null,
   };
 }
@@ -393,7 +405,9 @@ function TrendSummary({ stats, formatValue }) {
       {stats.change ? (
         <p
           className={`mb-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-            up ? 'bg-(--color-success-soft) text-(--color-success)' : 'bg-(--color-danger-soft) text-(--color-danger)'
+            up
+              ? 'bg-(--color-success-soft) text-(--color-success)'
+              : 'bg-(--color-danger-soft) text-(--color-danger)'
           }`}
         >
           {t(up ? 'charts.summary.up' : 'charts.summary.down', {

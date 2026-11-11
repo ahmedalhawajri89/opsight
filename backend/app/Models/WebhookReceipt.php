@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -43,6 +45,11 @@ use Illuminate\Support\Carbon;
  */
 class WebhookReceipt extends Model
 {
+    use MassPrunable;
+
+    /** Days a rejected delivery is kept as evidence before it is swept. */
+    public const UNVERIFIED_DAYS = 30;
+
     /** @var list<string> */
     protected $fillable = [
         'business_id',
@@ -71,6 +78,20 @@ class WebhookReceipt extends Model
             'processed_at' => 'datetime',
             'attempts' => 'integer',
         ];
+    }
+
+    /**
+     * Only rejected deliveries are swept. A verified receipt is the record of
+     * an import and is kept; a rejected one is a month of evidence about
+     * who knocked, and after that, only bulk.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()
+            ->where('signature_ok', false)
+            ->where('created_at', '<', now()->subDays(self::UNVERIFIED_DAYS));
     }
 
     public function isProcessed(): bool

@@ -16,7 +16,7 @@ import { DataTable } from '@/components/data/DataTable';
 import { ExportButton } from '@/components/data/ExportButton';
 import { Pagination } from '@/components/data/Pagination';
 import { ResultSummary } from '@/components/data/ResultSummary';
-import { EmptyState } from '@/components/data/States';
+import { EmptyState, ForbiddenState } from '@/components/data/States';
 import { Card, FilterBar, PageHeader } from '@/components/layout/PageHeader';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
@@ -36,7 +36,21 @@ const FILTER_CONFIG = {
   sortable: ['incurred_on', 'amount', 'description', 'created_at'],
 };
 
+/**
+ * Asked before anything is fetched: a role without expenses was shown the
+ * filters, empty totals and a red "could not load" with a Retry that could
+ * never succeed, where every other refused screen says plainly that it is
+ * not available for the role.
+ */
 export default function ExpensesPage() {
+  const { can } = useAuth();
+
+  if (!can('expenses.view')) return <ForbiddenState />;
+
+  return <ExpensesScreen />;
+}
+
+function ExpensesScreen() {
   const { can } = useAuth();
   const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =

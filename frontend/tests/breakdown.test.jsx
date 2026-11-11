@@ -17,12 +17,16 @@ const ROWS = [
 ];
 
 function bars(container) {
-  return [...container.querySelectorAll('ol li .rounded-full > span')].map((bar) => bar.style.width);
+  return [...container.querySelectorAll('ol li .rounded-full > span')].map(
+    (bar) => bar.style.width,
+  );
 }
 
 describe('the ranking', () => {
   it('measures every bar against the leader, never against "Other"', () => {
-    const { container } = render(<BreakdownChart title="Net revenue by product" rows={ROWS} currency="BHD" />);
+    const { container } = render(
+      <BreakdownChart title="Net revenue by product" rows={ROWS} currency="BHD" />,
+    );
 
     // The leader fills the track; the second, half its revenue, half of it.
     expect(bars(container)).toEqual(['100%', '50%']);

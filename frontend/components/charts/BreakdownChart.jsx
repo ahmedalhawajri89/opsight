@@ -80,7 +80,10 @@ export function BreakdownChart({
       <div dir={dir}>
         {ranked.length > 0 && other ? (
           <p className="mb-3 text-xs text-(--color-text-2)">
-            {t('charts.topShare', { count: formatNumber(ranked.length), share: formatPercent(topShare) })}
+            {t('charts.topShare', {
+              count: formatNumber(ranked.length),
+              share: formatPercent(topShare),
+            })}
           </p>
         ) : null}
 
@@ -101,8 +104,12 @@ export function BreakdownChart({
           <div className="mt-2 flex items-center gap-3 border-t border-(--border-subtle) px-2 pt-3 text-sm">
             <span aria-hidden="true" className="w-6 shrink-0" />
             <span className="min-w-0 flex-1 truncate text-(--color-text-2)">{other.label}</span>
-            <span className="tabular shrink-0 text-(--color-text-2)">{formatValue(other.value)}</span>
-            <span className="tabular w-14 shrink-0 text-end text-(--color-muted)">{formatPercent(other.share)}</span>
+            <span className="tabular shrink-0 text-(--color-text-2)">
+              {formatValue(other.value)}
+            </span>
+            <span className="tabular w-14 shrink-0 text-end text-(--color-muted)">
+              {formatPercent(other.share)}
+            </span>
           </div>
         ) : null}
       </div>

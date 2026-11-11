@@ -35,37 +35,34 @@ export function CountUp({ value, format, className, duration = 0.9 }) {
   const display = useRef(null);
   const final = format(value);
 
-  const scope = useGsap(
-    () => {
-      const node = display.current;
+  const scope = useGsap(() => {
+    const node = display.current;
 
-      if (node === null || typeof value !== 'number' || !Number.isFinite(value)) return;
+    if (node === null || typeof value !== 'number' || !Number.isFinite(value)) return;
 
-      const counter = { current: 0 };
+    const counter = { current: 0 };
 
-      gsap.to(counter, {
-        current: value,
-        duration,
-        /*
-         * Fast at first, settling at the end: the reader sees the order of
-         * magnitude almost immediately and only the last digits resolve
-         * slowly. An ease that accelerates would hide the figure until the
-         * animation was nearly done, which is the opposite of useful.
-         */
-        ease: 'power2.out',
-        onUpdate: () => {
-          node.textContent = format(counter.current);
-        },
-        onComplete: () => {
-          // Snapped to the real value: the tween's last frame is subject to
-          // floating-point drift, and a figure that settles on 2,188.9997 is
-          // a bug a reader can see.
-          node.textContent = final;
-        },
-      });
-    },
-    [value, final],
-  );
+    gsap.to(counter, {
+      current: value,
+      duration,
+      /*
+       * Fast at first, settling at the end: the reader sees the order of
+       * magnitude almost immediately and only the last digits resolve
+       * slowly. An ease that accelerates would hide the figure until the
+       * animation was nearly done, which is the opposite of useful.
+       */
+      ease: 'power2.out',
+      onUpdate: () => {
+        node.textContent = format(counter.current);
+      },
+      onComplete: () => {
+        // Snapped to the real value: the tween's last frame is subject to
+        // floating-point drift, and a figure that settles on 2,188.9997 is
+        // a bug a reader can see.
+        node.textContent = final;
+      },
+    });
+  }, [value, final]);
 
   return (
     <span ref={scope} className={className}>

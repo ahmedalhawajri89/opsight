@@ -51,7 +51,7 @@ beforeEach(() => {
 });
 
 describe('the mapping', () => {
-  it('shows each guess with the first row\'s value beside it', async () => {
+  it("shows each guess with the first row's value beside it", async () => {
     const user = userEvent.setup();
     renderWizard();
     await chooseFile(user);
@@ -70,7 +70,9 @@ describe('check, then import', () => {
 
     expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
 
-    vi.mocked(admin.runImport).mockResolvedValue({ data: { written: false, records: 1, lines: 1, errors: [], error_count: 0 } });
+    vi.mocked(admin.runImport).mockResolvedValue({
+      data: { written: false, records: 1, lines: 1, errors: [], error_count: 0 },
+    });
     await user.click(screen.getByRole('button', { name: 'Check every row' }));
 
     await screen.findByText(/Every row reads cleanly/);
@@ -87,7 +89,9 @@ describe('check, then import', () => {
     renderWizard();
     await chooseFile(user);
 
-    vi.mocked(admin.runImport).mockResolvedValue({ data: { written: false, records: 1, lines: 1, errors: [], error_count: 0 } });
+    vi.mocked(admin.runImport).mockResolvedValue({
+      data: { written: false, records: 1, lines: 1, errors: [], error_count: 0 },
+    });
     await user.click(screen.getByRole('button', { name: 'Check every row' }));
     await screen.findByText(/Every row reads cleanly/);
 
@@ -108,7 +112,15 @@ describe('check, then import', () => {
         records: 0,
         lines: 0,
         error_count: 1,
-        errors: [{ row: 6, field: 'date', key: 'date', value: '31/02/2026', message: 'Date is not a date this import can read: “31/02/2026”.' }],
+        errors: [
+          {
+            row: 6,
+            field: 'date',
+            key: 'date',
+            value: '31/02/2026',
+            message: 'Date is not a date this import can read: “31/02/2026”.',
+          },
+        ],
       },
     });
     await user.click(screen.getByRole('button', { name: 'Check every row' }));
@@ -137,11 +149,15 @@ describe('check, then import', () => {
     renderWizard();
     await chooseFile(user);
 
-    vi.mocked(admin.runImport).mockResolvedValue({ data: { written: false, records: 1, lines: 1, errors: [], error_count: 0 } });
+    vi.mocked(admin.runImport).mockResolvedValue({
+      data: { written: false, records: 1, lines: 1, errors: [], error_count: 0 },
+    });
     await user.click(screen.getByRole('button', { name: 'Check every row' }));
     await screen.findByText(/Every row reads cleanly/);
 
-    vi.mocked(admin.runImport).mockResolvedValue({ data: { written: true, records: 1, lines: 1, errors: [], error_count: 0 } });
+    vi.mocked(admin.runImport).mockResolvedValue({
+      data: { written: true, records: 1, lines: 1, errors: [], error_count: 0 },
+    });
     await user.click(screen.getByRole('button', { name: 'Import' }));
 
     await waitFor(() => expect(screen.getByText(/1 orders imported/)).toBeInTheDocument());

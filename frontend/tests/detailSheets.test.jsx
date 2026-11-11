@@ -13,8 +13,22 @@ vi.mock('@/features/catalog/useCatalog', () => ({
   useMovements: () => ({
     isLoading: false,
     movements: [
-      { id: 2, quantity_delta: -3, balance_after: 1, reason: 'sale', occurred_at: '2026-11-10T09:00:00Z', note: null },
-      { id: 1, quantity_delta: 4, balance_after: 4, reason: 'restock', occurred_at: '2026-11-01T09:00:00Z', note: 'Supplier delivery' },
+      {
+        id: 2,
+        quantity_delta: -3,
+        balance_after: 1,
+        reason: 'sale',
+        occurred_at: '2026-11-10T09:00:00Z',
+        note: null,
+      },
+      {
+        id: 1,
+        quantity_delta: 4,
+        balance_after: 4,
+        reason: 'restock',
+        occurred_at: '2026-11-01T09:00:00Z',
+        note: 'Supplier delivery',
+      },
     ],
   }),
 }));
@@ -50,7 +64,9 @@ describe('an expense, opened from the list', () => {
   it('reads it first: the amount large, the facts as rows', () => {
     render(<ExpenseSheet expense={EXPENSE} onClose={() => {}} onEdit={() => {}} />);
 
-    expect(screen.getByRole('heading', { name: 'Warehouse air-conditioning repair' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Warehouse air-conditioning repair' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/645\.630/)).toBeInTheDocument();
     expect(screen.getAllByText('Maintenance').length).toBeGreaterThan(0);
     expect(screen.getByText('Dilmun Cooling')).toBeInTheDocument();

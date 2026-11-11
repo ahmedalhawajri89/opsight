@@ -142,7 +142,8 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
             tick={CHART_TYPE.tick}
             tickLine={false}
             axisLine={false}
-            width={62}
+            // Wide enough for an Arabic compact figure, "135 ألف د.ب.".
+            width={84}
             domain={[0, 'auto']}
           />
 
@@ -232,7 +233,11 @@ function Summary({ revenue, expenses, money }) {
       ].map(([colour, label, value]) => (
         <div key={label}>
           <p className="flex items-center gap-1.5 text-xs text-(--color-text-2)">
-            <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: colour }} />
+            <span
+              aria-hidden="true"
+              className="size-2.5 rounded-full"
+              style={{ background: colour }}
+            />
             {label}
           </p>
           <p className="tabular mt-1 text-lg font-semibold text-(--color-text)">{money(value)}</p>

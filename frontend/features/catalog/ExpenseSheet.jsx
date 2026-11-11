@@ -22,7 +22,11 @@ export function ExpenseSheet({ expense, onClose, onEdit }) {
       open={expense !== null}
       onClose={onClose}
       title={expense?.description ?? ''}
-      subtitle={expense ? t('expenses.sheet.subtitle', { date: formatDate(expense.incurred_on) }) : undefined}
+      subtitle={
+        expense
+          ? t('expenses.sheet.subtitle', { date: formatDate(expense.incurred_on) })
+          : undefined
+      }
       hero={
         expense ? (
           <DetailHero
@@ -49,7 +53,10 @@ export function ExpenseSheet({ expense, onClose, onEdit }) {
                 { label: t('expenses.sheet.category'), value: expense.category?.name },
                 { label: t('expenses.columns.vendor'), value: expense.vendor },
                 { label: t('expenses.form.reference'), value: expense.reference },
-                { label: t('expenses.sheet.recorded'), value: expense.created_at ? formatDateTime(expense.created_at) : null },
+                {
+                  label: t('expenses.sheet.recorded'),
+                  value: expense.created_at ? formatDateTime(expense.created_at) : null,
+                },
               ]}
             />
           </DetailSection>

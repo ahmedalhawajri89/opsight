@@ -8,8 +8,11 @@ use App\Domain\Export\CsvExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
+use App\Models\BusinessSetting;
 use App\Support\QueryFilter;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -55,6 +58,7 @@ class ActivityController extends Controller
         $filter = new QueryFilter(
             filters: [
                 'action' => QueryFilter::exact('action'),
+                'category' => self::category(),
                 'user_id' => QueryFilter::exact('user_id'),
                 'subject_type' => QueryFilter::exact('subject_type'),
                 'subject_id' => QueryFilter::exact('subject_id'),
@@ -83,6 +87,43 @@ class ActivityController extends Controller
         return $query->orderBy('id', 'desc');
     }
 
+    /**
+     * The log's areas, each a set of action prefixes. One place, so the
+     * screen's chips and the export filter the same rows.
+     */
+    public const CATEGORIES = [
+        'security' => ['auth.'],
+        'sales' => ['order.', 'orderitem.', 'customer.'],
+        'catalogue' => ['product.', 'category.', 'inventory.', 'import.'],
+        'money' => ['expense.', 'expensecategory.', 'forecast.', 'report.'],
+        'people' => ['user.'],
+        'system' => ['settings.', 'business.', 'integration.', 'webhook.', 'export.', 'activity.'],
+    ];
+
+    /**
+     * Narrows to one area of the business. An area this list does not know
+     * returns nothing rather than everything: a filter that silently stops
+     * filtering is how an audit reader misses a row.
+     *
+     * @return callable(Builder<covariant Model>, string): mixed
+     */
+    private static function category(): callable
+    {
+        return static function (Builder $query, string $value): Builder {
+            $prefixes = self::CATEGORIES[$value] ?? null;
+
+            if ($prefixes === null) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query->where(static function (Builder $inner) use ($prefixes): void {
+                foreach ($prefixes as $prefix) {
+                    $inner->orWhere('action', 'like', $prefix.'%');
+                }
+            });
+        };
+    }
+
     public function export(Request $request, CsvExport $export): StreamedResponse
     {
         $this->authorize('export', ActivityLog::class);
@@ -109,6 +150,79 @@ class ActivityController extends Controller
             request: $request,
             filename: 'activity-log',
         );
+    }
+
+    /** Sign-in attempts that did not get in, and the guards they tripped. */
+    private const FAILED_SIGN_INS = ['auth.login_failed', 'auth.failed', 'auth.google_failed', 'auth.google_no_account', 'auth.lockout', 'auth.throttled'];
+
+    /**
+     * The log at a glance: how busy today was, who was at work, the last
+     * fourteen days as a count per day, and the failed sign-ins of the week.
+     *
+     * Days are the BUSINESS's days, in its own timezone: "today" at two in
+     * the morning in Riyadh is not yesterday in UTC.
+     *
+     * @return array{data: array<string, mixed>}
+     */
+    public function summary(Request $request): array
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        $timezone = BusinessSetting::current()->timezone ?: 'UTC';
+        $today = CarbonImmutable::now($timezone)->startOfDay();
+        $from = $today->subDays(13);
+
+        /*
+         * Counted by the database, not by loading the rows: a busy business
+         * writes thousands of entries a fortnight. Bucketed by UTC hour and
+         * moved to the business's day here, which is exact for every
+         * whole-hour timezone (all of the Gulf) and needs no timezone tables
+         * in MySQL.
+         */
+        $hours = ActivityLog::query()
+            ->toBase()
+            ->where('created_at', '>=', $from->utc())
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') AS hour, COUNT(*) AS total")
+            ->groupBy('hour')
+            ->get();
+
+        $daily = [];
+
+        for ($d = 0; $d < 14; $d++) {
+            $daily[$from->addDays($d)->toDateString()] = 0;
+        }
+
+        foreach ($hours as $row) {
+            $day = CarbonImmutable::parse((string) $row->hour, 'UTC')->setTimezone($timezone)->toDateString();
+
+            if (array_key_exists($day, $daily)) {
+                $daily[$day] += (int) $row->total;
+            }
+        }
+
+        $people = ActivityLog::query()
+            ->where('created_at', '>=', $today->utc())
+            ->whereNotNull('user_id')
+            ->distinct()
+            ->count('user_id');
+
+        $failed = ActivityLog::query()
+            ->where('created_at', '>=', $today->subDays(6)->utc())
+            ->whereIn('action', self::FAILED_SIGN_INS)
+            ->count();
+
+        return ['data' => [
+            'today' => $daily[$today->toDateString()],
+            'week' => array_sum(array_slice($daily, 7)),
+            'people_today' => $people,
+            'failed_sign_ins_week' => $failed,
+            'failed_sign_in_actions' => self::FAILED_SIGN_INS,
+            'daily' => array_map(
+                static fn (string $date, int $count): array => ['date' => $date, 'count' => $count],
+                array_keys($daily),
+                array_values($daily),
+            ),
+        ]];
     }
 
     /**

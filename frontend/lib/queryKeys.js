@@ -55,10 +55,20 @@ export const queryKeys = {
     all: ['activity'],
     list: (filters) => ['activity', 'list', filters],
     actions: ['activity', 'actions'],
+    summary: ['activity', 'summary'],
   },
   users: {
     all: ['users'],
     list: (filters) => ['users', 'list', filters],
+    roles: ['users', 'roles'],
+  },
+  forecasts: {
+    all: ['forecasts'],
+    stock: (leadTime, coverDays) => ['forecasts', 'stock', leadTime, coverDays],
+    cash: ['forecasts', 'cash'],
+  },
+  reports: {
+    financing: ['reports', 'financing'],
   },
   brief: {
     all: ['brief'],

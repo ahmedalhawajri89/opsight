@@ -78,6 +78,18 @@ const NAV_GROUPS = [
         icon: 'expenses',
         ability: 'expenses.view',
       },
+      /*
+       * Forecasts (phase D), with the operations: what runs out and what to
+       * order is a stock decision, and staff who keep the stock may see it.
+       * Under "Analytics" it made that heading appear for staff, a role
+       * that holds no analytics at all. The cash tab inside asks for cost.
+       */
+      {
+        href: '/forecasts',
+        label: 'nav.items.forecasts',
+        icon: 'trendUp',
+        ability: 'inventory.view',
+      },
     ],
   },
   {
@@ -96,13 +108,13 @@ const NAV_GROUPS = [
         icon: 'spark',
         ability: 'analytics.view',
       },
-      // Not built yet: shown disabled and labelled, never as a link to nothing.
+      // The financing report (phase D3): the whole financial picture, built
+      // on cost, so for a role that may see cost.
       {
         href: '/reports',
         label: 'nav.items.reports',
         icon: 'fileChart',
-        ability: 'analytics.view',
-        ready: false,
+        ability: 'metrics.view_cost',
       },
     ],
   },
@@ -525,6 +537,7 @@ export function AppShell({ children }) {
           id="app-sidebar"
           data-shell-flip=""
           className={cn(
+            'print:hidden',
             // Above the content and on the page's own ground: a full-bleed
             // toolbar in a page reaches past its column, and the margin
             // around the floating panel would otherwise show it.
@@ -613,13 +626,16 @@ export function AppShell({ children }) {
         it. Nothing reaches the panel's edges anyway: <main> carries its own
         vertical padding, and the bar's background is the panel's own colour.
       */}
-      <div data-shell-flip="" className="flex min-w-0 flex-1 flex-col p-3 ps-0 max-md:p-0">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) max-md:rounded-none max-md:border-0 max-md:shadow-none">
+      <div
+        data-shell-flip=""
+        className="flex min-w-0 flex-1 flex-col p-3 ps-0 max-md:p-0 print:p-0"
+      >
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) max-md:rounded-none max-md:border-0 max-md:shadow-none print:rounded-none print:border-0 print:shadow-none">
           <TopBarContext.Provider value={slot}>
             <header
               className={cn(
                 CONTENT_INSET,
-                'sticky top-0 z-30 flex h-[62px] shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 backdrop-blur-sm [view-transition-name:app-topbar]',
+                'sticky top-0 z-30 flex h-[62px] print:hidden shrink-0 items-center gap-3 border-b border-(--color-line) bg-(--color-surface)/95 backdrop-blur-sm [view-transition-name:app-topbar]',
               )}
             >
               <button
@@ -712,7 +728,10 @@ export function AppShell({ children }) {
             <main
               id="main-content"
               tabIndex={-1}
-              className={cn(CONTENT_INSET, 'w-full min-w-0 flex-1 py-5 focus:outline-none lg:py-6')}
+              className={cn(
+                CONTENT_INSET,
+                'w-full min-w-0 flex-1 py-5 focus:outline-none lg:py-6 print:p-0',
+              )}
             >
               {children}
             </main>
@@ -1149,7 +1168,13 @@ function UserMenu({ user, onSignOut }) {
         <button
           type="button"
           {...props}
-          aria-label={t('shell.account', { name: user.name })}
+          /*
+           * Named by what it shows, not by an aria-label over it. The label
+           * said "Account: {name}" while the button showed the name and the
+           * role, and a voice-control user who says what they see ("click
+           * Ahmed Al Hawajri") would not have reached it. On a phone, where
+           * the name is hidden, the sr-only copy below names it instead.
+           */
           className="flex items-center gap-2.5 rounded-(--radius-control) py-1 ps-1 pe-1.5 transition-colors hover:bg-(--color-surface-hover)"
         >
           <span
@@ -1164,6 +1189,8 @@ function UserMenu({ user, onSignOut }) {
             </span>
             <span className="block text-xs text-(--color-text-2)">{user.role_label}</span>
           </span>
+          <span className="sr-only sm:hidden">{user.name}</span>
+          <span className="sr-only">{t('shell.accountMenu')}</span>
           <Icon name="chevronDown" size={14} className="hidden text-(--color-muted) sm:block" />
         </button>
       )}

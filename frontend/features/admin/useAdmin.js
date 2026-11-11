@@ -56,6 +56,16 @@ export function useActivityActions() {
   return { actions: query.data?.data ?? [], ...query };
 }
 
+/** Today, this week, the people at work and the failed sign-ins. */
+export function useActivitySummary() {
+  const query = useQuery({
+    queryKey: queryKeys.activity.summary,
+    queryFn: () => admin.activitySummary(),
+  });
+
+  return { summary: query.data?.data, ...query };
+}
+
 /* -------------------------------------------------------------------------- */
 /* Users                                                                       */
 /* -------------------------------------------------------------------------- */
@@ -68,6 +78,16 @@ export function useUsers(filters) {
   });
 
   return { users: query.data?.data ?? [], meta: query.data?.meta, ...query };
+}
+
+/**
+ * The roles with their abilities and head counts. Under the users key, so
+ * every change to a user refreshes the counts beside the list.
+ */
+export function useRoles() {
+  const query = useQuery({ queryKey: queryKeys.users.roles, queryFn: () => admin.listRoles() });
+
+  return { roles: query.data?.data?.roles ?? [], summary: query.data?.data?.summary, ...query };
 }
 
 export function useUserActions() {
@@ -189,7 +209,10 @@ export function useIntegrationActions() {
         if (url) window.location.assign(url);
       },
     }),
-    completeZid: useMutation({ mutationFn: (body) => admin.completeZid(body), onSuccess: invalidate }),
+    completeZid: useMutation({
+      mutationFn: (body) => admin.completeZid(body),
+      onSuccess: invalidate,
+    }),
     disconnect: useMutation({
       mutationFn: (id) => admin.disconnectIntegration(id),
       onSuccess: invalidate,

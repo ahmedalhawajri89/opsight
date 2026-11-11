@@ -11,6 +11,7 @@ return [
         'empty' => 'The file has no rows.',
         'unreadable' => 'This file could not be read. Save it as CSV or as an Excel workbook (.xlsx) and try again.',
         'too_many_rows' => 'The file has more than :max rows. Split it into smaller files by date.',
+        'too_large' => 'This workbook unpacks to more than fifty megabytes. Save it as CSV, or split it, and try again.',
         'mapping_missing' => 'Choose which column holds :field.',
         'mapping_duplicate' => 'One column is chosen for two fields, including :field.',
         'mapping_out_of_range' => 'The column chosen for :field is not in this file.',

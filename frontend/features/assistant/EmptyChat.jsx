@@ -22,7 +22,9 @@ const STARTERS = [
 export function EmptyChat({ onAsk }) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const first = String(user?.name ?? '').trim().split(/\s+/)[0];
+  const first = String(user?.name ?? '')
+    .trim()
+    .split(/\s+/)[0];
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-10 text-center">
@@ -46,8 +48,12 @@ export function EmptyChat({ onAsk }) {
               <Icon name={icon} size={16} aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-medium text-(--color-text)">{t(`assistant.starterTitles.${key}`)}</span>
-              <span className="mt-0.5 block text-xs text-(--color-text-2)">{t(`assistant.starters.${key}`)}</span>
+              <span className="block text-sm font-medium text-(--color-text)">
+                {t(`assistant.starterTitles.${key}`)}
+              </span>
+              <span className="mt-0.5 block text-xs text-(--color-text-2)">
+                {t(`assistant.starters.${key}`)}
+              </span>
             </span>
           </button>
         ))}

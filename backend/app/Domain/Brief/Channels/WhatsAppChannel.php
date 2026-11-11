@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Brief\Channels;
 
+use App\Domain\Brief\BriefProblem;
 use App\Domain\Brief\BriefText;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
@@ -44,13 +45,13 @@ final class WhatsAppChannel implements BriefChannel
     public function send(User $user, array $brief, array $text): void
     {
         if (! $this->available()) {
-            throw new RuntimeException(__('brief.unavailable_whatsapp'));
+            throw new BriefProblem(__('brief.unavailable_whatsapp'));
         }
 
         $phone = (string) $user->whatsapp_phone;
 
         if ($phone === '') {
-            throw new RuntimeException(__('brief.no_phone'));
+            throw new BriefProblem(__('brief.no_phone'));
         }
 
         $parameters = array_map(
@@ -82,7 +83,10 @@ final class WhatsAppChannel implements BriefChannel
         if (! $response->successful()) {
             $reason = $response->json('error.message');
 
-            throw new RuntimeException(is_string($reason) && $reason !== '' ? $reason : "WhatsApp answered {$response->status()}.");
+            // Meta's own words are for the logs; the reader gets ours.
+            report(new RuntimeException(is_string($reason) && $reason !== '' ? $reason : "WhatsApp answered {$response->status()}."));
+
+            throw new BriefProblem(__('brief.whatsapp_refused'));
         }
     }
 

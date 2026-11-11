@@ -32,6 +32,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $vat_number
  * @property string|null $commercial_registration
  * @property int $week_starts_on
+ * @property string|null $cash_balance
+ * @property Carbon|null $cash_balance_as_of
  * @property list<int>|null $weekend_days
  * @property int $activity_retention_days
  * @property Carbon|null $created_at
@@ -90,6 +92,8 @@ class BusinessSetting extends Model
             'week_starts_on' => 'integer',
             'weekend_days' => 'array',
             'activity_retention_days' => 'integer',
+            'cash_balance' => 'decimal:3',
+            'cash_balance_as_of' => 'date',
         ];
     }
 

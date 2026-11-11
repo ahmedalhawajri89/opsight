@@ -240,6 +240,19 @@ it('shows today\'s brief as a preview, with the reader\'s settings', function ()
         ->assertJsonStructure(['data' => ['preview' => ['subject', 'headline', 'lines', 'actions'], 'recent']]);
 });
 
+it('sends the preview figures raw, shaped by the reader role', function (): void {
+    $staff = User::factory()->role(Role::Staff)->create();
+
+    $this->actingAs($this->owner)->getJson('/api/v1/me/brief')
+        ->assertOk()
+        ->assertJsonStructure(['data' => ['preview' => ['figures' => ['revenue', 'change', 'orders', 'gross_profit', 'month_to_date', 'receivables', 'stock', 'actions']]]]);
+
+    $this->actingAs($staff)->getJson('/api/v1/me/brief')
+        ->assertOk()
+        ->assertJsonPath('data.preview.figures.gross_profit', null)
+        ->assertJsonPath('data.preview.figures.receivables', null);
+});
+
 it('turns the brief on and stores a WhatsApp number in international form', function (): void {
     $this->actingAs($this->owner)->patchJson('/api/v1/me/preferences', [
         'morning_brief' => true,
@@ -263,4 +276,26 @@ it('sends a test brief on request, and says where it went', function (): void {
     $this->actingAs($this->owner)->postJson('/api/v1/me/brief/test')->assertStatus(202);
 
     Mail::assertSent(MorningBriefMail::class, 1);
+});
+
+it('tells the reader WhatsApp refused, not what Meta said', function (): void {
+    config(['brief.whatsapp.token' => 'wa-token', 'brief.whatsapp.phone_number_id' => '1234567890']);
+    Http::fake(['https://graph.facebook.com/*' => Http::response(['error' => ['message' => '(#131030) Recipient not in allowed list, app id 99887766']], 400)]);
+    $this->owner->forceFill(['brief_channel' => 'whatsapp', 'whatsapp_phone' => '+966501806978'])->save();
+
+    $response = $this->actingAs($this->owner)->postJson('/api/v1/me/brief/test')->assertStatus(422);
+
+    expect($response->json('message'))->toBe(__('brief.whatsapp_refused'))
+        ->and($response->json('message'))->not->toContain('99887766');
+});
+
+it('keeps technical failures out of the delivery record the reader sees', function (): void {
+    // A mail transport that does not exist: the kind of failure whose own
+    // message names configuration the reader has no use for.
+    config(['mail.default' => 'not-a-mailer-at-db-internal']);
+
+    $this->owner->forceFill(['morning_brief' => true])->save();
+    app(SendBrief::class)->daily($this->owner, briefMorning());
+
+    expect(BriefDelivery::query()->value('error'))->toBe(__('brief.failed'));
 });
