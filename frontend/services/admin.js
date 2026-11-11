@@ -25,6 +25,11 @@ export function listActivityActions() {
   return api.get('/activity/actions');
 }
 
+/** The log at a glance: today, this week, who was at work, failed sign-ins. */
+export function activitySummary() {
+  return api.get('/activity/summary');
+}
+
 export function exportActivity(params) {
   return download('/activity/export', { params, fallbackName: 'activity-log.csv' });
 }
@@ -32,6 +37,11 @@ export function exportActivity(params) {
 /* -------------------------------------------------------------------------- */
 /* Users                                                                       */
 /* -------------------------------------------------------------------------- */
+
+/** Each role, what the server lets it do, and who holds it. */
+export function listRoles() {
+  return api.get('/roles');
+}
 
 export function listUsers(params) {
   return api.get('/users', { params });
