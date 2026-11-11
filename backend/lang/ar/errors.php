@@ -31,6 +31,7 @@ return [
         'malformed' => 'يجب إرسال عوامل التصفية بالصيغة filter[key]=value.',
         'unknown' => 'عامل تصفية غير معروف: :unknown. المسموح: :allowed.',
         'unsortable' => "لا يمكن الترتيب حسب ':field'. المسموح: :allowed.",
+        'date' => "القيمة ':value' ليست تاريخًا. استخدم الصيغة سنة-شهر-يوم.",
     ],
 
     'customer' => [

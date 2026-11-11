@@ -69,7 +69,13 @@ class ForecastController extends Controller
         }
 
         $input = $request->validate([
-            'amount' => ['present', 'nullable', 'numeric', 'between:-999999999999,999999999999'],
+            /*
+             * Written out, not `numeric`: `numeric` lets "1e5", " 5" and a JSON
+             * float sent as 1.0E-7 through to the money arithmetic, which
+             * cannot read them and answered with a 500. Twelve whole digits
+             * and three places is exactly what the column holds.
+             */
+            'amount' => ['present', 'nullable', 'regex:/^-?\d{1,12}(\.\d{1,3})?$/'],
             'as_of' => ['nullable', 'date', 'before_or_equal:today'],
         ]);
 

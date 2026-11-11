@@ -195,7 +195,7 @@ final class QueryFilter
         return fn (Builder $query, string $value): Builder => $query->where(
             $column,
             '>=',
-            CarbonImmutable::parse($value)->startOfDay(),
+            self::date($value)->startOfDay(),
         );
     }
 
@@ -211,7 +211,30 @@ final class QueryFilter
         return fn (Builder $query, string $value): Builder => $query->where(
             $column,
             '<',
-            CarbonImmutable::parse($value)->addDay()->startOfDay(),
+            self::date($value)->addDay()->startOfDay(),
         );
+    }
+
+    /**
+     * A calendar date, yyyy-mm-dd, or a 422 saying so.
+     *
+     * `CarbonImmutable::parse()` throws on "not-a-date", and an exception in
+     * a filter surfaced as a 500 on every list with a date filter. It also
+     * accepts "next tuesday" and "+1 week", which a date filter has no
+     * business understanding. A strict format answers both.
+     */
+    private static function date(string $value): CarbonImmutable
+    {
+        $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1
+            ? CarbonImmutable::createFromFormat('!Y-m-d', $value)
+            : false;
+
+        if ($date === false || $date === null || $date->format('Y-m-d') !== $value) {
+            throw ValidationException::withMessages([
+                'filter' => __('errors.filter.date', ['value' => $value]),
+            ]);
+        }
+
+        return $date;
     }
 }
