@@ -14,7 +14,7 @@ import {
 import { CHART_TYPE, ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { formatMoney, formatMoneyCompact } from '@/lib/format';
+import { formatMoney, formatMoneyCompact, formatPercent } from '@/lib/format';
 import { describePeriod, formatBucketLabel, formatMonthLabel } from '@/lib/periods';
 
 /**
@@ -102,8 +102,14 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
       loading={loading}
       emptyDescription={t('charts.noData')}
       footnote={partial ? t('dashboard.cashFlow.partialFootnote') : undefined}
-      actions={<Legend />}
-      height={180}
+      legend={
+        <Summary
+          revenue={sumAmounts(rows.map((row) => row.revenue))}
+          expenses={sumAmounts(rows.map((row) => row.expenses))}
+          money={money}
+        />
+      }
+      height={220}
       className={className}
       style={style}
     >
@@ -183,8 +189,8 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
               key={key}
               dataKey={key}
               fill={colour}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={26}
+              radius={[6, 6, 0, 0]}
+              maxBarSize={22}
               isAnimationActive={!reducedMotion}
               animationDuration={700}
             >
@@ -199,26 +205,67 @@ export function CashFlowChart({ data, currency, decimals, loading, className, st
   );
 }
 
-function Legend() {
+/**
+ * The period's two totals, each beside the colour its bars wear.
+ *
+ * It replaces a bare legend: a dot that says "revenue" is a key; a dot that
+ * says "revenue, 312,400.500" is a key and the answer. The ratio says how
+ * much of each unit of revenue the running costs took.
+ *
+ * Deliberately NOT "revenue minus expenses". These are operating expenses,
+ * and the difference ignores the cost of the goods sold — it would be
+ * labelled profit and be nothing of the kind. Net profit lives on the
+ * summary tiles above, where it is computed with the cost in it.
+ */
+function Summary({ revenue, expenses, money }) {
   const { t } = useI18n();
+  const ratio = Number(revenue) > 0 ? Number(expenses) / Number(revenue) : null;
 
   return (
-    <ul className="flex items-center gap-4 text-xs text-(--color-text-2)">
+    <div className="flex flex-wrap items-end gap-x-8 gap-y-3 pb-2">
       {[
-        [REVENUE, t('dashboard.trend.revenue')],
-        [EXPENSES, t('dashboard.trend.expenses')],
-      ].map(([colour, label]) => (
-        <li key={label} className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="size-2.5 rounded-full"
-            style={{ background: colour }}
-          />
-          {label}
-        </li>
+        [REVENUE, t('dashboard.trend.revenue'), revenue],
+        [EXPENSES, t('dashboard.trend.expenses'), expenses],
+      ].map(([colour, label, value]) => (
+        <div key={label}>
+          <p className="flex items-center gap-1.5 text-xs text-(--color-text-2)">
+            <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: colour }} />
+            {label}
+          </p>
+          <p className="tabular mt-1 text-lg font-semibold text-(--color-text)">{money(value)}</p>
+        </div>
       ))}
-    </ul>
+      {ratio !== null ? (
+        <p className="mb-1 rounded-full bg-(--color-surface-selected) px-2.5 py-1 text-xs text-(--color-text-2)">
+          {t('dashboard.cashFlow.ratio', { share: formatPercent(ratio, { decimals: 0 }) })}
+        </p>
+      ) : null}
+    </div>
   );
+}
+
+/**
+ * Sums decimal strings exactly. The amounts arrive as strings with up to
+ * four places; adding them as floats would print "312400.49999999994".
+ */
+export function sumAmounts(values) {
+  const SCALE = 10_000n;
+  let total = 0n;
+
+  for (const raw of values) {
+    if (raw === null || raw === undefined || raw === '') continue;
+
+    const [whole, fraction = ''] = String(raw).replace('-', '').split('.');
+    const units = BigInt(whole || '0') * SCALE + BigInt((fraction + '0000').slice(0, 4));
+
+    total += String(raw).startsWith('-') ? -units : units;
+  }
+
+  const negative = total < 0n;
+  const abs = negative ? -total : total;
+  const fraction = String(abs % SCALE).padStart(4, '0');
+
+  return `${negative ? '-' : ''}${abs / SCALE}.${fraction}`;
 }
 
 function TooltipRow({ colour, opacity, label, value }) {

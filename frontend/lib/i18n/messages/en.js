@@ -803,7 +803,7 @@ const en = {
       trend: 'Trend',
     },
     quickStats: {
-      title: 'Quick Stats',
+      title: 'Quick stats',
       products: 'Total Products',
       customers: 'Total Customers',
       inventoryValue: 'Total Inventory Value',
@@ -863,7 +863,8 @@ const en = {
       other: 'Other',
     },
     cashFlow: {
-      title: 'Business Performance',
+      title: 'Business performance',
+      ratio: 'Expenses were {share} of revenue',
       description: {
         one: '{currency} · the last month',
         other: '{currency} · the last {count} months',

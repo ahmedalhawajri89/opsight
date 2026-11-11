@@ -239,95 +239,83 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
 /* -------------------------------------------------------------------------- */
 
 const QUICK_STATS = [
-  { key: 'products', label: 'dashboard.quickStats.products', icon: 'cube', format: 'number' },
-  {
-    key: 'customers',
-    label: 'dashboard.quickStats.customers',
-    icon: 'customers',
-    format: 'number',
-  },
-  {
-    key: 'inventory_value',
-    label: 'dashboard.quickStats.inventoryValue',
-    icon: 'wallet',
-    format: 'money',
-  },
-  {
-    key: 'receivables',
-    label: 'dashboard.quickStats.receivables',
-    icon: 'coins',
-    format: 'money',
-  },
-  {
-    key: 'active_users',
-    label: 'dashboard.quickStats.activeUsers',
-    icon: 'userCircle',
-    format: 'number',
-  },
+  { key: 'products', label: 'dashboard.quickStats.products', icon: 'cube', format: 'number', href: '/products', tone: 'brand' },
+  { key: 'customers', label: 'dashboard.quickStats.customers', icon: 'customers', format: 'number', href: '/customers', tone: 'info' },
+  { key: 'inventory_value', label: 'dashboard.quickStats.inventoryValue', icon: 'wallet', format: 'money', href: '/inventory', tone: 'success' },
+  { key: 'receivables', label: 'dashboard.quickStats.receivables', icon: 'coins', format: 'money', href: '/orders', tone: 'warning' },
+  { key: 'active_users', label: 'dashboard.quickStats.activeUsers', icon: 'userCircle', format: 'number', href: '/settings/users', tone: 'brand' },
 ];
 
+/** A soft square behind each tile's icon. Colour sorts the tiles; it never carries a value. */
+const TILE_TONES = {
+  brand: 'bg-(--color-brand-soft) text-(--color-brand-text)',
+  info: 'bg-(--color-info-soft) text-(--color-info)',
+  success: 'bg-(--color-success-soft) text-(--color-success)',
+  warning: 'bg-(--color-warning-soft) text-(--color-warning)',
+};
+
+/**
+ * The business's standing counts, as tiles.
+ *
+ * IT WAS A LIST OF ROWS, label and figure on one line, and the figures —
+ * the reason anyone looks — were the same size as the labels beside them.
+ * Now each is a tile: what it is in small type, the figure large, and a
+ * change badge only where a change honestly exists (growth of a count;
+ * a position like receivables has no history to compare with).
+ *
+ * EACH TILE IS A WAY IN. A count of products is followed, more often than
+ * not, by wanting to see the products, so the whole tile links to the
+ * screen that lists them.
+ *
+ * The exact amount is the tile's tooltip: the face shows the compact one
+ * ("152.8K"), because five full three-decimal amounts do not fit a column.
+ */
 export function QuickStatsCard({ stats, currency, loading, className, style }) {
   const { t } = useI18n();
   const shown = QUICK_STATS.filter((stat) => stats && stat.key in stats);
 
   return (
-    <Card
-      title={t('dashboard.quickStats.title')}
-      icon="pulse"
-      padded={false}
-      className={className}
-      style={style}
-    >
+    <Card title={t('dashboard.quickStats.title')} icon="pulse" className={className} style={style}>
       {loading ? (
         <RowsSkeleton />
       ) : (
-        <ul className="px-5 pb-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-2">
           {shown.map((stat) => {
             const entry = stats[stat.key];
             const value =
-              stat.format === 'money'
-                ? formatMoneyCompact(entry.value, { currency })
-                : formatNumber(entry.value);
-            const exact =
-              stat.format === 'money' ? formatMoney(entry.value, { currency }) : undefined;
+              stat.format === 'money' ? formatMoneyCompact(entry.value, { currency }) : formatNumber(entry.value);
+            const exact = stat.format === 'money' ? formatMoney(entry.value, { currency }) : undefined;
 
             return (
-              <li key={stat.key} className="flex items-center gap-2.5 py-2.5">
-                <Icon name={stat.icon} size={16} className="shrink-0 text-(--color-text-2)" />
-                {/*
-                  It wraps rather than truncating. Keeping every row one line
-                  tall is worth something, and it is worth less than the
-                  words: in the two-column layout this panel is about 290px
-                  wide, which left the label 120px, and three of the five
-                  came out as "Total Inventory Val…", "Owed by customer…"
-                  and "Total Custome…". A label that has to be guessed at is
-                  not a label.
-                */}
-                <span className="min-w-0 flex-1 text-xs leading-snug text-(--color-text-2)">
-                  {t(stat.label)}
-                </span>
-                <bdi
+              <li key={stat.key} className="min-w-0">
+                <Link
+                  href={stat.href}
                   title={exact}
-                  dir={figureDirection(value)}
-                  className="tabular text-sm font-semibold whitespace-nowrap text-(--color-text)"
+                  className="group flex h-full flex-col gap-3 rounded-xl border border-(--border-subtle) p-3.5 transition-colors hover:border-(--color-brand) hover:bg-(--color-surface-selected)"
                 >
-                  {value}
-                </bdi>
-                {/*
-                  A change only where one honestly exists — growth of a count.
-
-                  `min-w-12`, not `w-12`. A fixed 48px box kept the column of
-                  changes aligned and clipped anything that did not fit, which
-                  turned out to be most of them: "19.3%" with its arrow was cut
-                  off at every width measured, from 1920 down to 360. The
-                  minimum keeps the alignment it was there for; the figure is
-                  no longer the thing that gives way.
-                */}
-                {entry.change !== null && (
-                  <span className="min-w-12 shrink-0 text-end whitespace-nowrap">
-                    <Trend change={entry.change} />
+                  <span className="flex items-center justify-between gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={cn('flex size-8 items-center justify-center rounded-lg', TILE_TONES[stat.tone])}
+                    >
+                      <Icon name={stat.icon} size={16} />
+                    </span>
+                    {entry.change !== null && entry.change !== undefined ? (
+                      <span className="rounded-full bg-(--color-surface-selected) px-1.5 py-0.5">
+                        <Trend change={entry.change} />
+                      </span>
+                    ) : null}
                   </span>
-                )}
+                  <span className="min-w-0">
+                    <bdi
+                      dir={figureDirection(value)}
+                      className="tabular block truncate text-xl font-semibold text-(--color-text)"
+                    >
+                      {value}
+                    </bdi>
+                    <span className="mt-0.5 block text-xs leading-snug text-(--color-text-2)">{t(stat.label)}</span>
+                  </span>
+                </Link>
               </li>
             );
           })}

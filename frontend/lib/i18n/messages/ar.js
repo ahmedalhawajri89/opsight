@@ -867,6 +867,7 @@ const ar = {
     },
     cashFlow: {
       title: 'أداء النشاط التجاري',
+      ratio: 'المصروفات = {share} من الإيرادات',
       description: {
         zero: '{currency}',
         one: '{currency} · الشهر الأخير',
