@@ -2,16 +2,21 @@
 
 import { AskBaydar } from '@/features/assistant/AskBaydar';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { PageHeader } from '@/components/layout/PageHeader';
 
-/** Ask Baydar (ADR-038). Permission is the API's: analytics.view. */
+/**
+ * Ask Baydar (ADR-038). Permission is the API's: analytics.view.
+ *
+ * No visible page header: a chat earns the whole height, and the greeting
+ * in the empty state already says what this is. The heading stays for
+ * screen readers, which navigate a page by its headings.
+ */
 export default function AssistantPage() {
   const { t } = useI18n();
 
   return (
-    <div className="space-y-5">
-      <PageHeader title={t('assistant.title')} description={t('assistant.description')} />
+    <>
+      <h1 className="sr-only">{t('assistant.title')}</h1>
       <AskBaydar />
-    </div>
+    </>
   );
 }

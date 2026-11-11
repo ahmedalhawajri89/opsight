@@ -300,3 +300,15 @@ it('names the products that are low, not only how many there are', function (): 
     expect($outcome['error'])->toBeFalse()
         ->and(collect($outcome['result']['low_or_out'])->pluck('sku')->all())->toContain('WB-1')->not->toContain('PL-1');
 });
+
+it('lets someone delete their own conversation, and no one else\'s', function (): void {
+    script(says('One.'));
+    $id = ask('Mine')->json('data.conversation_id');
+    $colleague = User::factory()->role(Role::Owner)->create();
+
+    $this->actingAs($colleague)->deleteJson("/api/v1/assistant/conversations/{$id}")->assertNotFound();
+    $this->actingAs($this->owner)->deleteJson("/api/v1/assistant/conversations/{$id}")->assertNoContent();
+
+    expect(AssistantConversation::query()->count())->toBe(0)
+        ->and(AssistantMessage::query()->count())->toBe(0);
+});

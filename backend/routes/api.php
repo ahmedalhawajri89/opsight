@@ -254,6 +254,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('assistant/conversations', [AssistantController::class, 'index']);
         Route::get('assistant/conversations/{conversation}', [AssistantController::class, 'show'])
             ->whereNumber('conversation');
+        Route::delete('assistant/conversations/{conversation}', [AssistantController::class, 'destroy'])
+            ->whereNumber('conversation');
         // Each question is several model calls; the monthly ceiling caps the
         // spend, this caps a script.
         Route::post('assistant/messages', [AssistantController::class, 'store'])

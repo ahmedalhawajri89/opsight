@@ -19,3 +19,7 @@ export function ask({ message, conversationId }) {
     ...(conversationId ? { conversation_id: conversationId } : {}),
   });
 }
+
+export function deleteConversation(id) {
+  return api.delete(`/assistant/conversations/${id}`);
+}

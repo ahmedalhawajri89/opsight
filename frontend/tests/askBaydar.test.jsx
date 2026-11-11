@@ -10,6 +10,11 @@ vi.mock('@/services/assistant', () => ({
   listConversations: vi.fn(),
   getConversation: vi.fn(),
   ask: vi.fn(),
+  deleteConversation: vi.fn(),
+}));
+
+vi.mock('@/features/auth/AuthProvider', () => ({
+  useAuth: () => ({ user: { name: 'Ahmed Al Hawajri' } }),
 }));
 
 /*
@@ -90,7 +95,7 @@ describe('asking', () => {
     const user = userEvent.setup();
     renderChat();
 
-    await user.click(await screen.findByRole('button', { name: 'Is anything about to run out?' }));
+    await user.click(await screen.findByRole('button', { name: /Is anything about to run out\?/ }));
 
     expect(vi.mocked(assistant.ask).mock.calls[0][0].message).toBe('Is anything about to run out?');
   });
@@ -138,5 +143,40 @@ describe('the text of an answer', () => {
 
     expect(container.querySelector('img')).toBeNull();
     expect(container).toHaveTextContent('<img src=x onerror=alert(1)>');
+  });
+});
+
+describe('the redesigned chat', () => {
+  it('greets the reader by first name', async () => {
+    renderChat();
+
+    expect(await screen.findByText('Hello, Ahmed. What would you like to know?')).toBeInTheDocument();
+  });
+
+  it('links every source to the same view and period on the analytics screen', async () => {
+    const { sourceHref } = await import('@/features/assistant/ChatMessage');
+
+    expect(sourceHref({ tool: 'get_summary', from: '2026-10-01', to: '2026-10-31', compare: 'previous_hijri_year' }))
+      .toBe('/analytics?preset=custom&from=2026-10-01&to=2026-10-31&comparison=previous_hijri_year');
+    expect(sourceHref({ tool: 'get_breakdown', from: '2026-08-14', to: '2026-11-11', dimension: 'product', metric: 'gross_profit' }))
+      .toContain('dimension=product');
+    expect(sourceHref({ tool: 'get_stock_risks', within_days: 14 })).toBe('/inventory');
+  });
+
+  it('groups earlier conversations by when they last moved', async () => {
+    const { group } = await import('@/features/assistant/ConversationList');
+    const now = new Date('2026-11-11T12:00:00');
+
+    const groups = group(
+      [
+        { id: 1, updated_at: '2026-11-11T09:00:00' },
+        { id: 2, updated_at: '2026-11-10T20:00:00' },
+        { id: 3, updated_at: '2026-11-07T10:00:00' },
+        { id: 4, updated_at: '2026-09-01T10:00:00' },
+      ],
+      now,
+    );
+
+    expect(groups.map((g) => g.key)).toEqual(['today', 'yesterday', 'week', 'earlier']);
   });
 });

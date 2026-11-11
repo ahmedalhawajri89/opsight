@@ -61,6 +61,20 @@ class AssistantController extends Controller
         ]]);
     }
 
+    /**
+     * Deleting one of one's own conversations, and every turn in it (the
+     * messages cascade). Its tokens leave this month's count with it; that
+     * is accepted, since the ceiling exists to stop runaway use, not to bill.
+     */
+    public function destroy(Request $request, int $conversation): JsonResponse
+    {
+        $this->authorizeAssistant($request);
+
+        $this->own($request, $conversation)->delete();
+
+        return response()->json(null, 204);
+    }
+
     public function store(Request $request, AskBaydar $ask): JsonResponse
     {
         $this->authorizeAssistant($request);
