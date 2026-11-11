@@ -70,7 +70,10 @@ export function StockForecastView() {
       header: t('forecasts.stock.columns.product'),
       cell: (row) => (
         <span className="block min-w-0">
-          <span className="block truncate font-medium text-(--color-text)" style={{ unicodeBidi: 'plaintext' }}>
+          <span
+            className="block truncate font-medium text-(--color-text)"
+            style={{ unicodeBidi: 'plaintext' }}
+          >
             {row.name}
           </span>
           <span className="block text-xs text-(--color-muted)">{row.sku}</span>
@@ -118,7 +121,13 @@ export function StockForecastView() {
       key: 'order_by',
       header: t('forecasts.stock.columns.orderBy'),
       width: '10rem',
-      cell: (row) => <Badge tone={BADGE_TONES[row.status]}>{row.status === 'ok' ? formatDate(row.order_by) : t(`forecasts.stock.status.${row.status}`)}</Badge>,
+      cell: (row) => (
+        <Badge tone={BADGE_TONES[row.status]}>
+          {row.status === 'ok'
+            ? formatDate(row.order_by)
+            : t(`forecasts.stock.status.${row.status}`)}
+        </Badge>
+      ),
     },
     {
       key: 'suggested_quantity',
@@ -127,9 +136,13 @@ export function StockForecastView() {
       width: '8rem',
       cell: (row) => (
         <span>
-          <span className="block font-semibold text-(--color-text)">{formatNumber(row.suggested_quantity)}</span>
+          <span className="block font-semibold text-(--color-text)">
+            {formatNumber(row.suggested_quantity)}
+          </span>
           {withCost && row.suggested_cost !== null ? (
-            <span className="block text-xs text-(--color-muted)">{formatMoney(row.suggested_cost)}</span>
+            <span className="block text-xs text-(--color-muted)">
+              {formatMoney(row.suggested_cost)}
+            </span>
           ) : null}
         </span>
       ),
@@ -138,7 +151,11 @@ export function StockForecastView() {
       key: 'confidence',
       header: t('forecasts.stock.columns.confidence'),
       width: '7rem',
-      cell: (row) => <Badge tone={CONFIDENCE_TONES[row.confidence]}>{t(`forecasts.stock.confidence.${row.confidence}`)}</Badge>,
+      cell: (row) => (
+        <Badge tone={CONFIDENCE_TONES[row.confidence]}>
+          {t(`forecasts.stock.confidence.${row.confidence}`)}
+        </Badge>
+      ),
     },
   ];
 
@@ -156,17 +173,26 @@ export function StockForecastView() {
               onClick={() => setStatus(active ? null : key)}
               className={cn(
                 'flex items-center gap-3 rounded-(--radius-card) border bg-(--color-surface) p-4 text-start transition-colors',
-                active ? 'border-(--color-brand) ring-1 ring-(--color-brand)' : 'border-(--color-line) hover:border-(--color-brand)',
+                active
+                  ? 'border-(--color-brand) ring-1 ring-(--color-brand)'
+                  : 'border-(--color-line) hover:border-(--color-brand)',
               )}
             >
-              <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', CARD_TONES[tone])}>
+              <span
+                className={cn(
+                  'flex size-10 shrink-0 items-center justify-center rounded-xl',
+                  CARD_TONES[tone],
+                )}
+              >
                 <Icon name={icon} size={18} aria-hidden="true" />
               </span>
               <span>
                 <span className="tabular block text-2xl font-semibold text-(--color-text)">
                   {data ? formatNumber(data.counts[key]) : '—'}
                 </span>
-                <span className="block text-xs text-(--color-text-2)">{t(`forecasts.stock.status.${key}`)}</span>
+                <span className="block text-xs text-(--color-text-2)">
+                  {t(`forecasts.stock.status.${key}`)}
+                </span>
               </span>
             </button>
           );
@@ -183,9 +209,13 @@ export function StockForecastView() {
               <p className="text-sm font-semibold text-(--color-text)">
                 {data?.accuracy === null || data?.accuracy === undefined
                   ? t('forecasts.stock.accuracyUnknown')
-                  : t('forecasts.stock.accuracy', { accuracy: formatPercent(data.accuracy, { decimals: 0 }) })}
+                  : t('forecasts.stock.accuracy', {
+                      accuracy: formatPercent(data.accuracy, { decimals: 0 }),
+                    })}
               </p>
-              <p className="measure mt-1 text-xs leading-relaxed text-(--color-text-2)">{t('forecasts.stock.method')}</p>
+              <p className="measure mt-1 text-xs leading-relaxed text-(--color-text-2)">
+                {t('forecasts.stock.method')}
+              </p>
             </div>
           </div>
         </Card>
@@ -193,20 +223,30 @@ export function StockForecastView() {
         <Card>
           <div className="flex flex-wrap items-end gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-(--color-text-2)">{t('forecasts.stock.leadTime')}</span>
+              <span className="text-xs font-medium text-(--color-text-2)">
+                {t('forecasts.stock.leadTime')}
+              </span>
               <Select
                 value={leadTime}
                 onChange={(event) => setLeadTime(Number(event.target.value))}
-                options={[3, 7, 14, 21, 30, 45].map((days) => ({ value: days, label: t('forecasts.stock.days', { days: formatNumber(days) }) }))}
+                options={[3, 7, 14, 21, 30, 45].map((days) => ({
+                  value: days,
+                  label: t('forecasts.stock.days', { days: formatNumber(days) }),
+                }))}
                 className="w-32"
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-(--color-text-2)">{t('forecasts.stock.cover')}</span>
+              <span className="text-xs font-medium text-(--color-text-2)">
+                {t('forecasts.stock.cover')}
+              </span>
               <Select
                 value={coverDays}
                 onChange={(event) => setCoverDays(Number(event.target.value))}
-                options={[14, 30, 60, 90].map((days) => ({ value: days, label: t('forecasts.stock.days', { days: formatNumber(days) }) }))}
+                options={[14, 30, 60, 90].map((days) => ({
+                  value: days,
+                  label: t('forecasts.stock.days', { days: formatNumber(days) }),
+                }))}
                 className="w-32"
               />
             </label>
@@ -225,7 +265,12 @@ export function StockForecastView() {
             rows={items}
             getRowId={(row) => row.product_id}
             loading={query.isLoading}
-            empty={<EmptyState title={t('forecasts.stock.empty.title')} description={t('forecasts.stock.empty.description')} />}
+            empty={
+              <EmptyState
+                title={t('forecasts.stock.empty.title')}
+                description={t('forecasts.stock.empty.description')}
+              />
+            }
           />
         </Card>
       )}

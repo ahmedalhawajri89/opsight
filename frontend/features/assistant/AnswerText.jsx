@@ -21,7 +21,10 @@ export function AnswerText({ text }) {
           const List = block.type;
 
           return (
-            <List key={i} className={`space-y-1 ps-5 ${block.type === 'ul' ? 'list-disc' : 'list-decimal'}`}>
+            <List
+              key={i}
+              className={`space-y-1 ps-5 ${block.type === 'ul' ? 'list-disc' : 'list-decimal'}`}
+            >
               {block.items.map((item, j) => (
                 <li key={j}>{inline(item)}</li>
               ))}

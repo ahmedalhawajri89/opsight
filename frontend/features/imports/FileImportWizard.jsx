@@ -51,8 +51,14 @@ export function FileImportWizard() {
   const write = useMutation({
     mutationFn: admin.runImport,
     onSuccess: () => {
-      [queryKeys.orders.all, queryKeys.products.all, queryKeys.customers.all, queryKeys.dashboard.all, queryKeys.analytics.all, ...AUDITED_KEYS]
-        .forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+      [
+        queryKeys.orders.all,
+        queryKeys.products.all,
+        queryKeys.customers.all,
+        queryKeys.dashboard.all,
+        queryKeys.analytics.all,
+        ...AUDITED_KEYS,
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
     },
   });
 
@@ -89,7 +95,9 @@ export function FileImportWizard() {
   }
 
   const fields = data ? Object.keys(data.fields) : [];
-  const missingRequired = fields.some((field) => data.fields[field] && (mapping?.[field] ?? null) === null);
+  const missingRequired = fields.some(
+    (field) => data.fields[field] && (mapping?.[field] ?? null) === null,
+  );
   const clean = checked && checked.error_count === 0 && checked.records > 0;
   const problem = preview.error ?? check.error ?? write.error;
 
@@ -101,7 +109,10 @@ export function FileImportWizard() {
         <p role="status" className="flex items-start gap-2 text-sm text-(--color-success)">
           <Icon name="check" size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
           <span>
-            {t(`imports.done.${kind}`, { count: formatNumber(result.records), lines: formatNumber(result.lines) })}
+            {t(`imports.done.${kind}`, {
+              count: formatNumber(result.records),
+              lines: formatNumber(result.lines),
+            })}
           </span>
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -171,11 +182,16 @@ export function FileImportWizard() {
           )}
         </Field>
 
-        {preview.isPending ? <p className="mt-3 text-xs text-(--color-muted)">{t('common.loading')}</p> : null}
+        {preview.isPending ? (
+          <p className="mt-3 text-xs text-(--color-muted)">{t('common.loading')}</p>
+        ) : null}
       </Card>
 
       {problem ? (
-        <p role="alert" className="measure rounded-(--radius-control) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)">
+        <p
+          role="alert"
+          className="measure rounded-(--radius-control) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)"
+        >
           {problem.message}
         </p>
       ) : null}
@@ -193,7 +209,11 @@ export function FileImportWizard() {
               const sample = index === null || index === undefined ? null : data.sample[0]?.[index];
 
               return (
-                <Field key={field} label={t(`imports.fields.${field}`)} required={data.fields[field]}>
+                <Field
+                  key={field}
+                  label={t(`imports.fields.${field}`)}
+                  required={data.fields[field]}
+                >
                   {(props) => (
                     <>
                       <Select
@@ -202,7 +222,10 @@ export function FileImportWizard() {
                         onChange={(event) => remap(field, event.target.value)}
                         invalid={data.fields[field] && (index ?? null) === null}
                         placeholder={t('imports.notInFile')}
-                        options={data.headers.map((header, i) => ({ value: i, label: header || `#${i + 1}` }))}
+                        options={data.headers.map((header, i) => ({
+                          value: i,
+                          label: header || `#${i + 1}`,
+                        }))}
                         className="w-full"
                       />
                       {/*
@@ -256,11 +279,19 @@ function CheckResult({ kind, result }) {
     return (
       <Card>
         <p role="status" className="flex items-start gap-2 text-sm text-(--color-text)">
-          <Icon name="check" size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-(--color-success)" />
+          <Icon
+            name="check"
+            size={16}
+            aria-hidden="true"
+            className="mt-0.5 shrink-0 text-(--color-success)"
+          />
           <span>
             {result.records === 0
               ? t('imports.nothing')
-              : t(`imports.ready.${kind}`, { count: formatNumber(result.records), lines: formatNumber(result.lines) })}
+              : t(`imports.ready.${kind}`, {
+                  count: formatNumber(result.records),
+                  lines: formatNumber(result.lines),
+                })}
           </span>
         </p>
       </Card>
@@ -277,15 +308,26 @@ function CheckResult({ kind, result }) {
       <table className="mt-3 w-full text-start text-sm">
         <thead>
           <tr className="border-b border-(--border-subtle) text-xs text-(--color-muted)">
-            <th scope="col" className="w-20 py-1.5 text-start font-medium">{t('imports.row')}</th>
-            <th scope="col" className="py-1.5 text-start font-medium">{t('imports.problem')}</th>
+            <th scope="col" className="w-20 py-1.5 text-start font-medium">
+              {t('imports.row')}
+            </th>
+            <th scope="col" className="py-1.5 text-start font-medium">
+              {t('imports.problem')}
+            </th>
           </tr>
         </thead>
         <tbody>
           {result.errors.map((error, i) => (
-            <tr key={`${error.row}-${error.field}-${i}`} className="border-b border-(--border-subtle) last:border-0">
-              <td className="py-1.5 align-top tabular-nums text-(--color-text-2)">{formatNumber(error.row)}</td>
-              <td className="py-1.5 text-(--color-text)" dir="auto">{error.message}</td>
+            <tr
+              key={`${error.row}-${error.field}-${i}`}
+              className="border-b border-(--border-subtle) last:border-0"
+            >
+              <td className="py-1.5 align-top tabular-nums text-(--color-text-2)">
+                {formatNumber(error.row)}
+              </td>
+              <td className="py-1.5 text-(--color-text)" dir="auto">
+                {error.message}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -232,7 +232,11 @@ function Summary({ revenue, expenses, money }) {
       ].map(([colour, label, value]) => (
         <div key={label}>
           <p className="flex items-center gap-1.5 text-xs text-(--color-text-2)">
-            <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: colour }} />
+            <span
+              aria-hidden="true"
+              className="size-2.5 rounded-full"
+              style={{ background: colour }}
+            />
             {label}
           </p>
           <p className="tabular mt-1 text-lg font-semibold text-(--color-text)">{money(value)}</p>

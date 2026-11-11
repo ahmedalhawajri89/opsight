@@ -38,7 +38,6 @@ function flatten(node, prefix = '', out = {}) {
   return out;
 }
 
-
 describe('the brand', () => {
   it('gives each language the wordmark it should draw', () => {
     /*
@@ -87,7 +86,10 @@ describe('the brand', () => {
      * operating system keeps for ever, and no later language change can
      * rename it. Both must read the config rather than repeat it.
      */
-    for (const file of [['app', 'manifest.js'], ['app', 'layout.jsx']]) {
+    for (const file of [
+      ['app', 'manifest.js'],
+      ['app', 'layout.jsx'],
+    ]) {
       const source = read(...file);
 
       expect(source).toContain('brand.config');

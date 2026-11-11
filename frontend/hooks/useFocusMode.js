@@ -88,7 +88,6 @@ function subscribeToFullscreen(onChange) {
  *   render; wrap it in useCallback.
  */
 export function useFocusMode(onBeforeChange) {
-
   /*
    * Focus is off on the server and on the first client render. Reading
    * localStorage during render would make the server's HTML disagree with

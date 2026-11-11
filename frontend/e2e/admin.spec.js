@@ -35,7 +35,9 @@ test.describe('the activity log, as an owner', () => {
     await page.goto('/activity?action=auth.login');
 
     // A day heading and at least one entry under it.
-    await expect(page.getByRole('list', { name: 'Activity log' }).getByRole('listitem').first()).toBeVisible();
+    await expect(
+      page.getByRole('list', { name: 'Activity log' }).getByRole('listitem').first(),
+    ).toBeVisible();
   });
 
   test('pages by cursor, offering no page numbers', async ({ page }) => {

@@ -72,7 +72,9 @@ export function AssistantMessage({ message }) {
 
         {message.sources?.length ? (
           <div className="mt-3">
-            <p className="mb-1.5 text-xs font-medium text-(--color-muted)">{t('assistant.sourcesLabel')}</p>
+            <p className="mb-1.5 text-xs font-medium text-(--color-muted)">
+              {t('assistant.sourcesLabel')}
+            </p>
             <ul className="flex flex-wrap gap-1.5" aria-label={t('assistant.sourcesLabel')}>
               {message.sources.map((source, i) => (
                 <li key={`${source.tool}-${i}`}>
@@ -80,7 +82,11 @@ export function AssistantMessage({ message }) {
                     href={sourceHref(source)}
                     className="inline-flex items-center gap-1.5 rounded-full border border-(--border) bg-(--color-surface) px-2.5 py-1 text-xs text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:text-(--color-brand-text)"
                   >
-                    <Icon name={source.tool === 'get_stock_risks' ? 'shelves' : 'chart'} size={12} aria-hidden="true" />
+                    <Icon
+                      name={source.tool === 'get_stock_risks' ? 'shelves' : 'chart'}
+                      size={12}
+                      aria-hidden="true"
+                    />
                     <span>{t(`assistant.sources.${source.tool}`)}</span>
                     {source.from ? (
                       <span className="text-(--color-muted)">

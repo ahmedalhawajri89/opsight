@@ -104,17 +104,7 @@ export async function exportElementToPdf(element, { filename }) {
     const context = slice.getContext('2d');
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, slice.width, slice.height);
-    context.drawImage(
-      canvas,
-      0,
-      top,
-      canvas.width,
-      slice.height,
-      0,
-      0,
-      canvas.width,
-      slice.height,
-    );
+    context.drawImage(canvas, 0, top, canvas.width, slice.height, 0, 0, canvas.width, slice.height);
 
     pdf.addImage(
       slice.toDataURL('image/jpeg', 0.92),

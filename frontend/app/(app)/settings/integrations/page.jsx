@@ -92,7 +92,9 @@ export default function IntegrationsPage() {
         */}
         {zidError ? (
           <p role="status" className="measure mt-3 text-xs text-(--color-danger)">
-            {zidError.status === 503 ? t('integrations.zid.unavailable') : t('integrations.zid.failed')}
+            {zidError.status === 503
+              ? t('integrations.zid.unavailable')
+              : t('integrations.zid.failed')}
           </p>
         ) : null}
 
@@ -109,7 +111,9 @@ export default function IntegrationsPage() {
       </Card>
 
       <Card>
-        <h3 className="text-sm font-semibold text-(--color-text)">{t('integrations.salla.title')}</h3>
+        <h3 className="text-sm font-semibold text-(--color-text)">
+          {t('integrations.salla.title')}
+        </h3>
 
         {/*
           Numbered, because the order matters and one of the steps happens in
@@ -181,8 +185,12 @@ export default function IntegrationsPage() {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-(--color-text)">{t('integrations.file.title')}</h3>
-            <p className="measure mt-1 text-sm text-(--color-text-2)">{t('integrations.file.description')}</p>
+            <h3 className="text-sm font-semibold text-(--color-text)">
+              {t('integrations.file.title')}
+            </h3>
+            <p className="measure mt-1 text-sm text-(--color-text-2)">
+              {t('integrations.file.description')}
+            </p>
           </div>
           <Link
             href="/settings/integrations/import"

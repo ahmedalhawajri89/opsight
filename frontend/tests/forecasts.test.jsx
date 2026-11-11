@@ -38,7 +38,18 @@ const RESPONSE = {
     cover_days: 30,
     accuracy: 0.5,
     counts: { out: 1, order_now: 0, soon: 0, ok: 1 },
-    items: [item(), item({ product_id: 2, name: 'Headset', sku: 'HS-1', stock: 18, status: 'ok', order_by: '2026-11-30', confidence: 'medium' })],
+    items: [
+      item(),
+      item({
+        product_id: 2,
+        name: 'Headset',
+        sku: 'HS-1',
+        stock: 18,
+        status: 'ok',
+        order_by: '2026-11-30',
+        confidence: 'medium',
+      }),
+    ],
   },
 };
 
@@ -60,7 +71,9 @@ describe('the stock forecast', () => {
   it('says how far to trust it, in a sentence', async () => {
     renderView();
 
-    expect(await screen.findByText('Over the last four weeks, this forecast was 50% accurate.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Over the last four weeks, this forecast was 50% accurate.'),
+    ).toBeInTheDocument();
   });
 
   it('lists the most urgent first, with what to order and what it costs', async () => {

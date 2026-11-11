@@ -383,7 +383,8 @@ const en = {
       action: 'Connect Zid',
       unavailable: 'Connecting Zid is not set up on this installation yet.',
       connecting: 'Connecting your Zid store…',
-      connected: 'Your Zid store is connected. Its history is being imported and will appear in your figures shortly.',
+      connected:
+        'Your Zid store is connected. Its history is being imported and will appear in your figures shortly.',
       declined: 'The connection was cancelled in Zid. Nothing was connected.',
       failed: 'The store could not be connected.',
       back: 'Back to connected stores',
@@ -464,7 +465,8 @@ const en = {
     history: 'Earlier conversations',
     reading: 'Reading your figures…',
     unavailable: 'Ask Baydar is not set up on this installation yet.',
-    disclaimer: 'Answers are written by AI from your figures. Check anything you will act on against the figures themselves.',
+    disclaimer:
+      'Answers are written by AI from your figures. Check anything you will act on against the figures themselves.',
     sourcesLabel: 'Where these figures came from',
     greeting: 'Hello, {name}. What would you like to know?',
     greetingAnon: 'What would you like to know?',
@@ -479,7 +481,8 @@ const en = {
     delete: 'Delete “{title}”',
     confirmDelete: {
       title: 'Delete this conversation?',
-      consequence: 'The questions and answers in it are removed for good. Your figures are not affected.',
+      consequence:
+        'The questions and answers in it are removed for good. Your figures are not affected.',
       action: 'Delete',
     },
     keys: 'Enter to send, Shift+Enter for a new line',
@@ -501,7 +504,8 @@ const en = {
 
   forecasts: {
     title: 'Forecasts',
-    description: 'What will run out, whether the money lasts the quarter, and what to do before either happens — from your own figures.',
+    description:
+      'What will run out, whether the money lasts the quarter, and what to do before either happens — from your own figures.',
     tabs: { stock: 'Stock', cash: 'Cash' },
     cash: {
       verdict: {
@@ -527,7 +531,14 @@ const en = {
       chartTitle: 'The next thirteen weeks',
       chartBalance: 'Money in and out each week, and the balance it leaves.',
       chartNoBalance: 'Money in and out each week, and the running net from zero.',
-      columns: { week: 'Week', in: 'Money in', out: 'Money out', net: 'Net', balance: 'Balance', runningNet: 'Running net' },
+      columns: {
+        week: 'Week',
+        in: 'Money in',
+        out: 'Money out',
+        net: 'Net',
+        balance: 'Balance',
+        runningNet: 'Running net',
+      },
       overdue:
         'Customers owe {amount} that is past the day they usually pay. It is not in the forecast: money that is already late may not come. If it does, it is extra.',
       assumptions: {
@@ -539,14 +550,20 @@ const en = {
         stockOrdersValue: '{count} orders, {amount}',
         recurring: 'Recurring expenses',
         monthlyOn: 'Monthly, around day {day}',
-        noRecurring: 'No expense has appeared in most of the last six months yet, so none is treated as recurring.',
+        noRecurring:
+          'No expense has appeared in most of the last six months yet, so none is treated as recurring.',
       },
       notIncluded:
         'Not included: VAT settlements, loan repayments, owner drawings, and anything else Baydar does not record. Other expenses are taken at their weekly average over the last twelve weeks.',
     },
     stock: {
       title: 'Stock forecast',
-      status: { out: 'Out of stock', order_now: 'Order now', soon: 'Order this week', ok: 'Covered' },
+      status: {
+        out: 'Out of stock',
+        order_now: 'Order now',
+        soon: 'Order this week',
+        ok: 'Covered',
+      },
       accuracy: 'Over the last four weeks, this forecast was {accuracy} accurate.',
       accuracyUnknown: 'Not enough sales yet to test how accurate the forecast is.',
       method:
@@ -580,12 +597,14 @@ const en = {
       title: 'Financing report',
       description:
         'Your business’s financial picture in one document, to hand a bank or a lending programme: a year of profit, what you hold and are owed, and whether the cash lasts.',
-      howTo: 'Download PDF saves the file at once. Print opens the print dialog, where “Save as PDF” keeps the text selectable. Each time a report is drawn up, the activity log records who did it.',
+      howTo:
+        'Download PDF saves the file at once. Print opens the print dialog, where “Save as PDF” keeps the text selectable. Each time a report is drawn up, the activity log records who did it.',
       amountsIn: 'Amounts in {currency}',
       download: 'Download PDF',
       print: 'Print',
       preparing: 'Preparing the file…',
-      downloadFailed: 'The file could not be prepared. Try again, or use Print and choose “Save as PDF”.',
+      downloadFailed:
+        'The file could not be prepared. Try again, or use Print and choose “Save as PDF”.',
       kicker: 'Financial report',
       period: 'Twelve complete months, {from} to {to}',
       cr: 'Commercial registration',
@@ -605,7 +624,8 @@ const en = {
       },
       pnl: {
         title: 'Profit and loss, month by month',
-        description: 'Revenue after discounts and refunds; the cost of the goods sold, as recorded when each was sold; and the running costs of the business.',
+        description:
+          'Revenue after discounts and refunds; the cost of the goods sold, as recorded when each was sold; and the running costs of the business.',
         chart: 'Net revenue by month',
         month: 'Month',
         net_revenue: 'Net revenue',
@@ -628,18 +648,24 @@ const en = {
       },
       cash: {
         title: 'Cash over the next thirteen weeks',
-        fromBalance: 'Money in and out each week from the business’s own payment and spending history, starting from the stated cash balance.',
-        fromZero: 'Money in and out each week from the business’s own payment and spending history. No cash balance was stated, so the last column is the running net from zero.',
+        fromBalance:
+          'Money in and out each week from the business’s own payment and spending history, starting from the stated cash balance.',
+        fromZero:
+          'Money in and out each week from the business’s own payment and spending history. No cash balance was stated, so the last column is the running net from zero.',
         lowestNet: 'The running net is at its lowest, {amount}, in the week of {date}.',
         overdue: 'Overdue from customers, not counted',
       },
       notes: {
         title: 'Notes',
-        source: 'Prepared by Baydar from the business’s own records of sales, payments, refunds, stock and expenses. Figures are the same as those on its dashboard.',
+        source:
+          'Prepared by Baydar from the business’s own records of sales, payments, refunds, stock and expenses. Figures are the same as those on its dashboard.',
         unaudited: 'These figures have not been audited.',
-        zeroCost: '{count} items sold in the period carry no recorded cost, so gross and net profit are higher than they would be with every cost recorded.',
-        noBalance: 'The cash balance was not stated, so the forecast shows the shape of the coming weeks, not the level of cash.',
-        notIncluded: 'The cash forecast does not include VAT settlements, loan repayments or owner drawings. Money customers owe past their usual day is not counted.',
+        zeroCost:
+          '{count} items sold in the period carry no recorded cost, so gross and net profit are higher than they would be with every cost recorded.',
+        noBalance:
+          'The cash balance was not stated, so the forecast shows the shape of the coming weeks, not the level of cash.',
+        notIncluded:
+          'The cash forecast does not include VAT settlements, loan repayments or owner drawings. Money customers owe past their usual day is not counted.',
       },
       footer: 'Prepared with Baydar',
     },
@@ -647,7 +673,8 @@ const en = {
 
   brief: {
     title: 'Morning brief',
-    description: 'Yesterday’s sales, the month so far, what is owed and what is about to run out — every morning, without opening Baydar.',
+    description:
+      'Yesterday’s sales, the month so far, what is owed and what is about to run out — every morning, without opening Baydar.',
     receive: 'Send me the morning brief',
     when: 'Every morning at {time}, in your business’s time.',
     channel: 'Where to send it',
@@ -698,7 +725,8 @@ const en = {
     },
     file: 'File',
     fileHint: 'CSV or Excel (.xlsx), up to ten megabytes. The first row must be the column names.',
-    rowsFound: '{count} rows found. Baydar has guessed the columns below; change any that are wrong.',
+    rowsFound:
+      '{count} rows found. Baydar has guessed the columns below; change any that are wrong.',
     notInFile: '— Not in this file —',
     example: 'First row: {value}',
     chooseRequired: 'Choose a column for every field marked required.',
@@ -706,7 +734,8 @@ const en = {
     import: 'Import',
 
     ready: {
-      orders: 'Every row reads cleanly: {count} orders with {lines} lines. Nothing has been written yet.',
+      orders:
+        'Every row reads cleanly: {count} orders with {lines} lines. Nothing has been written yet.',
       products: 'Every row reads cleanly: {count} products. Nothing has been written yet.',
     },
     nothing: 'The file reads cleanly but holds nothing to import.',
@@ -717,7 +746,8 @@ const en = {
     problem: 'What to fix',
 
     done: {
-      orders: '{count} orders imported, with {lines} lines. Uploading the same file again later updates them rather than adding copies.',
+      orders:
+        '{count} orders imported, with {lines} lines. Uploading the same file again later updates them rather than adding copies.',
       products: '{count} products imported.',
     },
     see: { orders: 'See the orders', products: 'See the products' },
@@ -1638,8 +1668,10 @@ const en = {
       '{count} active accounts have not signed in for {days} days, or never have. An account nobody uses is still a way in for whoever holds its password.',
     showUnused: 'Show them',
     roleSummary: {
-      owner: 'Everything, including people, settings, connected stores and erasing a customer’s data.',
-      manager: 'Runs the business day to day, costs and profit included. No say over people or settings.',
+      owner:
+        'Everything, including people, settings, connected stores and erasing a customer’s data.',
+      manager:
+        'Runs the business day to day, costs and profit included. No say over people or settings.',
       analyst: 'Reads every figure, cost included, and exports it. Changes nothing.',
       staff: 'Takes orders and payments and looks after customers. Never sees cost or profit.',
     },

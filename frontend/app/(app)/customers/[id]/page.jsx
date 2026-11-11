@@ -232,7 +232,9 @@ export default function CustomerDetailPage({ params }) {
         consequence={t('customers.detail.eraseConsequence')}
         confirmLabel={t('customers.detail.eraseSubmit')}
         loading={erase.isPending}
-        confirmDisabled={typedName.trim() !== (customer.name ?? '').trim() || reason.trim().length < 3}
+        confirmDisabled={
+          typedName.trim() !== (customer.name ?? '').trim() || reason.trim().length < 3
+        }
         onConfirm={async () => {
           setFailure(null);
 

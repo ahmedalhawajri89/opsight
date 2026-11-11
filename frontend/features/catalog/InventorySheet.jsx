@@ -44,7 +44,11 @@ export function InventorySheet({ item, onClose, onAdjust }) {
           <DetailHero
             tone={tone}
             label={t('inventory.columns.onHand')}
-            value={unit ? `${formatNumber(item.stock_on_hand)} ${unit}` : formatNumber(item.stock_on_hand)}
+            value={
+              unit
+                ? `${formatNumber(item.stock_on_hand)} ${unit}`
+                : formatNumber(item.stock_on_hand)
+            }
             badge={<Badge tone={badgeTone}>{t(`inventory.sheet.status.${status}`)}</Badge>}
             note={t('inventory.sheet.reorderNote', { level: formatNumber(item.threshold) })}
           />
@@ -77,7 +81,9 @@ export function InventorySheet({ item, onClose, onAdjust }) {
                 {
                   label: t('inventory.columns.lastMovement'),
                   value: item.last_movement_at ? (
-                    <span title={formatDateTime(item.last_movement_at)}>{formatRelative(item.last_movement_at)}</span>
+                    <span title={formatDateTime(item.last_movement_at)}>
+                      {formatRelative(item.last_movement_at)}
+                    </span>
                   ) : null,
                 },
               ]}
@@ -119,9 +125,13 @@ export function InventorySheet({ item, onClose, onAdjust }) {
                         </span>
                       </div>
                       <div className="mt-0.5 flex items-baseline justify-between gap-3 text-xs text-(--color-muted)">
-                        <span title={formatDateTime(movement.occurred_at)}>{formatRelative(movement.occurred_at)}</span>
+                        <span title={formatDateTime(movement.occurred_at)}>
+                          {formatRelative(movement.occurred_at)}
+                        </span>
                         <span className="tabular">
-                          {t('inventory.sheet.balance', { balance: formatNumber(movement.balance_after) })}
+                          {t('inventory.sheet.balance', {
+                            balance: formatNumber(movement.balance_after),
+                          })}
                         </span>
                       </div>
                       {movement.note ? (

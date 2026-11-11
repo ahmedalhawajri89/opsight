@@ -178,9 +178,7 @@ test.describe('as the second business', () => {
      * A lower bound rather than an exact count, because the customer form test
      * above adds one customer to this business on every run.
      */
-    await expect
-      .poll(() => customer.locator('option').count())
-      .toBeGreaterThan(2);
+    await expect.poll(() => customer.locator('option').count()).toBeGreaterThan(2);
 
     await search.fill('Mishref');
     await expect(customer.locator('option')).toHaveCount(2);

@@ -65,7 +65,9 @@ export function WaterfallChart({
       header: title,
       numeric: true,
       cell: (row) =>
-        row.value === null || row.value === undefined ? '—' : money(row.kind === 'down' ? -Number(row.value) : row.value),
+        row.value === null || row.value === undefined
+          ? '—'
+          : money(row.kind === 'down' ? -Number(row.value) : row.value),
     },
   ];
 
@@ -127,7 +129,13 @@ function Equation({ steps, margins, money }) {
             >
               <p className="truncate text-xs text-(--color-text-2)">
                 {/* Said in words too: the operator glyph is decorative. */}
-                <span className="sr-only">{step.kind === 'down' ? t('charts.minus') : index > 0 ? t('charts.equals') : ''} </span>
+                <span className="sr-only">
+                  {step.kind === 'down'
+                    ? t('charts.minus')
+                    : index > 0
+                      ? t('charts.equals')
+                      : ''}{' '}
+                </span>
                 {step.label}
               </p>
               <p
@@ -170,7 +178,9 @@ function Split({ revenue, valueOf, labelOf }) {
 
   return (
     <div>
-      <p className="mb-2 text-xs font-medium text-(--color-text-2)">{t('charts.whereRevenueWent')}</p>
+      <p className="mb-2 text-xs font-medium text-(--color-text-2)">
+        {t('charts.whereRevenueWent')}
+      </p>
 
       <div className="relative">
         <div className="flex h-3 overflow-hidden rounded-full bg-(--color-surface-selected)">
@@ -196,9 +206,15 @@ function Split({ revenue, valueOf, labelOf }) {
       <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs">
         {SPLIT.map(({ key, colour }) => (
           <li key={key} className="flex items-center gap-1.5 text-(--color-text-2)">
-            <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: colour }} />
+            <span
+              aria-hidden="true"
+              className="size-2.5 rounded-full"
+              style={{ background: colour }}
+            />
             {labelOf(key)}
-            <span className="tabular font-semibold text-(--color-text)">{formatPercent(parts[key] / revenue)}</span>
+            <span className="tabular font-semibold text-(--color-text)">
+              {formatPercent(parts[key] / revenue)}
+            </span>
           </li>
         ))}
         {overrun ? (

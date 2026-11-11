@@ -16,7 +16,7 @@ import { ENGLISH, readOriginals, savePreferences } from './support/preferences';
  * declares the dependency too even though it signs in for itself. Restoring
  * Arabic halfway through would break the specs still asserting English.
  */
-teardown('restore each account\'s language', async ({ browser }) => {
+teardown("restore each account's language", async ({ browser }) => {
   const originals = readOriginals();
 
   for (const [role] of ACCOUNTS) {

@@ -239,11 +239,46 @@ export function TopSellingCard({ rows = [], currency, decimals, loading, classNa
 /* -------------------------------------------------------------------------- */
 
 const QUICK_STATS = [
-  { key: 'products', label: 'dashboard.quickStats.products', icon: 'cube', format: 'number', href: '/products', tone: 'brand' },
-  { key: 'customers', label: 'dashboard.quickStats.customers', icon: 'customers', format: 'number', href: '/customers', tone: 'info' },
-  { key: 'inventory_value', label: 'dashboard.quickStats.inventoryValue', icon: 'wallet', format: 'money', href: '/inventory', tone: 'success' },
-  { key: 'receivables', label: 'dashboard.quickStats.receivables', icon: 'coins', format: 'money', href: '/orders', tone: 'warning' },
-  { key: 'active_users', label: 'dashboard.quickStats.activeUsers', icon: 'userCircle', format: 'number', href: '/settings/users', tone: 'brand' },
+  {
+    key: 'products',
+    label: 'dashboard.quickStats.products',
+    icon: 'cube',
+    format: 'number',
+    href: '/products',
+    tone: 'brand',
+  },
+  {
+    key: 'customers',
+    label: 'dashboard.quickStats.customers',
+    icon: 'customers',
+    format: 'number',
+    href: '/customers',
+    tone: 'info',
+  },
+  {
+    key: 'inventory_value',
+    label: 'dashboard.quickStats.inventoryValue',
+    icon: 'wallet',
+    format: 'money',
+    href: '/inventory',
+    tone: 'success',
+  },
+  {
+    key: 'receivables',
+    label: 'dashboard.quickStats.receivables',
+    icon: 'coins',
+    format: 'money',
+    href: '/orders',
+    tone: 'warning',
+  },
+  {
+    key: 'active_users',
+    label: 'dashboard.quickStats.activeUsers',
+    icon: 'userCircle',
+    format: 'number',
+    href: '/settings/users',
+    tone: 'brand',
+  },
 ];
 
 /** A soft square behind each tile's icon. Colour sorts the tiles; it never carries a value. */
@@ -283,8 +318,11 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
           {shown.map((stat) => {
             const entry = stats[stat.key];
             const value =
-              stat.format === 'money' ? formatMoneyCompact(entry.value, { currency }) : formatNumber(entry.value);
-            const exact = stat.format === 'money' ? formatMoney(entry.value, { currency }) : undefined;
+              stat.format === 'money'
+                ? formatMoneyCompact(entry.value, { currency })
+                : formatNumber(entry.value);
+            const exact =
+              stat.format === 'money' ? formatMoney(entry.value, { currency }) : undefined;
 
             return (
               <li key={stat.key} className="min-w-0">
@@ -296,7 +334,10 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
                   <span className="flex items-center justify-between gap-2">
                     <span
                       aria-hidden="true"
-                      className={cn('flex size-8 items-center justify-center rounded-lg', TILE_TONES[stat.tone])}
+                      className={cn(
+                        'flex size-8 items-center justify-center rounded-lg',
+                        TILE_TONES[stat.tone],
+                      )}
                     >
                       <Icon name={stat.icon} size={16} />
                     </span>
@@ -313,7 +354,9 @@ export function QuickStatsCard({ stats, currency, loading, className, style }) {
                     >
                       {value}
                     </bdi>
-                    <span className="mt-0.5 block text-xs leading-snug text-(--color-text-2)">{t(stat.label)}</span>
+                    <span className="mt-0.5 block text-xs leading-snug text-(--color-text-2)">
+                      {t(stat.label)}
+                    </span>
                   </span>
                 </Link>
               </li>

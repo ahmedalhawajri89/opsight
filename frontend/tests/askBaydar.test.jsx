@@ -26,7 +26,9 @@ vi.mock('@/features/auth/AuthProvider', () => ({
  */
 
 function renderChat() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 
   return render(
     <QueryClientProvider client={client}>
@@ -48,7 +50,9 @@ const ANSWER = {
 };
 
 beforeEach(() => {
-  vi.mocked(assistant.listConversations).mockReset().mockResolvedValue({ data: [], meta: { available: true } });
+  vi.mocked(assistant.listConversations)
+    .mockReset()
+    .mockResolvedValue({ data: [], meta: { available: true } });
   vi.mocked(assistant.ask).mockReset();
 });
 
@@ -78,14 +82,20 @@ describe('asking', () => {
     await screen.findByText(/Net revenue in March/);
     await user.type(box, 'Why?{Enter}');
 
-    expect(vi.mocked(assistant.ask).mock.calls[1][0]).toEqual({ message: 'Why?', conversationId: 7 });
+    expect(vi.mocked(assistant.ask).mock.calls[1][0]).toEqual({
+      message: 'Why?',
+      conversationId: 7,
+    });
   });
 
   it('keeps Shift+Enter as a new line rather than sending', async () => {
     const user = userEvent.setup();
     renderChat();
 
-    await user.type(await screen.findByLabelText('Ask about your business…'), 'line one{Shift>}{Enter}{/Shift}line two');
+    await user.type(
+      await screen.findByLabelText('Ask about your business…'),
+      'line one{Shift>}{Enter}{/Shift}line two',
+    );
 
     expect(assistant.ask).not.toHaveBeenCalled();
   });
@@ -100,9 +110,9 @@ describe('asking', () => {
     expect(vi.mocked(assistant.ask).mock.calls[0][0].message).toBe('Is anything about to run out?');
   });
 
-  it('says what went wrong, in the server\'s words', async () => {
+  it("says what went wrong, in the server's words", async () => {
     vi.mocked(assistant.ask).mockRejectedValue(
-      Object.assign(new Error('This business has used this month\'s questions.'), { status: 429 }),
+      Object.assign(new Error("This business has used this month's questions."), { status: 429 }),
     );
     const user = userEvent.setup();
     renderChat();
@@ -115,7 +125,10 @@ describe('asking', () => {
 
 describe('before it is set up', () => {
   it('says so instead of offering a box that cannot answer', async () => {
-    vi.mocked(assistant.listConversations).mockResolvedValue({ data: [], meta: { available: false } });
+    vi.mocked(assistant.listConversations).mockResolvedValue({
+      data: [],
+      meta: { available: false },
+    });
     renderChat();
 
     expect(await screen.findByText(/not set up on this installation/)).toBeInTheDocument();
@@ -127,7 +140,11 @@ describe('the text of an answer', () => {
   it('turns **bold** and lists into elements, not asterisks', async () => {
     const { AnswerText } = await import('@/features/assistant/AnswerText');
     const { container } = render(
-      <AnswerText text={'Sales **fell 22.5%** in October.\n\n- Orders: 64\n- Refunds: 4.7%\n\n1. Check refunds'} />,
+      <AnswerText
+        text={
+          'Sales **fell 22.5%** in October.\n\n- Orders: 64\n- Refunds: 4.7%\n\n1. Check refunds'
+        }
+      />,
     );
 
     expect(container.querySelector('strong')).toHaveTextContent('fell 22.5%');
@@ -150,16 +167,31 @@ describe('the redesigned chat', () => {
   it('greets the reader by first name', async () => {
     renderChat();
 
-    expect(await screen.findByText('Hello, Ahmed. What would you like to know?')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Hello, Ahmed. What would you like to know?'),
+    ).toBeInTheDocument();
   });
 
   it('links every source to the same view and period on the analytics screen', async () => {
     const { sourceHref } = await import('@/features/assistant/ChatMessage');
 
-    expect(sourceHref({ tool: 'get_summary', from: '2026-10-01', to: '2026-10-31', compare: 'previous_hijri_year' }))
-      .toBe('/analytics?preset=custom&from=2026-10-01&to=2026-10-31&comparison=previous_hijri_year');
-    expect(sourceHref({ tool: 'get_breakdown', from: '2026-08-14', to: '2026-11-11', dimension: 'product', metric: 'gross_profit' }))
-      .toContain('dimension=product');
+    expect(
+      sourceHref({
+        tool: 'get_summary',
+        from: '2026-10-01',
+        to: '2026-10-31',
+        compare: 'previous_hijri_year',
+      }),
+    ).toBe('/analytics?preset=custom&from=2026-10-01&to=2026-10-31&comparison=previous_hijri_year');
+    expect(
+      sourceHref({
+        tool: 'get_breakdown',
+        from: '2026-08-14',
+        to: '2026-11-11',
+        dimension: 'product',
+        metric: 'gross_profit',
+      }),
+    ).toContain('dimension=product');
     expect(sourceHref({ tool: 'get_stock_risks', within_days: 14 })).toBe('/inventory');
   });
 
