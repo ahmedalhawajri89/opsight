@@ -649,6 +649,9 @@ const en = {
     name: 'Name',
     share: 'Share',
     rankEmpty: 'Nothing was sold in this period, so there is nothing to rank.',
+    topShare: 'The top {count} make up {share} of the total.',
+    leaderFootnote:
+      'Each bar is measured against the leader. Everything outside the top rows is summed under “Other”, so the shares still add up to the whole.',
     otherFootnote:
       'Everything outside the top rows is grouped as Other, so the shares still sum to the whole.',
     shareOfPeriod: '{share} of the period',

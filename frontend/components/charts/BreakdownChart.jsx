@@ -1,46 +1,33 @@
 'use client';
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-
-import { CHART_TYPE, ChartFrame } from './ChartFrame';
+import { ChartFrame } from './ChartFrame';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import {
-  formatMoney,
-  formatMoneyCompact,
-  formatNumber,
-  formatPercent,
-  getMoneyDefaults,
-} from '@/lib/format';
+import { formatMoney, formatNumber, formatPercent, getMoneyDefaults } from '@/lib/format';
 
 /**
- * A metric grouped by a dimension, drawn as a horizontal bar ranking.
+ * A metric grouped by a dimension, as a ranked list (a leaderboard).
  *
- * Horizontal rather than vertical because the labels are product and customer
- * names: rotated vertical labels are unreadable at any useful density.
+ * IT USED TO BE A BAR CHART, and the owner looking at it named what was
+ * wrong. Three things, each a consequence of drawing a ranking as an axis:
  *
- * Three rules:
- *  - Bars start at zero. A truncated baseline makes a 5% difference look like
- *    a 50% one, which is the classic way a bar chart lies.
- *  - The "Other" row the API supplies is drawn in a neutral tone and kept, so
- *    the visible shares still sum to the whole.
- *  - EVERY BAR CARRIES ITS OWN FIGURE at the tip. The share was in the
- *    tooltip and in the table view, and on the chart a reader had to measure
- *    a length against an axis — which is exactly the work this screen exists
- *    to save them. It matters most here: "Other" aggregates thirty products
- *    and comes to two and a half times the largest single one, so the ten
- *    the chart is ranking are compressed into the first part of the width
- *    and are hard to tell apart by length alone. The label does not depend
- *    on the scale.
+ *  - "Other" aggregates everything past the top ten and was often the
+ *    longest bar — 37% against a leader of 11% — so it set the scale, and
+ *    the ten rows the chart existed to rank were squeezed into a third of
+ *    the width where their lengths could not be told apart.
+ *  - Product names ran onto two lines inside a fixed 140px label column,
+ *    and a name mixing Arabic and Latin ("لابتوب ١٥ إنش Core i7 32GB") was
+ *    reordered by the bidirectional algorithm into "32GBبذاكرة".
+ *  - Each bar carried its share but never its amount, which lived only in
+ *    a tooltip.
+ *
+ * So now: one row per item, rank, the whole name on one line, the amount
+ * and the share as text, and a thin bar measured against THE LEADER rather
+ * than against "Other". The bar answers "how close is this to the top?",
+ * which is the question a ranking asks; the share answers "how much of the
+ * whole?", in words. "Other" sits under a rule as a summary line with no
+ * bar, because it is an aggregate, not a competitor.
+ *
+ * Bars still start at zero, so a row twice as long is twice as much.
  */
 export function BreakdownChart({
   title,
@@ -52,11 +39,9 @@ export function BreakdownChart({
   loading = false,
   error = null,
   onRetry,
-  height = 320,
   className,
 }) {
   const { t, dir } = useI18n();
-  const rtl = dir === 'rtl';
 
   const formatValue = (value) =>
     format === 'money' ? formatMoney(value, { currency, decimals }) : formatNumber(value);
@@ -73,7 +58,10 @@ export function BreakdownChart({
     },
   ];
 
-  const data = rows.map((row) => ({ ...row, numeric: Number(row.value) }));
+  const ranked = rows.filter((row) => !row.is_other);
+  const other = rows.find((row) => row.is_other);
+  const leader = Math.max(0, ...ranked.map((row) => Number(row.value) || 0));
+  const topShare = ranked.reduce((sum, row) => sum + (Number(row.share) || 0), 0);
 
   return (
     <ChartFrame
@@ -84,113 +72,81 @@ export function BreakdownChart({
       loading={loading}
       error={error}
       onRetry={onRetry}
-      height={height}
+      height="auto"
       className={className}
       emptyDescription={t('charts.rankEmpty')}
-      footnote={rows.some((row) => row.is_other) ? t('charts.otherFootnote') : undefined}
+      footnote={other ? t('charts.leaderFootnote') : undefined}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={
-            rtl
-              ? { top: 4, right: 16, bottom: 0, left: 68 }
-              : { top: 4, right: 68, bottom: 0, left: 8 }
-          }
-        >
-          <CartesianGrid horizontal={false} stroke="var(--border)" />
+      <div dir={dir}>
+        {ranked.length > 0 && other ? (
+          <p className="mb-3 text-xs text-(--color-text-2)">
+            {t('charts.topShare', { count: formatNumber(ranked.length), share: formatPercent(topShare) })}
+          </p>
+        ) : null}
 
-          {/* Baseline at zero, always. */}
-          {/* Bars grow away from the reading start: from the right in Arabic. */}
-          <XAxis
-            type="number"
-            reversed={rtl}
-            domain={[0, 'auto']}
-            tickFormatter={(value) =>
-              format === 'money' ? formatMoneyCompact(value, { currency }) : formatNumber(value)
-            }
-            tick={CHART_TYPE.tick}
-            tickLine={false}
-            axisLine={{ stroke: 'var(--border)' }}
-          />
-
-          <YAxis
-            type="category"
-            orientation={rtl ? 'right' : 'left'}
-            dataKey="label"
-            tick={CHART_TYPE.tick}
-            tickLine={false}
-            axisLine={false}
-            width={140}
-          />
-
-          <Tooltip
-            cursor={{ fill: 'var(--surface-hover)' }}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-
-              const row = payload[0].payload;
-
-              return (
-                <div
-                  dir={dir}
-                  className="rounded-(--radius-control) border border-(--color-line) bg-(--color-surface) px-2.5 py-2 text-sm shadow-(--shadow-overlay)"
-                >
-                  <p className="font-medium text-(--color-text)">{row.label}</p>
-                  <p className="tabular text-(--color-text)">{formatValue(row.value)}</p>
-                  <p className="tabular text-(--color-text-2)">
-                    {t('charts.shareOfPeriod', { share: formatPercent(row.share) })}
-                  </p>
-                </div>
-              );
-            }}
-          />
-
-          <Bar dataKey="numeric" isAnimationActive={false} radius={[0, 2, 2, 0]}>
-            {data.map((row) => (
-              <Cell
-                key={row.key}
-                // "Other" is deliberately neutral: it is an aggregate, not a
-                // competitor in the ranking.
-                fill={row.is_other ? 'var(--chart-6)' : 'var(--chart-1)'}
-              />
-            ))}
-
-            {/*
-              OUTSIDE the bar, never inside it. The shortest bars here are a
-              few pixels wide, and a label placed inside one is either
-              clipped or printed over a mark it no longer fits in.
-
-              The share, not the amount: it is short enough to never collide
-              with the next row's label, it needs no currency, and it is the
-              comparison the ranking is actually for. The exact amount is on
-              the bar's own tooltip and in the table view behind the frame's
-              toggle — this is the figure that has to be readable without
-              either.
-
-              `var(--text-2)`, not the bar's colour: text never wears the
-              data colour, or a reader starts reading the label as a series.
-
-              `position="right"` in BOTH directions. Recharts reads it
-              against the VALUE axis, not the screen, and the Arabic chart
-              reverses that axis — so `left` put every label back at the
-              baseline, printed over the product names beside it. The margin
-              on the BarChart is the part that flips, because that one is
-              pixels.
-            */}
-            <LabelList
-              dataKey="share"
-              position="right"
-              offset={8}
-              formatter={(share) => formatPercent(share)}
-              fill={CHART_TYPE.label.fill}
-              fontSize={CHART_TYPE.label.fontSize}
-              className="tabular"
+        <ol className="space-y-1">
+          {ranked.map((row, index) => (
+            <RankRow
+              key={row.key}
+              rank={index + 1}
+              label={row.label}
+              value={formatValue(row.value)}
+              share={formatPercent(row.share)}
+              width={leader > 0 ? (Number(row.value) / leader) * 100 : 0}
             />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+          ))}
+        </ol>
+
+        {other ? (
+          <div className="mt-2 flex items-center gap-3 border-t border-(--border-subtle) px-2 pt-3 text-sm">
+            <span aria-hidden="true" className="w-6 shrink-0" />
+            <span className="min-w-0 flex-1 truncate text-(--color-text-2)">{other.label}</span>
+            <span className="tabular shrink-0 text-(--color-text-2)">{formatValue(other.value)}</span>
+            <span className="tabular w-14 shrink-0 text-end text-(--color-muted)">{formatPercent(other.share)}</span>
+          </div>
+        ) : null}
+      </div>
     </ChartFrame>
+  );
+}
+
+function RankRow({ rank, label, value, share, width }) {
+  const top = rank <= 3;
+
+  return (
+    <li className="group flex items-center gap-3 rounded-(--radius-control) px-2 py-2 transition-colors hover:bg-(--color-surface-selected)">
+      <span
+        className={`tabular flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+          top ? 'bg-(--color-brand-soft) text-(--color-brand-text)' : 'text-(--color-muted)'
+        }`}
+      >
+        {formatNumber(rank)}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        {/*
+          `unicode-bidi: plaintext` gives the name its OWN direction from its
+          first strong character, so "لابتوب ١٥ إنش Core i7 32GB" stays in
+          the order it was typed instead of being rearranged by the page's.
+          One line, the rest in the tooltip: a ranking is scanned, not read.
+        */}
+        <span
+          title={label}
+          style={{ unicodeBidi: 'plaintext' }}
+          className="block truncate text-sm text-(--color-text)"
+        >
+          {label}
+        </span>
+        <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-(--color-surface-selected)">
+          <span
+            className="block h-full rounded-full bg-(--chart-1) motion-safe:transition-[width] motion-safe:duration-500"
+            style={{ width: `${Math.max(width, 1.5)}%` }}
+          />
+        </span>
+      </span>
+
+      <span className="tabular shrink-0 text-sm font-medium text-(--color-text)">{value}</span>
+      <span className="tabular w-14 shrink-0 text-end text-xs text-(--color-text-2)">{share}</span>
+    </li>
   );
 }

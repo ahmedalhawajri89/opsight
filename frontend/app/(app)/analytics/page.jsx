@@ -317,7 +317,6 @@ export default function AnalyticsPage() {
         loading={breakdown.isLoading}
         error={breakdown.isError ? breakdown.error : null}
         onRetry={breakdown.refetch}
-        height={380}
       />
 
       {/*
