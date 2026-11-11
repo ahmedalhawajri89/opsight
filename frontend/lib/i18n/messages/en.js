@@ -39,6 +39,7 @@ const en = {
 
   shell: {
     account: 'Account: {name}',
+    newOrder: 'New order',
     accountMenu: 'account menu',
     profile: 'Profile',
     shortcuts: {
@@ -1856,6 +1857,27 @@ const en = {
     notes: 'Notes',
     notesPlaceholder: 'Anything worth recording about this order…',
     start: 'Start draft',
+    startHint: 'The draft is saved at once, so nothing is lost if you step away.',
+    steps: {
+      label: 'Order progress',
+      details: 'Customer and notes',
+      items: 'Lines',
+      confirm: 'Confirm',
+    },
+    summary: {
+      title: 'This order',
+      reference: 'Reference',
+      lines: 'Lines',
+      units: 'Units',
+      totalAtConfirm:
+        'The total is worked out when you confirm, from the catalogue prices at that moment, so a price changed meanwhile is the one that counts.',
+    },
+    how: {
+      title: 'How an order works',
+      draft: 'Starting saves a draft. It counts in no figure until it is confirmed.',
+      prices: 'Each line takes its price from the catalogue; nothing is typed in by hand.',
+      stock: 'Confirming moves the stock and puts the sale in your figures.',
+    },
     addItemTitle: 'Add an item',
     chooseProduct: 'Choose a product',
     showingFirst: 'Showing the first {shown} of {total} — search to reach the rest.',
