@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Integrations\WebhookProviders;
 use App\Jobs\ProcessWebhookReceipt;
+use App\Models\ActivityLog;
 use App\Models\Business;
 use App\Models\Integration;
 use App\Models\WebhookReceipt;
@@ -288,4 +289,30 @@ it('refuses to act on a receipt that is not the business it was queued for', fun
 
     expect(FakeWebhookProvider::$handled)->toBeEmpty()
         ->and($receipt->fresh()->error)->toContain('does not belong to the business');
+});
+
+it('keeps the evidence of a rejected delivery, not its body, and records a resend once', function (): void {
+    Queue::fake();
+
+    deliver(delivery(), signature: 'deadbeef')->assertStatus(401);
+    // The same rejected body again: answered the same way, not with a 500.
+    deliver(delivery(), signature: 'deadbeef')->assertStatus(401);
+
+    $receipt = WebhookReceipt::query()->sole();
+
+    expect($receipt->payload)->toHaveKeys(['bytes', 'sha256', 'ip'])
+        ->and($receipt->payload)->not->toHaveKey('id')
+        ->and(ActivityLog::query()->where('action', 'webhook.rejected')->count())->toBe(1);
+});
+
+it('sweeps rejected deliveries after a month, and keeps verified ones', function (): void {
+    Queue::fake();
+
+    deliver(delivery(), signature: 'deadbeef')->assertStatus(401);
+    deliver(delivery())->assertStatus(202);
+    WebhookReceipt::query()->update(['created_at' => now()->subDays(WebhookReceipt::UNVERIFIED_DAYS + 1)]);
+
+    $this->artisan('model:prune', ['--model' => [WebhookReceipt::class]])->assertSuccessful();
+
+    expect(WebhookReceipt::query()->pluck('signature_ok')->all())->toBe([true]);
 });

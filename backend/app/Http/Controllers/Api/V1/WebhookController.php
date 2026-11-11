@@ -74,19 +74,40 @@ class WebhookController extends Controller
              * what lets an operator tell "the secret rotated last Tuesday"
              * from "someone is probing us".
              */
-            WebhookReceipt::query()->create([
-                'business_id' => null,
-                'provider' => $provider,
-                'event' => 'unverified',
-                'external_event_id' => 'unverified:'.$provider.':'.hash('sha256', $body.$signature),
-                'payload' => $payload,
-                'signature_ok' => false,
-            ]);
+            /*
+             * The evidence, not the body. An unsigned body is whatever a
+             * stranger chose to send, and storing it whole let anyone fill
+             * the table at the route's rate limit. Its size, digest and
+             * source are what tell a rotated secret from a probe.
+             *
+             * The same rejected body sent again is the same row, recorded
+             * once: the unique index used to throw on the resend and answer
+             * it with a 500.
+             */
+            try {
+                WebhookReceipt::query()->create([
+                    'business_id' => null,
+                    'provider' => $provider,
+                    'event' => 'unverified',
+                    'external_event_id' => 'unverified:'.$provider.':'.hash('sha256', $body.$signature),
+                    'payload' => [
+                        'bytes' => strlen($body),
+                        'sha256' => hash('sha256', $body),
+                        'ip' => $request->ip(),
+                        'keys' => array_slice(array_map('strval', array_keys($payload)), 0, 20),
+                    ],
+                    'signature_ok' => false,
+                ]);
 
-            $recorder->record(
-                action: 'webhook.rejected',
-                context: ['provider' => $provider, 'reason' => 'signature'],
-            );
+                $recorder->record(
+                    action: 'webhook.rejected',
+                    context: ['provider' => $provider, 'reason' => 'signature'],
+                );
+            } catch (QueryException $e) {
+                if (! $this->isDuplicate($e)) {
+                    throw $e;
+                }
+            }
 
             abort(401);
         }

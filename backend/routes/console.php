@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Console\Commands\PruneActivityLogCommand;
 use App\Console\Commands\PruneUnclaimedIntegrations;
 use App\Console\Commands\SendMorningBriefs;
+use App\Models\WebhookReceipt;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -56,5 +57,15 @@ Schedule::command(PruneUnclaimedIntegrations::class)
  */
 Schedule::command(SendMorningBriefs::class)
     ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Rejected webhook deliveries, swept after a month (WebhookReceipt::prunable).
+ * Anyone can post to the webhook route; without this the evidence of every
+ * probe would be kept for ever.
+ */
+Schedule::command('model:prune', ['--model' => [WebhookReceipt::class]])
+    ->dailyAt('03:30')
     ->withoutOverlapping()
     ->onOneServer();
