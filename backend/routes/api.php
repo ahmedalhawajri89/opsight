@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\BriefController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\FileImportController;
+use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Api\V1\GoogleSignInController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InsightController;
@@ -250,6 +251,9 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:imports');
         Route::post('imports', [FileImportController::class, 'store'])
             ->middleware('throttle:imports');
+
+        /* ---- Forecasts (phase D) ----------------------------------------- */
+        Route::get('forecasts/stock', [ForecastController::class, 'stock']);
 
         /* ---- The morning brief (phase C) ---------------------------------- */
         Route::get('me/brief', [BriefController::class, 'show']);
