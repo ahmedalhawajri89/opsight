@@ -359,6 +359,28 @@ const PATHS = {
       <path d="m9 12 2 2 4-4" />
     </>
   ),
+
+  // A shopfront with an awning: a store, online or not.
+  store: (
+    <>
+      <path d="M4 9.5 5.5 4h13L20 9.5" />
+      <path d="M4 9.5a2.67 2.67 0 0 0 5.33 0 2.67 2.67 0 0 0 5.34 0 2.67 2.67 0 0 0 5.33 0" />
+      <path d="M5.5 11.5v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8" />
+      <path d="M10 20.5v-5h4v5" />
+    </>
+  ),
+  key: (
+    <>
+      <circle cx="8" cy="15" r="4" />
+      <path d="m10.85 12.15 8.65-8.65M16.5 6.5l2.5 2.5M14 9l2 2" />
+    </>
+  ),
+  upload: (
+    <>
+      <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" />
+      <path d="M4.5 14.5v4a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-4" />
+    </>
+  ),
 };
 
 /** Every icon the set holds, for the component gallery's icon library. */

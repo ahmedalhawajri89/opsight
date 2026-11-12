@@ -41,7 +41,7 @@ const TONES = {
  * @param {'md'|'lg'} size  `lg` is the front door's, where the mark is the
  *   first thing on the card; everywhere else it is a sidebar's.
  */
-export function Logo({ compact = false, tone = 'brand', size = 'md' }) {
+export function Logo({ compact = false, tone = 'brand', size = 'md', wordClassName }) {
   const { t } = useI18n();
   const colours = TONES[tone] ?? TONES.brand;
 
@@ -90,6 +90,7 @@ export function Logo({ compact = false, tone = 'brand', size = 'md' }) {
             'font-bold tracking-tight',
             size === 'lg' ? 'text-3xl' : 'text-xl',
             colours.word,
+            wordClassName,
           )}
         >
           {t('common.appName')}

@@ -39,6 +39,7 @@ const en = {
 
   shell: {
     account: 'Account: {name}',
+    newOrder: 'New order',
     accountMenu: 'account menu',
     profile: 'Profile',
     shortcuts: {
@@ -376,9 +377,30 @@ const en = {
       'Bring a store\u2019s orders into Baydar, so your figures cover everything you sell rather than what you enter by hand.',
 
     connect: 'Connect a store',
+    yours: 'Your stores',
+
+    overview: {
+      connected: 'Stores connected',
+      health: 'Connections',
+      healthy: 'All working',
+      attention: '{count} need your attention',
+      none: 'None yet',
+    },
+
+    assurance: {
+      live: 'New orders arrive on their own as they are placed; nothing to re-upload.',
+      keep: 'Disconnecting stops new orders only. Everything imported stays in your history.',
+      owner: 'Only a role allowed to manage integrations can connect or disconnect a store.',
+    },
 
     zid: {
       title: 'Zid',
+      tag: 'One click',
+      brings: {
+        catalog: 'Your catalogue',
+        history: 'The last year of orders',
+        live: 'New orders as they are placed',
+      },
       description:
         'Zid asks you to approve Baydar, then sends you back here. Your catalogue and the last year of orders follow, and new orders arrive as they are placed.',
       action: 'Connect Zid',
@@ -393,9 +415,17 @@ const en = {
 
     salla: {
       title: 'Salla',
+      tag: 'With your store id',
     },
 
     file: {
+      name: 'Excel or CSV file',
+      tag: 'No online store needed',
+      points: {
+        formats: 'Excel (.xlsx) or CSV',
+        kinds: 'Orders or your product catalogue',
+        check: 'You match the columns, and every row is checked before anything is saved',
+      },
       title: 'No online store?',
       description: 'Import your orders or your catalogue from Excel or CSV instead.',
       action: 'Import a spreadsheet',
@@ -439,7 +469,7 @@ const en = {
     empty: {
       title: 'No store is connected',
       description:
-        'Connect one above, and its orders will appear in your figures as they are placed.',
+        'Choose a way to connect below, and its orders will appear in your figures as they are placed.',
     },
 
     confirm: {
@@ -1741,6 +1771,17 @@ const en = {
   settings: {
     description:
       'Business configuration, editable at runtime. These are decisions the company makes, not the server it runs on, which is why they are here rather than in a deployment file.',
+    sections: 'Settings sections',
+    related: 'Also configured from',
+    preview: 'An amount will look like',
+    unsaved: '{count} unsaved changes',
+    upToDate: 'Everything is saved.',
+    discard: 'Discard changes',
+    impact: {
+      history: 'Restates past totals',
+      fromNow: 'Applies from now on',
+      destructive: 'Lowering deletes records',
+    },
     readOnly:
       'These values are shown because every screen needs the currency and timezone to render figures correctly. Only an Owner can change them.',
     business: {
@@ -1767,6 +1808,13 @@ const en = {
         'How long the activity log is kept. Entries older than this are deleted automatically, once a night. Nothing else is affected: orders, expenses and every figure stay exactly as they are.',
       label: 'Keep the activity log for (days)',
       hint: 'Between {min} and {max} days. The default of {default} is two years.',
+      presets: 'Common periods',
+      preset: {
+        90: 'Three months',
+        365: 'One year',
+        730: 'Two years',
+        1825: 'Five years',
+      },
       warning:
         'You are shortening how long the activity log is kept. Entries older than the new window will be deleted on the next nightly run, permanently, and nothing restores them.',
     },
@@ -1856,6 +1904,27 @@ const en = {
     notes: 'Notes',
     notesPlaceholder: 'Anything worth recording about this order…',
     start: 'Start draft',
+    startHint: 'The draft is saved at once, so nothing is lost if you step away.',
+    steps: {
+      label: 'Order progress',
+      details: 'Customer and notes',
+      items: 'Lines',
+      confirm: 'Confirm',
+    },
+    summary: {
+      title: 'This order',
+      reference: 'Reference',
+      lines: 'Lines',
+      units: 'Units',
+      totalAtConfirm:
+        'The total is worked out when you confirm, from the catalogue prices at that moment, so a price changed meanwhile is the one that counts.',
+    },
+    how: {
+      title: 'How an order works',
+      draft: 'Starting saves a draft. It counts in no figure until it is confirmed.',
+      prices: 'Each line takes its price from the catalogue; nothing is typed in by hand.',
+      stock: 'Confirming moves the stock and puts the sale in your figures.',
+    },
     addItemTitle: 'Add an item',
     chooseProduct: 'Choose a product',
     showingFirst: 'Showing the first {shown} of {total} — search to reach the rest.',

@@ -169,6 +169,16 @@ function useSearch(query, pages, commands) {
  * The field and its results, shared by both faces. `open` decides whether the
  * results are shown; the field is always there.
  */
+/*
+ * The key the reader's keyboard has: ⌘ on a Mac, Ctrl everywhere else. The
+ * bar said "⌘ K" on Windows, where no such key exists. Read once.
+ */
+const shortcutKey =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+    ? '⌘'
+    : 'Ctrl';
+
 const SearchField = forwardRef(function SearchField(
   { pages, commands = [], open, onOpenChange, variant, autoFocus = false },
   ref,
@@ -288,12 +298,12 @@ const SearchField = forwardRef(function SearchField(
   );
 
   return (
-    <div className={cn('relative', variant === 'bar' ? 'w-full max-w-[22.5rem]' : '')}>
+    <div className={cn('relative', variant === 'bar' ? 'w-full max-w-[26rem]' : '')}>
       <div
         className={cn(
           'flex items-center gap-2.5',
           variant === 'bar'
-            ? 'h-9 rounded-(--radius-control) border border-(--color-line) bg-(--color-ground) px-3 transition-colors duration-(--duration-fast) focus-within:border-(--color-brand-text) focus-within:bg-(--color-surface) focus-within:ring-2 focus-within:ring-(--color-brand-soft)'
+            ? 'h-10 rounded-(--radius-pill) border border-transparent bg-(--color-ground) ps-3.5 pe-1.5 transition-[border-color,background-color,box-shadow] duration-(--duration-fast) hover:border-(--color-line) focus-within:border-(--color-brand-text) focus-within:bg-(--color-surface) focus-within:ring-4 focus-within:ring-(--color-brand-soft)'
             : 'border-b-2 border-(--color-line-subtle) px-4 focus-within:border-(--color-brand-text)',
         )}
       >
@@ -331,7 +341,13 @@ const SearchField = forwardRef(function SearchField(
           )}
         />
         {variant === 'bar' && (
-          <kbd className="shrink-0 font-sans text-xs text-(--color-muted)">⌘ K</kbd>
+          <kbd
+            aria-hidden="true"
+            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-(--radius-pill) border border-(--color-line) bg-(--color-surface) px-2 font-sans text-[11px] font-medium text-(--color-text-2) shadow-[0_1px_0_var(--color-line)]"
+            dir="ltr"
+          >
+            {shortcutKey} K
+          </kbd>
         )}
       </div>
 

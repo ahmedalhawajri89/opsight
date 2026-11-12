@@ -53,14 +53,17 @@ export function NotificationsMenu() {
           type="button"
           {...props}
           aria-label={t('notifications.label', { count })}
-          className="relative inline-flex size-11 md:size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+          className="relative inline-flex size-11 items-center justify-center rounded-(--radius-pill) text-(--color-text-2) transition-colors hover:bg-(--color-surface) hover:text-(--color-text) md:size-8"
         >
-          <Icon name="bell" size={20} />
+          <Icon name="bell" size={18} />
           {count > 0 && (
+            /* How many, not just "some": the name already says the number. */
             <span
               aria-hidden="true"
-              className="absolute end-2 top-1.5 size-2 rounded-full bg-(--color-danger) ring-2 ring-(--color-surface)"
-            />
+              className="tabular absolute -end-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-(--color-danger) px-1 text-[10px] leading-none font-semibold text-white ring-2 ring-(--color-ground)"
+            >
+              {count > 9 ? '9+' : count}
+            </span>
           )}
         </button>
       )}

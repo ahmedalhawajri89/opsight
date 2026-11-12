@@ -211,7 +211,7 @@ export default function DashboardPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-own-motion="">
         {hero}
         <Card padded={false}>
           <ErrorState error={error} onRetry={refetch} />
@@ -260,7 +260,7 @@ export default function DashboardPage() {
   ].filter(Boolean);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-own-motion="">
       <div className="space-y-4">{hero}</div>
 
       {tradedElsewhere && (

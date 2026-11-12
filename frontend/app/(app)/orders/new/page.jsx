@@ -8,12 +8,14 @@ import { useCustomers, useProducts } from '@/features/catalog/useCatalog';
 import { CatalogPicker } from '@/features/orders/CatalogPicker';
 import { OrderActions } from '@/features/orders/OrderActions';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { Field, NumberInput, Textarea } from '@/components/ui/Field';
 import { DataTable } from '@/components/data/DataTable';
 import { EmptyState } from '@/components/data/States';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber } from '@/lib/format';
 
 /**
@@ -174,8 +176,15 @@ export default function NewOrderPage() {
     },
   ];
 
+  const step = !draftId ? 1 : (order?.items ?? []).length === 0 ? 2 : 3;
+  const lines = order?.items ?? [];
+  const units = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+  const customerName = order?.customer
+    ? (order.customer.display_name ?? order.customer.name)
+    : (chosenCustomer?.label ?? null);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <PageHeader
         title={t('orders.new')}
         description={
@@ -184,6 +193,8 @@ export default function NewOrderPage() {
             : t('newOrder.description')
         }
       />
+
+      <Steps current={step} />
 
       {failure && (
         <p
@@ -194,118 +205,245 @@ export default function NewOrderPage() {
         </p>
       )}
 
-      {!draftId ? (
-        <Card title={t('newOrder.details')}>
-          <div className="grid max-w-2xl gap-4">
-            <CatalogPicker
-              label={t('newOrder.customer')}
-              hint={t('newOrder.customerHint')}
-              searchLabel={t('customers.searchLabel')}
-              searchPlaceholder={t('customers.searchPlaceholder')}
-              search={customerSearch}
-              onSearchChange={setCustomerSearch}
-              placeholder={t('newOrder.walkInOption')}
-              options={customerOptions}
-              value={customerId}
-              selected={chosenCustomer}
-              onChange={choose(customerOptions, setCustomerId, setChosenCustomer)}
-              isLoading={loadingCustomers}
-              isError={customersFailed}
-              error={customerError}
-              onRetry={refetchCustomers}
-              total={customerMeta?.total}
-            />
-
-            <Field label={t('newOrder.notes')}>
-              {(props) => (
-                <Textarea
-                  placeholder={t('newOrder.notesPlaceholder')}
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  {...props}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 space-y-5">
+          {!draftId ? (
+            <Card title={t('newOrder.details')} icon="customers">
+              {/* Side by side on a wide screen: who it is for, and anything worth noting. */}
+              <div className="grid gap-5 lg:grid-cols-2">
+                <CatalogPicker
+                  label={t('newOrder.customer')}
+                  hint={t('newOrder.customerHint')}
+                  searchLabel={t('customers.searchLabel')}
+                  searchPlaceholder={t('customers.searchPlaceholder')}
+                  search={customerSearch}
+                  onSearchChange={setCustomerSearch}
+                  placeholder={t('newOrder.walkInOption')}
+                  options={customerOptions}
+                  value={customerId}
+                  selected={chosenCustomer}
+                  onChange={choose(customerOptions, setCustomerId, setChosenCustomer)}
+                  isLoading={loadingCustomers}
+                  isError={customersFailed}
+                  error={customerError}
+                  onRetry={refetchCustomers}
+                  total={customerMeta?.total}
                 />
-              )}
-            </Field>
 
-            <div>
-              <Button variant="primary" loading={create.isPending} onClick={startDraft}>
-                {t('newOrder.start')}
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <>
-          <Card title={t('newOrder.addItemTitle')}>
-            <div className="flex flex-wrap items-end gap-3">
-              <CatalogPicker
-                label={t('orderDetail.columns.product')}
-                className="min-w-64 flex-1"
-                searchLabel={t('products.searchLabel')}
-                searchPlaceholder={t('products.searchPlaceholder')}
-                search={productSearch}
-                onSearchChange={setProductSearch}
-                placeholder={t('newOrder.chooseProduct')}
-                options={productOptions}
-                value={productId}
-                selected={chosenProduct}
-                onChange={choose(productOptions, setProductId, setChosenProduct)}
-                isLoading={loadingProducts}
-                isError={productsFailed}
-                error={productError}
-                onRetry={refetchProducts}
-                total={productMeta?.total}
-              />
+                <Field label={t('newOrder.notes')}>
+                  {(props) => (
+                    <Textarea
+                      rows={5}
+                      placeholder={t('newOrder.notesPlaceholder')}
+                      value={notes}
+                      onChange={(event) => setNotes(event.target.value)}
+                      {...props}
+                    />
+                  )}
+                </Field>
+              </div>
 
-              <Field label={t('newOrder.quantity')} className="w-28">
-                {(props) => (
-                  <NumberInput
-                    value={quantity}
-                    onChange={(event) => setQuantity(event.target.value)}
-                    {...props}
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-(--border-subtle) pt-4">
+                <p className="text-xs text-(--color-muted)">{t('newOrder.startHint')}</p>
+                <Button variant="primary" loading={create.isPending} onClick={startDraft}>
+                  {t('newOrder.start')}
+                  <Icon name="arrowRight" size={16} className="rtl:rotate-180" aria-hidden="true" />
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <>
+              <Card title={t('newOrder.addItemTitle')} icon="products">
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_auto] sm:items-end">
+                  <CatalogPicker
+                    label={t('orderDetail.columns.product')}
+                    searchLabel={t('products.searchLabel')}
+                    searchPlaceholder={t('products.searchPlaceholder')}
+                    search={productSearch}
+                    onSearchChange={setProductSearch}
+                    placeholder={t('newOrder.chooseProduct')}
+                    options={productOptions}
+                    value={productId}
+                    selected={chosenProduct}
+                    onChange={choose(productOptions, setProductId, setChosenProduct)}
+                    isLoading={loadingProducts}
+                    isError={productsFailed}
+                    error={productError}
+                    onRetry={refetchProducts}
+                    total={productMeta?.total}
                   />
-                )}
-              </Field>
 
-              <Button
-                variant="secondary"
-                loading={addItem.isPending}
-                disabled={!productId}
-                onClick={handleAddItem}
-              >
-                {t('newOrder.addItem')}
-              </Button>
-            </div>
+                  <Field label={t('newOrder.quantity')}>
+                    {(props) => (
+                      <NumberInput
+                        value={quantity}
+                        onChange={(event) => setQuantity(event.target.value)}
+                        {...props}
+                      />
+                    )}
+                  </Field>
 
-            <p className="mt-3 text-sm text-(--color-muted)">{t('newOrder.priceNote')}</p>
-          </Card>
+                  <Button
+                    variant="primary"
+                    loading={addItem.isPending}
+                    disabled={!productId}
+                    onClick={handleAddItem}
+                  >
+                    <Icon name="plus" size={16} aria-hidden="true" />
+                    {t('newOrder.addItem')}
+                  </Button>
+                </div>
 
-          <Card title={t('orderDetail.items')} padded={false}>
-            <DataTable
-              caption={t('newOrder.draftItems')}
-              columns={itemColumns}
-              rows={order?.items ?? []}
-              density="compact"
-              empty={
-                <EmptyState
-                  title={t('newOrder.noItems')}
-                  description={t('newOrder.noItemsDescription')}
+                <p className="mt-3 text-xs text-(--color-muted)">{t('newOrder.priceNote')}</p>
+              </Card>
+
+              <Card title={t('orderDetail.items')} padded={false}>
+                <DataTable
+                  bare
+                  caption={t('newOrder.draftItems')}
+                  columns={itemColumns}
+                  rows={lines}
+                  density="compact"
+                  empty={
+                    <EmptyState
+                      title={t('newOrder.noItems')}
+                      description={t('newOrder.noItemsDescription')}
+                    />
+                  }
                 />
-              }
-            />
+              </Card>
+            </>
+          )}
+        </div>
+
+        {/*
+          What the order is so far, beside the form: who it is for, how many
+          lines and units. Counts only: a draft has no totals until it is
+          confirmed, when prices are read from the catalogue, and the screen
+          says so rather than adding them up itself.
+        */}
+        <aside
+          aria-label={t('newOrder.summary.title')}
+          className="min-w-0 space-y-4 xl:sticky xl:top-20"
+        >
+          <Card title={t('newOrder.summary.title')} icon="receipt">
+            <dl className="space-y-3 text-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-(--color-text-2)">{t('newOrder.summary.reference')}</dt>
+                <dd className="font-mono text-(--color-text)">{order?.reference ?? '—'}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-(--color-text-2)">{t('newOrder.customer')}</dt>
+                <dd className="truncate font-medium text-(--color-text)">
+                  <bdi>{customerName ?? t('common.walkIn')}</bdi>
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-(--color-text-2)">{t('newOrder.summary.lines')}</dt>
+                <dd className="tabular font-semibold text-(--color-text)">
+                  {formatNumber(lines.length)}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-(--color-text-2)">{t('newOrder.summary.units')}</dt>
+                <dd className="tabular font-semibold text-(--color-text)">{formatNumber(units)}</dd>
+              </div>
+            </dl>
+
+            <p className="mt-4 rounded-xl bg-(--color-ground) p-3 text-xs leading-5 text-(--color-text-2)">
+              {t('newOrder.summary.totalAtConfirm')}
+            </p>
+
+            {draftId ? (
+              <div className="mt-4 flex flex-col gap-2 border-t border-(--border-subtle) pt-4">
+                <OrderActions
+                  order={order ?? { id: draftId, available_actions: [] }}
+                  onDone={() => router.push(`/orders/${draftId}`)}
+                />
+                <Button variant="ghost" onClick={() => router.push(`/orders/${draftId}`)}>
+                  {t('newOrder.saveAndView')}
+                </Button>
+              </div>
+            ) : null}
           </Card>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <OrderActions
-              order={order ?? { id: draftId, available_actions: [] }}
-              onDone={() => router.push(`/orders/${draftId}`)}
-            />
-            <Button variant="ghost" onClick={() => router.push(`/orders/${draftId}`)}>
-              {t('newOrder.saveAndView')}
-            </Button>
-          </div>
-        </>
-      )}
+          <Card title={t('newOrder.how.title')} icon="info">
+            <ol className="space-y-3 text-xs leading-5 text-(--color-text-2)">
+              {['draft', 'prices', 'stock'].map((key, index) => (
+                <li key={key} className="flex gap-2.5">
+                  <span
+                    aria-hidden="true"
+                    className="tabular flex size-5 shrink-0 items-center justify-center rounded-full bg-(--color-brand-soft) text-[11px] font-semibold text-(--color-brand-text)"
+                  >
+                    {formatNumber(index + 1)}
+                  </span>
+                  {t(`newOrder.how.${key}`)}
+                </li>
+              ))}
+            </ol>
+          </Card>
+        </aside>
+      </div>
     </div>
+  );
+}
+
+/**
+ * Where the order stands: details, then lines, then confirm. The steps are
+ * the server's states read back (no draft, a draft with no lines, a draft
+ * with lines), not a wizard the screen keeps on its own.
+ */
+function Steps({ current }) {
+  const { t } = useI18n();
+
+  return (
+    <ol
+      className="flex flex-wrap items-center gap-2 sm:gap-3"
+      aria-label={t('newOrder.steps.label')}
+    >
+      {['details', 'items', 'confirm'].map((key, index) => {
+        const number = index + 1;
+        const done = number < current;
+        const active = number === current;
+
+        return (
+          <li
+            key={key}
+            aria-current={active ? 'step' : undefined}
+            className="flex items-center gap-2 sm:gap-3"
+          >
+            <span
+              className={cn(
+                'flex items-center gap-2 rounded-(--radius-pill) border px-3 py-1.5 text-sm font-medium transition-colors duration-(--duration-base)',
+                active && 'border-(--color-brand) bg-(--color-brand) text-(--color-text-inverse)',
+                done && 'border-(--color-success) bg-(--color-success-soft) text-(--color-success)',
+                !active &&
+                  !done &&
+                  'border-(--color-line) bg-(--color-surface) text-(--color-text-2)',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'tabular flex size-5 items-center justify-center rounded-full text-[11px] font-semibold',
+                  active && 'bg-white/20',
+                  done && 'bg-(--color-success) text-white',
+                  !active && !done && 'bg-(--color-surface-selected)',
+                )}
+              >
+                {done ? <Icon name="check" size={12} /> : formatNumber(number)}
+              </span>
+              {t(`newOrder.steps.${key}`)}
+            </span>
+            {number < 3 ? (
+              <span
+                aria-hidden="true"
+                className="hidden h-px w-8 bg-(--color-line-strong) sm:block"
+              />
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

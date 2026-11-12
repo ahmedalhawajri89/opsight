@@ -29,16 +29,16 @@ export function FocusControls({
   const fullLabel = fullscreen ? t('shell.fullscreen.leave') : t('shell.fullscreen.enter');
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       <Tooltip content={`${focusLabel} · Shift + F`}>
         <button
           type="button"
           onClick={onToggleFocus}
           aria-pressed={focused}
           aria-label={focusLabel}
-          className="inline-flex size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) aria-pressed:bg-(--color-brand-soft) aria-pressed:text-(--color-brand-text)"
+          className="inline-flex size-8 items-center justify-center rounded-(--radius-pill) text-(--color-text-2) transition-colors hover:bg-(--color-surface) hover:text-(--color-text) aria-pressed:bg-(--color-brand-soft) aria-pressed:text-(--color-brand-text)"
         >
-          <Icon name={focused ? 'minimise' : 'focus'} size={19} />
+          <Icon name={focused ? 'minimise' : 'focus'} size={17} />
         </button>
       </Tooltip>
 
@@ -49,9 +49,9 @@ export function FocusControls({
             onClick={onToggleFullscreen}
             aria-pressed={fullscreen}
             aria-label={fullLabel}
-            className="hidden size-9 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-hover) aria-pressed:bg-(--color-brand-soft) aria-pressed:text-(--color-brand-text) md:inline-flex"
+            className="hidden size-8 items-center justify-center rounded-(--radius-pill) text-(--color-text-2) transition-colors hover:bg-(--color-surface) hover:text-(--color-text) aria-pressed:bg-(--color-brand-soft) aria-pressed:text-(--color-brand-text) md:inline-flex"
           >
-            <Icon name={fullscreen ? 'collapse' : 'expand'} size={19} />
+            <Icon name={fullscreen ? 'collapse' : 'expand'} size={17} />
           </button>
         </Tooltip>
       )}
