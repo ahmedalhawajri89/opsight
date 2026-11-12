@@ -47,15 +47,29 @@ export function usePageEntrance(key) {
 
     const seen = new WeakSet();
 
+    /*
+     * Only what is laid out on the page. A closed <dialog>, anything hidden,
+     * and anything floating above the page (fixed or absolute) is not a
+     * block of it: animating a closed dialog left GSAP's inline styles on it,
+     * and it surfaced to assistive technology beside the one actually open.
+     */
+    function onPage(element) {
+      if (!(element instanceof HTMLElement) || element.tagName === 'DIALOG') return false;
+
+      const style = getComputedStyle(element);
+
+      return style.display !== 'none' && !['fixed', 'absolute'].includes(style.position);
+    }
+
     function targetsIn(block) {
-      if (!(block instanceof HTMLElement) || seen.has(block)) return [];
+      if (!onPage(block) || seen.has(block)) return [];
       seen.add(block);
 
       const display = getComputedStyle(block).display;
 
       if ((display === 'grid' || display === 'inline-grid') && block.children.length <= 24) {
         return [...block.children].filter((cell) => {
-          if (seen.has(cell)) return false;
+          if (seen.has(cell) || !onPage(cell)) return false;
           seen.add(cell);
 
           return true;
@@ -109,7 +123,7 @@ export function usePageEntrance(key) {
             parent?.parentElement === root &&
             ['grid', 'inline-grid'].includes(getComputedStyle(parent).display);
 
-          if (isBlock || isCell) {
+          if ((isBlock || isCell) && onPage(node)) {
             seen.add(node);
             arrived.push(node);
           }
