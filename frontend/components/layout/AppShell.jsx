@@ -35,6 +35,7 @@ import { useFlip } from '@/hooks/useFlip';
 import { useShortcuts } from '@/hooks/useShortcuts';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { recordVisit, useSeenOnce } from '@/hooks/useSeenOnce';
+import { usePageEntrance } from '@/hooks/usePageEntrance';
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -338,6 +339,7 @@ export function AppShell({ children }) {
   const [shellScope, captureShell] = useFlip('[data-shell-flip]', { absolute: false });
   const focus = useFocusMode(captureShell);
   const [sidebarCollapsed, toggleSidebar] = useSidebarCollapsed();
+  const entrance = usePageEntrance(pathname);
 
   /*
    * The two widths the shell has, and the move between them.
@@ -509,7 +511,7 @@ export function AppShell({ children }) {
   }, []);
 
   return (
-    <div ref={shellScope} className="flex min-h-dvh">
+    <div ref={shellScope} className="flex min-h-dvh bg-(--color-surface)">
       {/*
         Skip link: first in the tab order, visible only when focused. Without it
         a keyboard user tabs through every navigation entry on every page
@@ -542,7 +544,9 @@ export function AppShell({ children }) {
             // Above the content and on the page's own ground: a full-bleed
             // toolbar in a page reaches past its column, and the margin
             // around the floating panel would otherwise show it.
-            'sticky top-0 z-10 hidden h-dvh w-[80px] shrink-0 flex-col bg-(--color-ground) p-3 pe-0 md:flex [view-transition-name:app-sidebar]',
+            'sticky top-0 z-10 hidden h-dvh w-[80px] shrink-0 flex-col bg-(--color-surface) p-3 pe-0 md:flex [view-transition-name:app-sidebar]',
+            // The fold is the width alone (see FADE), so CSS can carry it.
+            'transition-[width] duration-300 ease-(--ease-out) motion-reduce:transition-none',
             /*
              * Collapsed means a rail at every width. Not collapsed leaves
              * the decision to the layout, which is where it belonged before
@@ -578,10 +582,7 @@ export function AppShell({ children }) {
               role={user?.role_label}
               variant={sidebarCollapsed ? 'rail' : 'auto'}
               collapsed={sidebarCollapsed}
-              onToggle={() => {
-                captureShell();
-                toggleSidebar();
-              }}
+              onToggle={toggleSidebar}
             />
           </div>
         </aside>
@@ -627,11 +628,8 @@ export function AppShell({ children }) {
         it. Nothing reaches the panel's edges anyway: <main> carries its own
         vertical padding, and the bar's background is the panel's own colour.
       */}
-      <div
-        data-shell-flip=""
-        className="flex min-w-0 flex-1 flex-col p-3 ps-0 max-md:p-0 print:p-0"
-      >
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) shadow-(--shadow-card) max-md:rounded-none max-md:border-0 max-md:shadow-none print:rounded-none print:border-0 print:shadow-none">
+      <div data-shell-flip="" className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-(--color-surface)">
           <TopBarContext.Provider value={slot}>
             <header
               className={cn(
@@ -754,6 +752,7 @@ export function AppShell({ children }) {
             forms at xl, FocusColumn at 110.
           */}
             <main
+              ref={entrance}
               id="main-content"
               tabIndex={-1}
               className={cn(
@@ -793,45 +792,41 @@ export function AppShell({ children }) {
  */
 const SIDEBAR = {
   full: {
-    header: 'px-5',
-    nav: 'px-3',
-    item: 'gap-3 px-3',
     label: '',
-    group: '',
-    rule: 'hidden',
-    markSmall: 'hidden',
-    markFull: 'block',
-    foot: '',
-    card: '',
+    fade: '',
+    rule: 'opacity-0',
     toggle: 'hidden',
   },
   auto: {
-    header: 'justify-center lg:justify-start lg:px-5',
-    nav: 'px-2 lg:px-3',
-    item: 'justify-center lg:justify-start lg:gap-3 lg:px-3',
-    label: 'sr-only lg:not-sr-only',
-    group: 'hidden lg:block',
-    rule: 'lg:hidden',
-    markSmall: 'lg:hidden',
-    markFull: 'hidden lg:block',
-    foot: 'hidden lg:block',
-    card: 'hidden lg:flex',
-    toggle: 'justify-center lg:justify-start lg:gap-3 lg:px-3',
+    label: 'opacity-0 lg:opacity-100 lg:delay-100',
+    fade: 'opacity-0 lg:opacity-100 lg:delay-100',
+    rule: 'lg:opacity-0',
+    toggle: '',
   },
   rail: {
-    header: 'justify-center',
-    nav: 'px-2',
-    item: 'justify-center',
-    label: 'sr-only',
-    group: 'hidden',
+    label: 'opacity-0',
+    fade: 'opacity-0',
     rule: '',
-    markSmall: '',
-    markFull: 'hidden',
-    foot: 'hidden',
-    card: 'hidden',
-    toggle: 'justify-center',
+    toggle: '',
   },
 };
+
+/*
+ * ONE GEOMETRY FOR EVERY FORM, and that is what makes folding smooth.
+ *
+ * The forms used to differ in layout: the rail centred its icons, hid the
+ * group names, dropped the business card and the version line, and swapped
+ * the wordmark for the mark. Every one of those happened in the first frame
+ * of the fold while the width was still moving, so the links jumped up the
+ * panel and sideways inside it, and the eye lost them. That was the hitch.
+ *
+ * Now every form has the same paddings, and the icons sit where the rail's
+ * 68px panel centres them anyway (24px in, 18px wide). Folding changes the
+ * aside's width and nothing else; the words fade and the panel's own
+ * overflow clips them. Faded text stays in the accessibility tree, which is
+ * what `sr-only` was giving the rail before.
+ */
+const FADE = 'whitespace-nowrap transition-opacity duration-200 ease-(--ease-out)';
 
 function Sidebar({
   groups,
@@ -900,27 +895,21 @@ function Sidebar({
     <>
       <SidebarArt />
 
-      <div className={cn('flex h-14 shrink-0 items-center', style.header)}>
+      <div className="flex h-14 shrink-0 items-center px-5">
         <Link
           href="/dashboard"
           className="rounded-(--radius-control)"
           aria-label={t('common.appName')}
         >
-          {/* The wordmark needs room; the rail shows the mark alone. */}
-          <span className={style.markSmall}>
-            <Logo compact tone="onBrand" />
-          </span>
-          <span className={style.markFull}>
-            <Logo tone="onBrand" />
-          </span>
+          {/* On the rail the wordmark fades and the panel clips it. */}
+          <Logo tone="onBrand" wordClassName={cn(FADE, style.fade)} />
         </Link>
       </div>
 
       {business && (
         <div
           className={cn(
-            'mx-3 mb-3 shrink-0 items-center gap-3 rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/5 p-2.5 [@media(max-height:820px)]:hidden',
-            style.card,
+            'mx-2 mb-3 flex shrink-0 items-center gap-3 overflow-hidden rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/5 p-2 [@media(max-height:820px)]:hidden',
           )}
         >
           <span
@@ -929,7 +918,7 @@ function Sidebar({
           >
             {initials(business).slice(0, 2)}
           </span>
-          <span className="min-w-0">
+          <span className={cn('min-w-0', FADE, style.fade)}>
             <span
               className="block truncate text-sm font-semibold text-(--color-on-brand)"
               dir="auto"
@@ -960,9 +949,8 @@ function Sidebar({
       <nav
         aria-label={t('nav.main')}
         className={cn(
-          'min-h-0 flex-1 overflow-y-auto pt-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          'min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 pt-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           '[mask-image:linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-20px),transparent)]',
-          style.nav,
         )}
       >
         <div ref={track} className="relative">
@@ -987,37 +975,40 @@ function Sidebar({
                 outline BEFORE the page's <h1>.
               */}
                 {group.label && (
-                  <p
-                    id={id}
-                    className={cn(
-                      'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase [@media(max-height:820px)]:hidden',
-                      // On the rail the group is shown by a rule instead of a word.
-                      style.group,
-                    )}
-                  >
-                    {t(group.label)}
-                  </p>
+                  <div className="relative">
+                    <p
+                      id={id}
+                      className={cn(
+                        'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase [@media(max-height:820px)]:hidden',
+                        FADE,
+                        style.label,
+                      )}
+                    >
+                      {t(group.label)}
+                    </p>
+                    {/*
+                      On the rail the group is shown by a rule instead of a
+                      word, drawn over the word's own line so nothing below
+                      it moves.
+                    */}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'pointer-events-none absolute inset-x-1 top-[calc(50%-2px)] h-px bg-(--color-on-brand-line)/25 transition-opacity duration-200 [@media(max-height:820px)]:hidden',
+                        style.rule,
+                      )}
+                    />
+                  </div>
                 )}
                 {/*
-                  On a short screen the group names give way to a rule, so
-                  the links keep their room and nothing has to scroll. The
-                  rail already draws its own rule; this is for the open list.
+                  On a short screen the group names give way to a rule in
+                  every form, so the links keep their room and nothing has to
+                  scroll.
                 */}
-                {group.label && index > 0 && variant !== 'rail' && (
+                {group.label && index > 0 && (
                   <div
                     aria-hidden="true"
-                    className={cn(
-                      'mx-3 mb-2 hidden h-px bg-(--color-on-brand-line)/25',
-                      variant === 'auto'
-                        ? 'lg:[@media(max-height:820px)]:block'
-                        : '[@media(max-height:820px)]:block',
-                    )}
-                  />
-                )}
-                {group.label && compact && (
-                  <div
-                    aria-hidden="true"
-                    className={cn('mx-2 mb-2 h-px bg-(--color-on-brand-line)/25', style.rule)}
+                    className="mx-1 mb-2 hidden h-px bg-(--color-on-brand-line)/25 [@media(max-height:820px)]:block"
                   />
                 )}
 
@@ -1056,7 +1047,7 @@ function Sidebar({
         the thing it operates rather than merely naming itself.
       */}
       {onToggle && (
-        <div className={cn('shrink-0 px-2 pb-2 lg:px-3', style.toggle === 'hidden' && 'hidden')}>
+        <div className={cn('shrink-0 px-3 pb-2', style.toggle)}>
           <button
             type="button"
             onClick={onToggle}
@@ -1064,12 +1055,11 @@ function Sidebar({
             aria-controls="app-sidebar"
             title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
             className={cn(
-              'flex h-9 w-full items-center rounded-(--radius-control) text-start text-sm font-medium whitespace-nowrap text-(--color-on-brand-2) transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
-              style.toggle,
+              'flex h-9 w-full items-center gap-3 overflow-hidden rounded-(--radius-control) px-3 text-start text-sm font-medium whitespace-nowrap text-(--color-on-brand-2) transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
             )}
           >
-            <Icon name="panel" size={18} />
-            <span className={style.label}>
+            <Icon name="panel" size={18} className="shrink-0" />
+            <span className={cn(FADE, style.label)}>
               {collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
             </span>
           </button>
@@ -1083,7 +1073,7 @@ function Sidebar({
         is a link in this very list and a quick action on the dashboard, and
         on a tall screen it was the reason the links scrolled.
       */}
-      <div className={cn('shrink-0 px-3 pb-4', style.foot)}>
+      <div className={cn('shrink-0 px-3 pb-4', FADE, style.fade)}>
         <p className="px-2 text-xs text-(--color-on-brand-2)">v{packageInfo.version}</p>
       </div>
     </>
@@ -1123,8 +1113,7 @@ function NavLink({ item, active, style, compact = false }) {
       aria-current={active ? 'page' : undefined}
       title={compact ? label : undefined}
       className={cn(
-        'relative flex h-9 items-center rounded-(--radius-control) text-sm transition-colors duration-(--duration-fast) ease-(--ease-out) [@media(max-height:820px)]:h-8',
-        style.item,
+        'relative flex h-9 items-center gap-3 overflow-hidden rounded-(--radius-control) px-3 text-sm transition-colors duration-(--duration-fast) ease-(--ease-out) [@media(max-height:820px)]:h-8',
         active
           ? 'font-semibold text-(--color-on-brand)'
           : 'font-medium text-(--color-on-brand-2) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
@@ -1133,10 +1122,13 @@ function NavLink({ item, active, style, compact = false }) {
       <Icon
         name={item.icon}
         size={18}
-        className={active ? 'text-(--color-accent-on-brand)' : 'text-(--color-on-brand-2)'}
+        className={cn(
+          'shrink-0',
+          active ? 'text-(--color-accent-on-brand)' : 'text-(--color-on-brand-2)',
+        )}
       />
       {/* On the rail the name is the tooltip and the accessible name. */}
-      <span className={style.label}>{label}</span>
+      <span className={cn(FADE, style.label)}>{label}</span>
     </Link>
   );
 }
@@ -1149,12 +1141,11 @@ function DisabledNavItem({ item, style, compact = false }) {
       aria-disabled="true"
       title={`${t(item.label)} — ${t('nav.comingLater')}`}
       className={cn(
-        'flex h-9 cursor-not-allowed items-center rounded-(--radius-control) text-sm font-medium text-(--color-on-brand-line)',
-        style.item,
+        'flex h-9 cursor-not-allowed items-center gap-3 overflow-hidden rounded-(--radius-control) px-3 text-sm font-medium text-(--color-on-brand-line)',
       )}
     >
-      <Icon name={item.icon} size={18} />
-      <span className={cn('flex-1', style.label)}>{t(item.label)}</span>
+      <Icon name={item.icon} size={18} className="shrink-0" />
+      <span className={cn('flex-1', FADE, style.label)}>{t(item.label)}</span>
       <span className="sr-only">{t('nav.comingLater')}</span>
     </span>
   );
