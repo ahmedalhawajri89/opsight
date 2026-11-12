@@ -377,9 +377,30 @@ const en = {
       'Bring a store\u2019s orders into Baydar, so your figures cover everything you sell rather than what you enter by hand.',
 
     connect: 'Connect a store',
+    yours: 'Your stores',
+
+    overview: {
+      connected: 'Stores connected',
+      health: 'Connections',
+      healthy: 'All working',
+      attention: '{count} need your attention',
+      none: 'None yet',
+    },
+
+    assurance: {
+      live: 'New orders arrive on their own as they are placed; nothing to re-upload.',
+      keep: 'Disconnecting stops new orders only. Everything imported stays in your history.',
+      owner: 'Only a role allowed to manage integrations can connect or disconnect a store.',
+    },
 
     zid: {
       title: 'Zid',
+      tag: 'One click',
+      brings: {
+        catalog: 'Your catalogue',
+        history: 'The last year of orders',
+        live: 'New orders as they are placed',
+      },
       description:
         'Zid asks you to approve Baydar, then sends you back here. Your catalogue and the last year of orders follow, and new orders arrive as they are placed.',
       action: 'Connect Zid',
@@ -394,9 +415,17 @@ const en = {
 
     salla: {
       title: 'Salla',
+      tag: 'With your store id',
     },
 
     file: {
+      name: 'Excel or CSV file',
+      tag: 'No online store needed',
+      points: {
+        formats: 'Excel (.xlsx) or CSV',
+        kinds: 'Orders or your product catalogue',
+        check: 'You match the columns, and every row is checked before anything is saved',
+      },
       title: 'No online store?',
       description: 'Import your orders or your catalogue from Excel or CSV instead.',
       action: 'Import a spreadsheet',
@@ -440,7 +469,7 @@ const en = {
     empty: {
       title: 'No store is connected',
       description:
-        'Connect one above, and its orders will appear in your figures as they are placed.',
+        'Choose a way to connect below, and its orders will appear in your figures as they are placed.',
     },
 
     confirm: {
