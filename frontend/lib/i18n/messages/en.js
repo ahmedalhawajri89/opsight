@@ -1771,6 +1771,17 @@ const en = {
   settings: {
     description:
       'Business configuration, editable at runtime. These are decisions the company makes, not the server it runs on, which is why they are here rather than in a deployment file.',
+    sections: 'Settings sections',
+    related: 'Also configured from',
+    preview: 'An amount will look like',
+    unsaved: '{count} unsaved changes',
+    upToDate: 'Everything is saved.',
+    discard: 'Discard changes',
+    impact: {
+      history: 'Restates past totals',
+      fromNow: 'Applies from now on',
+      destructive: 'Lowering deletes records',
+    },
     readOnly:
       'These values are shown because every screen needs the currency and timezone to render figures correctly. Only an Owner can change them.',
     business: {
@@ -1797,6 +1808,13 @@ const en = {
         'How long the activity log is kept. Entries older than this are deleted automatically, once a night. Nothing else is affected: orders, expenses and every figure stay exactly as they are.',
       label: 'Keep the activity log for (days)',
       hint: 'Between {min} and {max} days. The default of {default} is two years.',
+      presets: 'Common periods',
+      preset: {
+        90: 'Three months',
+        365: 'One year',
+        730: 'Two years',
+        1825: 'Five years',
+      },
       warning:
         'You are shortening how long the activity log is kept. Entries older than the new window will be deleted on the next nightly run, permanently, and nothing restores them.',
     },
