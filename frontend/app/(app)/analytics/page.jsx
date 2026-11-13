@@ -24,6 +24,8 @@ import { ErrorState, ForbiddenState } from '@/components/data/States';
 import { BreakdownChart } from '@/components/charts/BreakdownChart';
 import { TrendChart } from '@/components/charts/TrendChart';
 import { Card, PageHeader } from '@/components/layout/PageHeader';
+import { InView } from '@/components/data/InView';
+import { cn } from '@/lib/cn';
 import { PeriodSelector } from '@/components/layout/PeriodSelector';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 
@@ -158,25 +160,46 @@ export default function AnalyticsPage() {
         }
       />
 
-      {meta?.comparison?.compares_partial_against_complete && (
+      {/*
+        The notice's room is held from the first frame. It used to appear only
+        once the figures arrived and push the whole screen down by its own
+        height (a layout shift of 0.14 on its own). Before the server answers,
+        the period chosen already says whether it will be incomplete: every
+        preset but a custom range runs up to today.
+      */}
+      {(meta
+        ? meta.comparison?.compares_partial_against_complete
+        : filters.preset !== 'custom' && filters.comparison !== 'none') && (
         <p
           role="status"
-          className="flex flex-wrap items-center gap-2.5 rounded-(--radius-card) border border-(--color-warning-soft) bg-(--color-warning-soft)/60 px-4 py-2.5 text-sm text-(--color-text-2)"
+          className={cn(
+            'flex flex-wrap items-center gap-2.5 rounded-(--radius-card) border border-(--color-warning-soft) bg-(--color-warning-soft)/60 px-4 py-2.5 text-sm text-(--color-text-2)',
+            !meta && 'invisible',
+          )}
         >
           <PartialBadge />
           {t('analytics.partial')}
         </p>
       )}
 
-      {/* Ramadan or Eid on one side of the comparison and not the other. */}
-      <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
+      {/*
+        The season notice, the figures and the waterfall arrive as ONE swap.
+        The notice depends on the dates in the answer, so its room cannot be
+        held in advance; dropped in above a skeleton already on screen, it
+        pushed the skeleton down (a layout shift of 0.11). Keyed on whether
+        the first answer is in, the skeleton is replaced rather than moved.
+        A later change of period keeps the key, so nothing flashes then.
+      */}
+      <div key={meta ? 'ready' : 'waiting'} className="space-y-4">
+        {/* Ramadan or Eid on one side of the comparison and not the other. */}
+        <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
 
-      {summary.isError ? (
-        <Card padded={false}>
-          <ErrorState error={summary.error} onRetry={summary.refetch} />
-        </Card>
-      ) : (
-        /*
+        {summary.isError ? (
+          <Card padded={false}>
+            <ErrorState error={summary.error} onRetry={summary.refetch} />
+          </Card>
+        ) : (
+          /*
           TWO TIERS, which is the same arrangement the dashboard leads with
           and the arrangement §5 asks for: "A group of figures that describe
           one period is ONE panel divided by hairlines… Twelve equal boxes
@@ -195,17 +218,17 @@ export default function AnalyticsPage() {
           missing series as an empty one — the sparkline is omitted and the
           card does not offer to expand.
         */
-        <KpiPanel
-          metrics={metrics}
-          currency={currency}
-          decimals={decimals}
-          comparisonLabel={meta?.comparison?.label ?? ''}
-          compact={COMPACT_ORDER}
-          loading={summary.isLoading && !hasFigures}
-        />
-      )}
+          <KpiPanel
+            metrics={metrics}
+            currency={currency}
+            decimals={decimals}
+            comparisonLabel={meta?.comparison?.label ?? ''}
+            compact={COMPACT_ORDER}
+            loading={summary.isLoading && !hasFigures}
+          />
+        )}
 
-      {/*
+        {/*
         The arithmetic between the figures above, which the panel states but
         never performs. Every step is a metric the server already computed
         and this page already holds — no request, and no second idea of what
@@ -216,56 +239,59 @@ export default function AnalyticsPage() {
         cannot see cost; `showCost` already gates the cost series in the
         metric picker below.
       */}
-      {showCost && (
-        <WaterfallChart
-          title={t('analytics.waterfall.title')}
-          description={t('analytics.waterfall.description')}
-          steps={WATERFALL_STEPS.filter((step) => step.key in metrics).map((step) => ({
-            ...step,
-            label: t(`metrics.${step.key}.label`),
-            value: metrics[step.key]?.value ?? null,
-          }))}
-          // The server's own margins, beside the subtotals they belong to.
-          margins={{
-            gross_profit: metrics.gross_margin?.value ?? null,
-            net_profit: metrics.net_margin?.value ?? null,
-          }}
-          currency={currency}
-          decimals={decimals}
-          loading={summary.isLoading && !hasFigures}
-          error={summary.isError ? summary.error : null}
-          onRetry={summary.refetch}
-        />
-      )}
+        {showCost && (
+          <WaterfallChart
+            title={t('analytics.waterfall.title')}
+            description={t('analytics.waterfall.description')}
+            steps={WATERFALL_STEPS.filter((step) => step.key in metrics).map((step) => ({
+              ...step,
+              label: t(`metrics.${step.key}.label`),
+              value: metrics[step.key]?.value ?? null,
+            }))}
+            // The server's own margins, beside the subtotals they belong to.
+            margins={{
+              gross_profit: metrics.gross_margin?.value ?? null,
+              net_profit: metrics.net_margin?.value ?? null,
+            }}
+            currency={currency}
+            decimals={decimals}
+            loading={summary.isLoading && !hasFigures}
+            error={summary.isError ? summary.error : null}
+            onRetry={summary.refetch}
+          />
+        )}
+      </div>
 
-      <TrendChart
-        title={t('analytics.trend')}
-        description={
-          /*
+      <InView minHeight={430}>
+        <TrendChart
+          title={t('analytics.trend')}
+          description={
+            /*
             Composed from translated parts rather than from the raw API values.
             The previous version built "day" + "ly" and printed "dayly", and
             showed ISO dates to the reader.
           */
-          trend.meta
-            ? [
-                t(`metrics.${trend.meta.metric}.label`),
-                t(`analytics.grains.${trend.meta.grain}`),
-                describePeriod(trend.meta.period.from, trend.meta.period.to),
-              ].join(' · ')
-            : undefined
-        }
-        series={trend.series}
-        weekendDays={trend.meta?.weekend_days}
-        format={filters.metric === 'orders_count' ? 'count' : 'money'}
-        currency={currency}
-        decimals={decimals}
-        loading={trend.isLoading}
-        error={trend.isError ? trend.error : null}
-        onRetry={trend.refetch}
-        // Every metric this screen offers adds up, so a total means something.
-        summary
-        height={300}
-      />
+            trend.meta
+              ? [
+                  t(`metrics.${trend.meta.metric}.label`),
+                  t(`analytics.grains.${trend.meta.grain}`),
+                  describePeriod(trend.meta.period.from, trend.meta.period.to),
+                ].join(' · ')
+              : undefined
+          }
+          series={trend.series}
+          weekendDays={trend.meta?.weekend_days}
+          format={filters.metric === 'orders_count' ? 'count' : 'money'}
+          currency={currency}
+          decimals={decimals}
+          loading={trend.isLoading}
+          error={trend.isError ? trend.error : null}
+          onRetry={trend.refetch}
+          // Every metric this screen offers adds up, so a total means something.
+          summary
+          height={300}
+        />
+      </InView>
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1.5">
@@ -312,19 +338,21 @@ export default function AnalyticsPage() {
         </label>
       </div>
 
-      <BreakdownChart
-        // A whole title per dimension, not "Net revenue by {dimension}": the
-        // word order and the definite article differ by language.
-        title={t(`analytics.breakdownTitles.${filters.dimension}`)}
-        description={t('analytics.breakdownDescription')}
-        rows={breakdown.rows}
-        format="money"
-        currency={currency}
-        decimals={decimals}
-        loading={breakdown.isLoading}
-        error={breakdown.isError ? breakdown.error : null}
-        onRetry={breakdown.refetch}
-      />
+      <InView minHeight={420}>
+        <BreakdownChart
+          // A whole title per dimension, not "Net revenue by {dimension}": the
+          // word order and the definite article differ by language.
+          title={t(`analytics.breakdownTitles.${filters.dimension}`)}
+          description={t('analytics.breakdownDescription')}
+          rows={breakdown.rows}
+          format="money"
+          currency={currency}
+          decimals={decimals}
+          loading={breakdown.isLoading}
+          error={breakdown.isError ? breakdown.error : null}
+          onRetry={breakdown.refetch}
+        />
+      </InView>
 
       {/*
         The business at a glance: months of revenue against costs, and the
@@ -338,23 +366,25 @@ export default function AnalyticsPage() {
         name were the only readable part of the row. Below 1280 the two
         stack and each gets the full width.
       */}
-      <div className="grid gap-4 xl:grid-cols-12">
-        {overview.dashboard?.cash_flow && (
-          <CashFlowChart
-            data={overview.dashboard.cash_flow}
+      <InView minHeight={380}>
+        <div className="grid gap-4 xl:grid-cols-12">
+          {overview.dashboard?.cash_flow && (
+            <CashFlowChart
+              data={overview.dashboard.cash_flow}
+              currency={currency}
+              decimals={decimals}
+              loading={overview.isLoading}
+              className="xl:col-span-8"
+            />
+          )}
+          <QuickStatsCard
+            stats={overview.dashboard?.quick_stats}
             currency={currency}
-            decimals={decimals}
             loading={overview.isLoading}
-            className="xl:col-span-8"
+            className={overview.dashboard?.cash_flow ? 'xl:col-span-4' : 'xl:col-span-12'}
           />
-        )}
-        <QuickStatsCard
-          stats={overview.dashboard?.quick_stats}
-          currency={currency}
-          loading={overview.isLoading}
-          className={overview.dashboard?.cash_flow ? 'xl:col-span-4' : 'xl:col-span-12'}
-        />
-      </div>
+        </div>
+      </InView>
 
       {/* Only while VAT is switched on for the business (ADR-018). */}
       <VatCard

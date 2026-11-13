@@ -20,6 +20,7 @@ import { useInsights } from '@/features/insights/useInsights';
 import { ErrorState } from '@/components/data/States';
 import { TopBarPortal } from '@/components/layout/AppShell';
 import { Card } from '@/components/layout/PageHeader';
+import { InView } from '@/components/data/InView';
 import { PeriodControls } from '@/components/layout/PeriodControls';
 import { useGsap } from '@/hooks/useGsap';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -191,10 +192,18 @@ export default function DashboardPage() {
       />
 
       <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 empty:hidden">
-        <PeriodStatus
-          show={meta?.period?.is_partial}
-          againstComplete={meta?.comparison?.compares_partial_against_complete}
-        />
+        {/*
+          Held from the first frame, not dropped in when the figures arrive:
+          appearing late it pushed every card below it down (a layout shift
+          of 0.22). Before the server answers, the period chosen already says
+          whether it runs up to today: every preset but a custom range does.
+        */}
+        <div className={meta ? undefined : 'invisible'}>
+          <PeriodStatus
+            show={meta ? meta.period?.is_partial : filters.preset !== 'custom'}
+            againstComplete={meta?.comparison?.compares_partial_against_complete ?? true}
+          />
+        </div>
         <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
         {!wide && controls}
       </div>
@@ -268,28 +277,33 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-12">
-        {canSeeCost && (
-          <div data-rise className="min-w-0 lg:col-span-8">
-            <CashOutlook
-              data={cash.data?.data}
+      <InView minHeight={420}>
+        <div className="grid gap-4 lg:grid-cols-12">
+          {canSeeCost && (
+            <div data-rise className="min-w-0 lg:col-span-8">
+              <CashOutlook
+                data={cash.data?.data}
+                {...money}
+                loading={cash.isLoading}
+                canEdit={can('settings.update')}
+                className="h-full"
+              />
+            </div>
+          )}
+          <div
+            data-rise
+            className={canSeeCost ? 'min-w-0 lg:col-span-4' : 'min-w-0 lg:col-span-12'}
+          >
+            <ChannelMix
+              channels={dashboard?.channels ?? []}
+              canSeeCost={canSeeCost}
               {...money}
-              loading={cash.isLoading}
-              canEdit={can('settings.update')}
+              loading={isLoading}
               className="h-full"
             />
           </div>
-        )}
-        <div data-rise className={canSeeCost ? 'min-w-0 lg:col-span-4' : 'min-w-0 lg:col-span-12'}>
-          <ChannelMix
-            channels={dashboard?.channels ?? []}
-            canSeeCost={canSeeCost}
-            {...money}
-            loading={isLoading}
-            className="h-full"
-          />
         </div>
-      </div>
+      </InView>
 
       <div className="grid gap-4 lg:grid-cols-12">
         {canSeeStock && (
