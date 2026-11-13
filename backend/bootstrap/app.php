@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\ProtectDemoAccounts;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrustFrontendProxy;
 use App\Support\DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -69,6 +70,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // On every response, including the one Blade route.
         $middleware->append(SecurityHeaders::class);
+
+        // First of all: every limiter and the audit log read the address it sets.
+        $middleware->prepend(TrustFrontendProxy::class);
 
         /*
          * Behind a load balancer or a CDN, the client's address is in

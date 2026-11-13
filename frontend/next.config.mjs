@@ -33,6 +33,43 @@ const nextConfig = {
    */
   devIndicators: false,
 
+  // Which framework serves the page is nobody else's business.
+  poweredByHeader: false,
+
+  /*
+   * The pages' own security headers. The API has set these on its responses
+   * since Phase 5 (SecurityHeaders), but the pages a reader actually clicks
+   * on are served from here, and they had none: any site could load the
+   * application in a frame and lay a decoy over it, so an owner believing
+   * they were clicking something harmless pressed "Deactivate" or
+   * "Disconnect" underneath (clickjacking).
+   *
+   * The policy is deliberately the part of a CSP that cannot break the app:
+   * no framing by anyone, no plugins, no <base> rewriting, forms post only
+   * here. A script-src policy needs nonces through every page Next renders
+   * and is a change of its own.
+   */
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
+          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+        ],
+      },
+    ];
+  },
+
   async rewrites() {
     if (!apiOrigin) return [];
 

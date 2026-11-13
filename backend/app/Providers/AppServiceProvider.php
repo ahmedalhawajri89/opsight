@@ -151,9 +151,19 @@ class AppServiceProvider extends ServiceProvider
          * Raised rather than removed in local: a runaway loop should still
          * meet a wall.
          */
-        RateLimiter::for('login', static fn (Request $request): Limit => app()->isLocal()
-            ? Limit::perMinute(120)->by((string) $request->ip())
-            : Limit::perMinute(10)->by((string) $request->ip()));
+        /*
+         * Per address AND per account. The address stops one machine sweeping
+         * many accounts; the account limit stops many machines (or many
+         * addresses) taking turns at one, which a per-address limit alone
+         * never counts together. Thirty an hour is far above anyone who has
+         * merely forgotten their password and far below a guessing campaign.
+         */
+        RateLimiter::for('login', static fn (Request $request): array => app()->isLocal()
+            ? [Limit::perMinute(120)->by('ip:'.$request->ip())]
+            : [
+                Limit::perMinute(10)->by('ip:'.$request->ip()),
+                Limit::perHour(30)->by('email:'.strtolower(trim((string) $request->input('email')))),
+            ]);
 
         // Each sign-up creates a business: a handful an hour from one address.
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));

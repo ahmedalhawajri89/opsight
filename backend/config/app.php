@@ -128,6 +128,14 @@ return [
 
     'key' => env('APP_KEY'),
 
+    /*
+     * Shared with the frontend deployment, which sends it beside the
+     * client's address on every request it forwards here. See
+     * App\Http\Middleware\TrustFrontendProxy. Empty: no address is taken
+     * from a header.
+     */
+    'proxy_secret' => (string) env('PROXY_SECRET', ''),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', (string) env('APP_PREVIOUS_KEYS', ''))
