@@ -44,9 +44,9 @@ final class ConnectShopifyStore
             throw new ShopifyRefused('shop', __('errors.integrations.shopify_bad_shop'));
         }
 
-        $this->client->verify($domain, $token);
+        $store = $this->client->verify($domain, $token);
 
-        return $this->keep($domain, $token, null);
+        return $this->keep($domain, $token, null, $store['name']);
     }
 
     /** Where to send the browser to approve Baydar, for this user, this business. */
@@ -141,7 +141,7 @@ final class ConnectShopifyStore
         return hash_equals(hash_hmac('sha256', urldecode($message), $secret), strtolower($hmac));
     }
 
-    private function keep(string $domain, string $token, ?string $scopes): Integration
+    private function keep(string $domain, string $token, ?string $scopes, ?string $name = null): Integration
     {
         $owner = Integration::query()
             ->withoutGlobalScope(BusinessScope::class)
@@ -165,7 +165,11 @@ final class ConnectShopifyStore
                 'last_error' => null,
                 // An offline Admin API token does not expire on its own.
                 'token_expires_at' => null,
-                'scopes' => $scopes !== null ? array_values(array_filter(explode(',', $scopes))) : ['read_orders', 'read_products'],
+                'scopes' => [
+                    ...($scopes !== null ? array_values(array_filter(explode(',', $scopes))) : ['read_orders', 'read_products']),
+                    // The shop's own name, to tell one store from another on the page.
+                    ...($name !== null && $name !== '' ? ['name:'.$name] : []),
+                ],
             ])->save();
         } catch (UniqueConstraintViolationException) {
             throw new ShopifyStoreTaken($domain);

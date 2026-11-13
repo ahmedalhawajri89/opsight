@@ -28,7 +28,7 @@ final class ImportWooProduct
 
         ($this->record)(new ImportedProduct(
             source: self::SOURCE,
-            externalId: isset($payload['id']) ? (string) $payload['id'] : null,
+            externalId: isset($payload['id']) ? ImportWooOrder::id($payload, (string) $payload['id']) : null,
             sku: $sku,
             name: $name ?? $sku ?? 'WooCommerce product',
             price: Money::round(Amount::of($payload['price'] ?? $payload['regular_price'] ?? null, '0') ?? '0', 4),

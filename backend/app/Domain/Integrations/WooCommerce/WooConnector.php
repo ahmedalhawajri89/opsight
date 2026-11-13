@@ -24,17 +24,17 @@ final class WooConnector implements PolledConnector
 
     public function catalogue(Integration $connection): iterable
     {
-        return $this->client->products($connection);
+        return $this->marked($connection, $this->client->products($connection));
     }
 
     public function orders(Integration $connection, string $from, string $to): iterable
     {
-        return $this->client->orders($connection, $from, $to);
+        return $this->marked($connection, $this->client->orders($connection, $from, $to));
     }
 
     public function changedSince(Integration $connection, string $since): iterable
     {
-        return $this->client->ordersChangedSince($connection, $since);
+        return $this->marked($connection, $this->client->ordersChangedSince($connection, $since));
     }
 
     public function importProduct(array $payload): void
@@ -45,5 +45,18 @@ final class WooConnector implements PolledConnector
     public function importOrder(array $payload): Order
     {
         return ($this->orders)($payload);
+    }
+
+    /**
+     * Each payload marked with the store it came from (ImportWooOrder::id).
+     *
+     * @param  iterable<array<string, mixed>>  $payloads
+     * @return iterable<array<string, mixed>>
+     */
+    private function marked(Integration $connection, iterable $payloads): iterable
+    {
+        foreach ($payloads as $payload) {
+            yield [ImportWooOrder::STORE => (string) $connection->external_account_id] + $payload;
+        }
     }
 }

@@ -583,7 +583,12 @@ function ConnectionCard({ integration, onDisconnect }) {
                 {t(`integrations.status.${integration.status}`)}
               </Badge>
             </div>
-            <p className="mt-0.5 text-xs text-(--color-muted)">
+            {integration.store_name ? (
+              <p className="mt-0.5 truncate text-sm font-medium text-(--color-text-2)">
+                {integration.store_name}
+              </p>
+            ) : null}
+            <p className="mt-0.5 truncate text-xs text-(--color-muted)" dir="auto">
               {t('integrations.storeLabel', { id: integration.store_id })}
             </p>
           </div>

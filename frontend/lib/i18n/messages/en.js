@@ -396,7 +396,7 @@ const en = {
 
     sections: {
       stores: 'Store apps',
-      storesHint: 'Connected through an official app, so new orders arrive on their own.',
+      storesHint: 'Orders arrive from them on their own, and you can connect more than one store on the same platform.',
       universal: 'For any other system',
       universalHint: 'For every store or system that has no Baydar app yet.',
       more: 'Coming platforms',

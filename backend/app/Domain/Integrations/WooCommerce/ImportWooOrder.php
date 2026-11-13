@@ -28,10 +28,32 @@ use Illuminate\Support\Carbon;
  * STATUS. "processing" and "on-hold" are committed trade not yet shipped;
  * "completed" is delivered; "pending" is an unpaid checkout and stays a
  * draft, outside every figure, until the store moves it on.
+ *
+ * SEVERAL STORES. WooCommerce numbers orders, products and customers per
+ * store: order 1042 exists in every shop. The connector marks each payload
+ * with the store it came from (`_store`), and every id is recorded under that
+ * store, so two shops of one business never fold into each other.
  */
 final class ImportWooOrder
 {
     public const SOURCE = 'woocommerce';
+
+    /** The key the connector adds to every payload: the store's URL. */
+    public const STORE = '_store';
+
+    /**
+     * An id as WooCommerce gave it, made unique to its store. The store is
+     * shortened to a stable digest of its URL: the URL itself could fill the
+     * column, and reconnecting the same store yields the same ids again.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public static function id(array $payload, string $id): string
+    {
+        $store = $payload[self::STORE] ?? null;
+
+        return is_string($store) && $store !== '' ? substr(hash('sha256', $store), 0, 12).':'.$id : $id;
+    }
 
     public function __construct(private readonly RecordImportedOrder $record) {}
 
@@ -61,7 +83,7 @@ final class ImportWooOrder
             $productId = (int) ($item['variation_id'] ?? 0) ?: (int) ($item['product_id'] ?? 0);
 
             $lines[] = new ImportedLine(
-                productExternalId: $productId > 0 ? (string) $productId : null,
+                productExternalId: $productId > 0 ? self::id($payload, (string) $productId) : null,
                 productSku: $sku,
                 productName: $name ?? $sku ?? 'WooCommerce item',
                 productPrice: bcdiv($lineTotal, (string) $quantity, 4),
@@ -88,7 +110,7 @@ final class ImportWooOrder
 
         return new ImportedOrder(
             source: self::SOURCE,
-            externalId: (string) ($payload['id'] ?? ''),
+            externalId: self::id($payload, (string) ($payload['id'] ?? '')),
             status: $status,
             placedAt: Carbon::parse((string) ($payload['date_created_gmt'] ?? $payload['date_created'] ?? 'now'), 'UTC'),
             customer: $this->customer($payload),
@@ -145,7 +167,7 @@ final class ImportWooOrder
         return new ImportedCustomer(
             // A guest checkout has no customer id; the email keeps the same
             // buyer together across orders.
-            externalId: $id > 0 ? (string) $id : 'guest:'.strtolower((string) ($email ?? $name)),
+            externalId: self::id($payload, $id > 0 ? (string) $id : 'guest:'.strtolower((string) ($email ?? $name))),
             name: $name !== '' ? $name : (string) $email,
             email: $email,
             phone: is_string($billing['phone'] ?? null) && $billing['phone'] !== '' ? $billing['phone'] : null,

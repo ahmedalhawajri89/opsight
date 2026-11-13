@@ -102,6 +102,20 @@ final class RecordImportedOrder
             ->where('external_id', $imported->externalId)
             ->first();
 
+        /*
+         * The same person reached through another door: a second store, a
+         * second platform, or entered by hand. One email is one customer in
+         * a business (the table says so), so the order joins that person,
+         * and what they were already called here is left as it is.
+         */
+        if ($customer === null && $imported->email !== null) {
+            $known = Customer::query()->where('email', $imported->email)->first();
+
+            if ($known !== null) {
+                return $known;
+            }
+        }
+
         if ($customer === null) {
             $customer = new Customer;
             $customer->forceFill(['source' => $source, 'external_id' => $imported->externalId]);
