@@ -55,6 +55,24 @@ class OrderTransitionException extends DomainException
         );
     }
 
+    /** A line's discount may bring that line to nothing, never below it. */
+    public static function lineDiscountExceedsLine(string $product): self
+    {
+        return new self(
+            __('errors.order.line_discount_exceeds_line', ['product' => $product]),
+            'order.line_discount_exceeds_line',
+        );
+    }
+
+    /** A refund that rounds to nothing in the currency refunds nothing. */
+    public static function refundNotPositive(): self
+    {
+        return new self(
+            __('errors.order.refund_not_positive'),
+            'order.refund_not_positive',
+        );
+    }
+
     public static function refundExceedsTotal(): self
     {
         return new self(

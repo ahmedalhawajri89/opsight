@@ -86,6 +86,17 @@ final class ConfirmOrder
                 // Rounded at the LINE, then summed — what an invoice does, and
                 // what avoids a totals-drift bug class (DATABASE_DESIGN.md §2).
                 $lineGross = $this->round(bcmul($unitPrice, (string) $item->quantity, 6));
+                /*
+                 * A line's discount may take that line to nothing, not below
+                 * it. Only the order's total was guarded, so a line could be
+                 * driven negative while another kept the order positive:
+                 * negative revenue for one product, negative VAT on its line
+                 * (security audit, 2026-11-13).
+                 */
+                if (bccomp((string) $item->line_discount, $lineGross, 6) > 0) {
+                    throw OrderTransitionException::lineDiscountExceedsLine((string) $item->product_name);
+                }
+
                 $lineTotal = $this->round(bcsub($lineGross, (string) $item->line_discount, 6));
                 $lineCogs = $this->round(bcmul($unitCost, (string) $item->quantity, 6));
 

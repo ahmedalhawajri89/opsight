@@ -74,6 +74,8 @@ return [
         'not_editable' => 'A :status order cannot be edited. Cancel it and enter a correction instead.',
         'reason_required' => 'A cancellation reason is required.',
         'discount_exceeds_subtotal' => 'The discount is more than the goods on this order are worth.',
+        'line_discount_exceeds_line' => 'The discount on :product is larger than the line itself. A line can be discounted to nothing, not below.',
+        'refund_not_positive' => 'That refund comes to nothing in this currency. Enter an amount of at least the smallest unit.',
         'refund_exceeds_total' => 'A refund cannot exceed what is left to refund on this order.',
         'stock_already_returned' => 'The stock for this order has already been returned. Record this refund without returning stock.',
         'not_refundable' => 'Only a fulfilled order can be refunded.',
