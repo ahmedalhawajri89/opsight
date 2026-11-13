@@ -213,6 +213,10 @@ class AppServiceProvider extends ServiceProvider
          * which costs more than letting it through. This is a ceiling against
          * a flood, not a traffic policy.
          */
+        // Per key, not per address: a merchant's whole catalogue may be sent
+        // from one Zapier IP, and two merchants may share it.
+        RateLimiter::for('inbound', static fn (Request $request): Limit => Limit::perMinute(240)
+            ->by('inbound|'.substr((string) $request->bearerToken(), 0, 13).'|'.$request->ip()));
         RateLimiter::for('webhooks', static fn (Request $request): Limit => Limit::perMinute(300)
             ->by($request->route('provider').'|'.$request->ip()));
     }
