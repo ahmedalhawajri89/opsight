@@ -1653,6 +1653,7 @@ const en = {
       email_verified: 'email address confirmed',
       financing_generated: 'financing report drawn up',
       cash_balance_set: 'cash balance stated',
+      cash_threshold_set: 'cash floor set',
       file: 'file imported',
       claimed: 'claimed',
       claim_failed: 'claim failed',

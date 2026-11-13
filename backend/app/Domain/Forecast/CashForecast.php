@@ -79,6 +79,8 @@ final class CashForecast
         $running = $balance ?? 0.0;
         $lowest = null;
         $firstNegative = null;
+        $threshold = $settings->cash_safety_threshold !== null ? (float) $settings->cash_safety_threshold : null;
+        $belowThreshold = [];
         $totals = ['in' => 0.0, 'out' => 0.0];
         $out = [];
 
@@ -95,6 +97,12 @@ final class CashForecast
 
             if ($balance !== null && $firstNegative === null && $running < 0) {
                 $firstNegative = $w;
+            }
+
+            // Only against a stated balance: without one, `running` is the
+            // shape of the quarter from zero, and a floor means nothing.
+            if ($balance !== null && $threshold !== null && $running < $threshold) {
+                $belowThreshold[] = $w;
             }
 
             $out[] = [
@@ -122,6 +130,8 @@ final class CashForecast
             'totals' => ['in' => $this->money($totals['in']), 'out' => $this->money($totals['out']), 'net' => $this->money($totals['in'] - $totals['out'])],
             'lowest' => $lowest === null ? null : ['week' => $lowest['week'], 'start' => $out[$lowest['week']]['start'], 'value' => $this->money($lowest['value'])],
             'first_negative_week' => $firstNegative === null ? null : ['week' => $firstNegative, 'start' => $out[$firstNegative]['start']],
+            'safety_threshold' => $threshold !== null ? $this->money($threshold) : null,
+            'below_threshold_weeks' => $belowThreshold,
             'assumptions' => [
                 'median_days_to_pay' => $medianLag,
                 'paid_within_week' => round($shares[0], 3),

@@ -9,6 +9,7 @@ use App\Domain\Calendar\HijriCalendar;
 use App\Domain\Inventory\StockLevel;
 use App\Domain\Metrics\Breakdown;
 use App\Domain\Metrics\Comparison;
+use App\Domain\Metrics\DashboardFigures;
 use App\Domain\Metrics\MetricCalculator;
 use App\Domain\Metrics\MetricSummary;
 use App\Domain\Metrics\Period;
@@ -45,6 +46,7 @@ class AnalyticsController extends Controller
         private readonly Breakdown $breakdown,
         private readonly MetricCalculator $metrics,
         private readonly QuickStats $quickStats,
+        private readonly DashboardFigures $figures,
     ) {}
 
     /** Every headline metric for a period, with its comparison. */
@@ -188,13 +190,24 @@ class AnalyticsController extends Controller
             ],
             // Point in time, like low_stock: how the catalogue's stock is spread now.
             'inventory_status' => $this->metrics->inventoryStatus(),
+            // Where the sales came from. Margins only for a role that may see cost.
+            'channels' => $this->figures->channels($period, $canSeeCost)['rows'],
         ];
+
+        // The best bucket and the average day, worked out here so the screen
+        // does no money arithmetic.
+        $payload['peak'] = $this->figures->peak($payload['revenue_trend']);
+        $payload['daily_average'] = $this->figures->dailyAverage($this->metrics->netRevenue($period), $period);
 
         // Only computed, and only present, for a role that may see cost.
         if ($canSeeCost) {
             $payload['profit_trend'] = $this->timeSeries->build($period, 'gross_profit', $grain, $user);
             $payload['expenses_trend'] = $this->timeSeries->build($period, 'operating_expenses', $grain, $user);
             $payload['margin_trend'] = $this->timeSeries->build($period, 'gross_margin', $grain, $user);
+            $payload['net_profit_trend'] = $this->figures->netProfitTrend($payload['profit_trend'], $payload['expenses_trend']);
+            $payload['expenses_by_category'] = $this->figures->expensesByCategory(
+                $this->metrics->operatingExpensesByCategory($period),
+            );
 
             /*
              * Revenue against operating expenses, month by month over the last

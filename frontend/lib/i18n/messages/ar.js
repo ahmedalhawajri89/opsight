@@ -1662,6 +1662,7 @@ const ar = {
       email_verified: 'تأكيد البريد الإلكتروني',
       financing_generated: 'أُعدّ تقرير التمويل',
       cash_balance_set: 'أُدخل رصيد النقد',
+      cash_threshold_set: 'حُدّد الحد الأدنى للنقد',
       file: 'استُورد ملف',
       claimed: 'رُبط',
       claim_failed: 'تعذّر الربط',

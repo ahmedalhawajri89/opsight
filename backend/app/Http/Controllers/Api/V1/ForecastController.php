@@ -98,4 +98,39 @@ class ForecastController extends Controller
             'cash_balance_as_of' => $settings->cash_balance_as_of?->toDateString(),
         ]]);
     }
+
+    /**
+     * The least cash the owner wants to keep in hand. The forecast marks every
+     * week expected to fall below it. Audited, like the balance it is read
+     * against.
+     */
+    public function setThreshold(Request $request, AuditRecorder $recorder): JsonResponse
+    {
+        if (! ($request->user()?->can(Ability::SettingsUpdate->value) ?? false)) {
+            abort(403);
+        }
+
+        $input = $request->validate([
+            // Same shape as the balance, but never negative: a floor below
+            // zero is an overdraft, not a safety margin.
+            'amount' => ['present', 'nullable', 'regex:/^\d{1,12}(\.\d{1,3})?$/'],
+        ]);
+
+        $settings = BusinessSetting::current();
+        $before = $settings->cash_safety_threshold;
+
+        $settings->forceFill([
+            'cash_safety_threshold' => $input['amount'] === null ? null : Money::round((string) $input['amount']),
+        ])->save();
+
+        $recorder->record(
+            action: 'forecast.cash_threshold_set',
+            subject: $settings,
+            context: ['from' => $before, 'to' => $settings->cash_safety_threshold],
+        );
+
+        return response()->json(['data' => [
+            'cash_safety_threshold' => $settings->cash_safety_threshold,
+        ]]);
+    }
 }
