@@ -276,3 +276,23 @@ it('shows receivables only to a role with analytics', function (): void {
 
     expect($this->getJson('/api/v1/dashboard')->assertOk()->json('data.quick_stats'))->toBeArray()->not->toHaveKey('receivables');
 });
+
+it('records a double-clicked payment once, and a later identical instalment twice', function (): void {
+    $order = ledgerOrder(fulfil: false);
+    $pay = app(RecordPayment::class);
+    $actor = User::factory()->create()->id;
+
+    // Two identical requests a moment apart: one payment.
+    $order = $pay($order, '20', PaymentMethod::Card, actorId: $actor);
+    $order = $pay($order, '20', PaymentMethod::Card, actorId: $actor);
+
+    expect($order->payments()->count())->toBe(1)
+        ->and(PaymentStatus::outstanding($order))->toBe('80.000');
+
+    // The same amount again, past the window: a real second instalment.
+    $this->travel(RecordPayment::REPEAT_SECONDS + 1)->seconds();
+    $order = $pay($order, '20', PaymentMethod::Card, actorId: $actor);
+
+    expect($order->payments()->count())->toBe(2)
+        ->and(PaymentStatus::outstanding($order))->toBe('60.000');
+});

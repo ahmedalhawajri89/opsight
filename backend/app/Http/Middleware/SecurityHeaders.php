@@ -29,6 +29,16 @@ class SecurityHeaders
     {
         $response = $next($request);
 
+        /*
+         * PHP announces itself and its version (expose_php) at the SAPI level,
+         * outside the Response object, so it is removed there as well as here.
+         */
+        $response->headers->remove('X-Powered-By');
+
+        if (! headers_sent()) {
+            header_remove('X-Powered-By');
+        }
+
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');

@@ -13,6 +13,7 @@ use App\Support\Auth\GoogleIdTokens;
 use App\Support\Localization\Localizer;
 use App\Support\Tenancy\BusinessAgnosticUserProvider;
 use App\Support\Tenancy\CurrentBusiness;
+use Closure;
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
@@ -228,10 +229,27 @@ class AppServiceProvider extends ServiceProvider
      * length rule still applies in tests, so the shape of the policy is
      * exercised; only the network half is stubbed out.
      */
+    /** Bcrypt's own limit: it reads no further than this. */
+    public const PASSWORD_MAX_BYTES = 72;
+
     private function definePasswordPolicy(): void
     {
         Password::defaults(function (): Password {
-            $rule = Password::min(12);
+            /*
+             * At most 72 BYTES (security audit, 2026-11-13). Bcrypt reads no
+             * further and silently ignores the rest, so a 100-character
+             * passphrase was really its first 72 bytes — and two passphrases
+             * sharing those were the same password. Bytes, not characters:
+             * an Arabic letter is two bytes in UTF-8, so the limit is about
+             * 36 Arabic letters, and saying so beats truncating in silence.
+             */
+            $rule = Password::min(12)->rules([
+                static function (string $attribute, mixed $value, Closure $fail): void {
+                    if (is_string($value) && strlen($value) > self::PASSWORD_MAX_BYTES) {
+                        $fail(__('validation.password_too_long'));
+                    }
+                },
+            ]);
 
             return $this->app->environment('testing') ? $rule : $rule->uncompromised();
         });

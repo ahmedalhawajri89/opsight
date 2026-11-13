@@ -206,3 +206,12 @@ it('refuses a workbook that would unpack past the limit, before unpacking it', f
     expect(filesize($path))->toBeLessThan(1024 * 1024);
     expect(fn () => (new SheetReader)->read($path, 'xlsx'))->toThrow(ImportProblem::class);
 });
+
+it('refuses a file holding more cells than an import ever needs', function (): void {
+    // About 1,000,001 cells: within the row and column limits, past the cell budget.
+    $row = implode(',', array_fill(0, 250, 'x'));
+    $content = $row."\n".str_repeat($row."\n", 4001);
+
+    expect(fn () => (new SheetReader)->read(sheetFile($content), 'csv'))
+        ->toThrow(fn (ImportProblem $e) => expect($e->key)->toBe('too_large'));
+});

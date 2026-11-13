@@ -37,7 +37,18 @@ final class SheetReader
      * gigabytes of repeated XML, and reading a part reads all of it into
      * memory: the compressed size says nothing, the stated size says it all.
      */
-    public const MAX_PART_BYTES = 50 * 1024 * 1024;
+    public const MAX_PART_BYTES = 20 * 1024 * 1024;
+
+    /**
+     * The most cells, and the most characters, one file may hold in all
+     * (security audit, 2026-11-13). The row and column limits alone still
+     * allowed 20,000 x 256 cells of long text, every one held in an array
+     * and copied again on the way out: enough to run a request out of
+     * memory. A real import is a few hundred thousand short cells.
+     */
+    public const MAX_CELLS = 1_000_000;
+
+    public const MAX_CHARACTERS = 20_000_000;
 
     /**
      * The widest row read. A cell reference is the file's own claim, and
@@ -109,9 +120,12 @@ final class SheetReader
         rewind($stream);
 
         $rows = [];
+        $budget = new SheetBudget(self::MAX_CELLS, self::MAX_CHARACTERS);
 
         while (($row = fgetcsv($stream, null, $delimiter, '"', '')) !== false) {
-            $rows[] = array_map(static fn ($cell): string => (string) $cell, $row);
+            $cells = array_map(static fn ($cell): string => (string) $cell, $row);
+            $budget->spend(count($cells), array_sum(array_map('mb_strlen', $cells)));
+            $rows[] = $cells;
 
             if (count($rows) > self::MAX_ROWS + 1) {
                 break;
@@ -175,6 +189,7 @@ final class SheetReader
         $row = null;
         $column = 0;
         $type = null;
+        $budget = new SheetBudget(self::MAX_CELLS, self::MAX_CHARACTERS);
 
         while ($reader->read()) {
             if ($reader->nodeType === XMLReader::ELEMENT && $reader->localName === 'row') {
@@ -201,6 +216,8 @@ final class SheetReader
                 }
 
                 $value = $this->cellValue($reader, $type, $shared);
+                // Padding counts too: a sparse row of distant cells is still that wide.
+                $budget->spend(max(1, $column + 1 - count($row)), mb_strlen($value));
                 $row = array_pad($row, $column, '');
                 $row[$column] = $value;
             }

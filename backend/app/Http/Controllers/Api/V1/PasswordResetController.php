@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Forgotten passwords: a link by email, then a new password from that link.
@@ -43,9 +44,25 @@ class PasswordResetController extends Controller
     {
         $email = (string) $request->string('email');
 
-        if ($this->mayReset($email)) {
-            $this->broker()->sendResetLink(['email' => $email]);
-        }
+        /*
+         * After the answer has gone, not before it (security audit,
+         * 2026-11-13). The words were already the same for every address, but
+         * the time was not: a real account cost a token, a write and a mail
+         * sent while the caller waited, an unknown one cost nothing, and with
+         * a real mail server that difference can be timed. A mail server that
+         * failed turned the same request into a 500 — a different answer
+         * again. Now the caller gets the 202 at once either way, and a
+         * failure after it is reported, never shown.
+         */
+        dispatch(function () use ($email): void {
+            try {
+                if ($this->mayReset($email)) {
+                    $this->broker()->sendResetLink(['email' => $email]);
+                }
+            } catch (Throwable $e) {
+                report($e);
+            }
+        })->afterResponse();
 
         return response()->json(['message' => __('auth.reset_link_sent')], 202);
     }

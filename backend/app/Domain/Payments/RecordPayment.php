@@ -26,6 +26,9 @@ use Illuminate\Validation\ValidationException;
  */
 final class RecordPayment
 {
+    /** How close together two identical payments must be to count as one. */
+    public const REPEAT_SECONDS = 10;
+
     public function __invoke(
         Order $order,
         string $amount,
@@ -45,6 +48,27 @@ final class RecordPayment
 
             if (bccomp($amount, '0', $scale) <= 0) {
                 throw ValidationException::withMessages(['amount' => __('errors.payments.not_positive')]);
+            }
+
+            /*
+             * The same payment, by the same person, a moment ago: a double
+             * click or a retried request, not a second payment (security
+             * audit, 2026-11-13). The lock serialises the two requests, so
+             * the second sees the first's row and returns the order as it
+             * already stands instead of recording the money twice. A real
+             * second instalment of the same amount comes later than this, or
+             * from someone else, or with another reference.
+             */
+            $repeat = $order->payments()
+                ->where('amount', $amount)
+                ->where('method', $method->value)
+                ->where('recorded_by', $actorId)
+                ->where(fn ($q) => $reference === null ? $q->whereNull('reference') : $q->where('reference', $reference))
+                ->where('created_at', '>=', now()->subSeconds(self::REPEAT_SECONDS))
+                ->exists();
+
+            if ($repeat) {
+                return $order;
             }
 
             if (bccomp($amount, PaymentStatus::outstanding($order), $scale) > 0) {
