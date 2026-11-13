@@ -499,6 +499,31 @@ const en = {
 
   assistant: {
     title: 'Ask Baydar',
+    subtitle: '{company} · every answer from your records only',
+    back: 'Back to the dashboard',
+    thinking: 'Baydar is working it out from your records…',
+    scope: 'Baydar sees only your company’s data, and only what your role allows: staff get no answers about cost or profit.',
+    answerSources: {
+      zero: 'An answer with no figures from your records',
+      one: 'Worked out from {count} source',
+      other: 'Worked out from {count} sources',
+    },
+    followUps: {
+      cash: 'How much cash will I have at the end of the month?',
+      channels: 'Compare Salla sales with orders entered by hand',
+      customers: 'Who bought the most this quarter?',
+    },
+    evidence: {
+      title: 'Where did the figures come from?',
+      subtitle: 'The sources of the latest answer',
+      period: 'Period',
+      compared: 'Compared with',
+      computedBy: 'Calculated by',
+      engine: 'Baydar’s calculation engine',
+      open: 'Open',
+      empty: 'Ask a question, and the sources of every figure will show here.',
+      note: 'The AI in Baydar only understands your question and words the answer. Every figure is calculated from your database, and you can open its source.',
+    },
     description: 'Ask about your sales, profit, customers and stock, in Arabic or English.',
     intro:
       'Ask a question about your business. Every figure in an answer is read from your records, and the views it came from are listed under it, so you can check any number on the Analytics screen.',

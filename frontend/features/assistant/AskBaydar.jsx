@@ -1,15 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { gsap } from 'gsap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
-import { AssistantMessage, Thinking, UserMessage } from '@/features/assistant/ChatMessage';
+import { EvidencePanel } from '@/features/assistant/EvidencePanel';
+import {
+  AssistantMessage,
+  BaydarMark,
+  Thinking,
+  UserMessage,
+} from '@/features/assistant/ChatMessage';
 import { Composer } from '@/features/assistant/Composer';
 import { ConversationList } from '@/features/assistant/ConversationList';
 import { EmptyChat } from '@/features/assistant/EmptyChat';
 import { ErrorState, ForbiddenState } from '@/components/data/States';
 import { Icon } from '@/components/ui/Icon';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { queryKeys } from '@/lib/queryKeys';
 import * as assistant from '@/services/assistant';
 
@@ -34,7 +44,12 @@ export function AskBaydar() {
   const [thread, setThread] = useState([]);
   const [draft, setDraft] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
+  // The answer that has just arrived, revealed line by line; history is not.
+  const [freshId, setFreshId] = useState(null);
   const scroller = useRef(null);
+  const drawer = useRef(null);
+  const { user } = useAuth();
+  const reduced = useReducedMotion();
 
   const list = useQuery({
     queryKey: queryKeys.assistant.list,
@@ -46,6 +61,7 @@ export function AskBaydar() {
     onSuccess: (response, variables) => {
       const { conversation_id: id, answer } = response.data;
       setConversationId(id);
+      setFreshId(answer.id);
       setThread((current) => [
         ...current.filter((m) => !m.pending),
         { id: `q-${answer.id}`, role: 'user', text: variables.message },
@@ -60,6 +76,7 @@ export function AskBaydar() {
     mutationFn: assistant.getConversation,
     onSuccess: (response) => {
       setConversationId(response.data.id);
+      setFreshId(null);
       setThread(response.data.messages);
       setHistoryOpen(false);
     },
@@ -97,6 +114,20 @@ export function AskBaydar() {
 
     if (box) box.scrollTop = box.scrollHeight;
   }, [thread, ask.isPending]);
+
+  // The earlier conversations slide in from the side the page starts from.
+  useLayoutEffect(() => {
+    if (!historyOpen || reduced || !drawer.current) return undefined;
+
+    const rtl = document.documentElement.dir === 'rtl';
+    const tween = gsap.from(drawer.current, {
+      xPercent: rtl ? 100 : -100,
+      duration: 0.42,
+      ease: 'expo.out',
+    });
+
+    return () => tween.revert();
+  }, [historyOpen, reduced]);
 
   if (list.isError && list.error?.isForbidden) {
     return <ForbiddenState />;
@@ -136,92 +167,169 @@ export function AskBaydar() {
     />
   );
 
-  return (
-    <div className="flex h-[calc(100dvh-8.5rem)] min-h-[32rem] gap-4">
-      <aside className="hidden w-64 shrink-0 border-e border-(--border-subtle) pe-4 lg:block">
-        {history}
-      </aside>
+  const answers = thread.filter((message) => message.role !== 'user' && !message.pending);
+  const latestAnswer = answers[answers.length - 1];
+  const followUps = ['cash', 'channels', 'customers'];
 
-      <section aria-label={t('assistant.title')} className="relative flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between gap-2 pb-2 lg:hidden">
+  return (
+    <div className="flex h-[calc(100dvh-8.5rem)] min-h-[34rem] flex-col gap-5">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-(--color-line) pb-4">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <Link
+            href="/dashboard"
+            aria-label={t('assistant.back')}
+            title={t('assistant.back')}
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-(--color-line) bg-(--color-surface) text-(--color-text) transition-colors hover:bg-(--color-surface-hover)"
+          >
+            <Icon name="arrowRight" size={17} className="-scale-x-100 rtl:scale-x-100" />
+          </Link>
+          <BaydarMark size={40} className="rounded-xl" />
+          <div className="flex min-w-0 flex-col leading-tight">
+            <h2 className="text-lg font-bold text-(--color-text)">{t('assistant.title')}</h2>
+            <span className="truncate text-xs text-(--color-text-2)">
+              {t('assistant.subtitle', { company: user?.business?.name ?? '' })}
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setHistoryOpen((v) => !v)}
             aria-expanded={historyOpen}
-            className="inline-flex items-center gap-2 rounded-(--radius-control) px-2 py-1.5 text-sm text-(--color-text-2) hover:bg-(--color-surface-selected)"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-(--color-line) bg-(--color-surface) px-3.5 text-[0.8125rem] text-(--color-text) transition-colors hover:bg-(--color-surface-hover)"
           >
-            <Icon name="menu" size={16} aria-hidden="true" />
+            <Icon name="clock" size={15} />
             {t('assistant.history')}
           </button>
           <button
             type="button"
             onClick={startNew}
-            aria-label={t('assistant.new')}
-            className="flex size-8 items-center justify-center rounded-(--radius-control) text-(--color-text-2) hover:bg-(--color-surface-selected)"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-(--color-brand-panel) px-3.5 text-[0.8125rem] font-semibold text-(--color-on-brand) transition-colors hover:bg-(--color-brand-hover)"
           >
-            <Icon name="plus" size={16} aria-hidden="true" />
+            <Icon name="plus" size={15} />
+            {t('assistant.new')}
           </button>
         </div>
+      </header>
 
-        {historyOpen ? (
-          <div className="absolute inset-x-0 top-11 z-10 h-[60%] rounded-xl border border-(--border) bg-(--color-surface) p-3 shadow-lg lg:hidden">
-            {history}
-          </div>
-        ) : null}
-
-        {!available ? (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="measure text-center text-sm text-(--color-text-2)">
-              {t('assistant.unavailable')}
-            </p>
-          </div>
-        ) : list.isError ? (
-          <ErrorState error={list.error} onRetry={list.refetch} />
-        ) : (
-          <>
-            <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
-              {thread.length === 0 && !ask.isPending ? (
-                <EmptyChat onAsk={send} />
-              ) : (
-                <ol className="mx-auto w-full max-w-3xl space-y-6 px-1 py-6" aria-live="polite">
-                  {thread.map((message) => (
-                    <li key={message.id}>
-                      {message.role === 'user' ? (
-                        <UserMessage text={message.text} />
-                      ) : (
-                        <AssistantMessage message={message} />
-                      )}
-                    </li>
-                  ))}
-                  {ask.isPending ? (
-                    <li>
-                      <Thinking />
-                    </li>
-                  ) : null}
-                </ol>
-              )}
+      {historyOpen ? (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            aria-label={t('common.close')}
+            onClick={() => setHistoryOpen(false)}
+            className="absolute inset-0 size-full bg-(--color-text)/25"
+          />
+          <div
+            ref={drawer}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="history-title"
+            className="absolute inset-y-0 start-0 flex w-80 max-w-[88vw] flex-col gap-3 bg-(--color-surface) p-4 shadow-(--shadow-overlay)"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <h2 id="history-title" className="text-base font-bold text-(--color-text)">
+                {t('assistant.history')}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(false)}
+                aria-label={t('common.close')}
+                className="inline-flex size-8 items-center justify-center rounded-[9px] text-(--color-text-2) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+              >
+                <Icon name="close" size={16} />
+              </button>
             </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">{history}</div>
+          </div>
+        </div>
+      ) : null}
 
-            <div className="mx-auto w-full max-w-3xl pt-2">
-              {ask.isError ? (
-                <p
-                  role="alert"
-                  className="mb-2 rounded-(--radius-control) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)"
-                >
-                  {ask.error?.message}
-                </p>
-              ) : null}
-              <Composer
-                value={draft}
-                onChange={setDraft}
-                onSend={send}
-                busy={ask.isPending}
-                autoFocus
-              />
+      <div className="flex min-h-0 flex-1 gap-6">
+        <section
+          aria-label={t('assistant.title')}
+          className="relative flex min-w-0 flex-1 flex-col"
+        >
+          {!available ? (
+            <div className="flex flex-1 items-center justify-center">
+              <p className="measure text-center text-sm text-(--color-text-2)">
+                {t('assistant.unavailable')}
+              </p>
             </div>
-          </>
-        )}
-      </section>
+          ) : list.isError ? (
+            <ErrorState error={list.error} onRetry={list.refetch} />
+          ) : (
+            <>
+              <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
+                {thread.length === 0 && !ask.isPending ? (
+                  <EmptyChat onAsk={send} />
+                ) : (
+                  <ol className="mx-auto w-full max-w-3xl space-y-5 px-1 py-4" aria-live="polite">
+                    {thread.map((message) => (
+                      <li key={message.id}>
+                        {message.role === 'user' ? (
+                          <UserMessage text={message.text} />
+                        ) : (
+                          <AssistantMessage
+                            message={message}
+                            latest={message === latestAnswer}
+                            fresh={message.id === freshId}
+                          />
+                        )}
+                      </li>
+                    ))}
+                    {ask.isPending ? (
+                      <li>
+                        <Thinking />
+                      </li>
+                    ) : null}
+                  </ol>
+                )}
+              </div>
+
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-2.5 pt-3">
+                {thread.length > 0 && !ask.isPending ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {followUps.map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => send(t(`assistant.followUps.${key}`))}
+                        className="h-[2.125rem] rounded-(--radius-pill) border border-(--color-line) bg-(--color-surface) px-3.5 text-[0.8125rem] text-(--color-text) transition-[border-color,transform] duration-200 hover:-translate-y-px hover:border-(--color-brand-panel)"
+                      >
+                        {t(`assistant.followUps.${key}`)}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {ask.isError ? (
+                  <p
+                    role="alert"
+                    className="rounded-(--radius-control) bg-(--color-danger-soft) px-3 py-2 text-sm text-(--color-danger)"
+                  >
+                    {ask.error?.message}
+                  </p>
+                ) : null}
+                <Composer
+                  value={draft}
+                  onChange={setDraft}
+                  onSend={send}
+                  busy={ask.isPending}
+                  autoFocus
+                />
+                <p className="text-xs text-(--color-text-2)">{t('assistant.scope')}</p>
+              </div>
+            </>
+          )}
+        </section>
+
+        <div className="hidden w-[21rem] shrink-0 overflow-y-auto xl:block">
+          <EvidencePanel
+            sources={latestAnswer?.sources ?? []}
+            answerId={latestAnswer?.id ?? null}
+          />
+        </div>
+      </div>
     </div>
   );
 }

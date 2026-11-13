@@ -1,33 +1,82 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { gsap } from 'gsap';
 
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { AnswerText } from '@/features/assistant/AnswerText';
-import { Logo } from '@/components/layout/Logo';
 import { Icon } from '@/components/ui/Icon';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format';
 
-/** The assistant's mark: the product's own logo, in a soft disc. */
-export function AssistantAvatar() {
+/**
+ * Baydar's mark, small, for a chat turn: the bowl and the grain above it.
+ * `working` tosses the grain, as on the threshing floor, for as long as the
+ * answer is actually being worked out; it stops the moment it arrives.
+ */
+export function BaydarMark({ size = 32, working = false, className }) {
+  const grain = useRef(null);
+  const reduced = useReducedMotion();
+
+  useLayoutEffect(() => {
+    if (!working || reduced || !grain.current) return undefined;
+
+    const toss = gsap
+      .timeline({ repeat: -1 })
+      .to(grain.current, { y: -5, x: -1, duration: 0.38, ease: 'power2.out' })
+      .to(grain.current, { y: 0, x: 0, duration: 0.38, ease: 'power2.in' })
+      .to(grain.current, {
+        scaleX: 1.25,
+        scaleY: 0.75,
+        duration: 0.07,
+        yoyo: true,
+        repeat: 1,
+        transformOrigin: '50% 100%',
+      });
+
+    return () => toss.kill();
+  }, [working, reduced]);
+
   return (
     <span
       aria-hidden="true"
-      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-(--color-brand-soft) text-(--color-brand-text)"
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-[10px] bg-(--color-brand-panel)',
+        className,
+      )}
+      style={{ width: size, height: size }}
     >
-      <Logo compact size="md" />
+      <svg viewBox="0 0 32 32" width={size * 0.62} height={size * 0.62} fill="none">
+        <path d="M28.6 18.6 A12.6 12.6 0 0 1 3.4 18.6 Z" fill="var(--on-brand)" />
+        <path
+          d="M3.4 18.6h25.2"
+          stroke="var(--accent-on-brand)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <circle ref={grain} cx="21.5" cy="11.5" r="2.2" fill="var(--accent-on-brand)" />
+      </svg>
     </span>
   );
 }
 
-/** A question: a bubble at the reader's side of the column. */
+/** Kept for callers that only want the mark at rest. */
+export function AssistantAvatar() {
+  return <BaydarMark size={32} />;
+}
+
+/** The reader's question: navy, on the side a sentence starts from. */
 export function UserMessage({ text }) {
+  const bubble = useEnter({ x: 14 });
+
   return (
-    <div className="flex justify-end">
+    <div className="flex justify-start">
       <p
+        ref={bubble}
         dir="auto"
-        className="max-w-[85%] whitespace-pre-line rounded-2xl rounded-se-md bg-(--color-brand-soft) px-4 py-2.5 text-sm leading-6 text-(--color-text)"
+        className="max-w-[78%] rounded-2xl rounded-ss-md bg-(--color-brand-panel) px-4 py-3 text-[0.9375rem] leading-7 whitespace-pre-line text-(--color-on-brand)"
       >
         {text}
       </p>
@@ -36,16 +85,37 @@ export function UserMessage({ text }) {
 }
 
 /**
- * An answer: no bubble, the full reading width, the mark beside it.
+ * One answer, on a card. The latest answer carries a navy frame: it is the
+ * one the panel beside the chat is explaining.
  *
- * EVERY SOURCE IS A LINK. Each chip opens the analytics screen on the same
- * period the assistant read, so a doubted figure is one click from being
- * checked against the screen it came from (ADR-038). Stock has no period;
- * its chip opens the inventory instead.
+ * `fresh` is true only for an answer that has just arrived, not for one
+ * read back from history, so only a new answer is revealed line by line.
  */
-export function AssistantMessage({ message }) {
+export function AssistantMessage({ message, latest = false, fresh = false }) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
+  const card = useEnter({ y: 14 });
+  const body = useRef(null);
+  const reduced = useReducedMotion();
+  const sources = message.sources ?? [];
+
+  useLayoutEffect(() => {
+    if (!fresh || reduced || !body.current) return undefined;
+
+    const lines = body.current.querySelectorAll(':scope > *');
+    const tween = gsap.from(lines, {
+      autoAlpha: 0,
+      y: 8,
+      filter: 'blur(4px)',
+      duration: 0.45,
+      ease: 'power2.out',
+      stagger: 0.09,
+      delay: 0.15,
+      clearProps: 'filter,transform,opacity,visibility',
+    });
+
+    return () => tween.revert();
+  }, [fresh, reduced]);
 
   useEffect(() => {
     if (!copied) return undefined;
@@ -65,57 +135,74 @@ export function AssistantMessage({ message }) {
   }
 
   return (
-    <div className="flex gap-3">
-      <AssistantAvatar />
-      <div className="min-w-0 flex-1 pt-1">
-        <AnswerText text={message.text} />
-
-        {message.sources?.length ? (
-          <div className="mt-3">
-            <p className="mb-1.5 text-xs font-medium text-(--color-muted)">
-              {t('assistant.sourcesLabel')}
-            </p>
-            <ul className="flex flex-wrap gap-1.5" aria-label={t('assistant.sourcesLabel')}>
-              {message.sources.map((source, i) => (
-                <li key={`${source.tool}-${i}`}>
-                  <Link
-                    href={sourceHref(source)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-(--border) bg-(--color-surface) px-2.5 py-1 text-xs text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:text-(--color-brand-text)"
-                  >
-                    <Icon
-                      name={source.tool === 'get_stock_risks' ? 'shelves' : 'chart'}
-                      size={12}
-                      aria-hidden="true"
-                    />
-                    <span>{t(`assistant.sources.${source.tool}`)}</span>
-                    {source.from ? (
-                      <span className="text-(--color-muted)">
-                        {formatDate(source.from)} – {formatDate(source.to)}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        <div className="mt-2 flex items-center gap-1">
-          <button
-            type="button"
-            onClick={copy}
-            className="inline-flex items-center gap-1 rounded-(--radius-control) px-2 py-1 text-xs text-(--color-muted) transition-colors hover:bg-(--color-surface-selected) hover:text-(--color-text)"
-          >
-            <Icon name={copied ? 'check' : 'copy'} size={13} aria-hidden="true" />
-            {copied ? t('assistant.copied') : t('assistant.copy')}
-          </button>
-        </div>
+    <article
+      ref={card}
+      className={cn(
+        'flex flex-col gap-4 rounded-[18px] bg-(--color-surface) px-6 py-5 transition-[border-color,box-shadow] duration-300',
+        latest
+          ? 'border-2 border-(--color-brand-panel) shadow-(--shadow-card)'
+          : 'border border-(--color-line)',
+      )}
+    >
+      <div className="flex items-center gap-2.5">
+        <BaydarMark size={28} />
+        <span className="text-sm font-semibold text-(--color-text)">{t('assistant.title')}</span>
       </div>
-    </div>
+
+      <div ref={body} className="text-[0.9375rem] leading-[1.85]">
+        <AnswerText text={message.text} />
+      </div>
+
+      {sources.length ? (
+        <ul className="flex flex-wrap gap-1.5" aria-label={t('assistant.sourcesLabel')}>
+          {sources.map((source, i) => (
+            <li key={`${source.tool}-${i}`}>
+              <Link
+                href={sourceHref(source)}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-(--radius-pill) border border-(--color-line) bg-(--color-surface-subtle) px-3 text-xs text-(--color-text-2) transition-colors hover:border-(--color-brand) hover:text-(--color-brand-text)"
+              >
+                <Icon name={sourceIcon(source.tool)} size={13} />
+                <span>{t(`assistant.sources.${source.tool}`)}</span>
+                {source.from ? (
+                  <span className="text-(--color-muted)">
+                    {formatDate(source.from)} – {formatDate(source.to)}
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-line-subtle) pt-3">
+        <span className="flex items-center gap-1.5 text-xs text-(--color-text-2)">
+          <Icon name="database" size={13} />
+          {t('assistant.answerSources', { count: sources.length })}
+        </span>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-(--color-line) bg-(--color-surface) px-3 text-xs text-(--color-text) transition-colors hover:bg-(--color-surface-hover)"
+        >
+          <Icon name={copied ? 'check' : 'copy'} size={13} />
+          {copied ? t('assistant.copied') : t('assistant.copy')}
+        </button>
+      </div>
+    </article>
   );
 }
 
-/** Where a source chip leads: the same view, the same period. */
+export function sourceIcon(tool) {
+  return (
+    {
+      get_stock_risks: 'shelves',
+      get_trend: 'trendUp',
+      get_breakdown: 'pie',
+      get_insights: 'bolt',
+    }[tool] ?? 'chart'
+  );
+}
+
 export function sourceHref(source) {
   if (source.tool === 'get_stock_risks') return '/inventory';
   if (!source.from || !source.to) return '/analytics';
@@ -130,34 +217,58 @@ export function sourceHref(source) {
 }
 
 /**
- * While the tools run. A few seconds of nothing reads as broken; a line
- * that changes says work is happening. The dots pulse only for readers who
- * have not asked for reduced motion.
+ * While the answer is being worked out: the mark tossing its grain, and one
+ * honest sentence. It used to step through "reading… comparing… writing…"
+ * on a timer, which described nothing that was happening; now it says what
+ * is true for the whole wait, and a bar of light sweeps the line beneath it
+ * for as long as the request is open.
  */
 export function Thinking() {
   const { t } = useI18n();
-  const steps = ['reading', 'comparing', 'writing'];
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 3500);
-
-    return () => clearInterval(timer);
-  }, [steps.length]);
+  const row = useEnter({ y: 10 });
 
   return (
-    <div className="flex items-center gap-3" role="status">
-      <AssistantAvatar />
-      <span className="flex items-center gap-1" aria-hidden="true">
-        {[0, 1, 2].map((dot) => (
-          <span
-            key={dot}
-            className="size-1.5 rounded-full bg-(--color-brand) motion-safe:animate-pulse"
-            style={{ animationDelay: `${dot * 180}ms` }}
-          />
-        ))}
-      </span>
-      <span className="text-sm text-(--color-muted)">{t(`assistant.steps.${steps[step]}`)}</span>
+    <div
+      ref={row}
+      className="flex items-center gap-3 rounded-[18px] border border-(--color-line) bg-(--color-surface) px-5 py-4"
+      role="status"
+    >
+      <BaydarMark size={32} working />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="text-sm text-(--color-text-2)">{t('assistant.thinking')}</span>
+        <span
+          aria-hidden="true"
+          className="relative h-1 w-full max-w-64 overflow-hidden rounded-full bg-(--color-surface-hover)"
+        >
+          <span className="assist-sweep absolute inset-y-0 w-1/3 rounded-full bg-linear-to-l from-transparent via-(--color-chart-profit) to-transparent" />
+        </span>
+      </div>
     </div>
   );
+}
+
+/** A short entrance for something that has just appeared in the chat. */
+function useEnter({ x = 0, y = 0 }) {
+  const node = useRef(null);
+  const reduced = useReducedMotion();
+
+  useLayoutEffect(() => {
+    if (reduced || !node.current) return undefined;
+
+    const tween = gsap.from(node.current, {
+      autoAlpha: 0,
+      x: document.documentElement.dir === 'rtl' ? x : -x,
+      y,
+      scale: 0.98,
+      duration: 0.45,
+      ease: 'power3.out',
+      clearProps: 'transform,opacity,visibility',
+    });
+
+    return () => tween.revert();
+    // Once, when the element appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return node;
 }

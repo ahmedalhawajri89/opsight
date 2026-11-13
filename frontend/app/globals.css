@@ -658,6 +658,32 @@ html[lang='ar'] [class*='tracking-'] {
   }
 }
 
+/*
+ * assist-sweep: a bar of light crossing the line under "Baydar is working
+ * it out" for as long as the request is open (ChatMessage Thinking). It
+ * runs while the wait does and stops with it; it measures nothing, so it
+ * never claims a share of the work.
+ */
+@keyframes opsight-assist-sweep {
+  from {
+    inset-inline-start: -33%;
+  }
+  to {
+    inset-inline-start: 100%;
+  }
+}
+
+.assist-sweep {
+  animation: opsight-assist-sweep 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assist-sweep {
+    animation: none;
+    inset-inline-start: 33%;
+  }
+}
+
 @keyframes opsight-rise {
   from {
     opacity: 0;
