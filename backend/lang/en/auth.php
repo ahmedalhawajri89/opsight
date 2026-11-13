@@ -21,6 +21,7 @@ return [
 
     'google_failed' => 'Google could not confirm that sign-in. Try again, or sign in with your password.',
     'google_no_account' => 'No active Baydar account uses this Google address. Sign in with your password, or ask your owner to add this address.',
+    'google_unverified' => 'This address has a Baydar account that was never confirmed. Open the link in the confirmation email, or reset the password from "Forgot password", then sign in with Google.',
 
     /*
      * A forgotten password. `reset_link_sent` is the same sentence whether or
@@ -36,6 +37,19 @@ return [
         'action' => 'Choose a new password',
         'expires' => 'The link works for :minutes minutes, and only once.',
         'ignore' => 'If you did not ask, ignore this email: your password stays as it is.',
+        'salutation' => 'Baydar',
+    ],
+
+    'verify_invalid' => 'This confirmation link is not valid any more. Sign in and ask for a new one.',
+    'verify_done' => 'Your email address is confirmed.',
+    'verify_sent' => 'A confirmation link is on its way to your email address.',
+    'verify_mail' => [
+        'subject' => 'Confirm your email address for Baydar',
+        'greeting' => 'Hello,',
+        'intro' => 'Please confirm that this address is yours, so that Baydar can send your morning brief here and you can sign in with Google.',
+        'action' => 'Confirm my email address',
+        'expires' => 'The link works for :days days.',
+        'ignore' => 'If you did not open a Baydar account, ignore this email: nothing will be sent to you.',
         'salutation' => 'Baydar',
     ],
 

@@ -76,6 +76,7 @@ class SecondBusinessSeeder extends Seeder
         $owner->fill(['name' => 'Salem Al Noor', 'password' => 'password', 'locale' => 'en']);
         $owner->role = Role::Owner;
         $owner->is_active = true;
+        $owner->email_verified_at ??= now();
         $owner->save();
 
         $products = collect([

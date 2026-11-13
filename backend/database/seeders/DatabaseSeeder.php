@@ -104,6 +104,8 @@ class DatabaseSeeder extends Seeder
             // so the seeder sets them explicitly like any other service would.
             $user->role = $role;
             $user->is_active = true;
+            // Seeded addresses are ours (.test), so they count as confirmed.
+            $user->email_verified_at ??= now();
             $user->save();
         }
     }

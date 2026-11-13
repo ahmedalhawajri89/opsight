@@ -22,6 +22,7 @@ return [
     'footer' => 'You are receiving this because you turned on the morning brief. Turn it off in Baydar, under Morning brief.',
     'quiet' => 'A quiet day: nothing sold and nothing needs your attention.',
     'unavailable_whatsapp' => 'WhatsApp is not set up on this installation yet.',
+    'email_unverified' => 'Confirm your email address first: the brief is only sent to an address you have confirmed.',
     'no_phone' => 'Add a WhatsApp number first.',
     'sent_test' => 'A test brief is on its way.',
     'whatsapp_refused' => 'WhatsApp did not accept the message. Check the number, or try email.',

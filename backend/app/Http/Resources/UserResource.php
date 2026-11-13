@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'role_label' => $this->role->label(),
             'is_active' => $this->is_active,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
+            'email_verified' => $this->email_verified_at !== null,
 
             // Drive the interface language and digits on every device the user
             // signs in from (Phase 07).

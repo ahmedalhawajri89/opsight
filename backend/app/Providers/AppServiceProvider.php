@@ -168,6 +168,12 @@ class AppServiceProvider extends ServiceProvider
         // Each sign-up creates a business: a handful an hour from one address.
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));
 
+        // Opening the link in a confirmation email; the signature is the lock.
+        RateLimiter::for('verify-email', static fn (Request $request): Limit => Limit::perMinute(10)->by('ip:'.$request->ip()));
+
+        // Asking for another confirmation email: an inbox is not a target.
+        RateLimiter::for('verify-email-send', static fn (Request $request): Limit => Limit::perHour(5)->by($byUser($request)));
+
         // Changing one's own password: a few tries a minute, then wait.
         RateLimiter::for('password', static fn (Request $request): Limit => Limit::perMinute(5)->by($byUser($request)));
 

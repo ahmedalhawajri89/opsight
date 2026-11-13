@@ -117,6 +117,16 @@ final class SendBrief
             throw new BriefProblem(__('brief.unavailable_whatsapp'));
         }
 
+        /*
+         * Only to an address its owner has confirmed (security audit,
+         * 2026-11-13). Sign-up takes any address, so without this anyone
+         * could open an account in someone else's name and have a brief —
+         * carrying product names they chose — mailed to that inbox daily.
+         */
+        if ($channel->name() === 'email' && ! $user->hasVerifiedEmail()) {
+            throw new BriefProblem(__('brief.email_unverified'));
+        }
+
         $this->inLocaleOf($user, function () use ($user, $channel, $now): void {
             $brief = $this->brief->for($user, $now);
             $channel->send($user, $brief, $this->text->render($brief));

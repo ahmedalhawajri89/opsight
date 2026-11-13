@@ -79,6 +79,8 @@ class PasswordResetController extends Controller
                     $user->forceFill([
                         'password' => $password,
                         'remember_token' => Str::random(60),
+                        // The link arrived in this inbox, so the address is theirs.
+                        'email_verified_at' => $user->email_verified_at ?? now(),
                     ])->save();
                 });
 
