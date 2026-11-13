@@ -394,6 +394,70 @@ const en = {
     description:
       'Bring a store\u2019s orders into Baydar, so your figures cover everything you sell rather than what you enter by hand.',
 
+    sections: {
+      stores: 'Store apps',
+      storesHint: 'Connected through an official app, so new orders arrive on their own.',
+      universal: 'For any other system',
+      universalHint: 'For every store or system that has no Baydar app yet.',
+      more: 'Coming platforms',
+    },
+    howMany:
+      'You can connect a Salla store and a Zid store together, and any number of other systems through the universal connection, with a separate key for each.',
+    readiness: {
+      ready: 'Ready to connect',
+      setup: 'Awaiting app setup',
+      setupHint:
+        'This connection needs an app registered with {platform}, switched on by your administrator. Until then, connect through the universal connection or an Excel file.',
+      soon: 'Coming soon',
+      soonHint:
+        'A direct connection is in development. You can connect your store today through the universal connection, directly or with an automation tool such as Zapier or Make.',
+      useUniversal: 'Use the universal connection',
+    },
+    platforms: {
+      salla: 'Salla',
+      zid: 'Zid',
+      woocommerce: 'WooCommerce',
+      shopify: 'Shopify',
+      api: 'Universal connection',
+    },
+    woocommerce: { tag: 'WordPress stores' },
+    shopify: { tag: 'Shopify stores' },
+    api: {
+      title: 'Universal connection (API)',
+      tag: 'For any system that can send an HTTP request',
+      description:
+        'Any system sends its orders to Baydar with its own key: a WooCommerce or Shopify store, a till, your own system, or an automation tool. They are recorded as Salla and Zid orders are.',
+      works: 'Works with',
+      keys: 'Keys',
+      noKeys: 'No keys yet. Make one for each system you want to connect.',
+      create: 'Make a key',
+      name: 'System name',
+      namePlaceholder: 'For example: WooCommerce store',
+      nameHint: 'So you know where orders come from, and can revoke one system without the others.',
+      createdTitle: 'Copy the key now',
+      createdBody:
+        'This is the only time the whole key is shown. Save it in the system that will send the orders.',
+      copy: 'Copy',
+      copied: 'Copied',
+      done: 'Done',
+      cancel: 'Cancel',
+      revoke: 'Revoke key',
+      lastUsed: 'Last used {time}',
+      neverUsed: 'Not used yet',
+      received: {
+        zero: 'No orders received',
+        one: '{count} order received',
+        other: '{count} orders received',
+      },
+      how: 'How do I send an order?',
+      endpoint: 'Address',
+      header: 'The key, in the header',
+      example: 'Example',
+      sameId: 'Sending the same order again updates it rather than adding a second one.',
+      confirmTitle: 'Revoke this key?',
+      confirmConsequence:
+        'This system stops being able to send orders at once. The orders it sent stay in your records.',
+    },
     connect: 'Connect a store',
     yours: 'Your stores',
 
@@ -502,7 +566,8 @@ const en = {
     subtitle: '{company} · every answer from your records only',
     back: 'Back to the dashboard',
     thinking: 'Baydar is working it out from your records…',
-    scope: 'Baydar sees only your company’s data, and only what your role allows: staff get no answers about cost or profit.',
+    scope:
+      'Baydar sees only your company’s data, and only what your role allows: staff get no answers about cost or profit.',
     answerSources: {
       zero: 'An answer with no figures from your records',
       one: 'Worked out from {count} source',
@@ -1052,6 +1117,7 @@ const en = {
         zid: 'Zid',
         file: 'Excel file',
         manual: 'Entered by hand',
+        api: 'Other systems (API)',
       },
       hero: {
         label: 'Key figures',
@@ -1816,6 +1882,8 @@ const en = {
       financing_generated: 'financing report drawn up',
       cash_balance_set: 'cash balance stated',
       cash_threshold_set: 'cash floor set',
+      api_key_created: 'connection key made',
+      api_key_revoked: 'connection key revoked',
       file: 'file imported',
       claimed: 'claimed',
       claim_failed: 'claim failed',

@@ -150,3 +150,20 @@ export function runImport({ file, kind, mapping, dryRun }) {
 export function disconnectIntegration(id) {
   return api.delete(`/integrations/${id}`);
 }
+
+/* -------------------------------------------------------------------------- */
+/* The universal connection: keys any system sends orders in with              */
+/* -------------------------------------------------------------------------- */
+
+export function listApiKeys() {
+  return api.get('/integrations/api-keys');
+}
+
+/** Answers with the key in full, once; it can never be read back. */
+export function createApiKey(body) {
+  return api.post('/integrations/api-keys', body);
+}
+
+export function revokeApiKey(id) {
+  return api.delete(`/integrations/api-keys/${id}`);
+}

@@ -147,3 +147,16 @@ it('keeps keys from anyone who may not manage integrations', function (): void {
     $this->actingAs($staff)->getJson('/api/v1/integrations/api-keys')->assertForbidden();
     $this->actingAs($staff)->postJson('/api/v1/integrations/api-keys', ['name' => 'x'])->assertForbidden();
 });
+
+it('says whether each store app is set up on this installation, never how', function (): void {
+    config(['integrations.salla.client_id' => 'id', 'integrations.salla.client_secret' => 'secret']);
+    config(['integrations.zid.client_id' => null, 'integrations.zid.client_secret' => null]);
+
+    $response = $this->actingAs(User::factory()->role(Role::Owner)->create())
+        ->getJson('/api/v1/integrations')
+        ->assertOk()
+        ->assertJsonPath('meta.available.salla', true)
+        ->assertJsonPath('meta.available.zid', false);
+
+    expect($response->getContent())->not->toContain('secret');
+});

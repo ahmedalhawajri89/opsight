@@ -184,7 +184,33 @@ export function useIntegrations() {
     queryFn: () => admin.listIntegrations(),
   });
 
-  return { integrations: query.data?.data ?? [], ...query };
+  return {
+    integrations: query.data?.data ?? [],
+    // Whether each store app is set up on this installation at all.
+    available: query.data?.meta?.available ?? {},
+    ...query,
+  };
+}
+
+/** The keys for the universal connection, and making and revoking them. */
+export function useApiKeys() {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: [...queryKeys.integrations.all, 'api-keys'],
+    queryFn: () => admin.listApiKeys(),
+  });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.integrations.all });
+    AUDITED_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+  };
+
+  return {
+    keys: query.data?.data ?? [],
+    query,
+    create: useMutation({ mutationFn: (body) => admin.createApiKey(body), onSuccess: invalidate }),
+    revoke: useMutation({ mutationFn: (id) => admin.revokeApiKey(id), onSuccess: invalidate }),
+  };
 }
 
 export function useIntegrationActions() {

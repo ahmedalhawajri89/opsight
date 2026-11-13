@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { useIntegrationActions, useIntegrations } from '@/features/admin/useAdmin';
+import { UniversalConnection } from '@/features/integrations/UniversalConnection';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -50,7 +52,7 @@ const STATUS_TONE = {
 
 export default function IntegrationsPage() {
   const { t } = useI18n();
-  const { integrations, isLoading, isError, error, refetch } = useIntegrations();
+  const { integrations, available, isLoading, isError, error, refetch } = useIntegrations();
   const actions = useIntegrationActions();
 
   const [storeId, setStoreId] = useState('');
@@ -80,6 +82,12 @@ export default function IntegrationsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t('integrations.title')} description={t('integrations.description')} />
+
+      {/* The question every owner asks first: can I connect more than one? */}
+      <p className="flex items-start gap-2.5 rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) px-4 py-3 text-sm leading-6 text-(--color-text-2)">
+        <Icon name="info" size={16} className="mt-1 shrink-0 text-(--color-brand-text)" />
+        {t('integrations.howMany')}
+      </p>
 
       {!isLoading && !isError && integrations.length > 0 ? (
         <Overview integrations={integrations} />
@@ -122,15 +130,21 @@ export default function IntegrationsPage() {
       </section>
 
       <section aria-labelledby="connect-heading" className="space-y-3">
-        <SectionHeading id="connect-heading" icon="plus" title={t('integrations.connect')} />
+        <SectionHeading
+          id="connect-heading"
+          icon="store"
+          title={t('integrations.sections.stores')}
+          hint={t('integrations.sections.storesHint')}
+        />
 
-        <div className="grid grid-cols-[minmax(0,1fr)] items-stretch gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-stretch gap-4 lg:grid-cols-2">
           {/* Zid: one button, an OAuth round trip. */}
           <SourceCard
-            icon="store"
+            platform="zid"
             title={t('integrations.zid.title')}
             tag={t('integrations.zid.tag')}
             tagIcon="bolt"
+            readiness={available.zid ? 'ready' : 'setup'}
             description={t('integrations.zid.description')}
           >
             <ul className="space-y-2 text-sm text-(--color-text-2)">
@@ -160,11 +174,13 @@ export default function IntegrationsPage() {
                 </p>
               ) : null}
 
+              {!available.zid ? <SetupHint platform={t('integrations.platforms.zid')} /> : null}
+
               <Button
                 variant="primary"
                 className="w-full"
                 onClick={() => actions.connectZid.mutate()}
-                disabled={zidBusy}
+                disabled={zidBusy || !available.zid}
               >
                 <Icon name="link" size={16} />
                 {zidBusy ? t('common.loading') : t('integrations.zid.action')}
@@ -174,10 +190,11 @@ export default function IntegrationsPage() {
 
           {/* Salla: install there, claim here, within the hour. */}
           <SourceCard
-            icon="store"
+            platform="salla"
             title={t('integrations.salla.title')}
             tag={t('integrations.salla.tag')}
             tagIcon="key"
+            readiness={available.salla ? 'ready' : 'setup'}
           >
             {/*
               Numbered, because the order matters and one of the steps happens
@@ -214,6 +231,12 @@ export default function IntegrationsPage() {
               <span>{t('integrations.deadline')}</span>
             </p>
 
+            {!available.salla ? (
+              <div className="mt-4">
+                <SetupHint platform={t('integrations.platforms.salla')} />
+              </div>
+            ) : null}
+
             <form onSubmit={submit} className="mt-auto pt-4">
               <div className="flex items-start gap-2">
                 <Field
@@ -239,18 +262,37 @@ export default function IntegrationsPage() {
                   type="submit"
                   variant="primary"
                   className="mt-6 shrink-0"
-                  disabled={actions.claim.isPending}
+                  disabled={actions.claim.isPending || !available.salla}
                 >
                   {actions.claim.isPending ? t('common.loading') : t('integrations.claimAction')}
                 </Button>
               </div>
             </form>
           </SourceCard>
+        </div>
+      </section>
+
+      <section
+        id="universal"
+        aria-labelledby="universal-heading"
+        className="scroll-mt-24 space-y-3"
+      >
+        <SectionHeading
+          id="universal-heading"
+          icon="globe"
+          title={t('integrations.sections.universal')}
+          hint={t('integrations.sections.universalHint')}
+        />
+
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 2xl:grid-cols-3">
+          <div className="min-w-0 2xl:col-span-2">
+            <UniversalConnection />
+          </div>
 
           {/*
-            For the merchant whose "store" is WhatsApp and a workbook. Last of
-            the three because a connected store keeps itself current and a
-            file does not — the better option is offered first.
+            For the merchant whose "store" is WhatsApp and a workbook. Beside
+            the universal connection because both are for a business with no
+            store app; a connected store keeps itself current, a file does not.
           */}
           <SourceCard
             icon="table"
@@ -258,7 +300,7 @@ export default function IntegrationsPage() {
             tag={t('integrations.file.tag')}
             tagIcon="upload"
             description={t('integrations.file.description')}
-            className="lg:col-span-2 2xl:col-span-1"
+            className="h-full"
           >
             <ul className="space-y-2 text-sm text-(--color-text-2)">
               {['formats', 'kinds', 'check'].map((key) => (
@@ -279,6 +321,36 @@ export default function IntegrationsPage() {
               </Link>
             </div>
           </SourceCard>
+        </div>
+      </section>
+
+      {/*
+        Named honestly as coming, with the way to connect them today: a card
+        that offered a button for a connection that does not exist yet would
+        be the screen lying to the owner.
+      */}
+      <section aria-labelledby="more-heading" className="space-y-3">
+        <SectionHeading id="more-heading" icon="spark" title={t('integrations.sections.more')} />
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
+          {['woocommerce', 'shopify'].map((platform) => (
+            <SourceCard
+              key={platform}
+              platform={platform}
+              title={t(`integrations.platforms.${platform}`)}
+              tag={t(`integrations.${platform}.tag`)}
+              tagIcon="store"
+              readiness="soon"
+              description={t('integrations.readiness.soonHint')}
+            >
+              <a
+                href="#universal"
+                className="mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-4 text-sm font-medium text-(--color-text) transition-colors hover:bg-(--color-surface-selected)"
+              >
+                <Icon name="key" size={15} />
+                {t('integrations.readiness.useUniversal')}
+              </a>
+            </SourceCard>
+          ))}
         </div>
       </section>
 
@@ -322,12 +394,52 @@ export default function IntegrationsPage() {
   );
 }
 
-function SectionHeading({ id, icon, title }) {
+function SectionHeading({ id, icon, title, hint }) {
   return (
-    <h2 id={id} className="flex items-center gap-2 text-sm font-semibold text-(--color-text)">
-      <Icon name={icon} size={16} className="text-(--color-brand-text)" />
-      {title}
-    </h2>
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <h2 id={id} className="flex items-center gap-2 text-sm font-semibold text-(--color-text)">
+        <Icon name={icon} size={16} className="text-(--color-brand-text)" />
+        {title}
+      </h2>
+      {hint ? <p className="text-xs text-(--color-text-2)">{hint}</p> : null}
+    </div>
+  );
+}
+
+const READINESS = {
+  ready: { tone: 'bg-(--color-success-soft) text-(--color-success)', icon: 'check' },
+  setup: { tone: 'bg-(--color-warning-soft) text-(--color-warning)', icon: 'clock' },
+  soon: { tone: 'bg-(--color-surface-selected) text-(--color-text-2)', icon: 'spark' },
+};
+
+/** Whether this way in works on this installation today, said in words. */
+function Readiness({ state }) {
+  const { t } = useI18n();
+  const look = READINESS[state];
+
+  if (!look) return null;
+
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1 rounded-(--radius-pill) px-2.5 py-1 text-[0.6875rem] font-semibold',
+        look.tone,
+      )}
+    >
+      <Icon name={look.icon} size={12} />
+      {t(`integrations.readiness.${state}`)}
+    </span>
+  );
+}
+
+function SetupHint({ platform }) {
+  const { t } = useI18n();
+
+  return (
+    <p className="flex items-start gap-2 rounded-(--radius-control) bg-(--color-warning-soft) px-3 py-2 text-xs leading-5 text-(--color-warning)">
+      <Icon name="info" size={14} className="mt-0.5 shrink-0" />
+      <span>{t('integrations.readiness.setupHint', { platform })}</span>
+    </p>
   );
 }
 
@@ -414,25 +526,36 @@ function Overview({ integrations }) {
 }
 
 /** One way in: what it is, how it works, and its action pinned to the foot. */
-function SourceCard({ icon, title, tag, tagIcon, description, className, children }) {
+function SourceCard({
+  icon,
+  platform,
+  title,
+  tag,
+  tagIcon,
+  readiness,
+  description,
+  className,
+  children,
+}) {
   return (
     <article
       className={cn(
-        'flex min-w-0 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-5 transition-shadow duration-(--duration-base) hover:shadow-sm',
+        'flex min-w-0 flex-col rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-5 transition-[box-shadow,border-color] duration-(--duration-base) hover:border-(--color-border) hover:shadow-(--shadow-card)',
         className,
       )}
     >
       <header className="flex items-start gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-(--color-brand-soft) text-(--color-brand-text)">
+        <PlatformLogo platform={platform} size={44}>
           <Icon name={icon} size={22} />
-        </span>
-        <div className="min-w-0">
+        </PlatformLogo>
+        <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-(--color-text)">{title}</h3>
           <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-(--color-brand-text)">
             <Icon name={tagIcon} size={12} />
             {tag}
           </p>
         </div>
+        <Readiness state={readiness} />
       </header>
 
       {description ? (
@@ -457,8 +580,10 @@ function ConnectionCard({ integration, onDisconnect }) {
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="relative flex size-11 shrink-0 items-center justify-center rounded-xl bg-(--color-brand-soft) text-(--color-brand-text)">
-            <Icon name="store" size={22} />
+          <span className="relative flex shrink-0">
+            <PlatformLogo platform={integration.provider} size={44}>
+              <Icon name="store" size={22} />
+            </PlatformLogo>
             <span
               aria-hidden="true"
               className={cn(

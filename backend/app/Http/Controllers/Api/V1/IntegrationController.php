@@ -28,7 +28,18 @@ class IntegrationController extends Controller
 
         return IntegrationResource::collection(
             Integration::query()->orderBy('provider')->get()
-        );
+        )->additional(['meta' => [
+            /*
+             * Whether this installation can connect each store at all: a
+             * store app needs the partner credentials Salla and Zid issue.
+             * The screen says "awaiting setup" instead of offering a button
+             * that can only fail. A yes or no, never the credentials.
+             */
+            'available' => [
+                'salla' => filled(config('integrations.salla.client_id')) && filled(config('integrations.salla.client_secret')),
+                'zid' => filled(config('integrations.zid.client_id')) && filled(config('integrations.zid.client_secret')),
+            ],
+        ]]);
     }
 
     /**
