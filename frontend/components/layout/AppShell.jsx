@@ -54,6 +54,25 @@ const NAV_GROUPS = [
     label: null,
     items: [
       { href: '/dashboard', label: 'nav.items.dashboard', icon: 'home', ability: 'dashboard.view' },
+      /*
+       * The two ways Baydar talks to the merchant sit with the dashboard
+       * (redesign, 2026-11-13): asking, and the brief that arrives each
+       * morning. Both are daily habits, not settings.
+       */
+      // Reads the same figures as Analytics, so the same ability (ADR-038).
+      {
+        href: '/assistant',
+        label: 'nav.items.assistant',
+        icon: 'spark',
+        ability: 'analytics.view',
+      },
+      // Personal, like the language: anyone who can see the dashboard.
+      {
+        href: '/settings/brief',
+        label: 'nav.items.brief',
+        icon: 'mail',
+        ability: 'dashboard.view',
+      },
     ],
   },
   {
@@ -96,19 +115,12 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'nav.groups.analysis',
+    label: 'nav.groups.profit',
     items: [
       {
         href: '/analytics',
         label: 'nav.items.analytics',
         icon: 'chart',
-        ability: 'analytics.view',
-      },
-      // Reads the same figures as Analytics, so the same ability (ADR-038).
-      {
-        href: '/assistant',
-        label: 'nav.items.assistant',
-        icon: 'spark',
         ability: 'analytics.view',
       },
       // The financing report (phase D3): the whole financial picture, built
@@ -150,13 +162,6 @@ const NAV_GROUPS = [
         label: 'nav.items.activity',
         icon: 'activity',
         ability: 'activity.view',
-      },
-      // Personal, like the language: anyone who can see the dashboard.
-      {
-        href: '/settings/brief',
-        label: 'nav.items.brief',
-        icon: 'mail',
-        ability: 'dashboard.view',
       },
       {
         href: '/settings/integrations',
