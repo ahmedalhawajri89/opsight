@@ -9,6 +9,7 @@ use App\Models\Business;
 use App\Models\Integration;
 use App\Models\WebhookReceipt;
 use App\Support\Tenancy\CurrentBusiness;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\FakeWebhookProvider;
@@ -315,4 +316,63 @@ it('sweeps rejected deliveries after a month, and keeps verified ones', function
     $this->artisan('model:prune', ['--model' => [WebhookReceipt::class]])->assertSuccessful();
 
     expect(WebhookReceipt::query()->pluck('signature_ok')->all())->toBe([true]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| At rest (security audit, 2026-11-13)
+|--------------------------------------------------------------------------
+*/
+
+it('keeps a delivery encrypted in the table and readable through the model', function (): void {
+    Queue::fake();
+
+    $payload = delivery();
+    $payload['data'] = ['access_token' => 'store-token-must-not-be-readable'];
+
+    deliver($payload)->assertStatus(202);
+
+    $raw = (string) DB::table('webhook_receipts')->value('payload');
+
+    expect($raw)->not->toContain('store-token-must-not-be-readable')
+        ->and($raw)->not->toContain('order.created')
+        ->and(WebhookReceipt::query()->sole()->payload['data']['access_token'])
+        ->toBe('store-token-must-not-be-readable');
+});
+
+it('sweeps an imported delivery after the retention period, and keeps one still failing', function (): void {
+    Queue::fake();
+
+    deliver(delivery('evt-done'))->assertStatus(202);
+    deliver(delivery('evt-failing'))->assertStatus(202);
+    deliver(delivery('evt-recent'))->assertStatus(202);
+
+    $old = now()->subDays(WebhookReceipt::PROCESSED_DAYS + 1);
+
+    WebhookReceipt::query()->where('external_event_id', 'like', '%evt-done')
+        ->update(['processed_at' => $old, 'created_at' => $old]);
+    WebhookReceipt::query()->where('external_event_id', 'like', '%evt-failing')
+        ->update(['processed_at' => null, 'error' => 'boom', 'created_at' => $old]);
+    WebhookReceipt::query()->where('external_event_id', 'like', '%evt-recent')
+        ->update(['processed_at' => now()->subDay()]);
+
+    $this->artisan('model:prune', ['--model' => [WebhookReceipt::class]])->assertSuccessful();
+
+    $left = WebhookReceipt::query()->pluck('external_event_id')->map(fn ($id) => (string) $id)->all();
+
+    expect($left)->toHaveCount(2)
+        ->and(collect($left)->contains(fn ($id) => str_ends_with($id, 'evt-done')))->toBeFalse();
+});
+
+it('refuses an unsigned body that is a bare JSON value with a 401, not a 500', function (): void {
+    Queue::fake();
+
+    test()->call(
+        'POST',
+        '/api/v1/webhooks/fake',
+        server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X_FAKE_SIGNATURE' => 'deadbeef'],
+        content: '"x"',
+    )->assertStatus(401);
+
+    expect(WebhookReceipt::query()->sole()->signature_ok)->toBeFalse();
 });
