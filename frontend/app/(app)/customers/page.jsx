@@ -31,6 +31,7 @@ const FILTER_CONFIG = {
 
 export default function CustomersPage() {
   const { can } = useAuth();
+  const seesValue = can('customers.view_ltv');
   const { t } = useI18n();
   const { filters, setFilters, setPage, setSort, clearFilters, activeKeys } =
     useUrlFilters(FILTER_CONFIG);
@@ -108,7 +109,8 @@ export default function CustomersPage() {
       width: '8rem',
       cell: (row) => formatNumber(row.orders_count ?? 0),
     },
-    {
+    // Only for a role that may see it; the server sends no figure otherwise.
+    seesValue && {
       key: 'lifetime_value',
       header: t('customers.columns.lifetimeValue'),
       sortable: true,
@@ -142,7 +144,7 @@ export default function CustomersPage() {
           <span className="text-(--color-muted)">{t('customers.columns.neverOrdered')}</span>
         ),
     },
-  ];
+  ].filter(Boolean);
 
   /*
    * The band above the table — server-counted over the whole matched set,
@@ -154,13 +156,13 @@ export default function CustomersPage() {
       value: formatNumber(totals?.customers ?? meta?.total ?? 0),
       label: t('customers.summary.matched'),
     },
-    {
+    seesValue && {
       key: 'lifetime_value',
       value: formatMoney(totals?.lifetime_value),
       label: t('customers.summary.lifetimeValue'),
       tone: 'accent',
     },
-  ];
+  ].filter(Boolean);
 
   return (
     <div>

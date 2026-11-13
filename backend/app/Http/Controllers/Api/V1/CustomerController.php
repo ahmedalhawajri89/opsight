@@ -32,17 +32,28 @@ class CustomerController extends Controller
     {
         $this->authorize('viewAny', Customer::class);
 
-        $filtered = $this->listing($request);
+        /*
+         * Lifetime value is its own ability (customers.view_ltv), which Staff
+         * do not hold (ROLES_AND_PERMISSIONS.md). It was computed, returned
+         * and sortable for everyone with customers.view until the security
+         * audit (2026-11-13) found the policy method written and never called.
+         * Without it the figure is not computed, not totalled, and not a
+         * column anyone can sort by — sorting by it would rank customers by
+         * the very figure that is withheld.
+         */
+        $withValue = $request->user()?->can('viewLifetimeValue', Customer::class) ?? false;
+
+        $filtered = $this->listing($request, $withValue);
 
         /*
          * Totalled from the PLAIN filtered query, before the per-row
          * subqueries are attached, and from a clone because `paginate`
          * mutates the builder it is called on.
          */
-        $totals = self::totals(clone $filtered);
+        $totals = self::totals(clone $filtered, $withValue);
 
         return CustomerResource::collection(
-            self::withTrade($filtered)->paginate(QueryFilter::perPage($request))->withQueryString(),
+            self::withTrade($filtered, $withValue)->paginate(QueryFilter::perPage($request))->withQueryString(),
         )->additional(['totals' => $totals]);
     }
 
@@ -74,15 +85,20 @@ class CustomerController extends Controller
      * @param  Builder<Customer>  $query
      * @return Builder<Customer>
      */
-    private static function withTrade(Builder $query): Builder
+    private static function withTrade(Builder $query, bool $withValue): Builder
     {
         $qualifying = fn (QueryBuilder|EloquentBuilder $orders) => $orders
             ->whereIn('status', OrderStatus::qualifying());
 
-        return $query
+        $query
             ->withCount(['orders as orders_count' => $qualifying])
-            ->withSum(['orders as lifetime_value' => $qualifying], 'total_amount')
             ->withMax(['orders as last_order_at' => $qualifying], 'placed_at');
+
+        if ($withValue) {
+            $query->withSum(['orders as lifetime_value' => $qualifying], 'total_amount');
+        }
+
+        return $query;
     }
 
     /**
@@ -96,9 +112,13 @@ class CustomerController extends Controller
      * @param  Builder<Customer>  $query
      * @return array<string, int|string>
      */
-    private static function totals(Builder $query): array
+    private static function totals(Builder $query, bool $withValue): array
     {
         $customers = (int) (clone $query)->reorder()->toBase()->count();
+
+        if (! $withValue) {
+            return ['customers' => $customers];
+        }
 
         /*
          * Summed from the orders table against the matched customers, NOT by
@@ -131,7 +151,8 @@ class CustomerController extends Controller
         $this->authorize('export', Customer::class);
 
         return $export->stream(
-            query: $this->listing($request),
+            // The export carries no trade columns, so no value to sort by either.
+            query: $this->listing($request, false),
             resource: CustomerResource::class,
             columns: [
                 'name' => __('labels.csv.name'),
@@ -159,7 +180,7 @@ class CustomerController extends Controller
      *
      * @return Builder<Customer>
      */
-    private function listing(Request $request): Builder
+    private function listing(Request $request, bool $withValue): Builder
     {
         $filter = new QueryFilter(
             filters: [
@@ -170,7 +191,9 @@ class CustomerController extends Controller
             // The trade columns sort too — a customer list is opened to find
             // the biggest, the quietest, the ones who stopped. They are
             // subquery aliases from `withTrade`, which MySQL sorts on happily.
-            sortable: ['name', 'email', 'created_at', 'orders_count', 'lifetime_value', 'last_order_at'],
+            sortable: $withValue
+                ? ['name', 'email', 'created_at', 'orders_count', 'lifetime_value', 'last_order_at']
+                : ['name', 'email', 'created_at', 'orders_count', 'last_order_at'],
             defaultSort: 'name',
         );
 
