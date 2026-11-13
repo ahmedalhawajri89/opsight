@@ -45,6 +45,16 @@ final class RecordRefund
             $scale = Money::scale();
             $amount = Money::round($amount);
 
+            /*
+             * Checked after rounding, as RecordPayment does. The request asks
+             * for at least 0.001, which in a two-decimal currency rounds to
+             * nothing — and a refund of nothing still moved the order to
+             * Refunded and put its stock back (security audit, 2026-11-13).
+             */
+            if (bccomp($amount, '0', $scale) <= 0) {
+                throw OrderTransitionException::refundNotPositive();
+            }
+
             // The first refund moves a fulfilled order to refunded; later ones
             // add to an order that is refunded already.
             if ($order->status !== OrderStatus::Refunded && ! $order->status->canTransitionTo(OrderStatus::Refunded)) {

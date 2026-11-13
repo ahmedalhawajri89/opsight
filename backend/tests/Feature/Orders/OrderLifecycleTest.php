@@ -8,6 +8,7 @@ use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderStatus;
 use App\Domain\Orders\OrderTransitionException;
 use App\Domain\Orders\RecordRefund;
+use App\Models\BusinessSetting;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Order;
@@ -217,4 +218,18 @@ it('reports a finalized order as not editable', function (OrderStatus $status): 
 
 it('reports a draft as editable', function (): void {
     expect(OrderStatus::Draft->isEditable())->toBeTrue();
+});
+
+it('refuses a refund that rounds to nothing in the currency, and leaves the order as it was', function (): void {
+    // Two decimals: the request's minimum of 0.001 rounds to 0.00.
+    BusinessSetting::current()->forceFill(['currency' => 'SAR', 'currency_decimals' => 2])->save();
+    BusinessSetting::flushCache();
+
+    $product = Product::factory()->priced(50.0000, 20.0000)->withStock(10)->create();
+    $order = app(FulfilOrder::class)(confirmed($product, 1));
+
+    expect(fn () => app(RecordRefund::class)($order, '0.001'))
+        ->toThrow(OrderTransitionException::class);
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Fulfilled);
 });

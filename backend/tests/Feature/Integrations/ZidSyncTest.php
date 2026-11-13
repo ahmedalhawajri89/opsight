@@ -82,7 +82,7 @@ function deliverToZidDoor(array $payload, ?string $authorization): TestResponse
 */
 
 it('imports an order delivered with the credentials Zid was given', function (): void {
-    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET))->assertStatus(202);
+    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET, '98765'))->assertStatus(202);
 
     $order = Order::query()->withoutGlobalScope(BusinessScope::class)->where('source', 'zid')->sole();
 
@@ -91,7 +91,7 @@ it('imports an order delivered with the credentials Zid was given', function ():
 });
 
 it('refuses a delivery with the wrong password, and keeps the evidence', function (): void {
-    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader('guessed'))->assertStatus(401);
+    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader('guessed', '98765'))->assertStatus(401);
 
     expect(Order::query()->withoutGlobalScope(BusinessScope::class)->where('source', 'zid')->exists())->toBeFalse()
         ->and(WebhookReceipt::query()->where('provider', 'zid')->where('signature_ok', false)->exists())->toBeTrue();
@@ -105,18 +105,18 @@ it('is no door at all on an installation without the secret', function (): void 
     // Exactly as for Salla: nothing set up, nothing accepting payloads.
     config(['integrations.secrets.zid' => null]);
 
-    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET))->assertNotFound();
+    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET, '98765'))->assertNotFound();
 });
 
 it('answers a retry without importing it twice', function (): void {
-    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET))->assertStatus(202);
-    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET))->assertJsonPath('status', 'duplicate');
+    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET, '98765'))->assertStatus(202);
+    deliverToZidDoor(zidDelivery(), ZidWebhooks::expectedHeader(ZID_SECRET, '98765'))->assertJsonPath('status', 'duplicate');
 
     expect(Order::query()->withoutGlobalScope(BusinessScope::class)->where('source', 'zid')->count())->toBe(1);
 });
 
 it('keeps a delivery for a store nobody connected, without acting on it', function (): void {
-    deliverToZidDoor(zidDelivery(['store_id' => 11111]), ZidWebhooks::expectedHeader(ZID_SECRET))->assertStatus(202);
+    deliverToZidDoor(zidDelivery(['store_id' => 11111]), ZidWebhooks::expectedHeader(ZID_SECRET, '11111'))->assertStatus(202);
 
     $receipt = WebhookReceipt::query()->where('provider', 'zid')->sole();
 
@@ -258,4 +258,13 @@ it('lets the database refuse a second business for one store', function (): void
 
     expect(fn () => DB::table('integrations')->insert($row($second->id)))
         ->toThrow(UniqueConstraintViolationException::class);
+});
+
+it('refuses a delivery naming another store than the one its password belongs to', function (): void {
+    /*
+     * The password from store 98765's own webhook settings, on a delivery
+     * that names store 11111: the forgery a single shared password allowed.
+     */
+    deliverToZidDoor(zidDelivery(['store_id' => 11111]), ZidWebhooks::expectedHeader(ZID_SECRET, '98765'))
+        ->assertStatus(401);
 });

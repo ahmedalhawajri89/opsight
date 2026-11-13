@@ -64,9 +64,14 @@ class CustomerResource extends JsonResource
              */
             $this->mergeWhen($this->resource->getAttribute('orders_count') !== null, fn (): array => [
                 'orders_count' => (int) $this->resource->getAttribute('orders_count'),
-                'lifetime_value' => $this->resource->getAttribute('lifetime_value') === null
-                    ? null
-                    : (string) $this->resource->getAttribute('lifetime_value'),
+                // Absent, not null, for a role without customers.view_ltv: the
+                // controller never computes it, and this says so twice.
+                'lifetime_value' => $this->when(
+                    $request->user()?->can('customers.view_ltv') ?? false,
+                    fn (): ?string => $this->resource->getAttribute('lifetime_value') === null
+                        ? null
+                        : (string) $this->resource->getAttribute('lifetime_value'),
+                ),
                 'last_order_at' => $this->resource->getAttribute('last_order_at')
                     ? Carbon::parse((string) $this->resource->getAttribute('last_order_at'))->toIso8601String()
                     : null,

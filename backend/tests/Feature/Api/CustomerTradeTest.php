@@ -176,3 +176,19 @@ it('never counts another business\'s orders towards a customer', function (): vo
         ->assertJsonPath('data.0.lifetime_value', '100.000')
         ->assertJsonPath('totals.lifetime_value', '100.000');
 });
+
+it('withholds lifetime value from a role without customers.view_ltv, in the rows, the total and the sort', function (): void {
+    // Staff see customers, and the orders they placed, but not what each is worth.
+    $this->actingAs(User::factory()->role(Role::Staff)->create());
+
+    customerWithOrders([[OrderStatus::Fulfilled->value, 100.0, '2026-01-10']]);
+
+    $response = $this->getJson('/api/v1/customers')->assertOk();
+
+    expect($response->json('data.0'))->not->toHaveKey('lifetime_value')
+        ->and($response->json('data.0.orders_count'))->toBe(1)
+        ->and($response->json('totals'))->not->toHaveKey('lifetime_value');
+
+    // Ranking by the figure would disclose it.
+    $this->getJson('/api/v1/customers?sort=-lifetime_value')->assertStatus(422);
+});

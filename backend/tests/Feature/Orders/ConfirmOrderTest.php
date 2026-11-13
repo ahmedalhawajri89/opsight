@@ -220,3 +220,25 @@ it('sets placed_at, which is the business date every metric ranges on', function
 
     expect($order->fresh()->placed_at)->not->toBeNull();
 });
+
+it('refuses a line discounted below nothing, even when the order stays positive', function (): void {
+    $cheap = Product::factory()->withStock(10)->create(['price' => '10.000', 'cost' => '4.000']);
+    $dear = Product::factory()->withStock(10)->create(['price' => '500.000', 'cost' => '200.000']);
+    $order = Order::factory()->create();
+
+    foreach ([[$cheap, '25.000'], [$dear, '0']] as [$product, $discount]) {
+        $order->items()->create([
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'product_sku' => $product->sku,
+            'unit_price' => $product->price,
+            'unit_cost' => $product->cost,
+            'quantity' => 1,
+            'line_discount' => $discount,
+            'line_total' => 0,
+        ]);
+    }
+
+    expect(fn () => app(ConfirmOrder::class)($order))->toThrow(OrderTransitionException::class);
+    expect($order->fresh()->status)->toBe(OrderStatus::Draft);
+});

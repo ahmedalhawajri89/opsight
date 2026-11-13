@@ -136,7 +136,13 @@ final class ConnectZidStore
 
         try {
             foreach (ZidWebhooks::EVENTS as $event) {
-                $this->client->subscribe($integration, $event, $target, ZidWebhooks::USERNAME, $secret);
+                $this->client->subscribe(
+                    $integration,
+                    $event,
+                    $target,
+                    ZidWebhooks::USERNAME,
+                    ZidWebhooks::passwordFor($secret, (string) $integration->external_account_id),
+                );
             }
         } catch (Throwable $e) {
             report($e);

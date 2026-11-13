@@ -11,6 +11,7 @@ use App\Domain\Orders\ConfirmOrder;
 use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderReference;
 use App\Domain\Orders\OrderStatus;
+use App\Domain\Orders\OrderTransitionException;
 use App\Domain\Orders\RecordRefund;
 use App\Domain\Payments\PaymentMethod;
 use App\Domain\Payments\PaymentStatus;
@@ -25,12 +26,14 @@ use App\Models\Product;
 use App\Support\Money;
 use App\Support\QueryFilter;
 use App\Support\Tenancy\TenantRule;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -239,7 +242,7 @@ class OrderController extends Controller
             'shipping_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $order->update($validated);
+        $this->whileDraft($order, static fn (Order $draft) => $draft->update($validated));
 
         return OrderResource::make($order->fresh()->load(['customer', 'items']));
     }
@@ -250,7 +253,7 @@ class OrderController extends Controller
         // deleted — it is cancelled, and stays on record.
         $this->authorize('delete', $order);
 
-        $order->delete();
+        $this->whileDraft($order, static fn (Order $draft) => $draft->delete());
 
         return response()->json(null, 204);
     }
@@ -270,7 +273,7 @@ class OrderController extends Controller
          * from the catalog as it stands at that moment — confirm is the
          * commitment point, not this.
          */
-        $order->items()->create([
+        $this->whileDraft($order, static fn (Order $draft) => $draft->items()->create([
             'product_id' => $product->id,
             'product_name' => $product->name,
             'product_name_ar' => $product->name_ar,
@@ -280,7 +283,7 @@ class OrderController extends Controller
             'quantity' => $data['quantity'],
             'line_discount' => $data['line_discount'] ?? 0,
             'line_total' => 0,
-        ]);
+        ]));
 
         return OrderResource::make($order->fresh()->load(['customer', 'items']))
             ->response()
@@ -300,9 +303,40 @@ class OrderController extends Controller
             abort(404);
         }
 
-        $item->delete();
+        $this->whileDraft($order, static fn () => $item->delete());
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * An edit to a draft, made only while it is still one.
+     *
+     * The policy checks "draft only" against the order as route binding
+     * loaded it, and confirming re-reads the order under a row lock
+     * (ConfirmOrder). An edit sent at the same moment as a confirm could
+     * therefore pass its check on the stale copy and land after the confirm
+     * committed: a discount changed on a confirmed order without its total
+     * being recomputed, or a line added to it with no stock moved (security
+     * audit, 2026-11-13). So every edit takes the same lock and asks again.
+     * Whichever of the two gets the row first wins, and the other sees the
+     * order as it now is.
+     *
+     * @template T
+     *
+     * @param  Closure(Order): T  $edit
+     * @return T
+     */
+    private function whileDraft(Order $order, Closure $edit): mixed
+    {
+        return DB::transaction(static function () use ($order, $edit): mixed {
+            $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+            if (! $locked->isEditable()) {
+                throw OrderTransitionException::notEditable($locked->status);
+            }
+
+            return $edit($locked);
+        });
     }
 
     /* ---------------------------------------------------------------------- */
