@@ -105,7 +105,8 @@ test('staff never receive cost or expense surfaces', async ({ page }) => {
   await expect(nav.getByText('Activity log')).toHaveCount(0);
 
   // And the dashboard it lands on carries revenue but no cost-bearing tile.
-  await expect(page.getByRole('heading', { name: 'Net revenue' }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sales', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Net profit' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Gross profit' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Gross margin' })).toHaveCount(0);
 });
@@ -122,7 +123,7 @@ test('an owner does receive the cost surfaces staff do not', async ({ page }) =>
   await expect(nav.getByText('Users')).toBeVisible();
 
   // The same dashboard, same period, now with a cost-bearing figure on its band…
-  await expect(page.getByRole('heading', { name: 'Gross profit', level: 3 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Net profit', level: 2 })).toBeVisible();
 
   // …and the margin among the full set on Analytics, which staff cannot open.
   await page.goto('/analytics');

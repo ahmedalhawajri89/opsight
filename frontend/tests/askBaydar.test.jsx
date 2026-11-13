@@ -50,6 +50,13 @@ const ANSWER = {
 };
 
 beforeEach(() => {
+  // jsdom has no matchMedia; the chat's motion asks it whether to move at all.
+  window.matchMedia = vi.fn().mockImplementation((query) => ({
+    matches: true,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
   vi.mocked(assistant.listConversations)
     .mockReset()
     .mockResolvedValue({ data: [], meta: { available: true } });

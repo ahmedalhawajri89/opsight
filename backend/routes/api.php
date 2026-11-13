@@ -273,6 +273,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('forecasts/cash', [ForecastController::class, 'cash'])
             ->middleware('throttle:analytics');
         Route::put('forecasts/cash/balance', [ForecastController::class, 'setBalance']);
+        Route::put('forecasts/cash/threshold', [ForecastController::class, 'setThreshold']);
         Route::get('reports/financing', [ReportController::class, 'financing'])
             ->middleware('throttle:analytics');
 

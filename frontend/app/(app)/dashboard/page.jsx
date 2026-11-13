@@ -1,51 +1,47 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useQuery } from '@tanstack/react-query';
+import { gsap } from 'gsap';
 
 import { getMoneyDefaults } from '@/lib/format';
 import { useDashboard } from '@/features/analytics/useAnalytics';
-import {
-  InventoryStatusCard,
-  PeriodStatus,
-  RecentActivityCard,
-  TopSellingCard,
-} from '@/features/analytics/DashboardPanels';
+import { PeriodStatus } from '@/features/analytics/DashboardPanels';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { AttentionStrip } from '@/features/dashboard/AttentionStrip';
 import { DashboardHero } from '@/features/dashboard/DashboardHero';
-import { DashboardTabs } from '@/features/dashboard/DashboardTabs';
+import { DashboardIntro } from '@/features/dashboard/DashboardIntro';
+import { ProfitBreakdown } from '@/features/dashboard/ProfitBreakdown';
+import { AskCard, ReadyCard } from '@/features/dashboard/SideCards';
+import { ChannelMix } from '@/features/dashboard/ChannelMix';
+import { StockRunway } from '@/features/dashboard/StockRunway';
+import { WeekActions } from '@/features/dashboard/WeekActions';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useInsights } from '@/features/insights/useInsights';
-import { RecentOrdersCard } from '@/features/orders/RecentOrdersCard';
 import { ErrorState } from '@/components/data/States';
-
 import { TopBarPortal } from '@/components/layout/AppShell';
 import { Card } from '@/components/layout/PageHeader';
 import { PeriodControls } from '@/components/layout/PeriodControls';
+import { useGsap } from '@/hooks/useGsap';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
 import { EmptyPeriodNotice } from '@/features/analytics/EmptyPeriodNotice';
 import { SeasonNotice } from '@/features/analytics/SeasonNotice';
 import { resolvePreset } from '@/lib/periods';
+import { queryKeys } from '@/lib/queryKeys';
+import * as briefService from '@/services/brief';
+import * as forecasts from '@/services/forecasts';
 
 /*
- * The charts arrive on their own.
- *
- * Recharts is about 114KB gzipped and only two screens draw with it — but one
- * of them is this, where every session lands. Loading it on demand lets the
- * figures, which are the point, paint without waiting for the library that
- * draws their history. `ssr: false` because it measures the DOM it is in.
+ * The charts arrive on their own: Recharts is large, and the figures, which
+ * are the point, should paint without waiting for the library that draws
+ * their history. `ssr: false` because it measures the DOM it is in.
  */
-const CategoryShareChart = dynamic(
-  () =>
-    import('@/components/charts/CategoryShareChart').then((module) => module.CategoryShareChart),
+const DailyChart = dynamic(
+  () => import('@/features/dashboard/DailyChart').then((module) => module.DailyChart),
   { ssr: false },
 );
-const RevenueExpensesChart = dynamic(
-  () =>
-    import('@/components/charts/RevenueExpensesChart').then(
-      (module) => module.RevenueExpensesChart,
-    ),
+const CashOutlook = dynamic(
+  () => import('@/features/dashboard/CashOutlook').then((module) => module.CashOutlook),
   { ssr: false },
 );
 
@@ -56,31 +52,22 @@ const PERIOD_CONFIG = {
 };
 
 /**
- * The dashboard: a page for the first minute of the day.
+ * The dashboard, in the order a merchant asks (redesign, 2026-11-13):
  *
- * IT USED TO SHOW EVERYTHING, AND SO IT SAID NOTHING. Twelve figures, four
- * charts, two tables, a feed, stock, activity and quick stats, all at the
- * same weight: a reader who opened it with one question met fifteen answers
- * and no way in. It is four bands now, in the order a person asks:
+ *   1  DID I MAKE MONEY?           net profit and three figures on the navy band
+ *   2  WHAT SHOULD I DO?           three ranked steps for this week
+ *   3  WHAT SHAPE WAS IT?          revenue and profit by day; revenue to profit
+ *   4  WILL I HAVE CASH?           thirteen weeks of balance; sales by channel
+ *   5  WHAT RUNS OUT?              the products closest to running out
+ *      and beside it, Ask Baydar and what is ready to read.
  *
- *   1  HOW IS IT GOING?        three figures on the band of ink (DashboardHero)
- *   2  WHAT NEEDS ME?          the insights, as things to do (AttentionStrip)
- *   3  WHAT SHAPE WAS IT?      revenue against expenses, and sales by category
- *   4  WHAT HAPPENED?          orders, best sellers, stock and activity, as tabs
+ * Every number comes from the server: the dashboard, insights, cash and stock
+ * forecasts, and the brief. This page computes nothing.
  *
- * The rest moved, nothing was lost: the eight supporting figures are among
- * the fifteen on Analytics, and business performance and quick stats sit at
- * the foot of that screen.
- *
- * Every figure comes from the dashboard endpoint, the insights endpoint, or an
- * ordinary list endpoint. This page computes nothing: the server owns every
- * number, and the page owns only where it goes.
- *
- * WHAT A ROLE CANNOT SEE IS ABSENT, NOT EMPTY. The band takes its three
- * figures from what the server sent; a tab for a refused list is not offered;
- * the quick actions are only those the role may take.
+ * WHAT A ROLE CANNOT SEE IS ABSENT, NOT EMPTY. Profit, the profit breakdown
+ * and the cash forecast are requested and drawn only for a role that may see
+ * cost; the stock card only for a role that may see inventory.
  */
-/** Is this calendar day inside the period the server resolved? */
 function withinPeriod(day, period) {
   if (!period?.from || !period?.to) return false;
 
@@ -102,12 +89,13 @@ function monthAround(day) {
 }
 
 export default function DashboardPage() {
-  const { can } = useAuth();
-  const { t } = useI18n();
+  const { can, user } = useAuth();
+  const { t, locale } = useI18n();
   const { filters, setFilters } = useUrlFilters(PERIOD_CONFIG);
-  // From 1440px the rail stands beside the content and the period controls
-  // live in the top bar; below that both move into the page.
   const wide = useMediaQuery('(min-width: 90rem)');
+
+  const canSeeCost = can('metrics.view_cost');
+  const canSeeStock = can('inventory.view');
 
   const period = {
     preset: filters.preset,
@@ -117,36 +105,49 @@ export default function DashboardPage() {
   };
 
   const { dashboard, meta, isLoading, isError, error, refetch } = useDashboard(period);
-
-  /*
-   * Insights read the same period as the cards, so the feed and the figures
-   * cannot describe different windows.
-   */
   const insights = useInsights(period);
+
+  const cash = useQuery({
+    queryKey: queryKeys.forecasts.cash,
+    queryFn: forecasts.cash,
+    enabled: canSeeCost,
+  });
+  const stock = useQuery({
+    queryKey: queryKeys.forecasts.stock(7, 30),
+    queryFn: () => forecasts.stock({ lead_time: 7, cover_days: 30 }),
+    enabled: canSeeStock,
+  });
+  const brief = useQuery({ queryKey: queryKeys.brief.detail, queryFn: briefService.getBrief });
 
   const metrics = dashboard?.metrics ?? {};
   const comparisonLabel = meta?.comparison?.label ?? '';
   const currency = meta?.currency ?? getMoneyDefaults().currency;
   const decimals = meta?.currency_decimals ?? getMoneyDefaults().decimals;
+  const money = { currency, decimals };
+  const firstLoad = isLoading && !dashboard;
 
-  /*
-   * An empty window that is not an empty business.
-   *
-   * "Nothing happened" and "nothing happened HERE" render identically — a
-   * column of zeros — and mean opposite things. The notice appears only when
-   * both are true: this period produced no trade, and the server says the
-   * business traded on some other day.
-   *
-   * Orders, not revenue, decides it: a period CAN legitimately contain
-   * orders worth nothing once discounts and refunds are counted, and that
-   * is trade, not silence.
-   */
   const periodIsEmpty = Number(metrics.orders_count?.value ?? 0) === 0;
   const latestActivityOn = meta?.latest_activity_on ?? null;
   const tradedElsewhere =
     periodIsEmpty && latestActivityOn !== null && !withinPeriod(latestActivityOn, meta?.period);
-  const money = { currency, decimals };
-  const firstLoad = isLoading && !dashboard;
+
+  /*
+   * One entrance for the cards below the band: a short rise, a small stagger,
+   * no overshoot on data. useGsap skips it under reduced motion.
+   */
+  const scope = useGsap(
+    (self) => {
+      gsap.from(self.selector('[data-rise]'), {
+        opacity: 0,
+        y: 10,
+        duration: 0.4,
+        ease: 'power1.out',
+        stagger: 0.05,
+        clearProps: 'transform,opacity',
+      });
+    },
+    [locale, Boolean(dashboard)],
+  );
 
   function changePeriod(next) {
     setFilters({
@@ -169,50 +170,41 @@ export default function DashboardPage() {
     />
   );
 
-  /*
-   * One set of period controls, rendered in exactly one place: the top bar on
-   * a wide screen, beneath the band otherwise.
-   */
-  const notices = (
-    <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 empty:hidden">
-      {/*
-        Shown whenever the selected range includes today. The sentence beside
-        it says what that means: compared against a complete period, or simply
-        still accumulating when there is no comparison.
-      */}
-      <PeriodStatus
-        show={meta?.period?.is_partial}
-        againstComplete={meta?.comparison?.compares_partial_against_complete}
-      />
-
-      {/* Ramadan or Eid on one side of the comparison and not the other. */}
-      <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
-
-      {!wide && controls}
-    </div>
-  );
-
-  const hero = (
-    <>
+  const head = (
+    <div className="flex flex-col gap-5">
       {wide && <TopBarPortal>{controls}</TopBarPortal>}
+
+      <DashboardIntro channels={dashboard?.channels ?? []} />
 
       <DashboardHero
         metrics={metrics}
-        revenueTrend={dashboard?.revenue_trend}
-        currency={currency}
-        decimals={decimals}
+        trends={{
+          revenue: dashboard?.revenue_trend,
+          orders: dashboard?.orders_trend,
+          aov: dashboard?.aov_trend,
+        }}
+        cash={cash.data?.data}
+        canSeeCost={canSeeCost}
+        {...money}
         comparisonLabel={comparisonLabel}
         loading={firstLoad}
       />
 
-      {notices}
-    </>
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 empty:hidden">
+        <PeriodStatus
+          show={meta?.period?.is_partial}
+          againstComplete={meta?.comparison?.compares_partial_against_complete}
+        />
+        <SeasonNotice meta={meta} onUseHijri={(comparison) => setFilters({ comparison })} />
+        {!wide && controls}
+      </div>
+    </div>
   );
 
   if (isError) {
     return (
-      <div className="space-y-6" data-own-motion="">
-        {hero}
+      <div className="flex flex-col gap-5" data-own-motion="">
+        {head}
         <Card padded={false}>
           <ErrorState error={error} onRetry={refetch} />
         </Card>
@@ -220,48 +212,9 @@ export default function DashboardPage() {
     );
   }
 
-  /*
-   * The lists, one at a time. Orders and activity are offered only to roles
-   * that may open them; the best sellers and stock are on every dashboard.
-   */
-  const tabs = [
-    can('orders.view') && {
-      id: 'orders',
-      label: t('dashboard.tabs.orders'),
-      icon: 'orders',
-      render: () => <RecentOrdersCard {...money} />,
-    },
-    {
-      id: 'products',
-      label: t('dashboard.tabs.products'),
-      icon: 'star',
-      render: () => (
-        <TopSellingCard rows={dashboard?.top_products ?? []} {...money} loading={isLoading} />
-      ),
-    },
-    {
-      id: 'inventory',
-      label: t('dashboard.tabs.inventory'),
-      icon: 'shelves',
-      render: () => (
-        <InventoryStatusCard
-          status={dashboard?.inventory_status}
-          lowStock={dashboard?.low_stock}
-          loading={isLoading}
-        />
-      ),
-    },
-    can('activity.view') && {
-      id: 'activity',
-      label: t('dashboard.tabs.activity'),
-      icon: 'activity',
-      render: () => <RecentActivityCard />,
-    },
-  ].filter(Boolean);
-
   return (
-    <div className="space-y-8" data-own-motion="">
-      <div className="space-y-4">{hero}</div>
+    <div ref={scope} className="flex flex-col gap-5" data-own-motion="">
+      {head}
 
       {tradedElsewhere && (
         <EmptyPeriodNotice
@@ -276,43 +229,95 @@ export default function DashboardPage() {
         />
       )}
 
-      {/*
-        Insights read the same period as the figures, so the cards and the
-        band cannot describe different windows.
-      */}
-      <AttentionStrip
-        insights={insights.insights}
-        suppressed={insights.suppressed}
-        loading={insights.isLoading}
-        viewAllHref={can('analytics.view') ? '/analytics' : undefined}
-      />
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <RevenueExpensesChart
-          revenue={dashboard?.revenue_trend ?? []}
-          expenses={dashboard?.expenses_trend}
-          {...money}
-          preset={filters.preset}
-          onPresetChange={(preset) =>
-            changePeriod({ preset, ...resolvePreset(preset), comparison: filters.comparison })
-          }
-          loading={isLoading}
-          weekendDays={meta?.weekend_days}
-          className="rise lg:col-span-7"
-          style={{ '--rise-index': 4 }}
-        />
-
-        <CategoryShareChart
-          rows={dashboard?.category_breakdown ?? []}
-          total={metrics.net_revenue?.value ?? null}
-          {...money}
-          loading={isLoading}
-          className="rise lg:col-span-5"
-          style={{ '--rise-index': 5 }}
+      <div data-rise>
+        <WeekActions
+          insights={insights.insights}
+          suppressed={insights.suppressed}
+          loading={insights.isLoading}
+          viewAllHref={can('analytics.view') ? '/analytics' : undefined}
         />
       </div>
 
-      <DashboardTabs tabs={tabs} label={t('dashboard.tabs.label')} />
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div data-rise className={canSeeCost ? 'min-w-0 lg:col-span-8' : 'min-w-0 lg:col-span-12'}>
+          <DailyChart
+            revenue={dashboard?.revenue_trend ?? []}
+            netProfit={dashboard?.net_profit_trend}
+            metrics={metrics}
+            dailyAverage={dashboard?.daily_average}
+            peak={dashboard?.peak}
+            {...money}
+            preset={filters.preset}
+            onPresetChange={(preset) =>
+              changePeriod({ preset, ...resolvePreset(preset), comparison: filters.comparison })
+            }
+            loading={isLoading}
+            className="h-full"
+          />
+        </div>
+        {canSeeCost && (
+          <div data-rise className="min-w-0 lg:col-span-4">
+            <ProfitBreakdown
+              metrics={metrics}
+              expenses={dashboard?.expenses_by_category}
+              {...money}
+              loading={isLoading}
+              className="h-full"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-12">
+        {canSeeCost && (
+          <div data-rise className="min-w-0 lg:col-span-8">
+            <CashOutlook
+              data={cash.data?.data}
+              {...money}
+              loading={cash.isLoading}
+              canEdit={can('settings.update')}
+              className="h-full"
+            />
+          </div>
+        )}
+        <div data-rise className={canSeeCost ? 'min-w-0 lg:col-span-4' : 'min-w-0 lg:col-span-12'}>
+          <ChannelMix
+            channels={dashboard?.channels ?? []}
+            canSeeCost={canSeeCost}
+            {...money}
+            loading={isLoading}
+            className="h-full"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-12">
+        {canSeeStock && (
+          <div data-rise className="min-w-0 lg:col-span-8">
+            <StockRunway data={stock.data?.data} loading={stock.isLoading} className="h-full" />
+          </div>
+        )}
+        <div
+          data-rise
+          className={
+            canSeeStock
+              ? 'flex min-w-0 flex-col gap-4 lg:col-span-4'
+              : 'grid min-w-0 gap-4 lg:col-span-12 lg:grid-cols-2'
+          }
+        >
+          {can('analytics.view') && <AskCard canSeeCost={canSeeCost} />}
+          <ReadyCard brief={brief.data?.data} canSeeCost={canSeeCost} />
+        </div>
+      </div>
+
+      <footer className="flex flex-wrap justify-between gap-2 pt-1 text-[0.6875rem] text-(--color-text-2)">
+        {user?.business?.name && (
+          <span>{t('dashboard.home.footer.isolated', { company: user.business.name })}</span>
+        )}
+        {user?.role && (
+          <span>{t('dashboard.home.footer.role', { role: t(`roles.${user.role}`) })}</span>
+        )}
+      </footer>
     </div>
   );
 }
