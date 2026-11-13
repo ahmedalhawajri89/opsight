@@ -184,7 +184,33 @@ export function useIntegrations() {
     queryFn: () => admin.listIntegrations(),
   });
 
-  return { integrations: query.data?.data ?? [], ...query };
+  return {
+    integrations: query.data?.data ?? [],
+    // Whether each store app is set up on this installation at all.
+    available: query.data?.meta?.available ?? {},
+    ...query,
+  };
+}
+
+/** The keys for the universal connection, and making and revoking them. */
+export function useApiKeys() {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: [...queryKeys.integrations.all, 'api-keys'],
+    queryFn: () => admin.listApiKeys(),
+  });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.integrations.all });
+    AUDITED_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+  };
+
+  return {
+    keys: query.data?.data ?? [],
+    query,
+    create: useMutation({ mutationFn: (body) => admin.createApiKey(body), onSuccess: invalidate }),
+    revoke: useMutation({ mutationFn: (id) => admin.revokeApiKey(id), onSuccess: invalidate }),
+  };
 }
 
 export function useIntegrationActions() {
@@ -215,6 +241,27 @@ export function useIntegrationActions() {
     }),
     disconnect: useMutation({
       mutationFn: (id) => admin.disconnectIntegration(id),
+      onSuccess: invalidate,
+    }),
+    connectWooCommerce: useMutation({
+      mutationFn: (body) => admin.connectWooCommerce(body),
+      onSuccess: invalidate,
+    }),
+    // Leaves the application on success, for Shopify's approval screen.
+    connectShopify: useMutation({
+      mutationFn: (body) => admin.shopifyAuthorizeUrl(body),
+      onSuccess: (response) => {
+        const url = response?.data?.url;
+
+        if (url) window.location.assign(url);
+      },
+    }),
+    completeShopify: useMutation({
+      mutationFn: (body) => admin.completeShopify(body),
+      onSuccess: invalidate,
+    }),
+    connectShopifyToken: useMutation({
+      mutationFn: (body) => admin.connectShopifyToken(body),
       onSuccess: invalidate,
     }),
   };

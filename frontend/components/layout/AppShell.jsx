@@ -601,7 +601,7 @@ export function AppShell({ children }) {
             // Above the content and on the page's own ground: a full-bleed
             // toolbar in a page reaches past its column, and the margin
             // around the floating panel would otherwise show it.
-            'sticky top-0 z-10 hidden h-dvh w-[80px] shrink-0 flex-col bg-(--color-surface) p-3 pe-0 md:flex [view-transition-name:app-sidebar]',
+            'sticky top-0 z-10 hidden h-dvh w-[68px] shrink-0 flex-col bg-(--color-sidebar-ground) md:flex [view-transition-name:app-sidebar]',
             // The fold is the width alone (see FADE), so CSS can carry it.
             'transition-[width] duration-300 ease-(--ease-out) motion-reduce:transition-none',
             /*
@@ -623,15 +623,16 @@ export function AppShell({ children }) {
              * rows would spend the gain on air at the exact sizes where
              * there is least of it.
              */
-            !sidebarCollapsed && 'lg:w-[264px]',
+            !sidebarCollapsed && 'lg:w-[252px]',
           )}
         >
           {/*
-            A panel standing off the edge of the screen rather than a strip
-            fastened to it: the same rounded ink as the dashboard's band, so
-            the two read as one family of surfaces.
+            Fastened to the edge, full height (2026-11-13). The floating panel
+            spent about 24px of height on its own margins, which on a laptop
+            pushed the last link under the fade; a working tool's navigation
+            is the frame of the application, not one more card on the page.
           */}
-          <div className="relative isolate flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[18px] bg-(--color-sidebar-ground) shadow-(--shadow-auth)">
+          <div className="relative isolate flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-(--color-sidebar-ground)">
             <Sidebar
               groups={groups}
               current={current}

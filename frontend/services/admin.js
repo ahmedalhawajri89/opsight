@@ -150,3 +150,40 @@ export function runImport({ file, kind, mapping, dryRun }) {
 export function disconnectIntegration(id) {
   return api.delete(`/integrations/${id}`);
 }
+
+/* -------------------------------------------------------------------------- */
+/* The universal connection: keys any system sends orders in with              */
+/* -------------------------------------------------------------------------- */
+
+export function listApiKeys() {
+  return api.get('/integrations/api-keys');
+}
+
+/** Answers with the key in full, once; it can never be read back. */
+export function createApiKey(body) {
+  return api.post('/integrations/api-keys', body);
+}
+
+export function revokeApiKey(id) {
+  return api.delete(`/integrations/api-keys/${id}`);
+}
+
+/** WooCommerce: the store's address and a read-only REST key made in it. */
+export function connectWooCommerce(body) {
+  return api.post('/integrations/woocommerce', body);
+}
+
+/** Shopify, through Baydar's own app: where to send the browser to approve. */
+export function shopifyAuthorizeUrl(body) {
+  return api.post('/integrations/shopify/authorize', body);
+}
+
+/** Every parameter Shopify sent the browser back with, its signature included. */
+export function completeShopify(body) {
+  return api.post('/integrations/shopify/callback', body);
+}
+
+/** Shopify, with an Admin API token from a custom app the owner already has. */
+export function connectShopifyToken(body) {
+  return api.post('/integrations/shopify/token', body);
+}

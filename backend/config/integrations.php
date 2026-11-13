@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Domain\Integrations\Salla\SallaConnector;
 use App\Domain\Integrations\Salla\SallaWebhooks;
+use App\Domain\Integrations\Shopify\ShopifyConnector;
+use App\Domain\Integrations\WooCommerce\WooConnector;
 use App\Domain\Integrations\Zid\ZidConnector;
 use App\Domain\Integrations\Zid\ZidWebhooks;
 
@@ -49,6 +51,8 @@ return [
     'connectors' => [
         'salla' => SallaConnector::class,
         'zid' => ZidConnector::class,
+        'woocommerce' => WooConnector::class,
+        'shopify' => ShopifyConnector::class,
     ],
 
     /*
@@ -92,6 +96,28 @@ return [
         'oauth_base' => env('ZID_OAUTH_BASE', 'https://oauth.zid.sa'),
         'api_base' => env('ZID_API_BASE', 'https://api.zid.sa/v1'),
         'webhook_url' => env('ZID_WEBHOOK_URL'),
+    ],
+
+    /*
+     * WooCommerce (2026-11-13): no partner app. The owner pastes a read-only
+     * REST key made in their own store; Baydar polls for changed orders.
+     */
+    'woocommerce' => [
+        'timeout' => (int) env('WOOCOMMERCE_TIMEOUT', 20),
+        // Only for a developer's test store on localhost (PublicUrl).
+        'allow_private_hosts' => (bool) env('WOOCOMMERCE_ALLOW_PRIVATE_HOSTS', env('APP_ENV') === 'local'),
+    ],
+
+    /*
+     * Shopify (2026-11-13): Baydar's own app for the OAuth way in, registered
+     * in Shopify's Dev Dashboard. Without it only a pasted token works.
+     */
+    'shopify' => [
+        'client_id' => env('SHOPIFY_CLIENT_ID'),
+        'client_secret' => env('SHOPIFY_CLIENT_SECRET'),
+        'redirect_uri' => env('SHOPIFY_REDIRECT_URI'),
+        'scopes' => env('SHOPIFY_SCOPES', 'read_orders,read_products'),
+        'api_version' => env('SHOPIFY_API_VERSION', '2025-10'),
     ],
 
     'secrets' => [

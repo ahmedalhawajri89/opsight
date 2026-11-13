@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
 final class DashboardFigures
 {
     /** Where an order came from. Null `source` is an order typed in by hand. */
-    public const CHANNELS = ['salla', 'zid', 'file', 'manual'];
+    public const CHANNELS = ['salla', 'zid', 'woocommerce', 'shopify', 'api', 'file', 'manual'];
 
     /**
      * Sales by channel, largest first.

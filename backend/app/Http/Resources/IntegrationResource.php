@@ -27,6 +27,9 @@ class IntegrationResource extends JsonResource
             'id' => $this->id,
             'provider' => $this->provider,
             'store_id' => $this->external_account_id,
+            // The name the store gave itself, where the platform said it
+            // when connecting: two stores on one platform read apart by it.
+            'store_name' => $this->storeName(),
             'status' => $this->status,
 
             /*
@@ -42,5 +45,16 @@ class IntegrationResource extends JsonResource
             'last_error' => $this->last_error,
             'connected_at' => $this->created_at?->toIso8601String(),
         ];
+    }
+
+    private function storeName(): ?string
+    {
+        foreach ((array) ($this->scopes ?? []) as $scope) {
+            if (str_starts_with($scope, 'name:') && trim(substr($scope, 5)) !== '') {
+                return trim(substr($scope, 5));
+            }
+        }
+
+        return null;
     }
 }

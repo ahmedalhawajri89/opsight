@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\ActivityController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
+use App\Http\Controllers\Api\V1\ApiKeyController;
 use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BriefController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\V1\FileImportController;
 use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Api\V1\GoogleSignInController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\InboundOrderController;
 use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\InventoryController;
@@ -24,8 +26,10 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\ShopifyConnectionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\Api\V1\WooCommerceConnectionController;
 use App\Http\Controllers\Api\V1\ZidConnectionController;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +93,15 @@ Route::prefix('v1')->group(function (): void {
      * waiting for a handler: today there are no providers and every name is a
      * 404. Phase 6 registers Salla.
      */
+    /*
+     * The universal connection (2026-11-13): any system sends orders with a
+     * key made on the integrations screen. No session; the key is the
+     * authentication and names the business (InboundOrderController).
+     */
+    Route::post('inbound/orders', [InboundOrderController::class, 'store'])
+        ->middleware('throttle:inbound')
+        ->name('inbound.orders');
+
     Route::post('webhooks/{provider}', WebhookController::class)
         ->middleware('throttle:webhooks')
         ->where('provider', '[a-z][a-z0-9_-]{1,31}')
@@ -247,9 +260,22 @@ Route::prefix('v1')->group(function (): void {
          * until one of them is waiting" (SECURITY.md §7).
          */
         Route::get('integrations', [IntegrationController::class, 'index']);
+        Route::get('integrations/api-keys', [ApiKeyController::class, 'index']);
+        Route::post('integrations/api-keys', [ApiKeyController::class, 'store']);
+        Route::delete('integrations/api-keys/{apiKey}', [ApiKeyController::class, 'destroy'])->whereNumber('apiKey');
         Route::post('integrations/claim', [IntegrationController::class, 'claim'])
             ->middleware('throttle:integration-claim');
         Route::delete('integrations/{integration}', [IntegrationController::class, 'destroy']);
+        // WooCommerce: the owner's own read-only REST key, tried before it is kept.
+        Route::post('integrations/woocommerce', [WooCommerceConnectionController::class, 'store'])
+            ->middleware('throttle:integration-claim');
+        // Shopify: Baydar's own app (authorize + callback), or a token the owner already has.
+        Route::post('integrations/shopify/token', [ShopifyConnectionController::class, 'token'])
+            ->middleware('throttle:integration-claim');
+        Route::post('integrations/shopify/authorize', [ShopifyConnectionController::class, 'authorizeUrl'])
+            ->middleware('throttle:integration-claim');
+        Route::post('integrations/shopify/callback', [ShopifyConnectionController::class, 'callback'])
+            ->middleware('throttle:integration-claim');
 
         // Zid connects through an OAuth redirect bound to this session, so
         // there is nothing to guess and no claim to rate-limit as tightly;

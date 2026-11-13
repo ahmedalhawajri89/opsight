@@ -7,6 +7,7 @@ use App\Domain\Orders\ConfirmOrder;
 use App\Domain\Orders\FulfilOrder;
 use App\Domain\Orders\OrderReference;
 use App\Domain\Orders\OrderStatus;
+use App\Models\ApiKey;
 use App\Models\AssistantConversation;
 use App\Models\Business;
 use App\Models\BusinessSetting;
@@ -106,7 +107,10 @@ function otherBusiness(): array
         // Inside the analytics period, so a leak in any aggregate shows a name.
         DB::table('orders')->where('id', $fulfilled->id)->update(['placed_at' => '2026-08-20 10:00:00']);
 
-        return compact('business', 'owner', 'staff', 'customer', 'product', 'expense', 'category', 'draft', 'fulfilled', 'integration', 'conversation');
+        // A key for the universal connection, so its revoke route is asked too.
+        [$apiKey] = ApiKey::issue(LEAK_MARKER.' key', $owner->id);
+
+        return compact('business', 'owner', 'staff', 'customer', 'product', 'expense', 'category', 'draft', 'fulfilled', 'integration', 'conversation', 'apiKey');
     });
 }
 
@@ -151,6 +155,7 @@ it('answers 404 to every route that names another business\'s record, and change
         'user' => $b['staff']->id,
         'integration' => $b['integration']->id,
         'conversation' => $b['conversation']->id,
+        'apiKey' => $b['apiKey']->id,
     ];
 
     $this->actingAs($this->ownerA);
