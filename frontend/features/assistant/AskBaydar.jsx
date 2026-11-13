@@ -73,6 +73,24 @@ export function AskBaydar() {
     },
   });
 
+  /*
+   * A question asked from the dashboard's card arrives here once: it is left
+   * in sessionStorage under HANDOFF_KEY, read, removed, and sent, so a reload
+   * does not ask it twice.
+   */
+  const handedOff = useRef(false);
+
+  useEffect(() => {
+    if (handedOff.current) return;
+    handedOff.current = true;
+
+    const question = takeHandoff();
+
+    if (question) send(question);
+    // Once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Keep the newest turn in view as the conversation grows.
   useEffect(() => {
     const box = scroller.current;
@@ -206,4 +224,18 @@ export function AskBaydar() {
       </section>
     </div>
   );
+}
+
+/** Where the dashboard leaves a question for this screen to ask. */
+export const HANDOFF_KEY = 'baydar:ask';
+
+function takeHandoff() {
+  try {
+    const question = window.sessionStorage.getItem(HANDOFF_KEY);
+    window.sessionStorage.removeItem(HANDOFF_KEY);
+
+    return question?.trim() || null;
+  } catch {
+    return null;
+  }
 }

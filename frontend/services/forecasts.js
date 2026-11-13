@@ -14,3 +14,8 @@ export function cash() {
 export function setCashBalance({ amount, as_of }) {
   return api.put('/forecasts/cash/balance', { amount, as_of });
 }
+
+/** The least cash the owner wants to keep; the forecast marks weeks below it. */
+export function setCashThreshold({ amount }) {
+  return api.put('/forecasts/cash/threshold', { amount });
+}

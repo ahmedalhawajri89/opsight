@@ -3,261 +3,301 @@
 import Link from 'next/link';
 import { gsap } from 'gsap';
 
-import { CountUp } from '@/components/data/CountUp';
+import { Sparkline } from '@/components/charts/Sparkline';
 import { Icon } from '@/components/ui/Icon';
-import { tierMetrics } from '@/features/analytics/KpiPanel';
 import { metricLabel, presentMetric } from '@/features/analytics/MetricTile';
-import { useAuth } from '@/features/auth/AuthProvider';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { useGsap } from '@/hooks/useGsap';
 import { cn } from '@/lib/cn';
-import { EMPTY, changeTone, figureDirection, formatPercent, formatPoints } from '@/lib/format';
-import { greeting } from '@/lib/person';
+import {
+  EMPTY,
+  changeTone,
+  figureDirection,
+  formatDate,
+  formatPercent,
+  formatPoints,
+} from '@/lib/format';
+
+import { Amount } from './Amount';
 
 /**
- * The top of the dashboard: who this is for, the three figures that matter,
- * and where to go next — on the same ink as the sign-in panel.
+ * The navy band at the top of the dashboard: one large figure and three
+ * beside it, each with the shape of its period underneath.
  *
- * WHY THREE, AND WHY HERE. The dashboard used to open on twelve figures of
- * equal weight, and a reader who lands with a question had nowhere for the
- * eye to start. The band answers the first question anyone asks of a shop —
- * how is it going? — with the first three figures the server's role-aware
- * ordering produces (tierMetrics), so a Staff user, who receives no cost
- * keys, sees revenue, orders and average order value rather than a hole
- * where profit would be. The rest are one click away on Analytics.
+ * THE LARGE FIGURE IS THE ANSWER TO "DID I MAKE MONEY?" For a role that may
+ * see cost that is net profit, after cost of goods AND operating expenses,
+ * with the net margin beside it. A role without cost receives no profit keys
+ * at all, so its large figure is sales, and the band says plainly that cost
+ * and profit are not shown, rather than leaving a hole.
  *
- * THE LINE ACROSS THE BOTTOM IS THE PERIOD'S REVENUE, not an ornament. It is
- * the server's own series, drawn faint and without axes: the shape of the
- * month behind the number above it. Decorative, so `aria-hidden`; the figures
- * carry the information.
+ * The third small figure is the lowest cash balance the thirteen-week
+ * forecast expects. It is only there for a role that may see the forecast.
  *
- * Each figure is a link to the screen that explains it, so "where do I go to
- * understand this?" is answered by the figure itself.
- *
- * Nothing here computes. Figures, changes and the series are the server's.
+ * Nothing here computes. Every figure, change and series is the server's;
+ * the sparklines only scale the server's values to fit their box.
  */
-
-/* Where a reader goes to understand a figure. A metric absent here is not a link. */
-const DESTINATIONS = {
-  net_revenue: '/analytics',
-  orders_count: '/orders',
-  gross_profit: '/analytics',
-  gross_margin: '/analytics',
-  average_order_value: '/orders',
-  units_sold: '/products',
-};
-
-const GLYPHS = {
-  net_revenue: 'coins',
-  orders_count: 'receipt',
-  gross_profit: 'wallet',
-  gross_margin: 'percent',
-  average_order_value: 'cart',
-  units_sold: 'box',
-};
-
-const HEADLINE_COUNT = 3;
-
 export function DashboardHero({
   metrics,
-  revenueTrend,
+  trends,
+  cash,
+  canSeeCost,
   currency,
   decimals,
   comparisonLabel,
   loading,
 }) {
-  const { user, can } = useAuth();
   const { t, locale } = useI18n();
-
-  const keys = tierMetrics(metrics).primary.slice(0, HEADLINE_COUNT);
-  const line = trendPath(revenueTrend);
+  const money = { currency, decimals };
+  const primaryKey = canSeeCost && metrics.net_profit ? 'net_profit' : 'net_revenue';
+  const ready = !loading && metrics[primaryKey];
 
   const root = useGsap(
     (self) => {
       const q = self.selector;
 
       gsap
-        .timeline({ defaults: { ease: 'power3.out' } })
-        .from(q('[data-band]'), { opacity: 0, y: 16, duration: 0.6 })
-        .from(q('[data-band-curve]'), { xPercent: 8, opacity: 0, duration: 0.9 }, 0.1)
-        .from(q('[data-band-text]'), { opacity: 0, y: 10, duration: 0.5, stagger: 0.08 }, 0.2)
-        .from(q('[data-band-figure]'), { opacity: 0, y: 14, duration: 0.55, stagger: 0.09 }, 0.35)
-        .from(
-          q('[data-band-line]'),
-          { strokeDashoffset: 1, duration: 1.6, ease: 'power2.inOut' },
-          0.4,
-        )
-        .from(q('[data-band-area]'), { opacity: 0, duration: 1.2 }, 0.9);
+        .timeline({ defaults: { ease: 'power2.out' } })
+        .from(q('[data-band]'), { opacity: 0, y: 12, duration: 0.5 })
+        .from(q('[data-band-wave]'), { opacity: 0, duration: 1.1 }, 0.15)
+        .from(q('[data-band-figure]'), { opacity: 0, y: 10, duration: 0.45, stagger: 0.07 }, 0.2);
     },
-    // Re-run when the figures arrive, so they enter rather than pop in.
-    [locale, keys.join()],
+    [locale, primaryKey, Boolean(ready)],
   );
 
+  const secondary = canSeeCost
+    ? [
+        { key: 'net_revenue', series: trends.revenue, href: '/analytics' },
+        { key: 'orders_count', series: trends.orders, href: '/orders', note: 'aov' },
+        { key: 'cash' },
+      ]
+    : [
+        { key: 'orders_count', series: trends.orders, href: '/orders' },
+        { key: 'average_order_value', series: trends.aov, href: '/orders' },
+        { key: 'units_sold', href: '/products' },
+      ];
+
   return (
-    <section ref={root} aria-labelledby="dashboard-title">
+    <section ref={root} aria-label={t('dashboard.home.hero.label')}>
       <div
         data-band
-        className="relative isolate overflow-hidden rounded-(--radius-auth) bg-linear-to-br from-(--color-brand-panel) to-(--color-brand-panel-deep) px-6 pt-7 pb-8 text-(--color-on-brand) sm:ps-8 sm:pe-[max(2rem,12%)] lg:ps-10"
+        className="relative isolate overflow-hidden rounded-(--radius-auth) bg-(--color-brand-panel) px-6 py-7 text-(--color-on-brand) sm:px-8"
       >
-        <BandDecoration line={line} />
+        <BandWave />
 
-        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
-          <div className="min-w-0">
-            {/*
-              The page's name leads the heading for assistive technology, so a
-              screen reader announces "Dashboard" before the greeting.
-            */}
-            <h1
-              id="dashboard-title"
-              data-band-text
-              className="text-2xl leading-tight font-bold tracking-tight sm:text-3xl"
-            >
-              <span className="sr-only">{t('nav.items.dashboard')} — </span>
-              {greeting(t, user?.name)}
-            </h1>
-            <p data-band-text className="mt-2 text-base text-(--color-on-brand-2)">
-              {t('dashboard.band.subtitle')}
-            </p>
+        <div className="flex flex-wrap gap-x-0 gap-y-7">
+          <div data-band-figure className="min-w-0 flex-[1.4_1_20rem] lg:pe-7">
+            {ready ? (
+              <PrimaryFigure
+                metricKey={primaryKey}
+                metrics={metrics}
+                money={money}
+                canSeeCost={canSeeCost}
+                comparisonLabel={comparisonLabel}
+              />
+            ) : (
+              <PrimarySkeleton />
+            )}
           </div>
 
-          <QuickActions can={can} />
-        </div>
-
-        <div className="mt-8 grid gap-6 sm:grid-cols-3 sm:gap-0">
-          {loading && keys.length === 0
-            ? [0, 1, 2].map((index) => <FigureSkeleton key={index} first={index === 0} />)
-            : keys.map((key, index) => (
-                <Figure
-                  key={key}
-                  metricKey={key}
-                  metric={metrics[key]}
-                  first={index === 0}
-                  currency={currency}
-                  decimals={decimals}
-                  comparisonLabel={comparisonLabel}
+          <div className="flex min-w-0 flex-[2_1_32rem] flex-wrap gap-y-6">
+            {secondary.map((item) =>
+              item.key === 'cash' ? (
+                <CashFigure key="cash" cash={cash} money={money} />
+              ) : (
+                <SmallFigure
+                  key={item.key}
+                  metricKey={item.key}
+                  metric={metrics[item.key]}
+                  aov={item.note === 'aov' ? metrics.average_order_value : null}
+                  series={item.series}
+                  href={item.href}
+                  money={money}
+                  loading={loading}
                 />
-              ))}
+              ),
+            )}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/**
- * The next step, offered rather than hunted for. Only what the reader's role
- * may do: a link to a screen they cannot open is a link to a refusal.
- */
-function QuickActions({ can }) {
+function PrimaryFigure({ metricKey, metrics, money, canSeeCost, comparisonLabel }) {
   const { t } = useI18n();
-
-  const actions = [
-    can('orders.create') && {
-      href: '/orders/new',
-      label: t('dashboard.band.newOrder'),
-      icon: 'plus',
-      primary: true,
-    },
-    can('inventory.view') && {
-      href: '/inventory',
-      label: t('dashboard.band.inventory'),
-      icon: 'shelves',
-    },
-    can('analytics.view') && {
-      href: '/analytics',
-      label: t('dashboard.band.analytics'),
-      icon: 'chart',
-    },
-  ].filter(Boolean);
-
-  if (actions.length === 0) return null;
+  const metric = metrics[metricKey];
+  const shown = presentMetric(metric, money);
+  const margin = metrics.net_margin?.value;
+  const isProfit = metricKey === 'net_profit';
 
   return (
-    <nav data-band-text aria-label={t('dashboard.band.actions')} className="flex flex-wrap gap-2">
-      {actions.map((action) => (
-        <Link
-          key={action.href}
-          href={action.href}
-          className={cn(
-            'inline-flex h-10 items-center gap-2 rounded-(--radius-pill) px-4 text-sm font-semibold transition-colors duration-(--duration-fast)',
-            action.primary
-              ? 'bg-(--color-accent-on-brand) text-(--color-brand-panel) hover:bg-(--color-accent-on-brand-strong)'
-              : 'border border-(--color-on-brand-line)/35 text-(--color-on-brand) hover:border-(--color-accent-on-brand) hover:bg-(--color-on-brand)/6',
-          )}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="inline-flex size-7 items-center justify-center rounded-(--radius-control) bg-(--color-on-brand-raise) text-(--color-accent-on-brand)"
         >
-          <Icon name={action.icon} size={16} />
-          {action.label}
-        </Link>
-      ))}
-    </nav>
+          <Icon name={isProfit ? 'pie' : 'coins'} size={15} strokeWidth={2} />
+        </span>
+        <h2 className="text-sm font-medium text-(--color-on-brand-2)">
+          {isProfit ? t('dashboard.home.hero.netProfit') : t('dashboard.home.hero.sales')}
+        </h2>
+        {isProfit && (
+          <span className="rounded-(--radius-pill) bg-(--color-accent-on-brand) px-2 py-px text-[0.6875rem] font-semibold text-(--color-brand-panel)">
+            {t('dashboard.home.hero.afterExpenses')}
+          </span>
+        )}
+      </div>
+
+      <Amount
+        value={metric.value}
+        {...money}
+        className="text-[2.75rem] leading-none font-bold tracking-tight sm:text-[3.25rem]"
+        currencyClassName="text-xl text-(--color-on-brand-2)"
+      />
+
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--color-on-brand-2)">
+        <InkChange metric={metric} shown={shown} />
+        {comparisonLabel && <span>{comparisonLabel}</span>}
+        {isProfit && margin !== null && margin !== undefined && (
+          <>
+            <span aria-hidden="true" className="text-(--color-on-brand-line)">
+              |
+            </span>
+            <span>
+              {t('dashboard.home.hero.netMargin')}{' '}
+              <strong className="tabular font-semibold text-(--color-on-brand)">
+                {formatPercent(margin)}
+              </strong>
+            </span>
+          </>
+        )}
+        {!canSeeCost && (
+          <span className="inline-flex items-center gap-1.5">
+            <Icon name="lock" size={13} className="text-(--color-accent-on-brand)" />
+            {t('dashboard.home.hero.costHidden')}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
-function Figure({ metricKey, metric, first, currency, decimals, comparisonLabel }) {
+function SmallFigure({ metricKey, metric, aov, series, href, money, loading }) {
   const { t } = useI18n();
-  const shown = presentMetric(metric, { currency, decimals });
-  const destination = DESTINATIONS[metricKey];
-  const label = metricLabel(t, metricKey);
+
+  if (!metric) {
+    return loading ? <SmallSkeleton /> : null;
+  }
+
+  const shown = presentMetric(metric, money);
+  const isMoney = metric.format === 'money';
+  const values = (series ?? []).map((bucket) => bucket.value);
 
   const body = (
     <>
-      {/*
-        The label is an h3, as a figure's label is on every card in the
-        product: the heading outline then reads "Dashboard, Net revenue,
-        Orders…", and a chart titled the same (an h2) stays distinguishable.
-      */}
-      <div className="flex items-center gap-2 text-sm font-medium text-(--color-on-brand-2)">
-        <span
-          aria-hidden="true"
-          className="inline-flex size-7 items-center justify-center rounded-(--radius-control) bg-(--color-accent-on-brand)/15 text-(--color-accent-on-brand)"
-        >
-          <Icon name={GLYPHS[metricKey] ?? 'analytics'} size={15} />
-        </span>
-        <h3 className="min-w-0 truncate">{label}</h3>
-        {destination && (
-          <Icon
-            name="arrowRight"
-            size={14}
-            className="ms-auto opacity-0 transition-[opacity,transform] duration-(--duration-base) group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+      <h3 className="text-[0.8125rem] text-(--color-on-brand-2)">{metricLabel(t, metricKey)}</h3>
+      <span className="text-[1.75rem] leading-none font-bold tracking-tight">
+        {isMoney ? (
+          <Amount
+            value={metric.value}
+            {...money}
+            currencyClassName="text-[0.8125rem] text-(--color-on-brand-2)"
           />
+        ) : (
+          <span className="tabular">{shown.value ?? EMPTY}</span>
         )}
-      </div>
-      <div className="mt-3">
-        <span className="tabular block text-3xl leading-none font-bold tracking-tight">
-          {shown.raw === null ? EMPTY : <CountUp value={shown.raw} format={shown.format} />}
-        </span>
-        <span className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--color-on-brand-2)">
-          <InkChange metric={metric} shown={shown} />
-          {comparisonLabel && <span>{comparisonLabel}</span>}
-        </span>
-      </div>
+      </span>
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--color-on-brand-2)">
+        <InkChange metric={metric} shown={shown} />
+        {aov?.value && (
+          <span>
+            {metricLabel(t, 'average_order_value')}{' '}
+            <span className="tabular">{presentMetric(aov, money).value}</span>
+          </span>
+        )}
+      </span>
+      {values.length > 1 && (
+        <Sparkline values={values} colour="var(--on-brand-2)" height={28} className="mt-1" />
+      )}
     </>
   );
 
-  const frame = cn(
-    'relative block rounded-(--radius-card) sm:px-6',
-    first ? 'sm:ps-0' : 'sm:border-s sm:border-(--color-on-brand-line)/25',
-  );
-
   return (
-    <div data-band-figure className={frame}>
-      {destination ? (
-        <Link
-          href={destination}
-          className="group -m-2 block rounded-(--radius-control) p-2 transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/5"
-        >
-          {body}
-        </Link>
-      ) : (
-        body
-      )}
+    <div
+      data-band-figure
+      className="flex min-w-0 flex-[1_1_11rem] flex-col border-(--color-on-brand-line)/30 px-0 sm:border-s sm:px-6"
+    >
+      <Link
+        href={href}
+        className="-m-2 flex flex-col gap-2.5 rounded-(--radius-control) p-2 transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/5"
+      >
+        {body}
+      </Link>
     </div>
   );
 }
 
 /**
- * A figure's movement, on ink. The same verdict as the cards elsewhere
- * (changeTone reads the metric's favourable direction), with the arrow kept
- * so colour is never the only carrier of it.
+ * The lowest balance the forecast expects, and the week it falls in. Without
+ * a stated opening balance the forecast has a shape but no level, so the
+ * figure would be meaningless; it asks for the balance instead.
+ */
+function CashFigure({ cash, money }) {
+  const { t } = useI18n();
+
+  if (!cash) return <SmallSkeleton />;
+
+  const hasBalance = cash.opening_balance !== null && cash.opening_balance !== undefined;
+  const lowest = cash.lowest;
+  const series = (cash.weeks ?? []).map((week) => week.running);
+
+  return (
+    <div
+      data-band-figure
+      className="flex min-w-0 flex-[1_1_11rem] flex-col border-(--color-on-brand-line)/30 px-0 sm:border-s sm:px-6"
+    >
+      <Link
+        href="/forecasts"
+        className="-m-2 flex flex-col gap-2.5 rounded-(--radius-control) p-2 transition-colors duration-(--duration-fast) hover:bg-(--color-on-brand)/5"
+      >
+        <h3 className="text-[0.8125rem] text-(--color-on-brand-2)">
+          {t('dashboard.home.hero.lowestCash')}
+        </h3>
+        {hasBalance && lowest ? (
+          <>
+            <span className="text-[1.75rem] leading-none font-bold tracking-tight">
+              <Amount
+                value={lowest.value}
+                {...money}
+                currencyClassName="text-[0.8125rem] text-(--color-on-brand-2)"
+              />
+            </span>
+            <span className="text-xs text-(--color-accent-on-brand)">
+              {t('dashboard.home.hero.lowestCashOn', { date: formatDate(lowest.start) })}
+            </span>
+            {series.length > 1 && (
+              <Sparkline
+                values={series}
+                colour="var(--accent-on-brand)"
+                height={28}
+                className="mt-1"
+              />
+            )}
+          </>
+        ) : (
+          <span className="text-sm leading-relaxed text-(--color-on-brand)">
+            {t('dashboard.home.hero.lowestCashNoBalance')}
+          </span>
+        )}
+      </Link>
+    </div>
+  );
+}
+
+/**
+ * A figure's movement, on ink. changeTone reads the metric's favourable
+ * direction, and the arrow stays so colour never carries the verdict alone.
  */
 function InkChange({ metric, shown }) {
   const { t } = useI18n();
@@ -277,7 +317,7 @@ function InkChange({ metric, shown }) {
     <span
       data-tone={tone}
       className={cn(
-        'tabular inline-flex items-center gap-1 rounded-(--radius-pill) bg-(--color-on-brand)/8 px-2 py-0.5 font-semibold',
+        'tabular inline-flex items-center gap-1 rounded-(--radius-control) bg-(--color-on-brand)/8 px-2 py-0.5 font-semibold',
         tone === 'positive'
           ? 'text-(--color-success-on-brand)'
           : tone === 'negative'
@@ -285,135 +325,65 @@ function InkChange({ metric, shown }) {
             : 'text-(--color-on-brand-2)',
       )}
     >
+      <bdi dir={figureDirection(magnitude)}>{magnitude}</bdi>
       <Icon
         name={change > 0 ? 'arrowUp' : change < 0 ? 'arrowDown' : 'arrowRight'}
         size={12}
         strokeWidth={2.5}
         label={change > 0 ? t('comparison.up') : change < 0 ? t('comparison.down') : undefined}
       />
-      <bdi dir={figureDirection(magnitude)}>{magnitude}</bdi>
     </span>
   );
 }
 
-function FigureSkeleton({ first }) {
+function PrimarySkeleton() {
+  return (
+    <div aria-hidden="true" className="flex flex-col gap-3">
+      <div className="h-7 w-48 animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
+      <div className="h-12 w-72 max-w-full animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
+      <div className="h-5 w-56 animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
+    </div>
+  );
+}
+
+function SmallSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className={cn(
-        'sm:px-6',
-        first ? 'sm:ps-0' : 'sm:border-s sm:border-(--color-on-brand-line)/25',
-      )}
+      className="flex min-w-0 flex-[1_1_11rem] flex-col gap-3 border-(--color-on-brand-line)/30 sm:border-s sm:px-6"
     >
+      <div className="h-4 w-24 animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
       <div className="h-7 w-32 animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
-      <div className="mt-3 h-8 w-44 animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
-      <div className="mt-3 h-5 w-28 animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
+      <div className="h-7 w-full animate-pulse rounded-(--radius-control) bg-(--color-on-brand)/10" />
     </div>
   );
 }
 
-/**
- * The band's drawing: the accent curve at the end of the line, a faint dot
- * grid, and the period's revenue as a line across the foot. The curve is
- * drawn for the END of an English line; in Arabic it is mirrored.
- */
-function BandDecoration({ line }) {
+/** Two faint gold lines across the foot of the band. Ornament only. */
+function BandWave() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-      <div className="absolute inset-0 bg-[radial-gradient(var(--color-on-brand-line)_1px,transparent_1px)] bg-size-[22px_22px] opacity-[0.12] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
-
-      <svg
-        data-band-curve
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        className="absolute inset-y-0 end-0 hidden h-full w-[14%] min-w-24 sm:block rtl:-scale-x-100"
-        focusable="false"
-      >
-        <path
-          d="M58 0C30 22 74 48 42 72C26 86 38 94 46 100H100V0Z"
-          className="fill-(--color-accent-on-brand)/90"
-        />
-        <path
-          d="M72 0C44 22 88 48 56 72C40 86 52 94 60 100H100V0Z"
-          className="fill-(--color-brand-panel-deep)"
-        />
-      </svg>
-
-      {line && (
-        <svg
-          viewBox="0 0 1000 100"
-          preserveAspectRatio="none"
-          className="absolute inset-x-0 bottom-0 h-28 w-full"
-          focusable="false"
-        >
-          <defs>
-            <linearGradient id="band-area" x1="0" x2="0" y1="0" y2="1">
-              <stop
-                offset="0"
-                style={{ stopColor: 'var(--color-accent-on-brand)', stopOpacity: 0.22 }}
-              />
-              <stop
-                offset="1"
-                style={{ stopColor: 'var(--color-accent-on-brand)', stopOpacity: 0 }}
-              />
-            </linearGradient>
-          </defs>
-          <path data-band-area d={line.area} fill="url(#band-area)" />
-          <path
-            data-band-line
-            d={line.stroke}
-            pathLength="1"
-            strokeDasharray="1"
-            fill="none"
-            vectorEffect="non-scaling-stroke"
-            strokeWidth="2"
-            strokeLinejoin="round"
-            className="stroke-(--color-accent-on-brand)/70"
-          />
-        </svg>
-      )}
-    </div>
+    <svg
+      data-band-wave
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 1200 220"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 -z-10 size-full"
+    >
+      <path
+        d="M0 190 C 160 150, 300 215, 470 178 S 760 120, 900 160 S 1120 200, 1200 150"
+        fill="none"
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+        className="stroke-(--color-accent-on-brand)/45"
+      />
+      <path
+        d="M0 205 C 180 172, 320 228, 490 196 S 770 142, 920 178 S 1130 214, 1200 172"
+        fill="none"
+        strokeWidth="1"
+        vectorEffect="non-scaling-stroke"
+        className="stroke-(--color-accent-on-brand)/22"
+      />
+    </svg>
   );
-}
-
-/**
- * The series as an SVG path in a 1000 × 100 box, leaving headroom so the line
- * never touches the figures above it. Null when there is nothing to draw.
- *
- * This scales the server's values to fit a box; it does not compute a figure.
- */
-export function trendPath(series) {
-  const values = Array.isArray(series)
-    ? series.map((bucket) => Number(bucket.value)).filter((value) => Number.isFinite(value))
-    : [];
-
-  if (values.length < 2) return null;
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const step = 1000 / (values.length - 1);
-  const points = values.map((value, index) => [index * step, 96 - ((value - min) / span) * 70]);
-
-  /*
-   * Through every point, as curves rather than corners: a Catmull-Rom spline
-   * written as cubic Béziers. Daily trade is spiky, and straight segments drew
-   * a row of mountain peaks where the reader should see a tide.
-   */
-  const at = (index) => points[Math.max(0, Math.min(points.length - 1, index))];
-  const fixed = (value) => value.toFixed(1);
-  let stroke = `M${fixed(points[0][0])} ${fixed(points[0][1])}`;
-
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const [x0, y0] = at(index - 1);
-    const [x1, y1] = at(index);
-    const [x2, y2] = at(index + 1);
-    const [x3, y3] = at(index + 2);
-
-    stroke +=
-      `C${fixed(x1 + (x2 - x0) / 6)} ${fixed(y1 + (y2 - y0) / 6)} ` +
-      `${fixed(x2 - (x3 - x1) / 6)} ${fixed(y2 - (y3 - y1) / 6)} ${fixed(x2)} ${fixed(y2)}`;
-  }
-
-  return { stroke, area: `${stroke}L1000 100L0 100Z` };
 }

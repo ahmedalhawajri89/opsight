@@ -122,12 +122,12 @@
    * light blue, which would turn the panel into a pale wash at night. A
    * brand surface is the brand's colour in both themes, only deepened.
    */
-  --brand-panel: #0f2a47;
-  --brand-panel-deep: #0a1d33;
+  --brand-panel: #0f2747;
+  --brand-panel-deep: #0a1a33;
   --on-brand: #ffffff;
   --on-brand-2: #9fb3cc;
   --on-brand-line: #7e96b3;
-  --accent-on-brand: #e0a44c;
+  --accent-on-brand: #e3b04b;
   /* The same bronze, lifted — hover on ink brightens, it does not darken. */
   --accent-on-brand-strong: #f0bd74;
   /*
@@ -189,6 +189,18 @@
   --chart-4: #991a00;
   --chart-5: #be185d;
   --chart-6: #0e7490;
+  /*
+   * The dashboard's two money hues (redesign, 2026-11-13): revenue in a quiet
+   * slate and net profit in gold, so profit reads as the part of each day
+   * that stayed. Fills only, never text: gold on white is under 4.5:1.
+   */
+  --chart-revenue: #d5dce8;
+  --chart-profit: #b98019;
+  --chart-cost: #98a2b3;
+  --chart-expense: #c0c7d2;
+  --chart-ink: #0f2747;
+  --chart-ink-2: #3e5c86;
+  --chart-band: #e3e9f2;
 
   /* Sparkline strokes: decorative marks beneath a figure that is already stated. */
   --spark-green: #16a34a;
@@ -283,6 +295,13 @@
   --chart-4: #c32230;
   --chart-5: #f5d0fe;
   --chart-6: #0e9fbf;
+  --chart-revenue: #2c3a55;
+  --chart-profit: #e0b155;
+  --chart-cost: #5c6880;
+  --chart-expense: #3d4a63;
+  --chart-ink: #8fb8f0;
+  --chart-ink-2: #5b7fb3;
+  --chart-band: #1c2740;
 
   --spark-green: #4ade80;
   --spark-blue: #6b8cff;
@@ -344,6 +363,13 @@
   --color-teal-soft: var(--teal-soft);
 
   --color-chart-1: var(--chart-1);
+  --color-chart-revenue: var(--chart-revenue);
+  --color-chart-profit: var(--chart-profit);
+  --color-chart-cost: var(--chart-cost);
+  --color-chart-expense: var(--chart-expense);
+  --color-chart-ink: var(--chart-ink);
+  --color-chart-ink-2: var(--chart-ink-2);
+  --color-chart-band: var(--chart-band);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);

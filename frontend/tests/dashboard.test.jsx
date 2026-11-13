@@ -2,9 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AttentionStrip } from '@/features/dashboard/AttentionStrip';
+import { ChannelMix } from '@/features/dashboard/ChannelMix';
 import { DashboardTabs } from '@/features/dashboard/DashboardTabs';
-import { trendPath } from '@/features/dashboard/DashboardHero';
+import { ProfitBreakdown } from '@/features/dashboard/ProfitBreakdown';
+import { StockRunway } from '@/features/dashboard/StockRunway';
+import { WeekActions } from '@/features/dashboard/WeekActions';
 
 /*
 |--------------------------------------------------------------------------
@@ -26,30 +28,7 @@ beforeEach(() => {
   }));
 });
 
-describe('the line across the band', () => {
-  it('draws nothing from fewer than two points', () => {
-    // One bucket is a dot, not a shape, and no data is not a flat line.
-    expect(trendPath([])).toBeNull();
-    expect(trendPath([{ value: '120.000' }])).toBeNull();
-    expect(trendPath(undefined)).toBeNull();
-  });
-
-  it('runs edge to edge through every point and closes its area at the foot', () => {
-    const line = trendPath([{ value: '10' }, { value: '30' }, { value: '20' }]);
-
-    expect(line.stroke.startsWith('M0.0 ')).toBe(true);
-    expect(line.stroke.trim().endsWith('1000.0 61.0')).toBe(true);
-    expect(line.area.endsWith('L1000 100L0 100Z')).toBe(true);
-  });
-
-  it('draws a flat period as a flat line rather than dividing by nothing', () => {
-    const line = trendPath([{ value: '5' }, { value: '5' }]);
-
-    expect(line.stroke).not.toContain('NaN');
-  });
-});
-
-describe('Needs your attention', () => {
+describe('What to do this week', () => {
   const insight = (id) => ({
     id,
     severity: 'action',
@@ -58,9 +37,9 @@ describe('Needs your attention', () => {
     link: { href: '/inventory' },
   });
 
-  it('shows the first three the server ranked, and counts the rest', () => {
+  it('shows the first three the server ranked, and links to all of them', () => {
     render(
-      <AttentionStrip
+      <WeekActions
         insights={[insight('a'), insight('b'), insight('c'), insight('d'), insight('e')]}
         viewAllHref="/analytics"
       />,
@@ -69,11 +48,14 @@ describe('Needs your attention', () => {
     expect(screen.getByText('Insight a')).toBeInTheDocument();
     expect(screen.getByText('Insight c')).toBeInTheDocument();
     expect(screen.queryByText('Insight d')).toBeNull();
-    expect(screen.getByRole('link', { name: /2 more/ })).toHaveAttribute('href', '/analytics');
+    expect(screen.getByRole('link', { name: /All alerts \(5\)/ })).toHaveAttribute(
+      'href',
+      '/analytics',
+    );
   });
 
   it('gives each card its next step as a link to the evidence', () => {
-    render(<AttentionStrip insights={[insight('a')]} />);
+    render(<WeekActions insights={[insight('a')]} />);
 
     expect(screen.getByRole('link', { name: /Check inventory/ })).toHaveAttribute(
       'href',
@@ -82,11 +64,93 @@ describe('Needs your attention', () => {
   });
 
   it('says so when nothing crossed a threshold, rather than leaving a blank', () => {
-    render(<AttentionStrip insights={[]} />);
+    render(<WeekActions insights={[]} />);
 
     expect(
       screen.getByText('Nothing in this period crossed a reporting threshold.'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('sales by channel', () => {
+  const channels = [
+    { key: 'salla', orders: 3, revenue: '300.000', share: 0.6, gross_margin: 0.3 },
+    { key: 'manual', orders: 2, revenue: '200.000', share: 0.4, gross_margin: 0.45 },
+  ];
+
+  it('names each source with its revenue, and the best margin for a role that sees cost', () => {
+    render(<ChannelMix channels={channels} canSeeCost currency="BHD" decimals={3} />);
+
+    expect(screen.getByText('Salla')).toBeInTheDocument();
+    expect(screen.getByText('Entered by hand')).toBeInTheDocument();
+    expect(screen.getByText(/Highest margin: Entered by hand/)).toBeInTheDocument();
+  });
+
+  it('shows no margin at all to a role that cannot see cost', () => {
+    const sales = channels.map(({ gross_margin: _unused, ...rest }) => rest);
+
+    render(<ChannelMix channels={sales} canSeeCost={false} currency="BHD" decimals={3} />);
+
+    expect(screen.queryByText(/Margin/)).toBeNull();
+    expect(screen.getByText('Where do your sales come from?')).toBeInTheDocument();
+  });
+});
+
+describe('when stock runs out', () => {
+  it('lists the products closest to running out first, at most five', () => {
+    const item = (id, days) => ({
+      product_id: id,
+      name: `Product ${id}`,
+      stock: 5,
+      daily_rate: 1,
+      days_left: days,
+      run_out_on: days === null ? null : '2026-12-01',
+      status: days !== null && days < 7 ? 'order_now' : 'ok',
+    });
+
+    render(
+      <StockRunway
+        data={{
+          cover_days: 30,
+          items: [item(1, 40), item(2, 2), item(3, null), item(4, 10), item(5, 20), item(6, 30)],
+        }}
+      />,
+    );
+
+    const rows = screen.getAllByRole('row').slice(1);
+
+    expect(rows).toHaveLength(5);
+    expect(rows[0]).toHaveTextContent('Product 2');
+    expect(screen.queryByText('Product 3')).toBeNull();
+  });
+});
+
+describe('did you make a profit', () => {
+  it('reads revenue down to net profit from the server, and names the remainder', () => {
+    const metric = (value) => ({ value, format: 'money' });
+
+    render(
+      <ProfitBreakdown
+        metrics={{
+          net_revenue: metric('1000.000'),
+          cogs: metric('400.000'),
+          operating_expenses: metric('300.000'),
+          net_profit: metric('300.000'),
+        }}
+        expenses={{
+          rows: [
+            { label: 'Rent', value: '200.000', is_other: false },
+            { label: null, count: 2, value: '100.000', is_other: true },
+          ],
+        }}
+        currency="BHD"
+        decimals={3}
+      />,
+    );
+
+    expect(screen.getByText('Rent')).toBeInTheDocument();
+    expect(screen.getByText('Other items (2)')).toBeInTheDocument();
+    expect(screen.getAllByText('Profit').length).toBeGreaterThan(0);
   });
 });
 

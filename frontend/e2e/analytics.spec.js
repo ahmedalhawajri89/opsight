@@ -36,8 +36,9 @@ test.describe('dashboard, as an owner', () => {
     // previous-period figure, so a /BHD/ locator matches two elements.
     await expect(revenue).toContainText('BHD');
 
-    // The comparison basis is stated in words, never left as a bare percentage.
-    await expect(revenue).toContainText(/vs previous \d+ days/);
+    // The comparison basis is stated in words beside the band's large figure.
+    await expect(page.getByRole('heading', { name: 'Net profit', level: 2 })).toBeVisible();
+    await expect(page.getByText(/vs previous \d+ days/).first()).toBeVisible();
 
     await expect(
       page.getByRole('heading', { name: 'Orders', exact: true, level: 3 }),
@@ -85,7 +86,7 @@ test.describe('dashboard, as an owner', () => {
     await page.goto('/dashboard');
     await dashboardReady(page);
 
-    const chart = page.getByRole('heading', { name: 'Net revenue', exact: true }).last();
+    const chart = page.getByRole('heading', { name: 'Revenue and profit, day by day' });
     await expect(chart).toBeVisible();
 
     // A chart is never the only route to its numbers.
@@ -93,34 +94,33 @@ test.describe('dashboard, as an owner', () => {
     await expect(page.getByRole('table').first()).toBeVisible();
   });
 
-  test('names the products closest to running out, not just how many', async ({ page }) => {
-    // The server already sends five by name; the panel used to show only counts.
+  test('names the products closest to running out, with the date', async ({ page }) => {
     await page.goto('/dashboard');
     await dashboardReady(page);
 
-    // Stock is one of the dashboard's tabs; the first open is the latest orders.
-    await page.getByRole('tab', { name: 'Stock' }).click();
-
-    const panel = page
-      .getByRole('heading', { name: 'Inventory Health' })
+    const card = page
+      .getByRole('heading', { name: 'When will stock run out?' })
       .locator('xpath=ancestor::section[1]');
 
-    await expect(panel.getByText('Lowest stock')).toBeVisible();
-    await expect(panel.getByRole('link').filter({ hasNotText: 'View all' }).first()).toBeVisible();
+    await expect(card).toBeVisible();
+    await expect(card.getByRole('columnheader', { name: 'Runs out' })).toBeVisible();
+    await expect(card.getByRole('row').nth(1)).toBeVisible();
+    await expect(card.getByRole('link', { name: 'All products' })).toHaveAttribute(
+      'href',
+      '/forecasts',
+    );
   });
 
-  test('labels low stock as a point-in-time figure, not a period one', async ({ page }) => {
+  test('answers whether the period made money, from revenue to net profit', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.getByRole('tab', { name: 'Stock' }).click();
+    await dashboardReady(page);
 
-    const panel = page
-      .getByRole('heading', { name: 'Inventory Health' })
+    const card = page
+      .getByRole('heading', { name: 'Did you actually make a profit?' })
       .locator('xpath=ancestor::section[1]');
-    await expect(panel).toBeVisible();
-    await expect(panel.getByText('Low Stock', { exact: true })).toBeVisible();
 
-    // Stated to assistive technology and in the panel's tooltip, not by position.
-    await expect(panel.getByText('As of now — not for the selected period')).toHaveCount(1);
+    await expect(card).toBeVisible();
+    await expect(card.getByText('Cost of goods').first()).toBeAttached();
   });
 });
 
@@ -176,8 +176,12 @@ test.describe('as staff', () => {
     await page.goto('/dashboard');
     await dashboardReady(page);
 
-    await expect(page.getByRole('heading', { name: 'Net revenue' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sales', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Net profit' })).toHaveCount(0);
+    await expect(
+      page.getByRole('heading', { name: 'Did you actually make a profit?' }),
+    ).toHaveCount(0);
 
     // Not hidden — never sent. The server omits the keys entirely.
     await expect(page.getByRole('heading', { name: 'Gross profit' })).toHaveCount(0);
