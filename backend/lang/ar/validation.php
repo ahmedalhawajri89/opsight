@@ -18,6 +18,7 @@ declare(strict_types=1);
 */
 
 return [
+    'password_too_long' => 'كلمة المرور أطول من اللازم: لا يُقرأ منها إلا أول 72 بايت (نحو 36 حرفًا عربيًا أو 72 حرفًا إنجليزيًا). اختر كلمة أقصر.',
 
     'accepted' => 'يجب قبول :attribute.',
     'accepted_if' => 'يجب قبول :attribute عندما يكون :other هو :value.',

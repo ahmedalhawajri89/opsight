@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Password;
 
 /**
  * @property int $id
@@ -124,6 +125,20 @@ class User extends Authenticatable
         static::saving(static function (User $user): void {
             if ($user->isDirty('whatsapp_phone')) {
                 $user->whatsapp_verified_at = null;
+            }
+        });
+
+        /*
+         * A changed password voids every reset link still outstanding
+         * (security audit, 2026-11-13). Otherwise a link asked for before
+         * the change — perhaps by whoever the change was meant to shut out,
+         * reading the inbox — went on working for the rest of its hour. Here
+         * rather than at each place a password is set, so a new one cannot
+         * forget it.
+         */
+        static::saved(static function (User $user): void {
+            if ($user->wasChanged('password')) {
+                Password::broker()->deleteToken($user);
             }
         });
     }

@@ -172,3 +172,28 @@ it('rate limits requests for links from one address', function (): void {
     $this->postJson('/api/v1/auth/forgot-password', ['email' => 'someone6@reset.test'])
         ->assertStatus(429);
 });
+
+it('voids an outstanding reset link when the password is changed another way', function (): void {
+    $user = User::factory()->create();
+    $token = Password::broker()->createToken($user);
+
+    // The owner sets a new password (or the user changes it, signed in).
+    $user->forceFill(['password' => 'a-different-passphrase'])->save();
+
+    $this->postJson('/api/v1/auth/reset-password', [
+        'email' => $user->email,
+        'token' => $token,
+        'password' => 'an-attackers-passphrase',
+        'password_confirmation' => 'an-attackers-passphrase',
+    ])->assertStatus(422);
+});
+
+it('answers the same 202 when the mail server fails, and reports it instead', function (): void {
+    // A mailer that cannot exist: sending throws, after the answer has gone.
+    config(['mail.default' => 'no-such-mailer']);
+    $user = User::factory()->create();
+
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => $user->email])
+        ->assertStatus(202)
+        ->assertJsonPath('message', __('auth.reset_link_sent'));
+});

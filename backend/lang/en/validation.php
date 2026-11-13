@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'password_too_long' => 'The password is too long: bcrypt reads only its first 72 bytes (about 72 English or 36 Arabic letters). Choose a shorter one.',
 
     /*
     |--------------------------------------------------------------------------

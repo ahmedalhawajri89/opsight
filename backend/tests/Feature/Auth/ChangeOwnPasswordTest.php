@@ -123,3 +123,18 @@ it('limits how fast it can be tried', function (): void {
     $this->patchJson('/api/v1/me/password', ['current_password' => 'wrong', 'password' => 'a-brand-new-passphrase'])
         ->assertStatus(429);
 });
+
+it('refuses a password longer than bcrypt reads, counting bytes not letters', function (): void {
+    // 37 Arabic letters: 74 bytes in UTF-8, two past bcrypt's 72.
+    $tooLong = str_repeat('ب', 37);
+
+    $this->actingAs($this->staff)
+        ->patchJson('/api/v1/me/password', ['current_password' => 'the-old-passphrase', 'password' => $tooLong])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('password');
+
+    // 36 of them fit exactly.
+    $this->actingAs($this->staff)
+        ->patchJson('/api/v1/me/password', ['current_password' => 'the-old-passphrase', 'password' => str_repeat('ب', 36)])
+        ->assertNoContent();
+});
