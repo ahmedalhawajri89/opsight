@@ -10,6 +10,8 @@ vi.mock('@/services/brief', () => ({
   getBrief: vi.fn(),
   sendTestBrief: vi.fn(),
   updateBriefSettings: vi.fn(),
+  sendWhatsAppCode: vi.fn(),
+  verifyWhatsAppCode: vi.fn(),
 }));
 
 vi.mock('@/features/auth/AuthProvider', () => ({
@@ -165,5 +167,45 @@ describe('the morning brief settings', () => {
     renderSettings();
 
     expect(await screen.findByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+});
+
+describe('proving the WhatsApp number', () => {
+  const onWhatsApp = (verified) => ({
+    data: {
+      ...BRIEF.data,
+      // The channel choices are only live while the brief is on.
+      enabled: true,
+      channel: 'whatsapp',
+      whatsapp_phone: '+966501806978',
+      whatsapp_available: true,
+      whatsapp_verified: verified,
+    },
+  });
+
+  it('asks for a code before the brief can go to an unproved number, then takes it back', async () => {
+    vi.mocked(briefService.getBrief).mockResolvedValue(onWhatsApp(false));
+    vi.mocked(briefService.sendWhatsAppCode).mockResolvedValue({});
+    vi.mocked(briefService.verifyWhatsAppCode).mockResolvedValue({});
+
+    renderSettings();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Send a code' }));
+    expect(await screen.findByText(/Code sent/)).toBeInTheDocument();
+    await userEvent.type(await screen.findByLabelText('Code from WhatsApp'), '12a3456');
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    expect(briefService.sendWhatsAppCode).toHaveBeenCalledTimes(1);
+    // Digits only: the stray letter never reaches the server.
+    expect(briefService.verifyWhatsAppCode).toHaveBeenCalledWith('123456');
+  });
+
+  it('says a proved number is confirmed and offers no code', async () => {
+    vi.mocked(briefService.getBrief).mockResolvedValue(onWhatsApp(true));
+
+    renderSettings();
+
+    expect(await screen.findByText('Number confirmed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Send a code' })).not.toBeInTheDocument();
   });
 });

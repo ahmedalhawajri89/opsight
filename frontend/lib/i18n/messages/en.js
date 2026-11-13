@@ -733,6 +733,16 @@ const en = {
     whatsappUnavailable: 'Not set up on this installation yet.',
     phone: 'WhatsApp number',
     phoneHint: 'With the country code, e.g. {example}.',
+    proof: {
+      needed:
+        'Confirm this number before the brief can go to it: we send a six-digit code to its WhatsApp.',
+      send: 'Send a code',
+      resend: 'Send another code',
+      sent: 'Code sent. It works for ten minutes.',
+      code: 'Code from WhatsApp',
+      confirm: 'Confirm',
+      verified: 'Number confirmed',
+    },
     save: 'Save',
     saved: 'Saved',
     recent: 'Recent briefs',

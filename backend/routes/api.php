@@ -280,6 +280,9 @@ Route::prefix('v1')->group(function (): void {
         Route::get('me/brief', [BriefController::class, 'show']);
         // A test send reaches a real inbox or phone; a few an hour is plenty.
         Route::post('me/brief/test', [BriefController::class, 'test'])->middleware('throttle:brief-test');
+        // Proving the WhatsApp number before anything is sent to it.
+        Route::post('me/whatsapp/code', [BriefController::class, 'sendWhatsAppCode'])->middleware('throttle:whatsapp-code');
+        Route::post('me/whatsapp/verify', [BriefController::class, 'verifyWhatsApp'])->middleware('throttle:whatsapp-verify');
 
         /* ---- Ask Baydar (ADR-038) ---------------------------------------- */
         Route::get('assistant/conversations', [AssistantController::class, 'index']);

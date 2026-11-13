@@ -127,6 +127,11 @@ final class SendBrief
             throw new BriefProblem(__('brief.email_unverified'));
         }
 
+        // The same for a WhatsApp number: only one its owner has proved.
+        if ($channel->name() === 'whatsapp' && $user->whatsapp_verified_at === null) {
+            throw new BriefProblem(__('brief.whatsapp_unverified'));
+        }
+
         $this->inLocaleOf($user, function () use ($user, $channel, $now): void {
             $brief = $this->brief->for($user, $now);
             $channel->send($user, $brief, $this->text->render($brief));

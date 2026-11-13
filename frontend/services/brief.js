@@ -16,3 +16,13 @@ export function sendTestBrief() {
 export function updateBriefSettings({ morning_brief, brief_channel, whatsapp_phone }) {
   return api.patch('/me/preferences', { morning_brief, brief_channel, whatsapp_phone });
 }
+
+/** A six-digit code to the saved WhatsApp number, to prove it is the reader's. */
+export function sendWhatsAppCode() {
+  return api.post('/me/whatsapp/code');
+}
+
+/** The code typed back. */
+export function verifyWhatsAppCode(code) {
+  return api.post('/me/whatsapp/verify', { code });
+}

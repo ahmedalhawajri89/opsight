@@ -26,6 +26,9 @@ return [
          */
         'template' => env('WHATSAPP_BRIEF_TEMPLATE', 'baydar_morning_brief'),
 
+        // An authentication template carrying a one-time code (docs/SETUP.md).
+        'verify_template' => env('WHATSAPP_VERIFY_TEMPLATE', 'baydar_verify'),
+
         'api_base' => env('WHATSAPP_API_BASE', 'https://graph.facebook.com/v21.0'),
     ],
 ];

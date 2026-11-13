@@ -173,6 +173,17 @@ function BriefForm({ data }) {
                   )}
                 </Field>
               ) : null}
+
+              {/*
+                Proved before anything is sent to it. Only for the number as
+                saved: a number still being typed has nothing to prove yet.
+              */}
+              {form.channel === 'whatsapp' &&
+              data.whatsapp_available &&
+              data.whatsapp_phone &&
+              form.phone.trim() === data.whatsapp_phone ? (
+                <WhatsAppProof verified={Boolean(data.whatsapp_verified)} />
+              ) : null}
             </fieldset>
 
             <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-(--border-subtle) pt-4">
@@ -289,6 +300,99 @@ function BriefForm({ data }) {
  * role, so they are laid out as tiles rather than read as a line of prose.
  * A server that sends only the text still gets its text.
  */
+/**
+ * Proving the saved WhatsApp number with a one-time code (security audit,
+ * 2026-11-13). The brief is not sent to a number until this is done.
+ */
+function WhatsAppProof({ verified }) {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const [code, setCode] = useState('');
+
+  const send = useMutation({ mutationFn: briefService.sendWhatsAppCode });
+  const verify = useMutation({
+    mutationFn: () => briefService.verifyWhatsAppCode(code.trim()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.brief.all }),
+  });
+
+  if (verified) {
+    return (
+      <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-(--color-success)">
+        <Icon name="shield" size={16} aria-hidden="true" />
+        {t('brief.proof.verified')}
+      </p>
+    );
+  }
+
+  const codeError = verify.error?.errors?.code?.[0] ?? verify.error?.fieldErrors?.code;
+
+  return (
+    <div className="mt-4 max-w-sm space-y-3 rounded-(--radius-control) border border-(--color-warning) bg-(--color-warning-soft) p-4">
+      <p className="flex items-start gap-2 text-sm text-(--color-warning)">
+        <Icon name="alert" size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+        {t('brief.proof.needed')}
+      </p>
+
+      {send.isSuccess ? (
+        <form
+          className="flex items-start gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            verify.mutate();
+          }}
+        >
+          <Field label={t('brief.proof.code')} error={codeError} className="min-w-0 flex-1">
+            {(field) => (
+              <Input
+                {...field}
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                dir="ltr"
+                placeholder="123456"
+              />
+            )}
+          </Field>
+          <Button
+            type="submit"
+            variant="primary"
+            className="mt-6 shrink-0"
+            disabled={code.length !== 6 || verify.isPending}
+          >
+            {verify.isPending ? t('common.loading') : t('brief.proof.confirm')}
+          </Button>
+        </form>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={send.isPending}
+          onClick={() => send.mutate()}
+        >
+          {send.isPending
+            ? t('common.loading')
+            : send.isSuccess
+              ? t('brief.proof.resend')
+              : t('brief.proof.send')}
+        </Button>
+        {send.isSuccess ? (
+          <span role="status" className="text-xs text-(--color-text-2)">
+            {t('brief.proof.sent')}
+          </span>
+        ) : null}
+        {send.isError ? (
+          <span role="alert" className="text-xs text-(--color-danger)">
+            {send.error?.message}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function BriefPreview({ preview, time }) {
   const { t } = useI18n();
   const figures = preview.figures;

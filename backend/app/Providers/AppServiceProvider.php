@@ -174,6 +174,12 @@ class AppServiceProvider extends ServiceProvider
         // Asking for another confirmation email: an inbox is not a target.
         RateLimiter::for('verify-email-send', static fn (Request $request): Limit => Limit::perHour(5)->by($byUser($request)));
 
+        // A code to a WhatsApp number costs money and lands on a phone: a few an hour.
+        RateLimiter::for('whatsapp-code', static fn (Request $request): Limit => Limit::perHour(3)->by($byUser($request)));
+
+        // Typing the code back; the code itself also dies after five wrong tries.
+        RateLimiter::for('whatsapp-verify', static fn (Request $request): Limit => Limit::perHour(10)->by($byUser($request)));
+
         // Changing one's own password: a few tries a minute, then wait.
         RateLimiter::for('password', static fn (Request $request): Limit => Limit::perMinute(5)->by($byUser($request)));
 
