@@ -863,6 +863,7 @@ const SIDEBAR = {
     rule: 'opacity-0',
     toggle: 'hidden',
     topToggle: 'hidden',
+    card: 'border-(--color-sidebar-line) bg-(--color-sidebar-card) px-3',
   },
   auto: {
     label: 'opacity-0 lg:opacity-100 lg:delay-100',
@@ -870,6 +871,7 @@ const SIDEBAR = {
     rule: 'lg:opacity-0',
     toggle: 'lg:hidden',
     topToggle: 'hidden lg:inline-flex',
+    card: 'border-transparent bg-transparent px-0.5 lg:border-(--color-sidebar-line) lg:bg-(--color-sidebar-card) lg:px-3',
   },
   rail: {
     label: 'opacity-0',
@@ -877,6 +879,7 @@ const SIDEBAR = {
     rule: '',
     toggle: '',
     topToggle: 'hidden',
+    card: 'border-transparent bg-transparent px-0.5',
   },
 };
 
@@ -1038,7 +1041,8 @@ function Sidebar({
       {business && (
         <div
           className={cn(
-            'mx-3.5 mt-1 mb-4 flex min-h-[54px] shrink-0 items-center gap-2.5 overflow-hidden rounded-[12px] border border-(--color-sidebar-line) bg-(--color-sidebar-card) px-3 py-2.5 [@media(max-height:820px)]:hidden',
+            'mx-3.5 mt-1 mb-4 flex min-h-[54px] shrink-0 items-center gap-2.5 overflow-hidden rounded-[12px] border py-2.5 transition-[padding,background-color,border-color] duration-300 ease-(--ease-out) motion-reduce:transition-none [@media(max-height:820px)]:hidden',
+            style.card,
           )}
         >
           <span
@@ -1218,7 +1222,12 @@ function Sidebar({
         on a tall screen it was the reason the links scrolled.
       */}
       <div className="relative z-10 shrink-0 px-3.5 pb-5 [@media(max-height:960px)]:hidden">
-        <div className="flex items-center gap-2.5 overflow-hidden rounded-[12px] border border-(--color-sidebar-line) bg-(--color-sidebar-card) p-3">
+        <div
+          className={cn(
+            'flex items-center gap-2.5 overflow-hidden rounded-[12px] border py-3 transition-[padding,background-color,border-color] duration-300 ease-(--ease-out) motion-reduce:transition-none',
+            style.card,
+          )}
+        >
           <span
             aria-hidden="true"
             className="inline-flex size-[34px] shrink-0 items-center justify-center rounded-full bg-(--color-on-brand) text-xs font-bold text-(--color-sidebar-ground)"
