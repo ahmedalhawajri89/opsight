@@ -64,8 +64,15 @@ class WebhookController extends Controller
         $signature = (string) $request->header($handler->signatureHeader(), '');
         $verified = $signature !== '' && $handler->verify($body, $signature, $secret);
 
+        /*
+         * An object or nothing. A body that is valid JSON but a bare string
+         * or number decoded to a scalar, and the rejection below then took
+         * array_keys() of it: an unauthenticated 500, and no evidence row.
+         */
+        $decoded = json_decode($body, true);
+
         /** @var array<string, mixed> $payload */
-        $payload = json_decode($body, true) ?: [];
+        $payload = is_array($decoded) ? $decoded : [];
 
         if (! $verified) {
             /*

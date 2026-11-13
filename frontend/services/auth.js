@@ -45,6 +45,19 @@ export function resetPassword({ token, email, password }) {
   return api.post('/auth/reset-password', { token, email, password });
 }
 
+/**
+ * The link in the confirmation email, posted back as it arrived: the account,
+ * the expiry and the signature. Public — the link may be opened anywhere.
+ */
+export function verifyEmail({ id, expires, signature }) {
+  return api.post('/auth/email/verify', { id, expires, signature });
+}
+
+/** Another confirmation email to the signed-in account's address. */
+export function resendVerification() {
+  return api.post('/me/email/verification');
+}
+
 export function logout() {
   return api.post('/auth/logout');
 }

@@ -65,6 +65,34 @@ final class WhatsAppChannel implements BriefChannel
             ],
         );
 
+        $this->post($phone, (string) config('brief.whatsapp.template'), $user->locale ?? 'en', [
+            ['type' => 'body', 'parameters' => $parameters],
+        ]);
+    }
+
+    /**
+     * A one-time code proving a number is the reader's (security audit,
+     * 2026-11-13). Meta's authentication category: the code in the body, and
+     * again behind the template's "copy code" button. Its text is Meta's own
+     * fixed wording for that category; the template name is in docs/SETUP.md.
+     */
+    public function sendCode(string $phone, string $code, string $locale): void
+    {
+        if (! $this->available()) {
+            throw new BriefProblem(__('brief.unavailable_whatsapp'));
+        }
+
+        $this->post($phone, (string) config('brief.whatsapp.verify_template'), $locale, [
+            ['type' => 'body', 'parameters' => [['type' => 'text', 'text' => $code]]],
+            ['type' => 'button', 'sub_type' => 'url', 'index' => '0', 'parameters' => [['type' => 'text', 'text' => $code]]],
+        ]);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $components
+     */
+    private function post(string $phone, string $template, string $locale, array $components): void
+    {
         $response = Http::withToken((string) config('brief.whatsapp.token'))
             ->acceptJson()
             ->timeout(15)
@@ -74,9 +102,9 @@ final class WhatsAppChannel implements BriefChannel
                 'to' => ltrim($phone, '+'),
                 'type' => 'template',
                 'template' => [
-                    'name' => (string) config('brief.whatsapp.template'),
-                    'language' => ['code' => ($user->locale ?? 'en') === 'ar' ? 'ar' : 'en'],
-                    'components' => [['type' => 'body', 'parameters' => $parameters]],
+                    'name' => $template,
+                    'language' => ['code' => $locale === 'ar' ? 'ar' : 'en'],
+                    'components' => $components,
                 ],
             ]);
 

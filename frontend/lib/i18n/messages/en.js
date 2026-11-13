@@ -185,6 +185,23 @@ const en = {
     signInAs: 'Sign in as {role}',
   },
 
+  verify: {
+    title: 'Confirm your email',
+    subtitle: 'One click from the email we sent you.',
+    working: 'Confirming your address…',
+    done: 'Your email address is confirmed. The morning brief can reach it, and you can sign in with Google.',
+    continue: 'Go to Baydar',
+    incomplete: 'This link is incomplete. Open it again from the email, or ask for a new one.',
+    askAgain: 'Sign in and use "Send the link again" at the top of any page.',
+    banner: {
+      title: 'Confirm your email address.',
+      body: 'We sent a link to {email}. Until it is opened, the morning brief is not emailed and Google sign-in stays off.',
+      resend: 'Send the link again',
+      retry: 'Try again',
+      sent: 'Sent. Check your inbox.',
+    },
+  },
+
   reset: {
     forgotLink: 'Forgot password?',
     forgotTitle: 'Forgot your password?',
@@ -716,6 +733,16 @@ const en = {
     whatsappUnavailable: 'Not set up on this installation yet.',
     phone: 'WhatsApp number',
     phoneHint: 'With the country code, e.g. {example}.',
+    proof: {
+      needed:
+        'Confirm this number before the brief can go to it: we send a six-digit code to its WhatsApp.',
+      send: 'Send a code',
+      resend: 'Send another code',
+      sent: 'Code sent. It works for ten minutes.',
+      code: 'Code from WhatsApp',
+      confirm: 'Confirm',
+      verified: 'Number confirmed',
+    },
     save: 'Save',
     saved: 'Saved',
     recent: 'Recent briefs',
@@ -1069,6 +1096,7 @@ const en = {
         role_changed: 'role changed',
         password_changed: 'password changed',
         password_reset: 'password reset by email',
+        email_verified: 'email address confirmed',
       },
     },
     explore: {
@@ -1622,6 +1650,7 @@ const en = {
       role_changed: 'role changed',
       password_changed: 'password changed',
       password_reset: 'password reset by email',
+      email_verified: 'email address confirmed',
       financing_generated: 'financing report drawn up',
       cash_balance_set: 'cash balance stated',
       file: 'file imported',

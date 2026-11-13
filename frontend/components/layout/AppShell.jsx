@@ -24,6 +24,7 @@ import { InstallPrompt } from '@/features/pwa/InstallPrompt';
 import { Icon } from '@/components/ui/Icon';
 import { Popover } from '@/components/ui/Popover';
 import { Logo } from '@/components/layout/Logo';
+import { VerifyEmailBanner } from '@/components/layout/VerifyEmailBanner';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/person';
 import { TodayChip } from '@/components/layout/TodayChip';
@@ -751,6 +752,14 @@ export function AppShell({ children }) {
             its own — PageHeader caps its description at 3xl, the settings
             forms at xl, FocusColumn at 110.
           */}
+            {/*
+              Outside <main>: the page entrance reads main's first child as
+              the page, and this line is not part of any page.
+            */}
+            <div className={cn(CONTENT_INSET, 'empty:hidden [&>*]:mt-5')}>
+              <VerifyEmailBanner />
+            </div>
+
             <main
               ref={entrance}
               id="main-content"

@@ -6,10 +6,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Authorization\Ability;
 use App\Domain\Brief\SendBrief;
+use App\Domain\Brief\WhatsAppVerification;
 use App\Http\Controllers\Controller;
 use App\Models\BriefDelivery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 /**
@@ -29,6 +31,7 @@ class BriefController extends Controller
             'enabled' => (bool) $user->morning_brief,
             'channel' => $user->brief_channel,
             'whatsapp_phone' => $user->whatsapp_phone,
+            'whatsapp_verified' => $user->whatsapp_verified_at !== null,
             'whatsapp_available' => $send->whatsappAvailable(),
             'hour' => (int) config('brief.hour', 8),
             'preview' => $preview['text'] + [
@@ -76,6 +79,35 @@ class BriefController extends Controller
         }
 
         return response()->json(['message' => __('brief.sent_test')], 202);
+    }
+
+    /** A one-time code to the saved WhatsApp number (WhatsAppVerification). */
+    public function sendWhatsAppCode(Request $request, WhatsAppVerification $verification): JsonResponse
+    {
+        $this->authorizeBrief($request);
+
+        try {
+            $verification->sendCode($request->user());
+        } catch (Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => SendBrief::readerMessage($e), 'code' => 'brief.failed'], 422);
+        }
+
+        return response()->json(['message' => __('brief.code_sent')], 202);
+    }
+
+    public function verifyWhatsApp(Request $request, WhatsAppVerification $verification): JsonResponse
+    {
+        $this->authorizeBrief($request);
+
+        $data = $request->validate(['code' => ['required', 'string', 'regex:/^\d{6}$/']]);
+
+        if (! $verification->verify($request->user(), (string) $data['code'])) {
+            throw ValidationException::withMessages(['code' => __('brief.code_invalid')]);
+        }
+
+        return response()->json(['message' => __('brief.code_verified')]);
     }
 
     private function authorizeBrief(Request $request): void

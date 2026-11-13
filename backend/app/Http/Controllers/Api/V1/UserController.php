@@ -11,6 +11,7 @@ use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\Auth\EmailVerification;
 use App\Support\QueryFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,7 +54,7 @@ class UserController extends Controller
         );
     }
 
-    public function store(StoreUserRequest $request): JsonResponse
+    public function store(StoreUserRequest $request, EmailVerification $verification): JsonResponse
     {
         $this->authorize('create', User::class);
 
@@ -77,6 +78,9 @@ class UserController extends Controller
 
         $user->auditAs('user.created', ['role' => $validated['role']]);
         $user->save();
+
+        // The owner typed the address; its owner has not yet said it is theirs.
+        $verification->send($user);
 
         return UserResource::make($user)->response()->setStatusCode(201);
     }

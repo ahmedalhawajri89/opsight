@@ -298,6 +298,19 @@ run out, and up to three findings. The template starts and ends with fixed text
 because Meta rejects one that begins or ends with a variable, and every value is
 sent as a single line because template parameters may not contain line breaks.
 
+**A second template proves the number first (security audit, 2026-11-13).** The
+brief is sent only to a number its owner has confirmed with a six-digit code, so
+anyone who signs up cannot point this installation's WhatsApp number at a
+stranger. Create it as category **Authentication**, named `baydar_verify` (or set
+`WHATSAPP_VERIFY_TEMPLATE`), in Arabic and English, with Meta's **Copy code**
+button. Meta writes the body text of an authentication template itself; the
+code is sent as the body's one parameter and again as the button's. The code
+lasts ten minutes, five wrong tries discard it, and changing the number clears
+the confirmation.
+
+Email has the same rule: the brief is mailed only to an address confirmed from
+the link sent on sign-up (or by a completed password reset).
+
 **The scheduler.** One cron entry runs everything scheduled, which today is the nightly
 audit-log prune (ADR-026):
 

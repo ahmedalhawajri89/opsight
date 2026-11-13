@@ -50,6 +50,15 @@ class WebhookReceipt extends Model
     /** Days a rejected delivery is kept as evidence before it is swept. */
     public const UNVERIFIED_DAYS = 30;
 
+    /**
+     * Days a delivery is kept once it has been imported. Its work is done —
+     * the order or product it carried is in the store's own tables — and
+     * what is left is a copy of a customer's details and, for an install,
+     * of the store's tokens. A provider retries for hours, not months, so
+     * this is far past any duplicate the unique event id has to catch.
+     */
+    public const PROCESSED_DAYS = 90;
+
     /** @var list<string> */
     protected $fillable = [
         'business_id',
@@ -73,7 +82,8 @@ class WebhookReceipt extends Model
     protected function casts(): array
     {
         return [
-            'payload' => 'array',
+            // Encrypted at rest: an install event carries the store's tokens.
+            'payload' => 'encrypted:array',
             'signature_ok' => 'boolean',
             'processed_at' => 'datetime',
             'attempts' => 'integer',
@@ -81,17 +91,29 @@ class WebhookReceipt extends Model
     }
 
     /**
-     * Only rejected deliveries are swept. A verified receipt is the record of
-     * an import and is kept; a rejected one is a month of evidence about
-     * who knocked, and after that, only bulk.
+     * A rejected delivery is a month of evidence about who knocked, and after
+     * that, only bulk. A verified one is kept while it is still being worked
+     * on, and for PROCESSED_DAYS once it has been imported; after that it is
+     * only a copy of personal data (and, for an install, of tokens) that the
+     * import itself no longer needs. One still failing is never swept.
      *
      * @return Builder<static>
      */
     public function prunable(): Builder
     {
-        return static::query()
-            ->where('signature_ok', false)
-            ->where('created_at', '<', now()->subDays(self::UNVERIFIED_DAYS));
+        return static::query()->where(function (Builder $query): void {
+            $query
+                ->where(function (Builder $rejected): void {
+                    $rejected->where('signature_ok', false)
+                        ->where('created_at', '<', now()->subDays(self::UNVERIFIED_DAYS));
+                })
+                // Imported and long done. A delivery still failing is kept.
+                ->orWhere(function (Builder $done): void {
+                    $done->where('signature_ok', true)
+                        ->whereNotNull('processed_at')
+                        ->where('processed_at', '<', now()->subDays(self::PROCESSED_DAYS));
+                });
+        });
     }
 
     public function isProcessed(): bool

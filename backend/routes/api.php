@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BriefController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\FileImportController;
 use App\Http\Controllers\Api\V1\ForecastController;
@@ -74,6 +75,12 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:password-reset')
         ->name('auth.password.reset');
 
+    // The link in the confirmation email. Public: it is opened from an inbox,
+    // and the signature in it is the proof (EmailVerification).
+    Route::post('auth/email/verify', [EmailVerificationController::class, 'verify'])
+        ->middleware('throttle:verify-email')
+        ->name('auth.email.verify');
+
     /*
      * Webhook deliveries (ADR-027). Unauthenticated by necessity — a provider
      * has no session — and the signature is the authentication.
@@ -95,6 +102,9 @@ Route::prefix('v1')->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
         Route::patch('me/preferences', [AuthController::class, 'updatePreferences'])->name('me.preferences');
+        Route::post('me/email/verification', [EmailVerificationController::class, 'resend'])
+            ->middleware('throttle:verify-email-send')
+            ->name('me.email.resend');
 
         // Its own limiter: it accepts a current password, so it must not become
         // a way to guess one (SECURITY.md §7).
@@ -270,6 +280,9 @@ Route::prefix('v1')->group(function (): void {
         Route::get('me/brief', [BriefController::class, 'show']);
         // A test send reaches a real inbox or phone; a few an hour is plenty.
         Route::post('me/brief/test', [BriefController::class, 'test'])->middleware('throttle:brief-test');
+        // Proving the WhatsApp number before anything is sent to it.
+        Route::post('me/whatsapp/code', [BriefController::class, 'sendWhatsAppCode'])->middleware('throttle:whatsapp-code');
+        Route::post('me/whatsapp/verify', [BriefController::class, 'verifyWhatsApp'])->middleware('throttle:whatsapp-verify');
 
         /* ---- Ask Baydar (ADR-038) ---------------------------------------- */
         Route::get('assistant/conversations', [AssistantController::class, 'index']);

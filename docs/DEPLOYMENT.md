@@ -74,14 +74,14 @@ routes and the nightly cron. Environment variables:
 | `DB_CONNECTION` | `mysql` |
 | `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | from TiDB |
 | `MYSQL_ATTR_SSL_CA` | `/etc/pki/tls/certs/ca-bundle.crt` |
-| `SESSION_DRIVER` | `cookie` |
+| `SESSION_DRIVER` | `database` |
 | `SESSION_SECURE_COOKIE` | `true` |
 | `SANCTUM_STATEFUL_DOMAINS` | `baydar-demo.vercel.app` |
 | `CACHE_STORE` | `database` |
 | `QUEUE_CONNECTION` | `sync` |
 | `LOG_CHANNEL` | `stderr` |
 | `MAIL_MAILER` | `log` |
-| `TRUSTED_PROXIES` | `*` |
+| `PROXY_SECRET` | a long random string, the same in the frontend project |
 | `CRON_SECRET` | a long random string |
 
 **No `ANTHROPIC_API_KEY` on the demo, on purpose (decided 2026-11-11).** Anyone
@@ -91,6 +91,22 @@ not set up, which is the honest state for a public sandbox. Zid is likewise
 unconfigured: no `ZID_*` variables.
 
 Leave `SESSION_DOMAIN` **unset**: the cookie belongs to the frontend's host.
+
+**`SESSION_DRIVER=database`, not `cookie` (security audit, 2026-11-13).** With
+the cookie driver the whole session lives in the browser's cookie and the
+server keeps nothing to end: signing out only replaced the browser's copy, so
+a copied cookie went on working, its expiry sliding forward with every use.
+With `database` the session is a row in TiDB, and signing out deletes it.
+The `sessions` table is created by the first migration.
+
+**`PROXY_SECRET` instead of `TRUSTED_PROXIES` (same audit).** Every browser
+request reaches this API through the frontend's rewrite, so the address the
+API sees is the frontend platform's, and every limiter keyed by address
+(sign-in, sign-up, password reset) would count the whole internet as one
+visitor. The frontend's `proxy.js` now sends the address it received with
+this secret, and `TrustFrontendProxy` believes it only when the secret
+matches. Leave `TRUSTED_PROXIES` unset: with `*`, any value in
+`X-Forwarded-For` would be taken at its word.
 The disk is read-only except `/tmp`; `api/_runtime.php` moves storage and the
 compiled caches there.
 
@@ -117,6 +133,7 @@ A second Vercel project from the same repository, **Root Directory**
 | `NEXT_PUBLIC_API_URL` | `https://baydar-demo.vercel.app` (this project's own address) |
 | `API_ORIGIN` | `https://baydar-demo-api.vercel.app` |
 | `NEXT_PUBLIC_DEMO_MODE` | `true` |
+| `PROXY_SECRET` | the same value as the API project's |
 
 Leave `NEXT_PUBLIC_ENABLE_GALLERY` unset. `NEXT_PUBLIC_DEMO_MODE` adds the
 one-click demo accounts to the sign-in page (`DemoAccounts`).

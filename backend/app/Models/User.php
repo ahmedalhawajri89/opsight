@@ -110,7 +110,22 @@ class User extends Authenticatable
             'role' => Role::class,
             'is_active' => 'boolean',
             'morning_brief' => 'boolean',
+            'whatsapp_verified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * A new WhatsApp number is an unproved one. Proof belongs to the number,
+     * not to the account: whatever proved the old number says nothing about
+     * the one typed in its place.
+     */
+    protected static function booted(): void
+    {
+        static::saving(static function (User $user): void {
+            if ($user->isDirty('whatsapp_phone')) {
+                $user->whatsapp_verified_at = null;
+            }
+        });
     }
 
     /**

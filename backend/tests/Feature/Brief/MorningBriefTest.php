@@ -202,6 +202,8 @@ it('sends WhatsApp as an approved template, one line per parameter', function ()
     Http::fake(['https://graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.1']]])]);
 
     $this->owner->forceFill(['brief_channel' => 'whatsapp', 'whatsapp_phone' => '+966501806978', 'locale' => 'ar'])->save();
+    // A number proved with a code; a new number never is (User::booted).
+    $this->owner->forceFill(['whatsapp_verified_at' => now()])->save();
     Product::factory()->withStock(1)->create(['name' => "Board\nwith a break", 'sku' => 'WB-1']);
 
     app(SendBrief::class)->test($this->owner);
@@ -282,6 +284,8 @@ it('tells the reader WhatsApp refused, not what Meta said', function (): void {
     config(['brief.whatsapp.token' => 'wa-token', 'brief.whatsapp.phone_number_id' => '1234567890']);
     Http::fake(['https://graph.facebook.com/*' => Http::response(['error' => ['message' => '(#131030) Recipient not in allowed list, app id 99887766']], 400)]);
     $this->owner->forceFill(['brief_channel' => 'whatsapp', 'whatsapp_phone' => '+966501806978'])->save();
+    // A number proved with a code; a new number never is (User::booted).
+    $this->owner->forceFill(['whatsapp_verified_at' => now()])->save();
 
     $response = $this->actingAs($this->owner)->postJson('/api/v1/me/brief/test')->assertStatus(422);
 

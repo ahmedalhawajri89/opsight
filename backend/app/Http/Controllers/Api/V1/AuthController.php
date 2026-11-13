@@ -12,6 +12,7 @@ use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePreferencesRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\Auth\EmailVerification;
 use App\Support\Localization\Localizer;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\JsonResponse;
@@ -59,12 +60,15 @@ class AuthController extends Controller
      * the caller an account exists; that is accepted here, as it is on every
      * sign-up form, and the limiter keeps it from becoming a bulk lookup.
      */
-    public function register(RegisterRequest $request, RegisterBusiness $register, Localizer $localizer): JsonResponse
+    public function register(RegisterRequest $request, RegisterBusiness $register, Localizer $localizer, EmailVerification $verification): JsonResponse
     {
         /** @var array{business_name: string, name: string, email: string, password: string, locale?: string|null} $data */
         $data = $request->validated();
 
         $user = $register($data);
+
+        // The address is only claimed until its owner opens the link.
+        $verification->send($user);
 
         Auth::guard('web')->login($user);
 
