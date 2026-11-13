@@ -164,8 +164,8 @@ it('fetches what changed since the last look, every quarter hour, without doubli
         'last_synced_at' => now()->subHour(),
     ]);
 
-    $this->artisan('integrations:sync-woocommerce')->assertSuccessful();
-    $this->artisan('integrations:sync-woocommerce')->assertSuccessful();
+    $this->artisan('integrations:sync')->assertSuccessful();
+    $this->artisan('integrations:sync')->assertSuccessful();
 
     expect(Order::query()->where('source', 'woocommerce')->count())->toBe(2);
 

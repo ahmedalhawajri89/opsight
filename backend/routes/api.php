@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\ShopifyConnectionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\WooCommerceConnectionController;
@@ -267,6 +268,13 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('integrations/{integration}', [IntegrationController::class, 'destroy']);
         // WooCommerce: the owner's own read-only REST key, tried before it is kept.
         Route::post('integrations/woocommerce', [WooCommerceConnectionController::class, 'store'])
+            ->middleware('throttle:integration-claim');
+        // Shopify: Baydar's own app (authorize + callback), or a token the owner already has.
+        Route::post('integrations/shopify/token', [ShopifyConnectionController::class, 'token'])
+            ->middleware('throttle:integration-claim');
+        Route::post('integrations/shopify/authorize', [ShopifyConnectionController::class, 'authorizeUrl'])
+            ->middleware('throttle:integration-claim');
+        Route::post('integrations/shopify/callback', [ShopifyConnectionController::class, 'callback'])
             ->middleware('throttle:integration-claim');
 
         // Zid connects through an OAuth redirect bound to this session, so

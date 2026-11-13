@@ -38,6 +38,8 @@ class IntegrationController extends Controller
             'available' => [
                 'salla' => filled(config('integrations.salla.client_id')) && filled(config('integrations.salla.client_secret')),
                 'zid' => filled(config('integrations.zid.client_id')) && filled(config('integrations.zid.client_secret')),
+                // The OAuth way in; a pasted token works either way.
+                'shopify' => ShopifyConnectionController::configured(),
             ],
         ]]);
     }

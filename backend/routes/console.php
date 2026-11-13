@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Console\Commands\PruneActivityLogCommand;
 use App\Console\Commands\PruneUnclaimedIntegrations;
 use App\Console\Commands\SendMorningBriefs;
-use App\Console\Commands\SyncWooStores;
+use App\Console\Commands\SyncPolledStores;
 use App\Models\WebhookReceipt;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -72,10 +72,10 @@ Schedule::command('model:prune', ['--model' => [WebhookReceipt::class]])
     ->onOneServer();
 
 /*
- * WooCommerce stores are asked, not told (SyncWooStores): every fifteen
- * minutes, for the orders each changed since the last look.
+ * WooCommerce and Shopify stores are asked, not told (SyncPolledStores):
+ * every fifteen minutes, for the orders each changed since the last look.
  */
-Schedule::command(SyncWooStores::class)
+Schedule::command(SyncPolledStores::class)
     ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->onOneServer();

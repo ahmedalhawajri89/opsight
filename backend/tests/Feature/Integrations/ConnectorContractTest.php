@@ -108,7 +108,7 @@ it('imports through the provider-neutral command, catalogue first', function ():
 
 it('refuses a provider nobody registered, and names the ones that are', function (): void {
     $this->artisan('opsight:import', ['provider' => 'nonexistent', 'from' => '2026-06-01', 'to' => '2026-06-30'])
-        ->expectsOutputToContain("No connector is registered as 'nonexistent'. Registered: salla, zid, woocommerce.")
+        ->expectsOutputToContain("No connector is registered as 'nonexistent'. Registered: salla, zid, woocommerce, shopify.")
         ->assertFailed();
 });
 
