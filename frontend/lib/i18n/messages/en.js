@@ -1011,6 +1011,12 @@ const en = {
     dismiss: 'Not now',
   },
 
+  loader: {
+    session: 'Checking your session',
+    data: 'Getting your figures ready',
+    ready: 'Ready',
+  },
+
   dashboard: {
     home: {
       subtitle: 'Your real profit, the cash ahead, and what needs you this week.',

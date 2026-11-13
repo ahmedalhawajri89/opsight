@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono, Marhey } from 'next/font/google';
 import localFont from 'next/font/local';
 
 import { ServiceWorker } from '@/features/pwa/ServiceWorker';
@@ -54,6 +54,20 @@ const arabic = localFont({
     { path: './fonts/IBMPlexSansArabic-500.woff2', weight: '500', style: 'normal' },
     { path: './fonts/IBMPlexSansArabic-700.woff2', weight: '700', style: 'normal' },
   ],
+});
+
+/*
+ * The wordmark's face (2026-11-13): Marhey, chosen by the owner for the
+ * curves of the name. Used for the name alone, never for reading text, so
+ * one weight and no preload: the mark falls back to the house face for the
+ * first paint rather than holding the page for a logo.
+ */
+const wordmark = Marhey({
+  variable: '--font-wordmark',
+  subsets: ['arabic', 'latin'],
+  weight: ['700'],
+  display: 'swap',
+  preload: false,
 });
 
 const mono = JetBrains_Mono({
@@ -125,7 +139,7 @@ export default async function RootLayout({ children }) {
     <html
       lang={locale}
       dir={directionOf(locale)}
-      className={`${inter.variable} ${arabic.variable} ${mono.variable} h-full antialiased`}
+      className={`${inter.variable} ${arabic.variable} ${mono.variable} ${wordmark.variable} h-full antialiased`}
       style={{ '--font-stack': FONT_STACK }}
     >
       <body className="min-h-full">

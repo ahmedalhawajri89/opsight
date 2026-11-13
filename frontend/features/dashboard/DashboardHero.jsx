@@ -197,7 +197,7 @@ function SmallFigure({ metricKey, metric, aov, series, href, money, loading }) {
   const body = (
     <>
       <h3 className="text-[0.8125rem] text-(--color-on-brand-2)">{metricLabel(t, metricKey)}</h3>
-      <span className="text-[1.75rem] leading-none font-bold tracking-tight">
+      <span className="text-2xl leading-none font-bold tracking-tight whitespace-nowrap min-[90rem]:text-[1.75rem]">
         {isMoney ? (
           <Amount
             value={metric.value}
@@ -266,7 +266,7 @@ function CashFigure({ cash, money }) {
         </h3>
         {hasBalance && lowest ? (
           <>
-            <span className="text-[1.75rem] leading-none font-bold tracking-tight">
+            <span className="text-2xl leading-none font-bold tracking-tight whitespace-nowrap min-[90rem]:text-[1.75rem]">
               <Amount
                 value={lowest.value}
                 {...money}

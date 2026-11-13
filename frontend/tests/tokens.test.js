@@ -68,7 +68,15 @@ describe('token class syntax', () => {
 describe('raw CSS variable references', () => {
   // Set at runtime, not in globals.css: next/font's families, the assembled
   // font stack on <html>, and per-element animation indices.
-  const RUNTIME = new Set(['font-inter', 'font-arabic', 'font-mono-ui', 'font-stack', 'i', 'd']);
+  const RUNTIME = new Set([
+    'font-inter',
+    'font-arabic',
+    'font-mono-ui',
+    'font-wordmark',
+    'font-stack',
+    'i',
+    'd',
+  ]);
 
   it('never references a token globals.css does not define', () => {
     const css = readFileSync(join(ROOT, 'app', 'globals.css'), 'utf8');

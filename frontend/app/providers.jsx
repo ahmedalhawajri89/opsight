@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 
+import { TopProgress } from '@/components/layout/TopProgress';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { I18nProvider } from '@/features/i18n/I18nProvider';
 import { createQueryClient } from '@/lib/queryClient';
@@ -14,6 +15,8 @@ export function Providers({ initialLocale, initialNumerals, children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Every screen, signed in or not: the line that says the app is working. */}
+      <TopProgress />
       <AuthProvider>
         {/* Inside auth: the signed-in user's saved language is the authority. */}
         <I18nProvider initialLocale={initialLocale} initialNumerals={initialNumerals}>

@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 import { AppShell } from '@/components/layout/AppShell';
+import { BootLoader } from '@/components/layout/BootLoader';
 
 /**
  * The authenticated shell. Everything under (app) is protected by it.
  *
  * Protected content never renders for an unknown user, not even for one frame:
- * while status is loading we render a skeleton, and an unauthenticated user is
+ * while status is loading the boot curtain covers the screen, and an unauthenticated user is
  * redirected before any child mounts.
  */
 export default function AuthenticatedLayout({ children }) {
@@ -40,17 +41,28 @@ export default function AuthenticatedLayout({ children }) {
     }
   }, [isLoading, isAuthenticated, needsSetup, router]);
 
-  if (isLoading) {
-    return (
-      <div aria-busy="true" className="min-h-dvh p-6">
-        <div className="h-12 w-48 rounded-(--radius-control) bg-(--color-surface)" />
-      </div>
-    );
-  }
+  /*
+   * The first screen has mounted, so its own requests have started (a
+   * child's effects run before this one). Until then an idle loader would
+   * only mean nothing had been asked for yet.
+   */
+  const [mounted, setMounted] = useState(false);
+  const showShell = !isLoading && isAuthenticated && !needsSetup;
 
-  if (!isAuthenticated || needsSetup) {
-    return null;
-  }
+  useEffect(() => {
+    if (!showShell) return undefined;
 
-  return <AppShell>{children}</AppShell>;
+    // A frame later, so the screen's first requests are already in flight.
+    const id = window.requestAnimationFrame(() => setMounted(true));
+
+    return () => window.cancelAnimationFrame(id);
+  }, [showShell]);
+
+  // Ready when the session is known and, if there is a screen to show, it is
+  // up and asking for its data. A visitor on the way to sign in is ready too.
+  const ready = !isLoading && (!showShell || mounted);
+
+  return (
+    <BootLoader ready={ready}>{showShell ? <AppShell>{children}</AppShell> : null}</BootLoader>
+  );
 }
