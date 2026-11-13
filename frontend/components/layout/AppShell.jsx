@@ -14,6 +14,24 @@ import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { gsap } from 'gsap';
+import {
+  ChartNoAxesCombined,
+  FileChartColumn,
+  History,
+  LayoutDashboard,
+  LayoutGrid,
+  Package,
+  Plug,
+  ReceiptText,
+  Settings,
+  Sparkles,
+  Sunrise,
+  TrendingUp,
+  UserCog,
+  Users,
+  Wallet,
+  Warehouse,
+} from 'lucide-react';
 
 import packageInfo from '@/package.json';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -49,6 +67,38 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
  * A group without a label renders its items unheaded — the dashboard sits
  * alone at the top, as the place every session starts.
  */
+/*
+ * The navigation's own glyphs (redesign, 2026-11-13): Lucide, chosen by the
+ * owner for a more finished set than the hand-drawn one. Keyed by route, so
+ * the rest of the product keeps the in-house Icon set and its single style.
+ */
+const NAV_ICONS = {
+  '/dashboard': LayoutDashboard,
+  '/assistant': Sparkles,
+  '/settings/brief': Sunrise,
+  '/orders': ReceiptText,
+  '/customers': Users,
+  '/products': Package,
+  '/inventory': Warehouse,
+  '/expenses': Wallet,
+  '/forecasts': TrendingUp,
+  '/analytics': ChartNoAxesCombined,
+  '/reports': FileChartColumn,
+  '/gallery': LayoutGrid,
+  '/settings/users': UserCog,
+  '/activity': History,
+  '/settings/integrations': Plug,
+  '/settings': Settings,
+};
+
+function NavGlyph({ item, className }) {
+  const Glyph = NAV_ICONS[item.href];
+
+  if (!Glyph) return <Icon name={item.icon} size={18} className={className} />;
+
+  return <Glyph aria-hidden="true" size={18} strokeWidth={1.75} className={className} />;
+}
+
 const NAV_GROUPS = [
   {
     label: null,
@@ -863,7 +913,37 @@ function Sidebar({
   const reduced = useReducedMotion();
   const track = useRef(null);
   const marker = useRef(null);
+  const hover = useRef(null);
   const placed = useRef(false);
+
+  /*
+   * THE HOVER BLOCK GLIDES TOO. One soft block follows the pointer from row
+   * to row instead of each row lighting on its own, so moving down the list
+   * reads as one motion. It fades out when the pointer leaves the list, and
+   * under reduced motion it jumps rather than glides.
+   */
+  function glideTo(event) {
+    const wrapper = track.current;
+    const block = hover.current;
+    const link = event.target.closest?.('a[href]');
+
+    if (!wrapper || !block || !link || !wrapper.contains(link)) return;
+
+    const target = {
+      y: link.getBoundingClientRect().top - wrapper.getBoundingClientRect().top,
+      height: link.offsetHeight,
+      autoAlpha: link.getAttribute('aria-current') === 'page' ? 0 : 1,
+    };
+
+    if (reduced) gsap.set(block, target);
+    else gsap.to(block, { ...target, duration: 0.28, ease: 'power3.out', overwrite: 'auto' });
+  }
+
+  function glideOut() {
+    if (hover.current) {
+      gsap.to(hover.current, { autoAlpha: 0, duration: reduced ? 0 : 0.2, overwrite: 'auto' });
+    }
+  }
 
   /*
    * THE LIT BLOCK IS ONE ELEMENT THAT MOVES, not a background on each link.
@@ -895,7 +975,15 @@ function Sidebar({
       };
 
       if (animate && placed.current && !reduced) {
-        gsap.to(block, { ...target, duration: 0.5, ease: 'power3.out' });
+        /*
+         * A short stretch on the way: the block leans into the move and
+         * settles, so the change of page feels like travel, not a cut. Then
+         * the new row's glyph gives one small pop (nav-pop in globals.css).
+         */
+        gsap
+          .timeline({ defaults: { overwrite: 'auto' } })
+          .to(block, { ...target, duration: 0.55, ease: 'expo.out' })
+          .fromTo(block, { scaleX: 0.94 }, { scaleX: 1, duration: 0.45, ease: 'back.out(2)' }, 0);
       } else {
         gsap.set(block, target);
       }
@@ -996,7 +1084,14 @@ function Sidebar({
           '[mask-image:linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-20px),transparent)]',
         )}
       >
-        <div ref={track} className="relative">
+        <div
+          ref={track}
+          className="relative"
+          onMouseOver={glideTo}
+          onMouseLeave={glideOut}
+          onFocus={glideTo}
+          onBlur={glideOut}
+        >
           {/*
           The lit block. Painted under the links (they sit above it), with a
           bar of the accent at the start of the line.
@@ -1004,7 +1099,13 @@ function Sidebar({
           <span
             ref={marker}
             aria-hidden="true"
-            className="pointer-events-none invisible absolute inset-x-0 top-0 rounded-[10px] bg-(--color-sidebar-active)"
+            className="pointer-events-none invisible absolute inset-x-0 top-0 rounded-[10px] bg-(--color-sidebar-active) shadow-[inset_0_0_0_1px_var(--sidebar-line)]"
+          />
+          {/* The hover block: softer than the lit one, under it in the stack. */}
+          <span
+            ref={hover}
+            aria-hidden="true"
+            className="pointer-events-none invisible absolute inset-x-0 top-0 rounded-[10px] bg-(--color-sidebar-card)"
           />
           {groups.map((group, index) => {
             const id = group.label
@@ -1116,7 +1217,7 @@ function Sidebar({
         is a link in this very list and a quick action on the dashboard, and
         on a tall screen it was the reason the links scrolled.
       */}
-      <div className="relative z-10 shrink-0 px-3.5 pb-5">
+      <div className="relative z-10 shrink-0 px-3.5 pb-5 [@media(max-height:960px)]:hidden">
         <div className="flex items-center gap-2.5 overflow-hidden rounded-[12px] border border-(--color-sidebar-line) bg-(--color-sidebar-card) p-3">
           <span
             aria-hidden="true"
@@ -1186,22 +1287,33 @@ function NavLink({ item, active, style, compact = false }) {
       aria-current={active ? 'page' : undefined}
       title={compact ? label : undefined}
       className={cn(
-        'relative flex h-10 items-center gap-[11px] overflow-hidden rounded-[10px] px-3 text-sm transition-colors duration-(--duration-fast) ease-(--ease-out) [@media(max-height:820px)]:h-8',
+        'group/nav relative flex h-9 items-center gap-[11px] overflow-hidden rounded-[10px] px-3 text-sm transition-colors duration-200 ease-(--ease-out) [@media(max-height:820px)]:h-8 [@media(min-height:1000px)]:h-10',
         active
           ? 'font-semibold text-(--color-on-brand)'
-          : 'font-normal text-(--color-sidebar-text) hover:bg-(--color-sidebar-card) hover:text-(--color-on-brand)',
+          : 'font-normal text-(--color-sidebar-text) hover:text-(--color-on-brand) focus-visible:text-(--color-on-brand)',
       )}
     >
-      <Icon
-        name={item.icon}
-        size={18}
+      <NavGlyph
+        item={item}
         className={cn(
-          'shrink-0',
-          active ? 'text-(--color-accent-on-brand)' : 'text-(--color-sidebar-muted)',
+          'shrink-0 transition-[color,transform] duration-200 ease-(--ease-out)',
+          active
+            ? 'nav-pop text-(--color-accent-on-brand)'
+            : 'text-(--color-sidebar-muted) group-hover/nav:scale-110 group-hover/nav:text-(--color-accent-on-brand-strong) motion-reduce:group-hover/nav:scale-100',
         )}
       />
       {/* On the rail the name is the tooltip and the accessible name. */}
-      <span className={cn(FADE, style.label)}>{label}</span>
+      <span
+        className={cn(
+          FADE,
+          style.label,
+          'transition-[opacity,transform]',
+          !active &&
+            'group-hover/nav:translate-x-0.5 motion-reduce:transform-none rtl:group-hover/nav:-translate-x-0.5',
+        )}
+      >
+        {label}
+      </span>
     </Link>
   );
 }
