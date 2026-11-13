@@ -333,6 +333,7 @@ export function AppShell({ children }) {
       current={current}
       business={user?.business?.name}
       role={user?.role_label}
+      userName={user?.name}
       variant="full"
     />
   );
@@ -572,7 +573,7 @@ export function AppShell({ children }) {
              * rows would spend the gain on air at the exact sizes where
              * there is least of it.
              */
-            !sidebarCollapsed && 'lg:w-[280px]',
+            !sidebarCollapsed && 'lg:w-[264px]',
           )}
         >
           {/*
@@ -580,12 +581,13 @@ export function AppShell({ children }) {
             fastened to it: the same rounded ink as the dashboard's band, so
             the two read as one family of surfaces.
           */}
-          <div className="relative isolate flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-(--radius-auth) bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) shadow-(--shadow-auth)">
+          <div className="relative isolate flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[18px] bg-(--color-sidebar-ground) shadow-(--shadow-auth)">
             <Sidebar
               groups={groups}
               current={current}
               business={user?.business?.name}
               role={user?.role_label}
+              userName={user?.name}
               variant={sidebarCollapsed ? 'rail' : 'auto'}
               collapsed={sidebarCollapsed}
               onToggle={toggleSidebar}
@@ -602,7 +604,7 @@ export function AppShell({ children }) {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 size-full bg-(--color-text)/25"
           />
-          <aside className="absolute inset-y-0 start-0 isolate flex w-64 max-w-[85vw] flex-col overflow-hidden bg-linear-to-b from-(--color-brand-panel) to-(--color-brand-panel-deep) shadow-(--shadow-overlay)">
+          <aside className="absolute inset-y-0 start-0 isolate flex w-64 max-w-[85vw] flex-col overflow-hidden bg-(--color-sidebar-ground) shadow-(--shadow-overlay)">
             {sidebar}
           </aside>
         </div>
@@ -810,18 +812,21 @@ const SIDEBAR = {
     fade: '',
     rule: 'opacity-0',
     toggle: 'hidden',
+    topToggle: 'hidden',
   },
   auto: {
     label: 'opacity-0 lg:opacity-100 lg:delay-100',
     fade: 'opacity-0 lg:opacity-100 lg:delay-100',
     rule: 'lg:opacity-0',
-    toggle: '',
+    toggle: 'lg:hidden',
+    topToggle: 'hidden lg:inline-flex',
   },
   rail: {
     label: 'opacity-0',
     fade: 'opacity-0',
     rule: '',
     toggle: '',
+    topToggle: 'hidden',
   },
 };
 
@@ -847,6 +852,7 @@ function Sidebar({
   current,
   business,
   role,
+  userName,
   variant = 'full',
   collapsed = false,
   onToggle,
@@ -909,7 +915,7 @@ function Sidebar({
     <>
       <SidebarArt />
 
-      <div className="flex h-14 shrink-0 items-center px-5">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-2 ps-5 pe-4 pt-2">
         <Link
           href="/dashboard"
           className="rounded-(--radius-control)"
@@ -918,29 +924,52 @@ function Sidebar({
           {/* On the rail the wordmark fades and the panel clips it. */}
           <Logo tone="onBrand" wordClassName={cn(FADE, style.fade)} />
         </Link>
+        {/*
+          The fold button sits beside the mark, as in the design. On the rail
+          there is no room beside it, so the button at the foot does the same
+          job there (SIDEBAR.toggle).
+        */}
+        {onToggle && (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-controls="app-sidebar"
+            aria-label={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+            title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+            className={cn(
+              'size-8 shrink-0 items-center justify-center rounded-[8px] border border-(--color-sidebar-line) text-(--color-sidebar-muted) transition-colors duration-(--duration-fast) hover:bg-(--color-sidebar-card) hover:text-(--color-on-brand)',
+              style.topToggle,
+            )}
+          >
+            <Icon name="panel" size={16} />
+          </button>
+        )}
       </div>
 
       {business && (
         <div
           className={cn(
-            'mx-2 mb-3 flex shrink-0 items-center gap-3 overflow-hidden rounded-(--radius-card) border border-(--color-on-brand-line)/20 bg-(--color-on-brand)/5 p-2 [@media(max-height:820px)]:hidden',
+            'mx-3.5 mt-1 mb-4 flex min-h-[54px] shrink-0 items-center gap-2.5 overflow-hidden rounded-[12px] border border-(--color-sidebar-line) bg-(--color-sidebar-card) px-3 py-2.5 [@media(max-height:820px)]:hidden',
           )}
         >
           <span
             aria-hidden="true"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-(--radius-control) bg-linear-to-br from-(--color-accent-on-brand-strong) to-(--color-accent-on-brand) text-sm font-bold text-(--color-brand-panel)"
+            className="inline-flex size-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--color-accent-on-brand) text-xs font-bold text-(--color-sidebar-ground)"
           >
             {initials(business).slice(0, 2)}
           </span>
           <span className={cn('min-w-0', FADE, style.fade)}>
             <span
-              className="block truncate text-sm font-semibold text-(--color-on-brand)"
+              className="block truncate text-[13px] font-semibold text-(--color-on-brand)"
               dir="auto"
             >
               {business}
             </span>
             {role && (
-              <span className="block truncate text-xs text-(--color-on-brand-2)">{role}</span>
+              <span className="block truncate text-[11px] text-(--color-sidebar-muted)">
+                {role}
+              </span>
             )}
           </span>
         </div>
@@ -963,7 +992,7 @@ function Sidebar({
       <nav
         aria-label={t('nav.main')}
         className={cn(
-          'min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 pt-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          'min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3.5 pt-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           '[mask-image:linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-20px),transparent)]',
         )}
       >
@@ -975,7 +1004,7 @@ function Sidebar({
           <span
             ref={marker}
             aria-hidden="true"
-            className="pointer-events-none invisible absolute inset-x-0 top-0 rounded-(--radius-control) bg-(--color-on-brand)/10 before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-(--radius-pill) before:bg-(--color-accent-on-brand)"
+            className="pointer-events-none invisible absolute inset-x-0 top-0 rounded-[10px] bg-(--color-sidebar-active)"
           />
           {groups.map((group, index) => {
             const id = group.label
@@ -983,7 +1012,7 @@ function Sidebar({
               : `nav-group-${index}`;
 
             return (
-              <div key={id} className={cn(index > 0 && 'mt-3.5 [@media(max-height:820px)]:mt-2')}>
+              <div key={id} className={cn(index > 0 && 'mt-4 [@media(max-height:820px)]:mt-2')}>
                 {/*
                 A label, not a heading: as <h2>s these put headings in the
                 outline BEFORE the page's <h1>.
@@ -993,7 +1022,7 @@ function Sidebar({
                     <p
                       id={id}
                       className={cn(
-                        'px-3 pb-1 text-xs font-medium tracking-[0.1em] text-(--color-on-brand-2) uppercase [@media(max-height:820px)]:hidden',
+                        'px-3 pb-1.5 text-[11px] font-semibold text-(--color-sidebar-muted) [@media(max-height:820px)]:hidden',
                         FADE,
                         style.label,
                       )}
@@ -1026,7 +1055,7 @@ function Sidebar({
                   />
                 )}
 
-                <ul aria-labelledby={group.label ? id : undefined} className="space-y-1">
+                <ul aria-labelledby={group.label ? id : undefined} className="space-y-0.5">
                   {group.items.map((item) => (
                     <li key={item.href}>
                       {item.ready === false ? (
@@ -1087,8 +1116,28 @@ function Sidebar({
         is a link in this very list and a quick action on the dashboard, and
         on a tall screen it was the reason the links scrolled.
       */}
-      <div className={cn('shrink-0 px-3 pb-4', FADE, style.fade)}>
-        <p className="px-2 text-xs text-(--color-on-brand-2)">v{packageInfo.version}</p>
+      <div className="relative z-10 shrink-0 px-3.5 pb-5">
+        <div className="flex items-center gap-2.5 overflow-hidden rounded-[12px] border border-(--color-sidebar-line) bg-(--color-sidebar-card) p-3">
+          <span
+            aria-hidden="true"
+            className="inline-flex size-[34px] shrink-0 items-center justify-center rounded-full bg-(--color-on-brand) text-xs font-bold text-(--color-sidebar-ground)"
+          >
+            {initials(userName ?? '').slice(0, 2)}
+          </span>
+          <span className={cn('min-w-0', FADE, style.fade)}>
+            {userName && (
+              <span
+                className="block truncate text-[13px] font-semibold text-(--color-on-brand)"
+                dir="auto"
+              >
+                {userName}
+              </span>
+            )}
+            <span className="block text-[11px] text-(--color-sidebar-muted)">
+              v{packageInfo.version}
+            </span>
+          </span>
+        </div>
       </div>
     </>
   );
@@ -1102,16 +1151,26 @@ function Sidebar({
 function SidebarArt() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-      <div className="absolute inset-0 bg-[radial-gradient(var(--color-on-brand-line)_1px,transparent_1px)] bg-size-[18px_18px] opacity-[0.1] [mask-image:linear-gradient(to_bottom,black,transparent_60%)]" />
-      <div className="absolute -bottom-24 start-1/2 size-64 -translate-x-1/2 rounded-full bg-(--color-accent-on-brand)/15 blur-3xl rtl:translate-x-1/2" />
       <svg
-        viewBox="0 0 100 60"
+        viewBox="0 0 252 80"
         preserveAspectRatio="none"
-        className="absolute inset-x-0 bottom-0 h-8 w-full rtl:-scale-x-100"
+        className="absolute inset-x-0 bottom-0 h-20 w-full rtl:-scale-x-100"
         focusable="false"
       >
-        <path d="M0 38C26 20 52 54 100 26V60H0Z" className="fill-(--color-accent-on-brand)/80" />
-        <path d="M0 44C28 28 54 60 100 32V60H0Z" className="fill-(--color-brand-panel-deep)" />
+        <path
+          d="M0 62 C 60 40, 120 78, 180 56 S 240 40, 252 46"
+          fill="none"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+          className="stroke-(--color-accent-on-brand)/55"
+        />
+        <path
+          d="M0 72 C 70 54, 130 86, 190 66 S 245 54, 252 58"
+          fill="none"
+          strokeWidth="1"
+          vectorEffect="non-scaling-stroke"
+          className="stroke-(--color-accent-on-brand)/30"
+        />
       </svg>
     </div>
   );
@@ -1127,10 +1186,10 @@ function NavLink({ item, active, style, compact = false }) {
       aria-current={active ? 'page' : undefined}
       title={compact ? label : undefined}
       className={cn(
-        'relative flex h-9 items-center gap-3 overflow-hidden rounded-(--radius-control) px-3 text-sm transition-colors duration-(--duration-fast) ease-(--ease-out) [@media(max-height:820px)]:h-8',
+        'relative flex h-10 items-center gap-[11px] overflow-hidden rounded-[10px] px-3 text-sm transition-colors duration-(--duration-fast) ease-(--ease-out) [@media(max-height:820px)]:h-8',
         active
           ? 'font-semibold text-(--color-on-brand)'
-          : 'font-medium text-(--color-on-brand-2) hover:bg-(--color-on-brand)/6 hover:text-(--color-on-brand)',
+          : 'font-normal text-(--color-sidebar-text) hover:bg-(--color-sidebar-card) hover:text-(--color-on-brand)',
       )}
     >
       <Icon
@@ -1138,7 +1197,7 @@ function NavLink({ item, active, style, compact = false }) {
         size={18}
         className={cn(
           'shrink-0',
-          active ? 'text-(--color-accent-on-brand)' : 'text-(--color-on-brand-2)',
+          active ? 'text-(--color-accent-on-brand)' : 'text-(--color-sidebar-muted)',
         )}
       />
       {/* On the rail the name is the tooltip and the accessible name. */}

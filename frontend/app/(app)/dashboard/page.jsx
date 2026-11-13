@@ -203,7 +203,7 @@ export default function DashboardPage() {
 
   if (isError) {
     return (
-      <div className="mx-auto flex max-w-[75rem] flex-col gap-5" data-own-motion="">
+      <div className="flex flex-col gap-5" data-own-motion="">
         {head}
         <Card padded={false}>
           <ErrorState error={error} onRetry={refetch} />
@@ -213,7 +213,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div ref={scope} className="mx-auto flex max-w-[75rem] flex-col gap-5" data-own-motion="">
+    <div ref={scope} className="flex flex-col gap-5" data-own-motion="">
       {head}
 
       {tradedElsewhere && (

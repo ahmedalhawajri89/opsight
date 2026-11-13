@@ -201,6 +201,17 @@
   --chart-ink: #0f2747;
   --chart-ink-2: #3e5c86;
   --chart-band: #e3e9f2;
+  /*
+   * The sidebar's own ink (redesign, 2026-11-13), taken from the design
+   * file: a deeper navy than the dashboard band, a raised card, its hairline,
+   * the lit row, and two text steps.
+   */
+  --sidebar-ground: #0a1a33;
+  --sidebar-card: #112443;
+  --sidebar-line: #1e3558;
+  --sidebar-active: #16305a;
+  --sidebar-text: #c7d0de;
+  --sidebar-muted: #8c9ab0;
 
   /* Sparkline strokes: decorative marks beneath a figure that is already stated. */
   --spark-green: #16a34a;
@@ -302,6 +313,12 @@
   --chart-ink: #8fb8f0;
   --chart-ink-2: #5b7fb3;
   --chart-band: #1c2740;
+  --sidebar-ground: #071221;
+  --sidebar-card: #0d1c33;
+  --sidebar-line: #1a2e4d;
+  --sidebar-active: #14294a;
+  --sidebar-text: #c7d0de;
+  --sidebar-muted: #8c9ab0;
 
   --spark-green: #4ade80;
   --spark-blue: #6b8cff;
@@ -370,6 +387,12 @@
   --color-chart-ink: var(--chart-ink);
   --color-chart-ink-2: var(--chart-ink-2);
   --color-chart-band: var(--chart-band);
+  --color-sidebar-ground: var(--sidebar-ground);
+  --color-sidebar-card: var(--sidebar-card);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-muted: var(--sidebar-muted);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
