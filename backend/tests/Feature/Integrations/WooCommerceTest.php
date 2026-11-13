@@ -10,6 +10,7 @@ use App\Models\Integration;
 use App\Models\Order;
 use App\Models\User;
 use App\Support\Http\PublicUrl;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
@@ -179,4 +180,13 @@ it('lets only a role that may manage integrations connect a store', function ():
         ->assertForbidden();
 
     Http::assertNothingSent();
+});
+
+it('says an address that does not answer at all is unreachable, beside the address', function (): void {
+    Http::fake(fn () => throw new ConnectionException('Connection refused'));
+
+    $this->actingAs(User::factory()->role(Role::Owner)->create())
+        ->postJson('/api/v1/integrations/woocommerce', ['url' => WOO_URL, 'consumer_key' => WOO_KEY, 'consumer_secret' => WOO_SECRET])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['url']);
 });

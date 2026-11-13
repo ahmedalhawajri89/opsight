@@ -420,7 +420,25 @@ const en = {
       shopify: 'Shopify',
       api: 'Universal connection',
     },
-    woocommerce: { tag: 'WordPress stores' },
+    woocommerce: {
+      tag: 'With a REST key from your store',
+      description:
+        'No app and nobody to approve: make a read key in your store and paste it here. Your catalogue and the last year of orders arrive, then new and changed orders every quarter hour.',
+      steps: {
+        open: 'In WordPress: WooCommerce → Settings → Advanced → REST API.',
+        add: 'Choose “Add key” and give it Read permission only.',
+        paste: 'Copy the key and the secret, and paste them here with your store’s address.',
+      },
+      url: 'Store address',
+      urlHint: 'As it appears in the browser, starting with https://',
+      key: 'Consumer key',
+      secret: 'Consumer secret',
+      secretHint: 'Kept encrypted, and never shown again.',
+      action: 'Connect WooCommerce',
+      connected:
+        'Your WooCommerce store is connected. Its history is being imported and will show in your figures soon.',
+      every: 'Updated every quarter hour',
+    },
     shopify: { tag: 'Shopify stores' },
     api: {
       title: 'Universal connection (API)',
@@ -539,6 +557,7 @@ const en = {
     providers: {
       salla: 'Salla',
       zid: 'Zid',
+      woocommerce: 'WooCommerce',
     },
 
     status: {
@@ -1117,6 +1136,7 @@ const en = {
         zid: 'Zid',
         file: 'Excel file',
         manual: 'Entered by hand',
+        woocommerce: 'WooCommerce',
         api: 'Other systems (API)',
       },
       hero: {

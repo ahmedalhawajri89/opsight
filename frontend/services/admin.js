@@ -167,3 +167,8 @@ export function createApiKey(body) {
 export function revokeApiKey(id) {
   return api.delete(`/integrations/api-keys/${id}`);
 }
+
+/** WooCommerce: the store's address and a read-only REST key made in it. */
+export function connectWooCommerce(body) {
+  return api.post('/integrations/woocommerce', body);
+}

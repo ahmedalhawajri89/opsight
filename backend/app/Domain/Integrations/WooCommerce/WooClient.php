@@ -6,6 +6,7 @@ namespace App\Domain\Integrations\WooCommerce;
 
 use App\Models\Integration;
 use App\Support\Http\PublicUrl;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -34,7 +35,13 @@ final class WooClient
      */
     public function verify(string $url, string $key, string $secret): array
     {
-        $orders = $this->send($url, $key, $secret, 'orders', ['per_page' => 1]);
+        try {
+            $orders = $this->send($url, $key, $secret, 'orders', ['per_page' => 1]);
+        } catch (ConnectionException) {
+            // Nothing answered at all: a wrong address, a site that is down,
+            // or a certificate the server will not trust.
+            throw new WooRefused('url', __('errors.integrations.woo_unreachable'));
+        }
 
         if ($orders->status() === 401 || $orders->status() === 403) {
             throw new WooRefused('consumer_key', __('errors.integrations.woo_refused'));
@@ -44,8 +51,12 @@ final class WooClient
             throw new WooRefused('url', __('errors.integrations.woo_not_store', ['status' => $orders->status()]));
         }
 
-        $index = $this->request($url, $key, $secret)->get($url.'/wp-json/');
-        $name = is_array($index->json()) ? (string) ($index->json('name') ?? '') : '';
+        try {
+            $index = $this->request($url, $key, $secret)->get($url.'/wp-json/');
+            $name = is_array($index->json()) ? (string) ($index->json('name') ?? '') : '';
+        } catch (ConnectionException) {
+            $name = '';
+        }
 
         return ['name' => $name !== '' ? $name : (string) parse_url($url, PHP_URL_HOST)];
     }

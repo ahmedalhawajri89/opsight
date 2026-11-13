@@ -243,5 +243,9 @@ export function useIntegrationActions() {
       mutationFn: (id) => admin.disconnectIntegration(id),
       onSuccess: invalidate,
     }),
+    connectWooCommerce: useMutation({
+      mutationFn: (body) => admin.connectWooCommerce(body),
+      onSuccess: invalidate,
+    }),
   };
 }

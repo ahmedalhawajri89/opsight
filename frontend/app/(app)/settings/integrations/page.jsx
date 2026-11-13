@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { useIntegrationActions, useIntegrations } from '@/features/admin/useAdmin';
 import { UniversalConnection } from '@/features/integrations/UniversalConnection';
+import { WooCommerceCard } from '@/features/integrations/WooCommerceCard';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -137,7 +138,10 @@ export default function IntegrationsPage() {
           hint={t('integrations.sections.storesHint')}
         />
 
-        <div className="grid grid-cols-[minmax(0,1fr)] items-stretch gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-stretch gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          {/* WooCommerce: the owner's own key, so ready on every installation. */}
+          <WooCommerceCard />
+
           {/* Zid: one button, an OAuth round trip. */}
           <SourceCard
             platform="zid"
@@ -331,8 +335,8 @@ export default function IntegrationsPage() {
       */}
       <section aria-labelledby="more-heading" className="space-y-3">
         <SectionHeading id="more-heading" icon="spark" title={t('integrations.sections.more')} />
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
-          {['woocommerce', 'shopify'].map((platform) => (
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          {['shopify'].map((platform) => (
             <SourceCard
               key={platform}
               platform={platform}
