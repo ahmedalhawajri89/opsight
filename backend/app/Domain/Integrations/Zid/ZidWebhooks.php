@@ -66,16 +66,41 @@ class ZidWebhooks implements WebhookProvider
         return 'authorization';
     }
 
-    /** What Zid sends back, given these credentials. */
-    public static function expectedHeader(string $secret): string
+    /**
+     * The webhook password for ONE store, derived from the installation's
+     * secret (security audit, 2026-11-13).
+     *
+     * Zid signs nothing, and the delivery names its store in the body. With
+     * one password for every store, anyone who learned it once — from a
+     * store's webhook settings, a log, a support screenshot — could post
+     * orders into ANY tenant by changing `store_id`. Now each store's
+     * subscription carries its own password, and a delivery is accepted only
+     * with the password of the store it names: a password seen in one store's
+     * settings opens that store's door alone.
+     */
+    public static function passwordFor(string $secret, string $storeId): string
     {
-        return 'Basic '.base64_encode(self::USERNAME.':'.$secret);
+        return hash_hmac('sha256', 'zid-webhook|'.$storeId, $secret);
+    }
+
+    /** What Zid sends back for a store, given the installation's secret. */
+    public static function expectedHeader(string $secret, string $storeId): string
+    {
+        return 'Basic '.base64_encode(self::USERNAME.':'.self::passwordFor($secret, $storeId));
     }
 
     public function verify(string $payload, string $signature, string $secret): bool
     {
+        $decoded = json_decode($payload, true);
+        $store = is_array($decoded) ? ($decoded['store_id'] ?? null) : null;
+
+        // No store named, no password to compare with.
+        if (! is_int($store) && ! is_string($store)) {
+            return false;
+        }
+
         // hash_equals, never ===: see SallaWebhooks::verify.
-        return hash_equals(self::expectedHeader($secret), $signature);
+        return hash_equals(self::expectedHeader($secret, (string) $store), $signature);
     }
 
     /**

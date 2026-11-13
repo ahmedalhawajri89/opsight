@@ -247,7 +247,9 @@ it('registers the store\'s webhooks with the credentials Zid will send back', fu
     [$request] = $subscriptions->first();
 
     expect($request['username'])->toBe('baydar')
-        ->and($request['password'])->toBe('webhook-password')
+        // The store's own password, never the installation's secret itself.
+        ->and($request['password'])->toBe(ZidWebhooks::passwordFor('webhook-password', '98765'))
+        ->and($request['password'])->not->toBe('webhook-password')
         ->and($request['target_url'])->toEndWith('/api/v1/webhooks/zid')
         ->and($request->header('X-Manager-Token')[0])->toBe('the-manager-token')
         ->and($request->header('Authorization')[0])->toBe('Bearer the-authorization-jwt');
