@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Integrations\Salla\SallaConnector;
 use App\Domain\Integrations\Salla\SallaWebhooks;
+use App\Domain\Integrations\WooCommerce\WooConnector;
 use App\Domain\Integrations\Zid\ZidConnector;
 use App\Domain\Integrations\Zid\ZidWebhooks;
 
@@ -49,6 +50,7 @@ return [
     'connectors' => [
         'salla' => SallaConnector::class,
         'zid' => ZidConnector::class,
+        'woocommerce' => WooConnector::class,
     ],
 
     /*
@@ -92,6 +94,16 @@ return [
         'oauth_base' => env('ZID_OAUTH_BASE', 'https://oauth.zid.sa'),
         'api_base' => env('ZID_API_BASE', 'https://api.zid.sa/v1'),
         'webhook_url' => env('ZID_WEBHOOK_URL'),
+    ],
+
+    /*
+     * WooCommerce (2026-11-13): no partner app. The owner pastes a read-only
+     * REST key made in their own store; Baydar polls for changed orders.
+     */
+    'woocommerce' => [
+        'timeout' => (int) env('WOOCOMMERCE_TIMEOUT', 20),
+        // Only for a developer's test store on localhost (PublicUrl).
+        'allow_private_hosts' => (bool) env('WOOCOMMERCE_ALLOW_PRIVATE_HOSTS', env('APP_ENV') === 'local'),
     ],
 
     'secrets' => [

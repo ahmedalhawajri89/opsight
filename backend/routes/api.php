@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\Api\V1\WooCommerceConnectionController;
 use App\Http\Controllers\Api\V1\ZidConnectionController;
 use Illuminate\Support\Facades\Route;
 
@@ -264,6 +265,9 @@ Route::prefix('v1')->group(function (): void {
         Route::post('integrations/claim', [IntegrationController::class, 'claim'])
             ->middleware('throttle:integration-claim');
         Route::delete('integrations/{integration}', [IntegrationController::class, 'destroy']);
+        // WooCommerce: the owner's own read-only REST key, tried before it is kept.
+        Route::post('integrations/woocommerce', [WooCommerceConnectionController::class, 'store'])
+            ->middleware('throttle:integration-claim');
 
         // Zid connects through an OAuth redirect bound to this session, so
         // there is nothing to guess and no claim to rate-limit as tightly;

@@ -30,6 +30,11 @@ return [
      * way to enumerate other people's shops.
      */
     'integrations' => [
+        'woocommerce_taken' => 'This WooCommerce store is already connected to another business.',
+        'woo_refused' => 'The store refused this key. Make sure it has Read access and was copied in full.',
+        'woo_not_store' => 'This address did not answer as a WooCommerce store (HTTP :status). Check the address and that the REST API is on.',
+        'woo_unreachable' => 'Baydar cannot reach this address. Use the store\'s public address.',
+        'woo_bad_url' => 'Enter the store\'s address, starting with https://',
         'claim_not_found' => 'No store is waiting to be connected with that id. Install the app from your store again, then enter the id within the hour.',
         'zid_unavailable' => 'Connecting a Zid store is not set up on this installation yet.',
         'zid_state' => 'This connection request has expired or was not started from this account. Start again from Connected stores.',

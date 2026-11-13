@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Console\Commands\PruneActivityLogCommand;
 use App\Console\Commands\PruneUnclaimedIntegrations;
 use App\Console\Commands\SendMorningBriefs;
+use App\Console\Commands\SyncWooStores;
 use App\Models\WebhookReceipt;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -67,5 +68,14 @@ Schedule::command(SendMorningBriefs::class)
  */
 Schedule::command('model:prune', ['--model' => [WebhookReceipt::class]])
     ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * WooCommerce stores are asked, not told (SyncWooStores): every fifteen
+ * minutes, for the orders each changed since the last look.
+ */
+Schedule::command(SyncWooStores::class)
+    ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->onOneServer();
