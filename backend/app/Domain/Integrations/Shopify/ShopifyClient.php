@@ -178,6 +178,12 @@ final class ShopifyClient
             throw new ShopifyRefused('token', __('errors.integrations.shopify_refused'));
         }
 
+        // No such shop (404), or a shop closed, frozen or unpaid (402, 423):
+        // the owner can act on that, so it is said beside the shop's name.
+        if (in_array($response->status(), [402, 404, 423], true)) {
+            throw new ShopifyRefused('shop', __('errors.integrations.shopify_unreachable'));
+        }
+
         if (! $response->successful()) {
             throw new RuntimeException("Shopify answered {$response->status()}.");
         }

@@ -212,3 +212,12 @@ it('lets only a role that may manage integrations connect a shop', function (): 
 
     Http::assertNothingSent();
 });
+
+it('says a shop that does not exist is unreachable, beside its name', function (): void {
+    Http::fake(['https://'.SHOP.'/admin/api/*' => Http::response('Not Found', 404)]);
+
+    $this->actingAs(User::factory()->role(Role::Owner)->create())
+        ->postJson('/api/v1/integrations/shopify/token', ['shop' => SHOP, 'token' => SHOP_TOKEN])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['shop']);
+});

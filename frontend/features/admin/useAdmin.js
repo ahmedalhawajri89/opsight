@@ -247,5 +247,22 @@ export function useIntegrationActions() {
       mutationFn: (body) => admin.connectWooCommerce(body),
       onSuccess: invalidate,
     }),
+    // Leaves the application on success, for Shopify's approval screen.
+    connectShopify: useMutation({
+      mutationFn: (body) => admin.shopifyAuthorizeUrl(body),
+      onSuccess: (response) => {
+        const url = response?.data?.url;
+
+        if (url) window.location.assign(url);
+      },
+    }),
+    completeShopify: useMutation({
+      mutationFn: (body) => admin.completeShopify(body),
+      onSuccess: invalidate,
+    }),
+    connectShopifyToken: useMutation({
+      mutationFn: (body) => admin.connectShopifyToken(body),
+      onSuccess: invalidate,
+    }),
   };
 }

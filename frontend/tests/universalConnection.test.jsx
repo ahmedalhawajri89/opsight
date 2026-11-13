@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UniversalConnection } from '@/features/integrations/UniversalConnection';
+import { ShopifyCard } from '@/features/integrations/ShopifyCard';
 import { WooCommerceCard } from '@/features/integrations/WooCommerceCard';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import * as admin from '@/services/admin';
@@ -17,6 +18,9 @@ vi.mock('@/services/admin', () => ({
   createApiKey: vi.fn(),
   revokeApiKey: vi.fn(),
   connectWooCommerce: vi.fn(),
+  connectShopifyToken: vi.fn(),
+  shopifyAuthorizeUrl: vi.fn(),
+  completeShopify: vi.fn(),
   claimStore: vi.fn(),
   zidAuthorizeUrl: vi.fn(),
   completeZid: vi.fn(),
@@ -112,5 +116,27 @@ describe('WooCommerceCard', () => {
       consumer_secret: 'cs_def',
     });
     expect(await screen.findByText('The store refused this key.')).toBeInTheDocument();
+  });
+});
+
+describe('ShopifyCard', () => {
+  it("waits for Baydar's app before offering it, and connects with a token meanwhile", async () => {
+    admin.connectShopifyToken.mockResolvedValue({ data: { id: 3, provider: 'shopify' } });
+
+    renderWithQuery(<ShopifyCard available={false} />);
+
+    expect(screen.getByRole('button', { name: /Connect Shopify/ })).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText('Store name'), 'karak-house');
+    await userEvent.click(screen.getByLabelText(/I have an access token/));
+    await userEvent.type(screen.getByLabelText('Admin API token'), 'shpat_abc');
+    await userEvent.click(screen.getByRole('button', { name: /Connect with the token/ }));
+
+    expect(admin.connectShopifyToken).toHaveBeenCalledWith({
+      shop: 'karak-house',
+      token: 'shpat_abc',
+    });
+    expect(await screen.findByText(/Your Shopify store is connected/)).toBeInTheDocument();
+    expect(admin.shopifyAuthorizeUrl).not.toHaveBeenCalled();
   });
 });

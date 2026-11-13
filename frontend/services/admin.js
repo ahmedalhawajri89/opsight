@@ -172,3 +172,18 @@ export function revokeApiKey(id) {
 export function connectWooCommerce(body) {
   return api.post('/integrations/woocommerce', body);
 }
+
+/** Shopify, through Baydar's own app: where to send the browser to approve. */
+export function shopifyAuthorizeUrl(body) {
+  return api.post('/integrations/shopify/authorize', body);
+}
+
+/** Every parameter Shopify sent the browser back with, its signature included. */
+export function completeShopify(body) {
+  return api.post('/integrations/shopify/callback', body);
+}
+
+/** Shopify, with an Admin API token from a custom app the owner already has. */
+export function connectShopifyToken(body) {
+  return api.post('/integrations/shopify/token', body);
+}

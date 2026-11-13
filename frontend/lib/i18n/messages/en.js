@@ -439,7 +439,28 @@ const en = {
         'Your WooCommerce store is connected. Its history is being imported and will show in your figures soon.',
       every: 'Updated every quarter hour',
     },
-    shopify: { tag: 'Shopify stores' },
+    shopify: {
+      tag: 'With Baydar’s app or an access token',
+      description:
+        'Type your store’s name and approve Baydar in Shopify. Your catalogue and the last year of orders arrive, then new and changed orders every quarter hour.',
+      shop: 'Store name',
+      shopHint: 'As in your Shopify admin’s address, for example mystore.myshopify.com',
+      action: 'Connect Shopify',
+      haveToken: 'I have an access token from a custom app',
+      tokenNote:
+        'For stores that made a custom app before twenty twenty-six: copy its Admin API token and paste it here.',
+      token: 'Admin API token',
+      tokenHint: 'Starts with shpat_, and is kept encrypted.',
+      tokenAction: 'Connect with the token',
+      customers:
+        'Customer names do not arrive from Shopify until Shopify approves Baydar’s access to protected customer data.',
+      connecting: 'Connecting your Shopify store…',
+      connected:
+        'Your Shopify store is connected. Its history is being imported and will show in your figures soon.',
+      declined: 'The connection was cancelled in Shopify, and nothing was connected.',
+      failed: 'The store could not be connected.',
+      back: 'Back to connected stores',
+    },
     api: {
       title: 'Universal connection (API)',
       tag: 'For any system that can send an HTTP request',
@@ -558,6 +579,7 @@ const en = {
       salla: 'Salla',
       zid: 'Zid',
       woocommerce: 'WooCommerce',
+      shopify: 'Shopify',
     },
 
     status: {
@@ -1137,6 +1159,7 @@ const en = {
         file: 'Excel file',
         manual: 'Entered by hand',
         woocommerce: 'WooCommerce',
+        shopify: 'Shopify',
         api: 'Other systems (API)',
       },
       hero: {

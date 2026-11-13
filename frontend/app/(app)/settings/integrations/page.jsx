@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { useIntegrationActions, useIntegrations } from '@/features/admin/useAdmin';
 import { UniversalConnection } from '@/features/integrations/UniversalConnection';
+import { ShopifyCard } from '@/features/integrations/ShopifyCard';
 import { WooCommerceCard } from '@/features/integrations/WooCommerceCard';
 import { useI18n } from '@/features/i18n/I18nProvider';
 import { Badge } from '@/components/ui/Badge';
@@ -141,6 +142,9 @@ export default function IntegrationsPage() {
         <div className="grid grid-cols-[minmax(0,1fr)] items-stretch gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {/* WooCommerce: the owner's own key, so ready on every installation. */}
           <WooCommerceCard />
+
+          {/* Shopify: Baydar's own app, or a token from an older custom app. */}
+          <ShopifyCard available={Boolean(available.shopify)} />
 
           {/* Zid: one button, an OAuth round trip. */}
           <SourceCard
@@ -325,36 +329,6 @@ export default function IntegrationsPage() {
               </Link>
             </div>
           </SourceCard>
-        </div>
-      </section>
-
-      {/*
-        Named honestly as coming, with the way to connect them today: a card
-        that offered a button for a connection that does not exist yet would
-        be the screen lying to the owner.
-      */}
-      <section aria-labelledby="more-heading" className="space-y-3">
-        <SectionHeading id="more-heading" icon="spark" title={t('integrations.sections.more')} />
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          {['shopify'].map((platform) => (
-            <SourceCard
-              key={platform}
-              platform={platform}
-              title={t(`integrations.platforms.${platform}`)}
-              tag={t(`integrations.${platform}.tag`)}
-              tagIcon="store"
-              readiness="soon"
-              description={t('integrations.readiness.soonHint')}
-            >
-              <a
-                href="#universal"
-                className="mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-(--radius-control) border border-(--color-line-strong) bg-(--color-surface) px-4 text-sm font-medium text-(--color-text) transition-colors hover:bg-(--color-surface-selected)"
-              >
-                <Icon name="key" size={15} />
-                {t('integrations.readiness.useUniversal')}
-              </a>
-            </SourceCard>
-          ))}
         </div>
       </section>
 
