@@ -26,39 +26,75 @@ final class WooClient
 {
     public const PER_PAGE = 100;
 
+    public const ROUTE_PRETTY = 'pretty';
+
+    public const ROUTE_QUERY = 'query';
+
+    public const AUTH_HEADER = 'header';
+
+    public const AUTH_QUERY = 'query';
+
     /**
-     * The store's name, checking on the way that the key can read orders.
+     * The store's name, and the way this store must be asked, found by
+     * asking it: the key is tried before anything is kept.
      *
-     * @return array{name: string}
+     * TWO ROUTES. `/wp-json/` needs WordPress's "pretty" permalinks; a site
+     * left on plain permalinks answers the same API at `/?rest_route=`, so
+     * that is tried when the first does not answer as WordPress.
      *
-     * @throws WooRefused when the store answers, but not to this key
+     * TWO WAYS TO SEND THE KEY. In a header (Basic auth), or, where a host's
+     * server strips that header before WordPress sees it (common on shared
+     * hosting), as query parameters, which WooCommerce documents for HTTPS.
+     * The header is tried first: a key in an address can land in the
+     * store's own access logs.
+     *
+     * @return array{name: string, route: string, auth: string}
+     *
+     * @throws WooRefused with what the owner can do about it
      */
     public function verify(string $url, string $key, string $secret): array
     {
-        try {
-            $orders = $this->send($url, $key, $secret, 'orders', ['per_page' => 1]);
-        } catch (ConnectionException) {
-            // Nothing answered at all: a wrong address, a site that is down,
-            // or a certificate the server will not trust.
-            throw new WooRefused('url', __('errors.integrations.woo_unreachable'));
+        $blocked = false;
+        $status = 0;
+
+        foreach ([self::ROUTE_PRETTY, self::ROUTE_QUERY] as $route) {
+            $response = $this->attempt($url, $key, $secret, $route, self::AUTH_HEADER);
+
+            if (self::isList($response)) {
+                return ['name' => $this->name($url, $key, $secret, $route, self::AUTH_HEADER), 'route' => $route, 'auth' => self::AUTH_HEADER];
+            }
+
+            $code = self::wordPressError($response);
+
+            // WordPress answered and refused: the key, or the header that carried it.
+            if ($code !== null && in_array($response->status(), [401, 403], true)) {
+                $retry = $this->attempt($url, $key, $secret, $route, self::AUTH_QUERY);
+
+                if (self::isList($retry)) {
+                    return ['name' => $this->name($url, $key, $secret, $route, self::AUTH_QUERY), 'route' => $route, 'auth' => self::AUTH_QUERY];
+                }
+
+                throw new WooRefused('consumer_key', __('errors.integrations.woo_refused'));
+            }
+
+            // WordPress answered, but has no WooCommerce API at all.
+            if ($code === 'rest_no_route') {
+                throw new WooRefused('url', __('errors.integrations.woo_no_woocommerce'));
+            }
+
+            // Something in front of WordPress said no, in its own words.
+            if ($code === null && in_array($response->status(), [403, 406, 429, 503], true)) {
+                $blocked = true;
+            }
+
+            $status = $response->status();
         }
 
-        if ($orders->status() === 401 || $orders->status() === 403) {
-            throw new WooRefused('consumer_key', __('errors.integrations.woo_refused'));
+        if ($blocked) {
+            throw new WooRefused('url', __('errors.integrations.woo_blocked'));
         }
 
-        if (! $orders->successful() || ! is_array($orders->json())) {
-            throw new WooRefused('url', __('errors.integrations.woo_not_store', ['status' => $orders->status()]));
-        }
-
-        try {
-            $index = $this->request($url, $key, $secret)->get($url.'/wp-json/');
-            $name = is_array($index->json()) ? (string) ($index->json('name') ?? '') : '';
-        } catch (ConnectionException) {
-            $name = '';
-        }
-
-        return ['name' => $name !== '' ? $name : (string) parse_url($url, PHP_URL_HOST)];
+        throw new WooRefused('url', __('errors.integrations.woo_not_store', ['status' => $status]));
     }
 
     /** @return iterable<array<string, mixed>> */
@@ -104,6 +140,7 @@ final class WooClient
     private function pages(Integration $connection, string $resource, array $query): iterable
     {
         $url = (string) $connection->external_account_id;
+        [$route, $auth] = self::wayOf($connection);
         $page = 1;
 
         do {
@@ -113,6 +150,8 @@ final class WooClient
                 (string) $connection->refresh_token,
                 $resource,
                 $query + ['per_page' => self::PER_PAGE, 'page' => $page],
+                $route,
+                $auth,
             );
 
             if (! $response->successful()) {
@@ -132,13 +171,96 @@ final class WooClient
         } while ($page <= $last && is_array($rows) && $rows !== []);
     }
 
-    /** @param  array<string, mixed>  $query */
-    private function send(string $url, string $key, string $secret, string $resource, array $query): Response
+    /**
+     * The way a connection was found to work when it was made (verify),
+     * kept among its scopes. A connection made before this was recorded
+     * used the pretty route and the header.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function wayOf(Integration $connection): array
     {
-        return $this->request($url, $key, $secret)->get("{$url}/wp-json/wc/v3/{$resource}", $query);
+        $scopes = (array) ($connection->scopes ?? []);
+
+        return [
+            in_array('rest:'.self::ROUTE_QUERY, $scopes, true) ? self::ROUTE_QUERY : self::ROUTE_PRETTY,
+            in_array('auth:'.self::AUTH_QUERY, $scopes, true) ? self::AUTH_QUERY : self::AUTH_HEADER,
+        ];
     }
 
-    private function request(string $url, string $key, string $secret): PendingRequest
+    /** One try at the orders list, for verify: a store that says nothing at all is unreachable. */
+    private function attempt(string $url, string $key, string $secret, string $route, string $auth): Response
+    {
+        try {
+            return $this->send($url, $key, $secret, 'orders', ['per_page' => 1], $route, $auth);
+        } catch (ConnectionException) {
+            // A wrong address, a site that is down, or a certificate the
+            // server will not trust.
+            throw new WooRefused('url', __('errors.integrations.woo_unreachable'));
+        }
+    }
+
+    private function name(string $url, string $key, string $secret, string $route, string $auth): string
+    {
+        try {
+            $index = $this->send($url, $key, $secret, '', [], $route, $auth, root: true);
+            $name = is_array($index->json()) ? (string) ($index->json('name') ?? '') : '';
+        } catch (ConnectionException) {
+            $name = '';
+        }
+
+        return $name !== '' ? $name : (string) parse_url($url, PHP_URL_HOST);
+    }
+
+    private static function isList(Response $response): bool
+    {
+        $rows = $response->successful() ? $response->json() : null;
+
+        return is_array($rows) && array_is_list($rows);
+    }
+
+    /** WordPress's own error code, when the answer is one: proof WordPress itself answered. */
+    private static function wordPressError(Response $response): ?string
+    {
+        $body = $response->json();
+
+        return is_array($body) && is_string($body['code'] ?? null) ? $body['code'] : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     *
+     * @throws ConnectionException without the address, which may hold the key
+     */
+    private function send(
+        string $url,
+        string $key,
+        string $secret,
+        string $resource,
+        array $query,
+        string $route = self::ROUTE_PRETTY,
+        string $auth = self::AUTH_HEADER,
+        bool $root = false,
+    ): Response {
+        $path = $root ? '/' : "/wc/v3/{$resource}";
+        $request = $this->request($url, $key, $secret, $auth);
+
+        if ($auth === self::AUTH_QUERY) {
+            $query += ['consumer_key' => $key, 'consumer_secret' => $secret];
+        }
+
+        try {
+            return $route === self::ROUTE_QUERY
+                ? $request->get("{$url}/", ['rest_route' => $path] + $query)
+                : $request->get("{$url}/wp-json{$path}", $query);
+        } catch (ConnectionException) {
+            // Guzzle's message carries the full address, and with it a key
+            // sent as a query parameter; it would reach the log and the page.
+            throw new ConnectionException('WooCommerce did not answer.');
+        }
+    }
+
+    private function request(string $url, string $key, string $secret, string $auth): PendingRequest
     {
         if (PublicUrl::normalise($url) === null) {
             throw new WooRefused('url', __('errors.integrations.woo_unreachable'));
@@ -150,7 +272,9 @@ final class WooClient
             throw new WooRefused('url', __('errors.integrations.woo_unreachable'));
         }
 
-        return Http::withBasicAuth($key, $secret)
+        $request = $auth === self::AUTH_HEADER ? Http::withBasicAuth($key, $secret) : Http::withOptions([]);
+
+        return $request
             ->acceptJson()
             ->withUserAgent('Baydar/1.0 (+store connection)')
             ->timeout((int) config('integrations.woocommerce.timeout', 20))

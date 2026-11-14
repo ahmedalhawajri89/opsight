@@ -10,6 +10,7 @@ use App\Domain\Integrations\Import\ImportedOrder;
 use App\Domain\Integrations\Import\ImportedPayment;
 use App\Domain\Orders\OrderStatus;
 use App\Domain\Payments\PaymentMethod;
+use App\Models\BusinessSetting;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
@@ -124,7 +125,14 @@ final class InboundOrder
             source: self::SOURCE,
             externalId: (string) $data['id'],
             status: $status,
-            placedAt: Carbon::parse((string) $data['placed_at']),
+            /*
+             * Kept in UTC like every other time here. An offset the sender
+             * gave (+03:00) is honoured exactly; a time without one is the
+             * business's own wall clock, as a person typing it would mean.
+             * Before this, the offset was dropped on save and an order
+             * landed three hours off, sometimes on the next day.
+             */
+            placedAt: Carbon::parse((string) $data['placed_at'], BusinessSetting::current()->timezone ?: 'Asia/Riyadh')->utc(),
             customer: $customer,
             lines: $lines,
             subtotal: $subtotal,
