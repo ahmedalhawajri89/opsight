@@ -92,7 +92,7 @@ final class PublicUrl
      * Plain http and private addresses, for a developer's test store on
      * localhost. Off unless the environment is local or it is switched on.
      */
-    private static function relaxed(): bool
+    public static function relaxed(): bool
     {
         return (bool) config('integrations.woocommerce.allow_private_hosts', app()->isLocal());
     }

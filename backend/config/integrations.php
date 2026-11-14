@@ -117,7 +117,9 @@ return [
         'client_secret' => env('SHOPIFY_CLIENT_SECRET'),
         'redirect_uri' => env('SHOPIFY_REDIRECT_URI'),
         'scopes' => env('SHOPIFY_SCOPES', 'read_orders,read_products'),
-        'api_version' => env('SHOPIFY_API_VERSION', '2025-10'),
+        // Shopify ships a version each quarter and serves each about a year;
+        // 2026-10 is served until October 2027.
+        'api_version' => env('SHOPIFY_API_VERSION', '2026-10'),
     ],
 
     'secrets' => [

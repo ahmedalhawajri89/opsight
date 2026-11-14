@@ -7,6 +7,7 @@ namespace App\Domain\Integrations\Shopify;
 use App\Models\Integration;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -159,7 +160,7 @@ final class ShopifyClient
             throw new ShopifyRefused('shop', __('errors.integrations.shopify_bad_shop'));
         }
 
-        $version = (string) config('integrations.shopify.api_version', '2025-10');
+        $version = (string) config('integrations.shopify.api_version', '2026-10');
 
         try {
             $response = Http::withHeaders(['X-Shopify-Access-Token' => $token])
@@ -182,6 +183,18 @@ final class ShopifyClient
         // the owner can act on that, so it is said beside the shop's name.
         if (in_array($response->status(), [402, 404, 423], true)) {
             throw new ShopifyRefused('shop', __('errors.integrations.shopify_unreachable'));
+        }
+
+        /*
+         * Shopify retires each API version about a year after it ships and
+         * then quietly answers with the oldest one it still serves. Said in
+         * the log, so the version in config/integrations.php is raised before
+         * a field changes under the importer.
+         */
+        $served = $response->header('X-Shopify-API-Version');
+
+        if ($served !== '' && $served !== $version) {
+            Log::warning('Shopify served API version '.$served.' instead of '.$version.'; raise SHOPIFY_API_VERSION.');
         }
 
         if (! $response->successful()) {

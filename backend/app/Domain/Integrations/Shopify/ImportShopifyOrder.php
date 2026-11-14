@@ -93,7 +93,7 @@ final class ImportShopifyOrder
             source: self::SOURCE,
             externalId: (string) ($payload['legacyResourceId'] ?? $payload['id'] ?? ''),
             status: $status,
-            placedAt: Carbon::parse((string) ($payload['createdAt'] ?? 'now'), 'UTC'),
+            placedAt: Carbon::parse((string) ($payload['createdAt'] ?? 'now'), 'UTC')->utc(),
             customer: null,
             lines: $lines,
             subtotal: $subtotal,

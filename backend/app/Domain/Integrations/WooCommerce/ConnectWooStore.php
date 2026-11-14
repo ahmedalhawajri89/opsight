@@ -30,6 +30,19 @@ final class ConnectWooStore
      */
     public function __invoke(string $url, string $key, string $secret): Integration
     {
+        $url = trim($url);
+
+        // "mystore.com", as most owners will type it, means its https address.
+        if ($url !== '' && preg_match('#^[a-z][a-z0-9+.-]*://#i', $url) !== 1) {
+            $url = 'https://'.$url;
+        }
+
+        // Said as such: the key would cross the internet readable, and
+        // WooCommerce itself refuses a key in a header without https.
+        if (str_starts_with(strtolower($url), 'http://') && ! PublicUrl::relaxed()) {
+            throw new WooRefused('url', __('errors.integrations.woo_plain_http'));
+        }
+
         $normalised = PublicUrl::normalise($url);
 
         if ($normalised === null) {
@@ -61,7 +74,8 @@ final class ConnectWooStore
                 'last_error' => null,
                 // A key made in the store does not expire on its own.
                 'token_expires_at' => null,
-                'scopes' => ['read', 'name:'.$store['name']],
+                // The name, and the way this store answers (WooClient::verify).
+                'scopes' => ['read', 'name:'.$store['name'], 'rest:'.$store['route'], 'auth:'.$store['auth']],
             ])->save();
         } catch (UniqueConstraintViolationException) {
             throw new WooStoreTaken($normalised);

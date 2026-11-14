@@ -56,7 +56,10 @@ function wooOrder(array $overrides = []): array
 function fakeStore(array $orders = [], int $ordersStatus = 200): void
 {
     Http::fake([
-        WOO_URL.'/wp-json/wc/v3/orders*' => Http::response($orders, $ordersStatus, ['X-WP-TotalPages' => '1']),
+        WOO_URL.'/wp-json/wc/v3/orders*' => $ordersStatus === 200
+            ? Http::response($orders, 200, ['X-WP-TotalPages' => '1'])
+            // What WordPress itself says when it refuses a key.
+            : Http::response(['code' => 'woocommerce_rest_authentication_error', 'message' => 'Consumer key is invalid.', 'data' => ['status' => $ordersStatus]], $ordersStatus),
         WOO_URL.'/wp-json/wc/v3/products*' => Http::response([], 200, ['X-WP-TotalPages' => '1']),
         WOO_URL.'/wp-json/' => Http::response(['name' => 'Karak House']),
     ]);

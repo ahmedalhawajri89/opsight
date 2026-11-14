@@ -160,3 +160,18 @@ it('says whether each store app is set up on this installation, never how', func
 
     expect($response->getContent())->not->toContain('secret');
 });
+
+it('keeps the moment an order was placed, whatever zone it was sent in', function (string $sent, string $utc): void {
+    BusinessSetting::current()->forceFill(['timezone' => 'Asia/Riyadh'])->save();
+
+    $this->withToken(issueKey())
+        ->postJson('/api/v1/inbound/orders', inboundPayload(['id' => 'TZ-'.md5($sent), 'placed_at' => $sent]))
+        ->assertCreated();
+
+    expect(Order::query()->where('external_id', 'TZ-'.md5($sent))->firstOrFail()->placed_at->utc()->format('Y-m-d H:i'))->toBe($utc);
+})->with([
+    'with an offset' => ['2026-11-14T09:30:00+03:00', '2026-11-14 06:30'],
+    'in UTC' => ['2026-11-14T09:30:00Z', '2026-11-14 09:30'],
+    // No zone: the business's own clock, as the person typing it meant.
+    'without a zone' => ['2026-11-14 01:30:00', '2026-11-13 22:30'],
+]);
